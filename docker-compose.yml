@@ -1,0 +1,58 @@
+version: "3.8"
+services:
+  sepharstudios:
+    image: your-registry/sepharstudios:latest
+    restart: always
+    ports:
+      - "3000"
+    networks:
+      - dokploy-network
+    environment:
+      # Server config
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      - ORIGIN=https://sepharstudios.com
+      
+      # Better Auth
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=https://sepharstudios.com
+      - BETTER_API_URL=https://sepharstudios.com/api/auth
+      
+      # Database
+      - DATABASE_URL=${DATABASE_URL}
+      
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      
+      # MinIO
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      
+      # Webhooks
+      - EMAIL_WEBHOOK=${EMAIL_WEBHOOK}
+      - BODY_SIZE_LIMIT=10485760
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sepharstudios.rule=Host(`sepharstudios.com`)"
+      - "traefik.http.routers.sepharstudios.entrypoints=websecure"
+      - "traefik.http.routers.sepharstudios.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sepharstudios.loadbalancer.server.port=3000"
+      
+      # www redirect
+      - "traefik.http.routers.sepharstudios-www.rule=Host(`www.sepharstudios.com`)"
+      - "traefik.http.routers.sepharstudios-www.entrypoints=websecure"
+      - "traefik.http.routers.sepharstudios-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sepharstudios-www.middlewares=sepharstudios-www-redirect"
+      - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.regex=^https://www\\.sepharstudios\\.com/(.*)"
+      - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.replacement=https://sepharstudios.com/$${1}"
+      - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.permanent=true"
+
+networks:
+  dokploy-network:
+    external: true
