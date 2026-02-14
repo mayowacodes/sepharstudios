@@ -1,0 +1,86 @@
+# Sephar Studios - Dockerfile with Web3 Support
+# Optimized multi-stage build for monorepo architecture
+
+# ==========================================
+# Stage 1: Build
+# ==========================================
+FROM oven/bun:1 AS builder
+
+WORKDIR /app
+
+# Copy workspace package files (for dependency caching)
+COPY bun.lock package.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/web3/package.json ./packages/web3/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/contracts/package.json ./packages/contracts/
+
+# Install all dependencies
+RUN bun install --frozen-lockfile
+
+# Copy all source code
+COPY apps ./apps
+COPY packages ./packages
+COPY drizzle.config.ts ./
+COPY tsconfig.json ./
+
+# Build web3 package first (needed by web app)
+WORKDIR /app/packages/web3
+RUN bun run build || echo "Web3 build skipped (no build script)"
+
+# Build shared package
+WORKDIR /app/packages/shared
+RUN bun run build || echo "Shared build skipped (no build script)"
+
+# Build the main web application
+WORKDIR /app/apps/web
+
+# Create minimal .env for build (actual env vars provided at runtime)
+RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > .env && \
+    echo "BETTER_AUTH_SECRET=dummy-secret-key-for-build-only-minimum-32chars" >> .env && \
+    echo "BETTER_AUTH_URL=http://localhost:3000" >> .env && \
+    echo "NODE_ENV=production" >> .env && \
+    echo "MINIO_ENDPOINT=localhost" >> .env && \
+    echo "MINIO_PORT=9000" >> .env && \
+    echo "MINIO_ACCESS_KEY=dummy" >> .env && \
+    echo "MINIO_SECRET_KEY=dummy" >> .env && \
+    echo "MINIO_USE_SSL=false" >> .env && \
+    echo "MINIO_BUCKET=dummy" >> .env
+
+# Build the application
+RUN bun run build
+
+# Verify build output
+RUN ls -la build/ && echo "Build completed successfully!"
+
+# ==========================================
+# Stage 2: Production
+# ==========================================
+FROM oven/bun:1-slim
+
+WORKDIR /app
+
+# Copy built application
+COPY --from=builder /app/apps/web/build ./build
+COPY --from=builder /app/apps/web/package.json ./package.json
+
+# Copy node_modules (includes all workspace packages)
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy workspace packages (for runtime imports)
+COPY --from=builder /app/packages ./packages
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD bun run -e "fetch('http://localhost:3000').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+
+# Start the application
+CMD ["bun", "run", "build/index.js"]

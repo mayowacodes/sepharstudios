@@ -8,6 +8,34 @@
       "when": 1767884241752,
       "tag": "0000_acoustic_starjammers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770895522385,
+      "tag": "0001_little_demogoblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771006191450,
+      "tag": "0002_secret_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771099468676,
+      "tag": "0003_polite_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771100936888,
+      "tag": "0004_massive_bushwacker",
+      "breakpoints": true
     }
   ]
 }

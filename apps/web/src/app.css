@@ -1,0 +1,283 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@variant dark (&:is(.dark *));
+
+*, *::before, *::after {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Sephar Studios Brand Colors - Faith-Based Streaming Platform */
+:root {
+  --radius: 0.5rem;
+
+  /* Core Background & Text */
+  --background: 0 0% 100%;          /* White */
+  --foreground: 222.2 84% 4.9%;     /* Near black */
+
+  /* Brand Colors - Orange, Gold, Brown */
+  --primary: 20 94% 53%;            /* #FF5E0E - Vibrant Orange */
+  --primary-foreground: 0 0% 100%;  /* White text on orange */
+
+  --secondary: 40 100% 50%;         /* #FFBF00 - Golden Yellow */
+  --secondary-foreground: 222.2 84% 4.9%; /* Dark text on gold */
+
+  --accent: 20 35% 49%;             /* #AF6E4D - Earthy Brown */
+  --accent-foreground: 0 0% 100%;   /* White text on brown */
+
+  /* UI Colors */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --destructive: 0 72.2% 50.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 20 94% 53%;               /* Orange ring to match primary */
+
+  /* Sidebar */
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 20 94% 53%;    /* Orange */
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 20 94% 53%;       /* Orange ring */
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;      /* Dark blue-gray */
+  --foreground: 210 40% 98%;         /* Off-white */
+
+  /* Brand Colors stay vibrant in dark mode */
+  --primary: 20 94% 58%;             /* Slightly brighter orange for dark mode */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 40 100% 55%;          /* Slightly brighter gold */
+  --secondary-foreground: 222.2 84% 4.9%;
+
+  --accent: 20 35% 54%;              /* Slightly brighter brown */
+  --accent-foreground: 0 0% 100%;
+
+  /* UI Colors */
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 20 94% 58%;
+
+  /* Sidebar */
+  --sidebar-background: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 20 94% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 20 94% 58%;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.7); }
+
+/* Font family */
+*,
+*::before,
+*::after {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* Utility classes */
+@utility gsgreen {
+  @apply bg-green-500/10 text-green-800 dark:bg-green-800/30 dark:text-green-500;
+}
+
+@utility gsred {
+  @apply bg-red-500/10 text-red-800 dark:bg-red-800/30 dark:text-red-500;
+}
+
+@utility gsorange {
+  @apply bg-orange-500/10 text-orange-600 dark:bg-orange-800/30 dark:text-orange-500;
+}
+
+@utility gsprimary {
+  @apply bg-primary/10 text-primary dark:bg-primary/30;
+}
+
+@utility center {
+  @apply max-w-[1440px] mx-auto px-2;
+}
+
+@utility padded {
+  @apply px-4 sm:px-0;
+}
+
+/* Switch component styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 50px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+}
+
+input:checked + .slider {
+  background-color: hsl(var(--primary));
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsla(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsla(var(--primary) / 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.floating-icon { animation: float 3s ease-in-out infinite; }
+.floating-icon-delayed { animation: float 3s ease-in-out infinite 0.5s; }
+.floating-icon-delayed-2 { animation: float 3s ease-in-out infinite 1s; }
+.glow-card { animation: pulse-glow 3s ease-in-out infinite; }
+.shimmer-text {
+  background: linear-gradient(90deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 50%, hsl(var(--foreground)) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+.feature-item { transition: all 0.3s ease; }
+.feature-item:hover { transform: translateX(8px); }
+
+/* Brand gradient for hero sections */
+.brand-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--accent)) 100%
+  );
+}
+
+/* Button hover glow effect */
+.btn-glow:hover {
+  box-shadow: 0 0 20px hsla(var(--primary) / 0.5);
+}

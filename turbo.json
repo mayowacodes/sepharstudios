@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        ".svelte-kit/**",
+        "dist/**",
+        "build/**",
+        ".vercel/**",
+        "artifacts/**",
+        "cache/**",
+        "typechain-types/**"
+      ],
+      "env": [
+        "CLERK_SECRET_KEY",
+        "PUBLIC_CLERK_PUBLISHABLE_KEY"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "type-check": {
+      "outputs": []
+    }
+  }
+}

@@ -1,0 +1,77 @@
+<script lang="ts">
+  import { writable } from 'svelte/store';
+  import { goto } from '$app/navigation';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Alert } from '$lib/components/ui/alert';
+  
+  let authMode = writable<'login' | 'register'>('login');
+  let email = writable('');
+  let password = writable('');
+  let error = writable<string | null>(null);
+  
+  async function handleSubmit() {
+    try {
+      const response = await fetch(`/api/auth/${$authMode}`, {
+        method: 'POST',
+        body: JSON.stringify({ email: $email, password: $password }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        $error = data.message;
+        return;
+      }
+      
+      goto('/dashboard');
+    } catch (err) {
+      $error = 'An unexpected error occurred';
+    }
+  }
+</script>
+
+<div class="flex min-h-screen items-center justify-center">
+  <div class="w-full max-w-md space-y-8 p-8">
+    <div class="text-center">
+      <h2 class="text-3xl font-bold">{$authMode === 'login' ? 'Sign Up' : 'Create Account'}</h2>
+    </div>
+
+    {#if $error}
+      <Alert variant="destructive">{$error}</Alert>
+    {/if}
+
+    <form class="space-y-6" on:submit|preventDefault={handleSubmit}>
+      <div>
+        <Input
+          type="email"
+          placeholder="Email"
+          bind:value={$email}
+          required
+        />
+      </div>
+
+      <div>
+        <Input
+          type="password"
+          placeholder="Password"
+          bind:value={$password}
+          required
+        />
+      </div>
+
+      <Button type="submit" class="w-full">
+        {$authMode === 'login' ? 'Sign In' : 'Create Account'}
+      </Button>
+    </form>
+
+    <div class="text-center">
+      <button
+        class="text-sm text-blue-600 hover:underline"
+        on:click={() => $authMode = $authMode === 'login' ? 'register' : 'login'}
+      >
+        {$authMode === 'login' ? 'Need an account?' : 'Already have an account?'}
+      </button>
+    </div>
+  </div>
+</div>

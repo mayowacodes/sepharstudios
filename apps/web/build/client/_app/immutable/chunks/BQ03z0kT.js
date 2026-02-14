@@ -1,0 +1,1 @@
+import{bD as c,a7 as a,bE as i,F as e}from"./TpWHEDIq.js";function _(n){n&&c(n[e]??"a component",n.name)}function d(){const n=a?.function;function o(t){i(t,n[e])}return{$destroy:()=>o("$destroy()"),$on:()=>o("$on(...)"),$set:()=>o("$set(...)")}}const s="5";typeof window<"u"&&((window.__svelte??={}).v??=new Set).add(s);export{_ as c,d as l};

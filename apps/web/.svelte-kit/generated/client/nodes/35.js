@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/(app)/kids/kiddies/movies/+page.svelte";

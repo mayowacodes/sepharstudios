@@ -1,0 +1,1 @@
+import{ad as c,j as _,k as d,ae as o,af as T,a5 as b,ag as g,T as y,ah as E,ai as f}from"./TpWHEDIq.js";function p(t,i,h=!1){_&&d();var r=new E(t),u=h?o:0;function n(a,s){if(_){const l=T(t)===b;if(a===l){var e=g();y(e),r.anchor=e,f(!1),r.ensure(a,s),f(!0);return}}r.ensure(a,s)}c(()=>{var a=!1;i((s,e=!0)=>{a=!0,n(e,s)}),a||n(!1,null)},u)}export{p as i};

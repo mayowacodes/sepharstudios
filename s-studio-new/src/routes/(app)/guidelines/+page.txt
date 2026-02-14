@@ -1,0 +1,150 @@
+<script lang="ts">
+  import { Card, CardContent } from "$lib/components/ui/card";
+  import { Check, X, PlayCircle, Film, Crown, Users } from 'lucide-svelte';
+  import { writable } from 'svelte/store';
+  import { Button } from "$lib/components/ui/button";
+
+  const searchQuery = writable('');
+
+  const guidelines = [
+    {
+      title: "Faith-Based Content",
+      allowed: [
+        "Content aligned with Christian teachings and values",
+        "Biblical stories and adaptations",
+        "Faith-promoting messages",
+        "Family-friendly content",
+        "Educational Christian material"
+      ],
+      prohibited: [
+        "Content contradicting Christian beliefs",
+        "Anti-religious messaging",
+        "Explicit or adult content",
+        "Violence or gore",
+        "Inappropriate language"
+      ]
+    },
+    {
+      title: "Technical Requirements",
+      allowed: [
+        "High-definition video (1080p minimum)",
+        "Clear audio quality",
+        "Professional editing",
+        "Proper lighting and composition",
+        "Subtitles and closed captions"
+      ],
+      prohibited: [
+        "Poor video quality",
+        "Distorted audio",
+        "Unstable footage",
+        "Missing subtitles",
+        "Improper aspect ratios"
+      ]
+    },
+    {
+      title: "Content Categories",
+      allowed: [
+        "Christian films and series",
+        "Biblical documentaries",
+        "Worship content",
+        "Educational programs",
+        "Family entertainment"
+      ],
+      prohibited: [
+        "Non-Christian religious content",
+        "Secular entertainment",
+        "Political content",
+        "Controversial topics",
+        "Divisive messaging"
+      ]
+    }
+  ];
+
+  $: filteredGuidelines = guidelines.map(section => ({
+    ...section,
+    allowed: section.allowed.filter(item => item.toLowerCase().includes($searchQuery.toLowerCase())),
+    prohibited: section.prohibited.filter(item => item.toLowerCase().includes($searchQuery.toLowerCase()))
+  }));
+</script>
+
+<svelte:head>
+  <title>Content Guidelines | Sephar Studios</title>
+  <meta name="description" content="Learn about our content guidelines and standards for faith-based content on Sephar Studios." />
+</svelte:head>
+
+<main class="container pt-32 pb-16">
+  <section class="text-center space-y-6 pb-24">
+    <h1 class="text-4xl sm:text-6xl font-bold tracking-tight">
+      Faith-Based Entertainment
+      <br />
+      For The Whole Family
+    </h1>
+    <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
+      Stream thousands of faith-inspiring movies, shows, and documentaries. Start your free trial today.
+    </p>
+    <div class="flex justify-center gap-4">
+      <Button size="lg" href="/sign-up" class="bg-primary hover:bg-primary/90">
+        <PlayCircle class="mr-2 h-5 w-5" />
+        Start Watching
+      </Button>
+      <Button size="lg" variant="outline">Learn More</Button>
+    </div>
+  </section>
+
+  <section class="min-h-screen bg-[#1A1A1A] pt-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-white mb-8">Content Guidelines</h2>
+      <input
+        type="text"
+        placeholder="Search guidelines..."
+        bind:value={$searchQuery}
+        class="w-full p-3 mb-8 rounded-lg bg-black/50 border border-gray-700 text-white placeholder-white/50"
+      />
+      <div class="space-y-8">
+        {#each filteredGuidelines as section}
+          {#if section.allowed.length || section.prohibited.length}
+            <Card class="bg-black/50 border-gray-800">
+              <CardContent class="p-6">
+                <h3 class="text-2xl font-bold text-white mb-6">{section.title}</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                  {#if section.allowed.length}
+                    <div>
+                      <h4 class="text-lg font-semibold text-green-500 mb-4 flex items-center gap-2">
+                        <Check class="w-5 h-5" />
+                        Allowed Content
+                      </h4>
+                      <ul class="space-y-2">
+                        {#each section.allowed as item}
+                          <li class="text-white/70 flex items-start gap-2">
+                            <span class="text-green-500">•</span>
+                            {item}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                  {#if section.prohibited.length}
+                    <div>
+                      <h4 class="text-lg font-semibold text-red-500 mb-4 flex items-center gap-2">
+                        <X class="w-5 h-5" />
+                        Prohibited Content
+                      </h4>
+                      <ul class="space-y-2">
+                        {#each section.prohibited as item}
+                          <li class="text-white/70 flex items-start gap-2">
+                            <span class="text-red-500">•</span>
+                            {item}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                </div>
+              </CardContent>
+            </Card>
+          {/if}
+        {/each}
+      </div>
+    </div>
+  </section>
+</main>

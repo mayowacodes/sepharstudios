@@ -1,0 +1,68 @@
+<script lang="ts">
+  import { cn } from '$lib/utils';
+  import { page } from '$app/state'; // was $app/state — corrected
+  import { fly, fade } from 'svelte/transition';
+  import MyStudiosDrawer from '$lib/components/sections/MyStudiosDrawer.svelte'; // Adjust path if needed
+  
+
+  interface UserType {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  }
+
+  $: user = (page.data.user as UserType) || null;
+  $: isAuthenticated = !!user;
+
+  let className: string | undefined = undefined;
+  export { className as class };
+
+  let showDrawer = false;
+
+  function handleClick(event: MouseEvent) {
+    if (isAuthenticated) {
+      event.preventDefault(); // prevent navigation
+      showDrawer = true;
+    }
+    // If not authenticated, allow normal navigation
+  }
+</script>
+
+<a
+  href={isAuthenticated ? '/dashboard' : '/'}
+  on:click={handleClick}
+  class={cn(
+    'flex items-center space-x-2 transition-opacity hover:opacity-80',
+    className
+  )}
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="h-6 w-6 text-primary"
+  >
+    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+  </svg>
+
+  {#key user?.id}
+    <span
+      in:fly={{ y: 8, duration: 200 }}
+      out:fade={{ duration: 150 }}
+      class="font-extrabold tracking-tight text-base sm:text-lg md:text-xl text-neutral-900 dark:text-white"
+    >
+      {isAuthenticated ? 'My Studios' : 'Sephar Studios'}
+    </span>
+  {/key}
+</a>
+
+{#if showDrawer}
+  <MyStudiosDrawer on:close={() => (showDrawer = false)} />
+{/if}

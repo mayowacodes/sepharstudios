@@ -1,12 +1,15 @@
 version: "3.8"
+
 services:
   sepharstudios:
-    image: your-registry/sepharstudios:latest
+    image: manimasaun/sepharstudios:0.0.1
     restart: always
     ports:
       - "3000"
     networks:
       - dokploy-network
+    depends_on:
+      - minio
     environment:
       # Server config
       - NODE_ENV=production
@@ -14,24 +17,28 @@ services:
       - PORT=3000
       - ORIGIN=https://sepharstudios.com
       
+      # Database
+      - DATABASE_URL=postgresql://mayowa:hotdbforsepharstudios2026@213.136.92.11:6060/sepharstudios
+      
       # Better Auth
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=https://sepharstudios.com
       - BETTER_API_URL=https://sepharstudios.com/api/auth
-      
-      # Database
-      - DATABASE_URL=${DATABASE_URL}
       
       # Google OAuth
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - REDIRECT_URI=${REDIRECT_URI}
       
-      # MinIO
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - MINIO_BUCKET=${MINIO_BUCKET}
+      # MinIO - Updated to use service name
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+      - MINIO_ENDPOINT=minio  # Service name instead of localhost
+      - MINIO_PORT=9000
+      - MINIO_USE_SSL=false
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin123}
+      - MINIO_BUCKET=${MINIO_BUCKET:-sephar-uploads}
       
       # Webhooks
       - EMAIL_WEBHOOK=${EMAIL_WEBHOOK}
@@ -52,6 +59,47 @@ services:
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.regex=^https://www\\.sepharstudios\\.com/(.*)"
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.replacement=https://sepharstudios.com/$${1}"
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.permanent=true"
+
+  # MinIO Service
+  minio:
+    image: minio/minio:latest
+    container_name: sephar-minio
+    restart: always
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Console port
+    networks:
+      - dokploy-network
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    labels:
+      # Optional: Expose MinIO console via Traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-console.rule=Host(`minio.sepharstudios.com`)"
+      - "traefik.http.routers.minio-console.entrypoints=websecure"
+      - "traefik.http.routers.minio-console.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio-console.service=minio-console"
+      - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
+      
+      # MinIO API
+      - "traefik.http.routers.minio-api.rule=Host(`s3.sepharstudios.com`)"
+      - "traefik.http.routers.minio-api.entrypoints=websecure"
+      - "traefik.http.routers.minio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio-api.service=minio-api"
+      - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
+
+volumes:
+  minio-data:
+    driver: local
 
 networks:
   dokploy-network:

@@ -1,0 +1,272 @@
+import { m as ensure_array_like, C as attr_class, x as stringify, E as escape_html } from './index-C14HL8mA.js';
+import { p as push_element, a as pop_element } from './dev-cqarhAJ0.js';
+import { F as FILENAME } from './index-client-DVey9PBT.js';
+
+_page[FILENAME] = "src/routes/(creator)/creator/analytics-help/+page.svelte";
+function _page($$renderer, $$props) {
+  $$renderer.component(
+    ($$renderer2) => {
+      let activeSection = "overview";
+      const sections = [
+        { id: "overview", title: "Analytics Overview", icon: "📊" },
+        { id: "metrics", title: "Key Metrics", icon: "📈" },
+        {
+          id: "interpretation",
+          title: "Data Interpretation",
+          icon: "🔍"
+        },
+        { id: "optimization", title: "Content Optimization", icon: "⚡" },
+        { id: "reporting", title: "Reports & Insights", icon: "📋" },
+        { id: "troubleshooting", title: "Troubleshooting", icon: "🔧" }
+      ];
+      $$renderer2.push(`<div class="space-y-6">`);
+      push_element($$renderer2, "div", 15, 0);
+      $$renderer2.push(`<div>`);
+      push_element($$renderer2, "div", 17, 2);
+      $$renderer2.push(`<h1 class="text-3xl font-bold text-white mb-2">`);
+      push_element($$renderer2, "h1", 18, 4);
+      $$renderer2.push(`Analytics Help</h1>`);
+      pop_element();
+      $$renderer2.push(` <p class="text-gray-300">`);
+      push_element($$renderer2, "p", 19, 4);
+      $$renderer2.push(`Understand your audience and optimize your content performance</p>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">`);
+      push_element($$renderer2, "div", 22, 2);
+      $$renderer2.push(`<div class="lg:col-span-1">`);
+      push_element($$renderer2, "div", 24, 4);
+      $$renderer2.push(`<div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 sticky top-6">`);
+      push_element($$renderer2, "div", 25, 6);
+      $$renderer2.push(`<nav class="space-y-2">`);
+      push_element($$renderer2, "nav", 26, 8);
+      $$renderer2.push(`<!--[-->`);
+      const each_array = ensure_array_like(sections);
+      for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+        let section = each_array[$$index];
+        $$renderer2.push(`<button${attr_class(`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${stringify(activeSection === section.id ? "bg-purple-600 text-white" : "text-gray-300 hover:text-white hover:bg-white/10")}`)}>`);
+        push_element($$renderer2, "button", 28, 12);
+        $$renderer2.push(`<span>`);
+        push_element($$renderer2, "span", 32, 14);
+        $$renderer2.push(`${escape_html(section.icon)}</span>`);
+        pop_element();
+        $$renderer2.push(` <span class="text-sm font-medium">`);
+        push_element($$renderer2, "span", 33, 14);
+        $$renderer2.push(`${escape_html(section.title)}</span>`);
+        pop_element();
+        $$renderer2.push(`</button>`);
+        pop_element();
+      }
+      $$renderer2.push(`<!--]--></nav>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="lg:col-span-3">`);
+      push_element($$renderer2, "div", 41, 4);
+      $$renderer2.push(`<div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">`);
+      push_element($$renderer2, "div", 42, 6);
+      {
+        $$renderer2.push("<!--[-->");
+        $$renderer2.push(`<div class="space-y-6">`);
+        push_element($$renderer2, "div", 44, 10);
+        $$renderer2.push(`<div>`);
+        push_element($$renderer2, "div", 45, 12);
+        $$renderer2.push(`<h2 class="text-2xl font-bold text-white mb-4">`);
+        push_element($$renderer2, "h2", 46, 14);
+        $$renderer2.push(`Analytics Overview</h2>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-gray-300 mb-4">`);
+        push_element($$renderer2, "p", 47, 14);
+        $$renderer2.push(`Analytics help you understand your audience, measure your ministry impact, and optimize your content
+                to reach more people with the Gospel message.</p>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="grid grid-cols-1 md:grid-cols-2 gap-6">`);
+        push_element($$renderer2, "div", 53, 12);
+        $$renderer2.push(`<div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">`);
+        push_element($$renderer2, "div", 54, 14);
+        $$renderer2.push(`<h3 class="text-lg font-bold text-white mb-2 flex items-center">`);
+        push_element($$renderer2, "h3", 55, 16);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 56, 18);
+        $$renderer2.push(`👁️</span>`);
+        pop_element();
+        $$renderer2.push(` Audience Insights</h3>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-blue-200 mb-3">`);
+        push_element($$renderer2, "p", 58, 16);
+        $$renderer2.push(`Understand who's watching your content and how they engage with your ministry.</p>`);
+        pop_element();
+        $$renderer2.push(` <ul class="text-blue-200 text-sm space-y-1">`);
+        push_element($$renderer2, "ul", 61, 16);
+        $$renderer2.push(`<li>`);
+        push_element($$renderer2, "li", 62, 18);
+        $$renderer2.push(`• Demographics and location data</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 63, 18);
+        $$renderer2.push(`• Viewing patterns and preferences</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 64, 18);
+        $$renderer2.push(`• Spiritual interest indicators</li>`);
+        pop_element();
+        $$renderer2.push(`</ul>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">`);
+        push_element($$renderer2, "div", 68, 14);
+        $$renderer2.push(`<h3 class="text-lg font-bold text-white mb-2 flex items-center">`);
+        push_element($$renderer2, "h3", 69, 16);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 70, 18);
+        $$renderer2.push(`⚡</span>`);
+        pop_element();
+        $$renderer2.push(` Performance Metrics</h3>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-green-200 mb-3">`);
+        push_element($$renderer2, "p", 72, 16);
+        $$renderer2.push(`Track how your content performs and identify opportunities for improvement.</p>`);
+        pop_element();
+        $$renderer2.push(` <ul class="text-green-200 text-sm space-y-1">`);
+        push_element($$renderer2, "ul", 75, 16);
+        $$renderer2.push(`<li>`);
+        push_element($$renderer2, "li", 76, 18);
+        $$renderer2.push(`• Watch time and retention rates</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 77, 18);
+        $$renderer2.push(`• Engagement and interaction data</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 78, 18);
+        $$renderer2.push(`• Growth and reach metrics</li>`);
+        pop_element();
+        $$renderer2.push(`</ul>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">`);
+        push_element($$renderer2, "div", 82, 14);
+        $$renderer2.push(`<h3 class="text-lg font-bold text-white mb-2 flex items-center">`);
+        push_element($$renderer2, "h3", 83, 16);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 84, 18);
+        $$renderer2.push(`🎯</span>`);
+        pop_element();
+        $$renderer2.push(` Ministry Impact</h3>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-purple-200 mb-3">`);
+        push_element($$renderer2, "p", 86, 16);
+        $$renderer2.push(`Measure the spiritual impact of your content beyond traditional metrics.</p>`);
+        pop_element();
+        $$renderer2.push(` <ul class="text-purple-200 text-sm space-y-1">`);
+        push_element($$renderer2, "ul", 89, 16);
+        $$renderer2.push(`<li>`);
+        push_element($$renderer2, "li", 90, 18);
+        $$renderer2.push(`• Prayer request submissions</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 91, 18);
+        $$renderer2.push(`• Testimony and life-change stories</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 92, 18);
+        $$renderer2.push(`• Community building indicators</li>`);
+        pop_element();
+        $$renderer2.push(`</ul>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="bg-orange-600/20 border border-orange-600 rounded-lg p-4">`);
+        push_element($$renderer2, "div", 96, 14);
+        $$renderer2.push(`<h3 class="text-lg font-bold text-white mb-2 flex items-center">`);
+        push_element($$renderer2, "h3", 97, 16);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 98, 18);
+        $$renderer2.push(`📈</span>`);
+        pop_element();
+        $$renderer2.push(` Growth Tracking</h3>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-orange-200 mb-3">`);
+        push_element($$renderer2, "p", 100, 16);
+        $$renderer2.push(`Monitor your channel's growth and identify successful content strategies.</p>`);
+        pop_element();
+        $$renderer2.push(` <ul class="text-orange-200 text-sm space-y-1">`);
+        push_element($$renderer2, "ul", 103, 16);
+        $$renderer2.push(`<li>`);
+        push_element($$renderer2, "li", 104, 18);
+        $$renderer2.push(`• Subscriber growth patterns</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 105, 18);
+        $$renderer2.push(`• Content performance trends</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 106, 18);
+        $$renderer2.push(`• Revenue and monetization data</li>`);
+        pop_element();
+        $$renderer2.push(`</ul>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4">`);
+        push_element($$renderer2, "div", 111, 12);
+        $$renderer2.push(`<h3 class="text-lg font-bold text-white mb-2">`);
+        push_element($$renderer2, "h3", 112, 14);
+        $$renderer2.push(`📋 Getting Started</h3>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-yellow-200 mb-3">`);
+        push_element($$renderer2, "p", 113, 14);
+        $$renderer2.push(`Analytics data becomes available 24-48 hours after content publication. Here's how to access and use it:</p>`);
+        pop_element();
+        $$renderer2.push(` <ol class="text-yellow-200 text-sm space-y-1">`);
+        push_element($$renderer2, "ol", 116, 14);
+        $$renderer2.push(`<li>`);
+        push_element($$renderer2, "li", 117, 16);
+        $$renderer2.push(`1. Navigate to Creator Dashboard → Analytics</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 118, 16);
+        $$renderer2.push(`2. Select date range and content filters</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 119, 16);
+        $$renderer2.push(`3. Review key metrics and identify trends</li>`);
+        pop_element();
+        $$renderer2.push(` <li>`);
+        push_element($$renderer2, "li", 120, 16);
+        $$renderer2.push(`4. Apply insights to optimize future content</li>`);
+        pop_element();
+        $$renderer2.push(`</ol>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+      }
+      $$renderer2.push(`<!--]--></div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+    },
+    _page
+  );
+}
+_page.render = function() {
+  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
+};
+
+export { _page as default };
+//# sourceMappingURL=_page.svelte-DC7znykw.js.map

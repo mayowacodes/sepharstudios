@@ -1,0 +1,121 @@
+// src/lib/data/movies.ts
+import { getXataClient } from '../xata'; // Assuming your Xata client is in '../xata.ts'
+import type { MediaItem } from '../types/media'; // Adjust the path if necessary
+
+const xata = getXataClient();
+
+export async function fetchXataMovies(): Promise<MediaItem[]> {
+  try {
+    const movies = await xata.db.movies.getMany();
+    return movies.map((movie) => ({
+      id: `m-${movie.id}`, // Prefix to distinguish from local data
+      title: movie.title || 'Untitled Movie',
+      description: movie.overview || '',
+      thumbnail: movie.poster_url || '',
+      trailerUrl: undefined, // No direct mapping
+      link: `/watch/movie/${movie.id}`,
+      rating: movie.vote_average ? movie.vote_average.toString() : undefined,
+      duration: undefined, // No direct mapping
+      quality: undefined, // No direct mapping
+      year: movie.release_date ? new Date(movie.release_date).getFullYear().toString() : undefined,
+      genre: movie.genres || [],
+      bibleReference: undefined, // No direct mapping
+      ageRating: undefined, // No direct mapping
+      backdropUrl: movie.backdrop_url || undefined,
+      genreIds: movie.genre_ids || undefined,
+      originalLanguage: movie.original_language || undefined,
+      popularity: movie.popularity || undefined,
+      releaseDate: movie.release_date || undefined,
+      voteCount: movie.vote_count || undefined,
+      keywords: movie.keywords || undefined,
+      keywordIds: movie.keyword_ids || undefined,
+      keywordsList: (movie as any).keywords_list || undefined, // Assuming this might exist
+    }));
+  } catch (error) {
+    console.error('Error fetching movies from Xata:', error);
+    return [];
+  }
+}
+
+export async function fetchXataShows(): Promise<MediaItem[]> {
+  try {
+    const shows = await xata.db.shows.getMany();
+    return shows.map((show) => ({
+      id: `s-${show.id}`, // Prefix to distinguish
+      title: show.title || 'Untitled Show',
+      description: show.overview || '',
+      thumbnail: show.poster_url || '',
+      trailerUrl: undefined, // No direct mapping
+      link: `/watch/show/${show.id}`,
+      rating: show.vote_average ? show.vote_average.toString() : undefined,
+      duration: undefined, // No direct mapping
+      quality: undefined, // No direct mapping
+      year: show.release_date ? new Date(show.release_date).getFullYear().toString() : undefined,
+      genre: show.genres || [],
+      bibleReference: undefined, // No direct mapping
+      ageRating: undefined, // No direct mapping
+      backdropUrl: show.backdrop_url || undefined,
+      posterUrl: show.poster_url || undefined,
+      genreIds: show.genre_ids || undefined,
+      keywordIds: show.keyword_ids || undefined,
+      popularity: show.popularity || undefined,
+      releaseDate: show.release_date || undefined,
+      voteCount: show.vote_count || undefined,
+      keywords: show.keywords || undefined,
+      originalLanguage: show.original_language || undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching shows from Xata:', error);
+    return [];
+  }
+}
+
+export async function fetchXataDocumentaries(): Promise<MediaItem[]> {
+  try {
+    const documentaries = await xata.db.documentaries.getMany();
+    return documentaries.map((doc) => ({
+      id: `d-${doc.id}`, // Prefix to distinguish
+      title: doc.title || 'Untitled Documentary',
+      description: doc.overview || '',
+      thumbnail: doc.poster_url || '',
+      trailerUrl: undefined, // No direct mapping
+      link: `/watch/documentary/${doc.id}`,
+      rating: doc.vote_average ? doc.vote_average.toString() : undefined,
+      duration: undefined, // No direct mapping
+      quality: undefined, // No direct mapping
+      year: doc.release_date ? new Date(doc.release_date).getFullYear().toString() : undefined,
+      genre: doc.genres || [],
+      bibleReference: undefined, // No direct mapping
+      ageRating: undefined, // No direct mapping
+      backdropUrl: doc.backdrop_url || undefined,
+      genreIds: doc.genre_ids || undefined,
+      originalLanguage: doc.original_language || undefined,
+      popularity: doc.popularity || undefined,
+      releaseDate: doc.release_date || undefined,
+      voteCount: doc.vote_count || undefined,
+      keywords: doc.keywords || undefined,
+      keywordsList: (doc as any).keywords_list || undefined, // Assuming this might exist
+      keywordIds: doc.keyword_ids || undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching documentaries from Xata:', error);
+    return [];
+  }
+}
+
+// Example of how you might use these functions (not part of the module itself)
+async function main() {
+  const movies = await fetchXataMovies();
+  console.log('Movies from Xata:', movies.slice(0, 2)); // Log first 2 for brevity
+
+  const shows = await fetchXataShows();
+  console.log('Shows from Xata:', shows.slice(0, 2));
+
+  const documentaries = await fetchXataDocumentaries();
+  console.log('Documentaries from Xata:', documentaries.slice(0, 2));
+}
+
+// If you want to run this script directly (for testing purposes)
+if (require.main === module) {
+  main();
+}

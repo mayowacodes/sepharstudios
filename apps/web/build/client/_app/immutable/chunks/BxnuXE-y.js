@@ -1,0 +1,1 @@
+import{al as r,a8 as n,b4 as c}from"./TpWHEDIq.js";import{s as f}from"./C80fVOtw.js";function p(e,...s){return r(()=>{try{let a=!1;const t=[];for(const o of s)o&&typeof o=="object"&&n in o?(t.push(f(o,!0)),a=!0):t.push(o);a&&(c(e),console.log("%c[snapshot]","color: grey",...t))}catch{}}),s}export{p as l};

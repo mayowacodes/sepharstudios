@@ -1,0 +1,30 @@
+{
+	"name": "@sephar/web3",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./components": "./src/components/index.ts",
+		"./lib": "./src/lib/index.ts",
+		"./hooks": "./src/hooks/index.ts",
+		"./types": "./src/types/index.ts"
+	},
+	"scripts": {
+		"dev": "tsc --watch",
+		"build": "tsc",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@wagmi/connectors": "^5.3.2",
+		"@wagmi/core": "^2.17.2",
+		"viem": "^2.21.49"
+	},
+	"devDependencies": {
+		"@types/node": "^24.9.1",
+		"typescript": "^5.9.3"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	}
+}

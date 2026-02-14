@@ -1,0 +1,1 @@
+const n=async e=>{const r=new FormData;r.append("file",e);const o=await fetch("/api/files",{method:"POST",body:r});if(!o.ok){const t=await o.json();throw new Error(t.error||"Failed to upload file")}return(await o.json()).url};export{n as uploadFile};

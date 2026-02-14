@@ -1,0 +1,1 @@
+import{R as o}from"./DTmrZ4Hq.js";const l=[{value:o.ADMIN,label:"Admin",color:"destructive"},{value:o.EDITOR,label:"Editor",color:"default"},{value:o.USER,label:"User",color:"secondary"}],s=e=>l.find(r=>r.value.toLowerCase()===e.toLowerCase())?.color||"secondary";export{s as g,l as r};

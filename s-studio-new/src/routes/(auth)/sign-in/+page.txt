@@ -1,0 +1,111 @@
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { AlertCircle, Loader2 } from 'lucide-svelte';
+  import { toasts } from '$lib/stores/toastStore';
+  import { auth } from 'svelte-clerk';
+  import { writable } from 'svelte/store';
+  import { onMount } from 'svelte';
+
+  let isSubmitting = writable(false);
+  let error = writable('');
+  let email = ''; // Used instead of bind:this={emailInput}
+  let password = '';
+
+  onMount(() => {
+    const inputElement = document.getElementById('email') as HTMLInputElement;
+    if (inputElement) inputElement.focus();
+  });
+
+  const handleSubmit = async (event: SubmitEvent) => {
+    event.preventDefault();
+    isSubmitting.set(true);
+    error.set('');
+
+    try {
+      const formData = new FormData(event.currentTarget as HTMLFormElement);
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+
+      const clerk = auth();
+      const result = await clerk.signIn.create({ identifier: email, password });
+
+      if (result.status === 'complete') {
+        await goto('/profiles');
+      } else {
+        throw new Error('Sign-in incomplete. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Sign-in error:', err);
+      error.set(err.errors?.[0]?.message || 'Invalid email or password');
+      toasts.add({
+        type: 'error',
+        title: 'Error',
+        description: err.errors?.[0]?.message || 'Invalid email or password'
+      });
+    } finally {
+      isSubmitting.set(false);
+    }
+  };
+</script>
+
+<div class="container flex h-screen w-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+  <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px] bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div class="flex flex-col space-y-2 text-center">
+      <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">Welcome back</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Enter your email to sign in to your account
+      </p>
+    </div>
+
+    {#if $error}
+      <Alert variant="destructive">
+        <AlertCircle class="h-4 w-4" />
+        <AlertDescription>{$error}</AlertDescription>
+      </Alert>
+    {/if}
+
+    <form on:submit={handleSubmit} class="space-y-4">
+      <div class="space-y-2">
+        <Label for="email" class="text-gray-900 dark:text-gray-300">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="m@example.com"
+          required
+          bind:value={email}
+          disabled={$isSubmitting}
+        />
+      </div>
+      <div class="space-y-2">
+        <Label for="password" class="text-gray-900 dark:text-gray-300">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          required
+          bind:value={password}
+          disabled={$isSubmitting}
+        />
+      </div>
+
+      <Button type="submit" class="w-full flex items-center justify-center gap-2" disabled={$isSubmitting}>
+        {#if $isSubmitting}
+          <Loader2 class="h-5 w-5 animate-spin" />
+          Signing in...
+        {:else}
+          Sign In
+        {/if}
+      </Button>
+    </form>
+
+    <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+      Don't have an account?
+      <a href="/signup" class="underline hover:text-primary">Sign up</a>
+    </div>
+  </div>
+</div>

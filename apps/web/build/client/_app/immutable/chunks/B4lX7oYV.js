@@ -1,0 +1,1 @@
+import{aj as k,ak as t,al as b,am as h,a8 as S}from"./TpWHEDIq.js";function u(a,s){return a===s||a?.[S]===s}function d(a={},s,f,T){return k(()=>{var i,r;return t(()=>{i=r,r=[],b(()=>{a!==f(...r)&&(s(a,...r),i&&u(f(...i),a)&&s(null,...i))})}),()=>{h(()=>{r&&u(f(...r),a)&&s(null,...r)})}}),a}export{d as b};

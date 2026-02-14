@@ -1,0 +1,245 @@
+import { E as escape_html, m as ensure_array_like, C as attr_class, x as stringify } from './index-C14HL8mA.js';
+import { p as push_element, a as pop_element } from './dev-cqarhAJ0.js';
+import { F as FILENAME } from './index-client-DVey9PBT.js';
+
+_page[FILENAME] = "src/routes/(admin)/admin/workflow/+page.svelte";
+function _page($$renderer, $$props) {
+  $$renderer.component(
+    ($$renderer2) => {
+      let workflowRules = [];
+      let workflowStats = {
+        totalProcessed: 0,
+        avgProcessingTime: 0,
+        approvalRate: 0,
+        pendingReviews: 0
+      };
+      $$renderer2.push(`<div class="space-y-6">`);
+      push_element($$renderer2, "div", 206, 0);
+      $$renderer2.push(`<div class="flex justify-between items-center">`);
+      push_element($$renderer2, "div", 208, 2);
+      $$renderer2.push(`<div>`);
+      push_element($$renderer2, "div", 209, 4);
+      $$renderer2.push(`<h1 class="text-4xl font-bold text-white mb-2">`);
+      push_element($$renderer2, "h1", 210, 6);
+      $$renderer2.push(`Workflow Management</h1>`);
+      pop_element();
+      $$renderer2.push(` <p class="text-xl text-gray-300">`);
+      push_element($$renderer2, "p", 211, 6);
+      $$renderer2.push(`Automate content review and approval processes</p>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">`);
+      push_element($$renderer2, "button", 214, 4);
+      $$renderer2.push(`Create Workflow Rule</button>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="grid grid-cols-1 md:grid-cols-4 gap-6">`);
+      push_element($$renderer2, "div", 223, 2);
+      $$renderer2.push(`<div class="bg-blue-600/20 rounded-xl p-6 text-center">`);
+      push_element($$renderer2, "div", 224, 4);
+      $$renderer2.push(`<div class="text-3xl font-bold text-blue-400 mb-2">`);
+      push_element($$renderer2, "div", 225, 6);
+      $$renderer2.push(`${escape_html(workflowStats.totalProcessed)}</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="text-sm text-blue-200">`);
+      push_element($$renderer2, "div", 226, 6);
+      $$renderer2.push(`Total Processed</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="bg-green-600/20 rounded-xl p-6 text-center">`);
+      push_element($$renderer2, "div", 228, 4);
+      $$renderer2.push(`<div class="text-3xl font-bold text-green-400 mb-2">`);
+      push_element($$renderer2, "div", 229, 6);
+      $$renderer2.push(`${escape_html(workflowStats.avgProcessingTime)}d</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="text-sm text-green-200">`);
+      push_element($$renderer2, "div", 230, 6);
+      $$renderer2.push(`Avg. Processing Time</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="bg-purple-600/20 rounded-xl p-6 text-center">`);
+      push_element($$renderer2, "div", 232, 4);
+      $$renderer2.push(`<div class="text-3xl font-bold text-purple-400 mb-2">`);
+      push_element($$renderer2, "div", 233, 6);
+      $$renderer2.push(`${escape_html(workflowStats.approvalRate)}%</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="text-sm text-purple-200">`);
+      push_element($$renderer2, "div", 234, 6);
+      $$renderer2.push(`Approval Rate</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="bg-yellow-600/20 rounded-xl p-6 text-center">`);
+      push_element($$renderer2, "div", 236, 4);
+      $$renderer2.push(`<div class="text-3xl font-bold text-yellow-400 mb-2">`);
+      push_element($$renderer2, "div", 237, 6);
+      $$renderer2.push(`${escape_html(workflowStats.pendingReviews)}</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="text-sm text-yellow-200">`);
+      push_element($$renderer2, "div", 238, 6);
+      $$renderer2.push(`Pending Reviews</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` <div class="space-y-4">`);
+      push_element($$renderer2, "div", 243, 2);
+      $$renderer2.push(`<h2 class="text-2xl font-bold text-white">`);
+      push_element($$renderer2, "h2", 244, 4);
+      $$renderer2.push(`Active Workflow Rules</h2>`);
+      pop_element();
+      $$renderer2.push(` <!--[-->`);
+      const each_array = ensure_array_like(workflowRules);
+      for (let $$index_2 = 0, $$length = each_array.length; $$index_2 < $$length; $$index_2++) {
+        let rule = each_array[$$index_2];
+        $$renderer2.push(`<div${attr_class(`bg-white/10 rounded-xl p-6 border-l-4 ${stringify(rule.isActive ? "border-green-600" : "border-gray-600")}`)}>`);
+        push_element($$renderer2, "div", 247, 6);
+        $$renderer2.push(`<div class="flex justify-between items-start mb-4">`);
+        push_element($$renderer2, "div", 248, 8);
+        $$renderer2.push(`<div>`);
+        push_element($$renderer2, "div", 249, 10);
+        $$renderer2.push(`<div class="flex items-center space-x-3 mb-2">`);
+        push_element($$renderer2, "div", 250, 12);
+        $$renderer2.push(`<h3 class="text-xl font-bold text-white">`);
+        push_element($$renderer2, "h3", 251, 14);
+        $$renderer2.push(`${escape_html(rule.name)}</h3>`);
+        pop_element();
+        $$renderer2.push(` <span class="bg-gray-600 text-white px-2 py-1 text-xs rounded-full">`);
+        push_element($$renderer2, "span", 252, 14);
+        $$renderer2.push(`Priority ${escape_html(rule.priority)}</span>`);
+        pop_element();
+        $$renderer2.push(` <button${attr_class(`px-3 py-1 text-xs rounded-full transition-colors ${stringify(rule.isActive ? "bg-green-600 text-white" : "bg-gray-600 text-gray-300")}`)}>`);
+        push_element($$renderer2, "button", 255, 14);
+        $$renderer2.push(`${escape_html(rule.isActive ? "Active" : "Inactive")}</button>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <p class="text-gray-300 text-sm mb-4">`);
+        push_element($$renderer2, "p", 262, 12);
+        $$renderer2.push(`${escape_html(rule.description)}</p>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="flex space-x-2">`);
+        push_element($$renderer2, "div", 265, 10);
+        $$renderer2.push(`<button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">`);
+        push_element($$renderer2, "button", 266, 12);
+        $$renderer2.push(`Edit</button>`);
+        pop_element();
+        $$renderer2.push(` <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">`);
+        push_element($$renderer2, "button", 272, 12);
+        $$renderer2.push(`Delete</button>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">`);
+        push_element($$renderer2, "div", 279, 8);
+        $$renderer2.push(`<div>`);
+        push_element($$renderer2, "div", 280, 10);
+        $$renderer2.push(`<h4 class="font-medium text-white mb-3 flex items-center">`);
+        push_element($$renderer2, "h4", 281, 12);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 282, 14);
+        $$renderer2.push(`🔍</span>`);
+        pop_element();
+        $$renderer2.push(` Conditions</h4>`);
+        pop_element();
+        $$renderer2.push(` <div class="space-y-2">`);
+        push_element($$renderer2, "div", 284, 12);
+        $$renderer2.push(`<!--[-->`);
+        const each_array_1 = ensure_array_like(rule.conditions);
+        for (let $$index = 0, $$length2 = each_array_1.length; $$index < $$length2; $$index++) {
+          let condition = each_array_1[$$index];
+          $$renderer2.push(`<div class="bg-white/5 p-3 rounded text-sm">`);
+          push_element($$renderer2, "div", 286, 16);
+          $$renderer2.push(`<span class="text-blue-300">`);
+          push_element($$renderer2, "span", 287, 18);
+          $$renderer2.push(`${escape_html(condition.field)}</span>`);
+          pop_element();
+          $$renderer2.push(` <span class="text-gray-400 mx-2">`);
+          push_element($$renderer2, "span", 288, 18);
+          $$renderer2.push(`${escape_html(condition.operator)}</span>`);
+          pop_element();
+          $$renderer2.push(` <span class="text-green-300">`);
+          push_element($$renderer2, "span", 289, 18);
+          $$renderer2.push(`"${escape_html(condition.value)}"</span>`);
+          pop_element();
+          $$renderer2.push(`</div>`);
+          pop_element();
+        }
+        $$renderer2.push(`<!--]--></div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div>`);
+        push_element($$renderer2, "div", 296, 10);
+        $$renderer2.push(`<h4 class="font-medium text-white mb-3 flex items-center">`);
+        push_element($$renderer2, "h4", 297, 12);
+        $$renderer2.push(`<span class="mr-2">`);
+        push_element($$renderer2, "span", 298, 14);
+        $$renderer2.push(`⚡</span>`);
+        pop_element();
+        $$renderer2.push(` Actions</h4>`);
+        pop_element();
+        $$renderer2.push(` <div class="space-y-2">`);
+        push_element($$renderer2, "div", 300, 12);
+        $$renderer2.push(`<!--[-->`);
+        const each_array_2 = ensure_array_like(rule.actions);
+        for (let $$index_1 = 0, $$length2 = each_array_2.length; $$index_1 < $$length2; $$index_1++) {
+          let action = each_array_2[$$index_1];
+          $$renderer2.push(`<div class="bg-white/5 p-3 rounded text-sm">`);
+          push_element($$renderer2, "div", 302, 16);
+          $$renderer2.push(`<span class="text-purple-300">`);
+          push_element($$renderer2, "span", 303, 18);
+          $$renderer2.push(`${escape_html(action.type.replace("_", " "))}</span>`);
+          pop_element();
+          $$renderer2.push(` <span class="text-gray-400 mx-2">`);
+          push_element($$renderer2, "span", 304, 18);
+          $$renderer2.push(`→</span>`);
+          pop_element();
+          $$renderer2.push(` <span class="text-yellow-300">`);
+          push_element($$renderer2, "span", 305, 18);
+          $$renderer2.push(`${escape_html(action.target)}: ${escape_html(action.value)}</span>`);
+          pop_element();
+          $$renderer2.push(`</div>`);
+          pop_element();
+        }
+        $$renderer2.push(`<!--]--></div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+        $$renderer2.push(` <div class="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-700">`);
+        push_element($$renderer2, "div", 312, 8);
+        $$renderer2.push(`Created ${escape_html(rule.createdAt.toLocaleDateString())}</div>`);
+        pop_element();
+        $$renderer2.push(`</div>`);
+        pop_element();
+      }
+      $$renderer2.push(`<!--]--></div>`);
+      pop_element();
+      $$renderer2.push(`</div>`);
+      pop_element();
+      $$renderer2.push(` `);
+      {
+        $$renderer2.push("<!--[!-->");
+      }
+      $$renderer2.push(`<!--]-->`);
+    },
+    _page
+  );
+}
+_page.render = function() {
+  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
+};
+
+export { _page as default };
+//# sourceMappingURL=_page.svelte-C3m1E7z-.js.map

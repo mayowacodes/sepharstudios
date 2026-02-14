@@ -1,0 +1,263 @@
+{
+	"/(web3)": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)": [
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/about": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin": [
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/analytics": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/communications": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/content": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/creators": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/policies": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/review": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/review/[id]": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/settings": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/test": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/tokenomics": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/workflow": [
+		"src/routes/+layout.server.ts"
+	],
+	"/api/auth/[...all]": [
+		"src/routes/api/auth/[...all]/+server.ts"
+	],
+	"/api/files": [
+		"src/routes/api/files/+server.ts"
+	],
+	"/api/users": [
+		"src/routes/api/users/+server.ts"
+	],
+	"/(app)/archive": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/auth/forget-password": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/auth/forget-password/success": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/auth/login": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/auth/register": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/auth/reset-password": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/contact": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator": [
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/agreement": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/analytics-help": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/analytics": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/best-practices": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/content": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/earnings": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/events": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/forum": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/guidelines": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/newsletter": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/profile": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/success-stories": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/support": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/tech-support": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/test": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/upload": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/dashboard": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/documentaries": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/documentation": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/faq": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/features": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/guidelines": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/help": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/kiddies": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/kiddies/documentaries": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/kiddies/movies": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/kiddies/shows": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/profile": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/teens": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/teens/documentaries": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/teens/movies": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/teens/profile": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/kids/teens/shows": [
+		"src/routes/(app)/kids/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/mayowa": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/movies": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/my-studios": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/offline": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/plans": [
+		"src/routes/+layout.server.ts",
+		"src/routes/(app)/plans/+server.ts"
+	],
+	"/(app)/press": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/privacy": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/profile": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/shows": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/sponsorships": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(web3)/subscription": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/terms": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(web3)/tokens": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/users": [
+		"src/routes/(protected)/users/+page.server.ts",
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(web3)/wallet": [
+		"src/routes/+layout.server.ts"
+	]
+}

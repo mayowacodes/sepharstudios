@@ -1,0 +1,6 @@
+{
+  "databaseURL": "https://Animasaun-Gbotemi-s-workspace-e3qc3c.eu-west-1.xata.sh/db/sephar-studios:main",
+  "codegen": {
+    "output": "src/lib/xata/index.ts"
+  }
+}

@@ -1,0 +1,1 @@
+- this is a netflix like web app, meant to compete with netflix

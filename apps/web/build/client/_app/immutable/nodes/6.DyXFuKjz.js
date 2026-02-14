@@ -1,0 +1,1 @@
+import{c as p,l as m}from"../chunks/BQ03z0kT.js";import"../chunks/B3OFaTZD.js";import{p as n,g as c,f,a as i,b as l,F as u}from"../chunks/TpWHEDIq.js";import{s as d}from"../chunks/Cpn8846K.js";e[u]="src/routes/(app)/kids/teens/+layout.svelte";function e(s,a){p(new.target),n(a,!1,e);var r={...m()},t=c(),o=f(t);return d(o,a,"default",{}),i(s,t),l(r)}export{e as component};

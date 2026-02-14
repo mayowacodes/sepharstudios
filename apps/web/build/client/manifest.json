@@ -1,0 +1,54 @@
+{
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "scope": "/",
+  "start_url": "/",
+  "name": "sepharstudios",
+  "short_name": "sepharstudios",
+  "description": "sepharstudios - A SvelteKit application",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.webp",
+      "sizes": "1920x1080",
+      "type": "image/webp",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow"
+    }
+  ]
+}

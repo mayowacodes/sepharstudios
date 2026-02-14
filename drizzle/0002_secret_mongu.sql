@@ -1,0 +1,51 @@
+CREATE TABLE "episodes" (
+	"id" text PRIMARY KEY NOT NULL,
+	"show_id" text NOT NULL,
+	"season_number" integer NOT NULL,
+	"episode_number" integer NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" text,
+	"thumbnail" text,
+	"video_url" text,
+	"duration" varchar(50),
+	"air_date" varchar(20),
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "media_library" (
+	"id" text PRIMARY KEY NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" text,
+	"thumbnail" text,
+	"backdrop_url" text,
+	"poster_url" text,
+	"trailer_url" text,
+	"video_url" text,
+	"link" text NOT NULL,
+	"slug" varchar(255) NOT NULL,
+	"media_type" varchar(50) NOT NULL,
+	"category" varchar(50),
+	"genres" jsonb,
+	"topics" jsonb,
+	"keywords" jsonb,
+	"rating" varchar(10),
+	"age_rating" varchar(10),
+	"duration" varchar(50),
+	"quality" varchar(20),
+	"year" varchar(4),
+	"release_date" varchar(20),
+	"language" varchar(50) DEFAULT 'English',
+	"bible_reference" varchar(100),
+	"featured" boolean DEFAULT false,
+	"is_new" boolean DEFAULT false,
+	"is_active" boolean DEFAULT true,
+	"view_count" integer DEFAULT 0,
+	"vote_average" varchar(10),
+	"vote_count" varchar(20),
+	"popularity" varchar(20),
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "media_library_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+ALTER TABLE "episodes" ADD CONSTRAINT "episodes_show_id_media_library_id_fk" FOREIGN KEY ("show_id") REFERENCES "public"."media_library"("id") ON DELETE cascade ON UPDATE no action;

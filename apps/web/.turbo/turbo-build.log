@@ -1,0 +1,60 @@
+$ vite build
+▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+
+    ../../tsconfig.json:2:12:
+      2 │   "extends": "./.svelte-kit/tsconfig.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[36mvite v7.3.1 [32mbuilding ssr environment for production...[36m[39m
+transforming...
+14:59:19 [vite-plugin-svelte] src/routes/(protected)/users/components/ListCard.svelte:28:14 This reference only captures the initial value of `i`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+26:   const me = page.data.user as User;
+27:   const isAdmin = $derived(adminRoles.includes(me.role as Role));
+28:   const num = i + 1;
+                   ^
+29:   const roleVariant = $derived(getRoleBadgeVariant(user?.role as string));
+30: 
+14:59:21 [vite-plugin-svelte] src/lib/components/team-switcher.svelte:8:26 This reference only captures the initial value of `teams`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+ 6:   let { teams }: { teams: { name: string; logo: any; plan: string }[] } = $props();
+ 7:   const sidebar = useSidebar();
+ 8:   let activeTeam = $state(teams[0]);
+                                   ^
+ 9: </script>
+10: 
+14:59:33 [vite-plugin-svelte] src/lib/authentication/ui/user-profile-image-cropper.svelte:19:0 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+17: </script>
+18: 
+19: <div class="relative group cursor-pointer inline-block" onclick={() => input.click()}>
+          ^
+20:   <Avatar class="h-24 w-24 border-2 border-border transition-opacity group-hover:opacity-80">
+21:     <AvatarImage {src} />
+14:59:33 [vite-plugin-svelte] src/lib/authentication/ui/user-profile-image-cropper.svelte:19:0 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+17: </script>
+18: 
+19: <div class="relative group cursor-pointer inline-block" onclick={() => input.click()}>
+          ^
+20:   <Avatar class="h-24 w-24 border-2 border-border transition-opacity group-hover:opacity-80">
+21:     <AvatarImage {src} />
+[33m"optionsMiddleware" is imported from external module "@better-auth/core/api" but never used in "../../node_modules/better-auth/dist/api/index.mjs" and "../../node_modules/better-auth/dist/plugins/index.mjs".[39m
+[32m✓[39m 5264 modules transformed.
+[33m"getTelemetryAuthConfig" is imported from external module "@better-auth/telemetry" but never used in "../../node_modules/better-auth/dist/index.mjs".[39m
+[33mGenerated an empty chunk: "entries/endpoints/(app)/plans/_server.ts".[39m
+rendering chunks...
+
+node:internal/event_target:1122
+  process.nextTick(() => { throw err; });
+                           ^
+TypeError: z.coerce.boolean(...).meta is not a function
+    at file:///C:/Users/Mayowa%20Animasaun/Documents/Projects/sepharstudios/apps/web/.svelte-kit/output/server/chunks/auth.js:2847:42
+    at ModuleJob.run (node:internal/modules/esm/module_job:413:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:660:26)
+    at async Promise.all (index 9)
+    at async analyse (file:///C:/Users/Mayowa%20Animasaun/Documents/Projects/sepharstudios/node_modules/@sveltejs/kit/src/core/postbuild/analyse.js:91:16)
+    at async MessagePort.<anonymous> (file:///C:/Users/Mayowa%20Animasaun/Documents/Projects/sepharstudios/node_modules/@sveltejs/kit/src/utils/fork.js:23:16)
+
+Node.js v24.13.0
+error: script "build" exited with code 1

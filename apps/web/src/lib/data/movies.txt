@@ -1,0 +1,323 @@
+// src/lib/data/movies.ts
+import type { MediaItem } from '../types/media';
+
+export const faithMovies: MediaItem[] = [
+  {
+    id: "m1",
+    title: "The Passion of the Christ",
+    description: "A graphic portrayal of the last 12 hours of Jesus Christ's life, from the Garden of Gethsemane to His crucifixion.",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BNDY1N2IyYWMtZTY4OS00OGM1LTkxNmUtOTQzYmM5MmI2YmVmXkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_FMjpg_UX1000_.jpg",
+    trailerUrl: "https://example.com/passion-trailer.mp4",
+    link: "/watch/passion-of-the-christ",
+    rating: "7.2",
+    duration: "2h 7m",
+    quality: "HD",
+    year: "2004",
+    genres: ["Biblical", "Drama"],
+    bibleReference: "Matthew 26-27",
+    ageRating: "18+"
+  },
+  {
+    id: "m1",
+    title: "Heaven Is for Real",
+    description: "The true story of the 4-year old son of a small-town pastor who, during emergency surgery, slips from consciousness and enters heaven. When he awakes, he recounts his experiences on the other side. Themes: basedonnovelorbook, heaven, faith, loss, basedontruestory.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/bYJhBhe6CPIHTl62kPfKfqicTaX.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/11eRKCIIkRnGseeIlWlAqkbiHKl.jpg",
+    link: "/watch/heaven-is-for-real",
+    rating: "6.7",
+    duration: "2h 7m",
+    quality: "HD",
+    year: "2014",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "Hebrews 11:1",
+    ageRating: "7+",
+    slug: "heaven-is-for-real",
+    language: "English"
+  },
+  {
+    id: "m2",
+    title: "Trust",
+    description: "Inspired by the book of Job, Trust tells the story of Daniel Rainwater, an everyday guy whose life is falling apart. As his marriage to Sarah begins to crumble when he loses his job and thinking that life couldn't get any worse, it does. Bitter towards God and going nowhere fast, Daniel must learn to trust God again before he loses it all for good. For Sarah, as tensions in the marriage rise, she falls out of love. Only to be confronted with whether she can still believe in her marriage and in hope once again. Meanwhile, their children Lea and Jonah are going through their personal journeys, with Lea having to learn to trust her parents and Jonah having to overcome his individual fears. Trust asks the age old question of 'How do we trust God, when life is falling apart? And carries a thread of relevance to everyone that no matter what you're going through, 'Never give up on hope'. Themes: christianfilm.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/dPxFuxa7qYkwhhKKQMWX15ogRPo.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/16YVuJdECeL2MphUPrdTi86bbw2.jpg",
+    link: "/watch/trust",
+    rating: "5.8",
+    duration: "1h 39m",
+    quality: "HD",
+    year: "2018",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "trust",
+    language: "English"
+  },
+
+  {
+    id: "m3",
+    title: "Left Behind II: Tribulation Force",
+    description: "After millions vanish, a group of people must band together to form the Tribulation Force and prepare themselves for the worst seven years the planet has ever seen. Themes: christianity, christianfilm.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/u4R0xYkKIOInESYvQcnODukSz5t.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/18sX5Ko1OzaW4phFDD5s2FyQ3Es.jpg",
+    link: "/watch/left-behind-ii-tribulation-force",
+    rating: "4.5",
+    duration: "1h 26m",
+    quality: "HD",
+    year: "2002",
+    genres: [
+      "Thriller",
+      "Drama",
+      "Fantasy"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "left-behind-ii-tribulation-force",
+    language: "English"
+  },
+  {
+    id: "m4",
+    title: "Running Water",
+    description: "A lonely career machinist falls for a troubled young artist and they are drawn together while being guided through a mysterious dimension to reconcile with their pasts. Themes: regret, faith, afterlife, love, romance.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/wlsYWIwVSdtwLcBJbmaKPABQOHo.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/194GRPUkBIb225upJeg3Oh9YqBi.jpg",
+    link: "/watch/running-water",
+    rating: "0.0",
+    duration: "2h 4m",
+    quality: "HD",
+    year: "2019",
+    genres: [
+      "Fantasy",
+      "Drama",
+      "Romance",
+      "Adventure"
+    ],
+    bibleReference: "Hebrews 11:1",
+    ageRating: "7+",
+    slug: "running-water",
+    language: "English"
+  },
+  {
+    id: "m5",
+    title: "Knock at the Cabin",
+    description: "While vacationing at a remote cabin, a young girl and her two fathers are taken hostage by four armed strangers who demand that the family make an unthinkable choice to avert the apocalypse. With limited access to the outside world, the family must decide what they believe before all is lost. Themes: basedonnovelorbook, sacrifice, faith, endoftheworld, apocalypse.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/dm06L9pxDOL9jNSK4Cb6y139rrG.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1dubuCInk9DM9JBjiItBGkkkZx0.jpg",
+    link: "/watch/knock-at-the-cabin",
+    rating: "6.3",
+    duration: "1h 57m",
+    quality: "HD",
+    year: "2023",
+    genres: [
+      "Thriller",
+      "Horror",
+      "Mystery"
+    ],
+    bibleReference: "Hebrews 11:1",
+    ageRating: "7+",
+    slug: "knock-at-the-cabin",
+    language: "English"
+  },
+  {
+    id: "m6",
+    title: "Judas: Close to Jesus",
+    description: "Pilate and the Roman legate Veturius look on worriedly as Jesus is celebrated as the new messiah in Jerusalem, fearing an uprising. Veturius decides to have Jesus arrested as soon as a suitable opportunity presents itself. Judas is delighted by the reception Jesus is receiving, and quickly wants to win over the influential merchants to the cause which would make him the king and the liberator of the Jews. Themes: judas, jesuschrist.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/mkfI5dmtCdBOZF7OmQAEzXtHM8u.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1Got7eqlXn5IWKHWOeYp1MhVZkq.jpg",
+    link: "/watch/judas-close-to-jesus",
+    rating: "7.4",
+    duration: "2h 6m",
+    quality: "HD",
+    year: "2001",
+    genres: [
+      "Tv movie",
+      "Drama",
+      "Fantasy"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "judas-close-to-jesus",
+    language: "Italian"
+  },
+  {
+    id: "m7",
+    title: "Hell and Mr Fudge",
+    description: "Hell and Mr. Fudge is an 2012 American drama film directed by Jeff Wood and written by Brian Phillip Stoddard. Based on a true story, the film stars Mackenzie Astin as Edward Fudge, an Alabama preacher who has been hired to determine the existence of hell. Themes: parentchildrelationship, 1970s, alabama, hell, church.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/8y6dJYNW2Xq8NtIK35iCuJcteDm.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1HmEZL2gzIF14I99L8Dvh1b5KF5.jpg",
+    link: "/watch/hell-and-mr-fudge",
+    rating: "0.0",
+    duration: "1h 44m",
+    quality: "HD",
+    year: "2012",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "hell-and-mr-fudge",
+    language: "English"
+  },
+  {
+    id: "m8",
+    title: "God With Us",
+    description: "Presented with newly enhanced animation, the life of Jesus Christ comes to live through the dramatic account of the last surviving apostle, John. Themes: christianity, historicaldrama, christianfaith.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/gmNRl19lWS9WyE9ZioibPx8GQ0A.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1j31k3DZvDp8pBU3qJbjIGTP0qz.jpg",
+    link: "/watch/god-with-us",
+    rating: "0.0",
+    duration: "1h 38m",
+    quality: "HD",
+    year: "2016",
+    genres: [
+      "Animation",
+      "History",
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "god-with-us",
+    language: "Spanish"
+  },
+  {
+    id: "m9",
+    title: "Sist\u00c3\u00a1",
+    description: "A struggling single mother faces her worst nightmare when the father of her children returns accidentally into their lives and completely steals their attention all for himself whilst trying to make amends for past sins. Themes: betrayal, restitution, emotional.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/dnyTauxMwjUCgSP7eWerKe3Q4wX.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1JiCRqpeYIxgSZf4zOArCdZOohz.jpg",
+    link: "/watch/sista",
+    rating: "4.5",
+    duration: "2h 4m",
+    quality: "HD",
+    year: "2022",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "16+",
+    slug: "sista",
+    language: "English"
+  },
+  {
+    id: "m10",
+    title: "Hotel St. Pauli",
+    description: "Jor and Gerda is a loving couple that lives together in Copenhagen. Jor is trying to make a breakthrough as a writer, without any luck so far. His struggles have caused Gerda to provide for them by selling sexual favors on the street. Themes: artist, st.pauli, prostitution, drugs.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/6rHqJoai7PeUCMy87BvcGzQaKtL.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1o31e4uWvH3T5CsPcfZuSfnILU6.jpg",
+    link: "/watch/hotel-st-pauli",
+    rating: "2.2",
+    duration: "1h 36m",
+    quality: "HD",
+    year: "1988",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "hotel-st-pauli",
+    language: "Unknown"
+  },
+  {
+    id: "m11",
+    title: "Apostle Peter and the Last Supper",
+    description: "The film portrays Saint Peter reflecting on his time with Jesus and his fellow Apostles during his final imprisonment in Rome. In particular, Peter attempts to convert one of his jailers, Martinian, by relating the life, teachings, and sacrifice of Jesus. Themes: christianity, prison, apostle, lastsupper, conversion.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/2axHjxvFO67WNqBPkO3GE1GWYZt.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1Q1UpxGl4UgjYntlkQG2Lq20mf.jpg",
+    link: "/watch/apostle-peter-and-the-last-supper",
+    rating: "5.5",
+    duration: "1h 39m",
+    quality: "HD",
+    year: "2013",
+    genres: [
+      "Drama",
+      "History"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "apostle-peter-and-the-last-supper",
+    language: "English"
+  },
+  {
+    id: "m12",
+    title: "The Pilgrim",
+    description: "The Tramp is an escaped convict who is mistaken as a pastor in a small town church. Themes: texas, minister, pickpocket, churchservice, escapedconvict.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/9wF0J5jjPkRu8jojHqq7Xaa9E2E.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1QctcHTtlFq5gO4xmny7zpQPynO.jpg",
+    link: "/watch/the-pilgrim",
+    rating: "6.8",
+    duration: "1h 27m",
+    quality: "HD",
+    year: "1923",
+    genres: [
+      "Comedy"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "the-pilgrim",
+    language: "English"
+  },
+  {
+    id: "m13",
+    title: "The Light of Freedom",
+    description: "It is the year 1861 and President Lincoln has called for 75,000 men to join the Union Army. As the Civil War begins, another battle has been raging for decades. It is the fight for freedom waged by the Underground Railroad. Themes: christianfilm.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/31mMO6ooA5pmmFW6ihYBkratj4j.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1siUXjmAgsOfUV7eOwU0Hda8rz4.jpg",
+    link: "/watch/the-light-of-freedom",
+    rating: "0.0",
+    duration: "1h 30m",
+    quality: "HD",
+    year: "2013",
+    genres: [
+      "Drama",
+      "Family",
+      "History"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "the-light-of-freedom",
+    language: "English"
+  },
+  {
+    id: "m14",
+    title: "The Starling Girl",
+    description: "17-year-old Jem Starling struggles with her place within her Christian fundamentalist community. But everything changes when her magnetic youth pastor Owen returns to their church. Themes: christianity, dance, sin, comingofage, religion.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/ysgnrkXwfFCxaBwviG2yNvzpfw5.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1TecFmK3v6VJzsaGQgvrBiaypxW.jpg",
+    link: "/watch/the-starling-girl",
+    rating: "7.2",
+    duration: "1h 49m",
+    quality: "HD",
+    year: "2023",
+    genres: [
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "the-starling-girl",
+    language: "English"
+  },
+  {
+    id: "m15",
+    title: "A Holy Place",
+    description: "Strange love story between Toma, a reluctant theology student and Katarina, the beautiful daughter of a powerful feudal lord. After Katarina's mysterious death, Toma is, according to her wishes, forced to read the prayers over her body for three nights in a row. Themes: coffin, prayer, russianorthodoxchurch, pentagram, corpseincoffin.",
+    thumbnail: "https://image.tmdb.org/t/p/w500/odBzLki7cSNldRRhEY8K2fnCyp5.jpg",
+    backdrop_url: "https://image.tmdb.org/t/p/w500/1U1nFKWz59eZW7WbIQwXsrJd15c.jpg",
+    link: "/watch/a-holy-place",
+    rating: "5.2",
+    duration: "1h 32m",
+    quality: "HD",
+    year: "1990",
+    genres: [
+      "Horror",
+      "Drama"
+    ],
+    bibleReference: "James 5:16",
+    ageRating: "12+",
+    slug: "a-holy-place",
+    language: "Unknown"
+  },
+
+  // Add more faith-based movies...
+];

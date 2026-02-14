@@ -1,0 +1,35 @@
+// src/lib/data/shows.ts
+import type { MediaItem } from '../types/media';
+
+export const faithShows: MediaItem[] = [
+  {
+    id: "s1",
+    title: "The Chosen",
+    description: "The life of Christ through the eyes of those who encountered Him. The first multi-season series about the life of Jesus.",
+    thumbnail: "https://www.thechosen.tv/wp-content/uploads/2020/06/TC_S1_Poster.jpg",
+    trailerUrl: "https://example.com/chosen-trailer.mp4",
+    link: "/watch/the-chosen",
+    rating: "9.5",
+    duration: "50m/episode",
+    quality: "4K",
+    year: "2017-Present",
+    genres: ["Biblical", "Drama"],
+    bibleReference: "Gospels",
+    ageRating: "All"
+  },
+  {
+    id: "s2",
+    title: "VeggieTales",
+    description: "Animated vegetables tell stories with moral lessons, often based on Bible stories or Christian principles.",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BMTQ1OTI0OTI3NF5BMl5BanBnXkFtZTcwOTk4OTUzNA@@._V1_FMjpg_UX1000_.jpg",
+    link: "/watch/veggietales",
+    rating: "7.9",
+    duration: "30m/episode",
+    quality: "HD",
+    year: "1993-2017",
+    genres: ["Animation", "Children", "Educational"],
+    bibleReference: "Various",
+    ageRating: "All"
+  },
+  // Add more faith-based shows...
+];
