@@ -36,6 +36,13 @@
       "when": 1771100936888,
       "tag": "0004_massive_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771103495055,
+      "tag": "0005_elite_sentry",
+      "breakpoints": true
     }
   ]
 }

@@ -1,44 +1,40 @@
-import { auth, type User } from "$lib/auth";
+import { auth, type User, type Session } from "$lib/auth";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { building } from "$app/environment";
+import { db } from "$lib/db/drizzle";
+import { session as sessionTable } from "$lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function handle({ event, resolve }) {
   const host = event.request.headers.get('host') || '';
+  const ua = event.request.headers.get('user-agent') || '';
   
-  // 1. Detect Subdomain
+  // 1. Device Detection
+  const isTV = /TV|Large Screen|SmartTV|AppleTV|AndroidTV|STB/i.test(ua);
+  const isTablet = /Tablet|iPad|PlayBook|Silk/i.test(ua);
+  const isMobile = /Mobi/i.test(ua) && !isTablet;
+  const isDesktop = !isTV && !isTablet && !isMobile;
+
+  const deviceType = isTV ? 'tv' : isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop';
+  event.locals.deviceType = deviceType;
+
+  // 2. Subdomain Detection
   const isCreatorsSubdomain = host.startsWith('creators.');
   const isAdminSubdomain = host.startsWith('admin.');
   const isKidsSubdomain = host.startsWith('kids.');
   
-  // Set subdomain in locals for components to use
   event.locals.subdomain = isCreatorsSubdomain ? 'creator' : 
                          isAdminSubdomain ? 'admin' : 
                          isKidsSubdomain ? 'kids' : 'app';
 
-  // 2. Path Guarding (Security)
-  // Prevent cross-access: e.g., sepharstudios.com/admin or creators.sepharstudios.com/admin
   const path = event.url.pathname;
 
-  // Block /admin if not on admin subdomain or localhost
+  // 3. Path & Subdomain Consistency (Prevent cross-access)
   if (path.startsWith('/admin') && !isAdminSubdomain && !host.includes('localhost')) {
     return new Response('Not Found', { status: 404 });
   }
-
-  // Block /creator if not on creators subdomain or localhost
   if (path.startsWith('/creator') && !isCreatorsSubdomain && !host.includes('localhost')) {
     return new Response('Not Found', { status: 404 });
-  }
-
-  // 3. Root Redirection
-  // If user visits creators.sepharstudios.com/ (root), redirect to /creator
-  if (isCreatorsSubdomain && path === '/') {
-    return Response.redirect(`${event.url.origin}/creator`, 307);
-  }
-  if (isAdminSubdomain && path === '/') {
-    return Response.redirect(`${event.url.origin}/admin`, 307);
-  }
-  if (isKidsSubdomain && path === '/') {
-    return Response.redirect(`${event.url.origin}/kids`, 307);
   }
 
   // 4. Session Handling
@@ -47,11 +43,60 @@ export async function handle({ event, resolve }) {
   });
 
   if (session) {
-    event.locals.session = session.session;
+    event.locals.session = session.session as Session;
     event.locals.user = session.user as User;
+
+    // 4.1 Persist deviceType to DB if it's new/different
+    // We only do this if it's not already set correctly in the DB
+    if (event.locals.session.deviceType !== deviceType) {
+      // Async update - don't block the request
+      db.update(sessionTable)
+        .set({ deviceType })
+        .where(eq(sessionTable.id, event.locals.session.id))
+        .execute()
+        .catch(err => console.error('Failed to update session deviceType:', err));
+    }
   } else {
     event.locals.session = undefined;
     event.locals.user = undefined;
+  }
+
+  const user = event.locals.user;
+
+  // 5. RBAC & Platform Enforcement
+  // ADMIN PORTAL
+  if (isAdminSubdomain) {
+    // Role Check
+    if (!user || user.role !== 'admin') {
+      return Response.redirect(`${event.url.origin}/auth/login`, 307);
+    }
+    // Platform Check: No Admin on TV or Mobile
+    if (deviceType === 'tv' || deviceType === 'mobile') {
+      return new Response('Access Denied: Admin portal is not available on this device.', { status: 403 });
+    }
+  }
+
+  // CREATOR PORTAL
+  if (isCreatorsSubdomain) {
+    // Role Check: Creators or Admins only
+    if (!user || (user.role !== 'creator' && user.role !== 'admin')) {
+      return Response.redirect(`${event.url.origin}/auth/login`, 307);
+    }
+    // Platform Check: No Creator Tools on TV or Mobile
+    if (deviceType === 'tv' || deviceType === 'mobile') {
+      return new Response('Access Denied: Creator tools are not available on this device.', { status: 403 });
+    }
+  }
+
+  // 6. Root Redirection
+  if (isCreatorsSubdomain && path === '/') {
+    return Response.redirect(`${event.url.origin}/creator`, 307);
+  }
+  if (isAdminSubdomain && path === '/') {
+    return Response.redirect(`${event.url.origin}/admin`, 307);
+  }
+  if (isKidsSubdomain && path === '/') {
+    return Response.redirect(`${event.url.origin}/kids`, 307);
   }
 
   return svelteKitHandler({ event, resolve, auth, building });

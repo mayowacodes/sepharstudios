@@ -5,6 +5,7 @@ import { FileText, LayoutDashboard, User, Users, Home, Book, Music, Heart, Globe
 export enum Role {
   ADMIN = 'admin',
   EDITOR = 'editor',
+  CREATOR = 'creator',
   USER = 'user',
 }
 

@@ -4,7 +4,7 @@
   import { page } from '$app/state';
   
   // Don't show navigation on profile or main kids page
-  $: showNav = page.route.id !== '/(app)/kids/profile' && page.route.id !== '/(app)/kids';
+  const showNav = $derived(page.route.id !== '/(kids)/kids/profile' && page.route.id !== '/(kids)/kids');
 </script>
 
 {#if showNav}

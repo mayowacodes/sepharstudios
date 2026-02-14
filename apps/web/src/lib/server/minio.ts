@@ -5,18 +5,7 @@ import { db } from '$lib/db/drizzle';
 import { files as filesTable } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-// Specialized Buckets Mapping
-export const BUCKETS = {
-	COMPLIANCE: 'compliance', // NFT/Royalty/Audit
-	MASTERS: 'masters',       // Versioning: ON, Locking: ON
-	STREAMS: 'streams',       // Versioning: ON
-	SEGMENTS: 'segments',     // Locking: ON
-	METADATA: 'metadata',     // Versioning: ON, Locking: ON
-	UPLOADS: 'uploads',       // No special config
-	THUMBNAILS: 'thumbnails', // No special config
-	DRM: 'drm',               // No special config
-	VIDEOS: 'videos'          // Versioning: ON, Locking: ON
-} as const;
+import { BUCKETS } from '$lib/constants/minio';
 
 // Configuration from environment
 const ENDPOINT = env.MINIO_ENDPOINT || 's3.sepharstudios.com'; // Use internal service name in production, or external in dev

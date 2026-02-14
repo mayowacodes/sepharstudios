@@ -73,7 +73,7 @@
     }
   }
 
-  let startX: number | null = null;
+  let startX = $state<number | null>(null);
 
   function handleTouchStart(e: TouchEvent) {
     startX = e.touches[0].clientX;
@@ -94,61 +94,65 @@
 
   <SheetContent
     side="left"
-    class="w-[90vw] max-w-2xl h-full p-6 space-y-10 overflow-y-auto bg-background border-r"
-    on:touchstart={handleTouchStart}
-    on:touchend={handleTouchEnd}
+    class="w-[90vw] max-w-2xl h-full p-0 space-y-10 overflow-hidden bg-background border-r"
   >
-    {#if user}
-      <Hero {user} />
-    {:else}
-      <p class="text-sm text-muted-foreground italic">Loading user info...</p>
-    {/if}
+    <div 
+      class="h-full p-6 space-y-10 overflow-y-auto"
+      ontouchstart={handleTouchStart}
+      ontouchend={handleTouchEnd}
+    >
+      {#if user}
+        <Hero {user} />
+      {:else}
+        <p class="text-sm text-muted-foreground italic">Loading user info...</p>
+      {/if}
 
-    <div class="space-y-1">
-      <h2 class="text-2xl font-semibold text-orange-500">Welcome to My Studios</h2>
-      <p class="text-muted-foreground text-sm">Manage everything in one place</p>
+      <div class="space-y-1">
+        <h2 class="text-2xl font-semibold text-orange-500">Welcome to My Studios</h2>
+        <p class="text-muted-foreground text-sm">Manage everything in one place</p>
+      </div>
+
+      <SectionBlock title="Switch Profile" {isLoading}>
+        {#if ProfileSwitcher}
+          <ProfileSwitcher />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="Recommended for You" {isLoading}>
+        {#if Recommendations}
+          <Recommendations />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="My List" {isLoading}>
+        {#if MyList}
+          <MyList />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="Recently Watched" {isLoading}>
+        {#if RecentlyWatched}
+          <RecentlyWatched />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="Downloads" {isLoading}>
+        {#if Downloads}
+          <Downloads />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="Settings" {isLoading}>
+        {#if Settings}
+          <Settings />
+        {/if}
+      </SectionBlock>
+
+      <SectionBlock title="Account" {isLoading}>
+        {#if AccountSettings}
+          <AccountSettings />
+        {/if}
+      </SectionBlock>
     </div>
-
-    <SectionBlock title="Switch Profile" {isLoading}>
-      {#if ProfileSwitcher}
-        <ProfileSwitcher />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="Recommended for You" {isLoading}>
-      {#if Recommendations}
-        <Recommendations />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="My List" {isLoading}>
-      {#if MyList}
-        <MyList />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="Recently Watched" {isLoading}>
-      {#if RecentlyWatched}
-        <RecentlyWatched />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="Downloads" {isLoading}>
-      {#if Downloads}
-        <Downloads />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="Settings" {isLoading}>
-      {#if Settings}
-        <Settings />
-      {/if}
-    </SectionBlock>
-
-    <SectionBlock title="Account" {isLoading}>
-      {#if AccountSettings}
-        <AccountSettings />
-      {/if}
-    </SectionBlock>
   </SheetContent>
 </Sheet>

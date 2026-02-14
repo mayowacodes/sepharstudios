@@ -35,6 +35,15 @@ export const roles = {
     settings: ['read'],
     system: ['audit']
   }),
+  [Role.CREATOR]: ac.newRole({
+    files: ['create', 'read', 'upload', 'download'],
+    users: ['read'],
+    roles: [],
+    analytics: ['view-dashboard'],
+    reports: ['read'],
+    settings: ['read'],
+    system: []
+  }),
   [Role.USER]: ac.newRole({
     files: ['read'],
     users: ['read'],
@@ -46,9 +55,15 @@ export const roles = {
   })
 };
 
-export const roleHierarchy = { [Role.ADMIN]: 3, [Role.EDITOR]: 2, [Role.USER]: 1 } as const;
+export const roleHierarchy = { [Role.ADMIN]: 4, [Role.EDITOR]: 3, [Role.CREATOR]: 2, [Role.USER]: 1 } as const;
 export const hasHigherRole = (userRole: Role, targetRole: Role): boolean => roleHierarchy[userRole] > roleHierarchy[targetRole];
 export const isAdmin = (role: Role): boolean => role === Role.ADMIN;
 export const isEditor = (role: Role): boolean => role === Role.EDITOR;
+export const isCreator = (role: Role): boolean => role === Role.CREATOR;
 export const isStaff = (role: Role): boolean => [Role.ADMIN, Role.EDITOR].includes(role);
-export const getRoleDisplayName = (role: Role): string => ({ [Role.ADMIN]: 'Administrator', [Role.EDITOR]: 'Editor', [Role.USER]: 'User' })[role] || 'Unknown';
+export const getRoleDisplayName = (role: Role): string => ({ 
+  [Role.ADMIN]: 'Administrator', 
+  [Role.EDITOR]: 'Editor', 
+  [Role.CREATOR]: 'Creator',
+  [Role.USER]: 'User' 
+})[role] || 'Unknown';

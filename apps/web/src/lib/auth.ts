@@ -20,6 +20,9 @@ const normalizeName = (name: string) => {
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL || 'http://localhost:3000',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 30, // 30 days
+  },
   advanced: {
     cookies: {
       sessionToken: {
@@ -93,7 +96,6 @@ export const auth = betterAuth({
       }
     }),
   },
-  session: { expiresIn: 60 * 60 * 24 * 30 }
 });
 
 export type ErrorCodes = keyof typeof auth.$ERROR_CODES | 'UNKNOWN';
@@ -102,4 +104,8 @@ export type User = typeof auth.$Infer.Session.user & {
   banned?: boolean | null;
   banReason?: string | null;
   banExpires?: Date | null;
+};
+
+export type Session = typeof auth.$Infer.Session.session & {
+  deviceType?: string | null;
 };

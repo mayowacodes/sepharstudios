@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { uploadAndSaveFile, deleteFileById, listObjects, getDirectObjectUrl } from '$lib/server/minio';
+import { uploadAndSaveFile, deleteFileById, listObjects, getDirectObjectUrl, uploadFile } from '$lib/server/minio';
 import { env } from '$env/dynamic/private';
 
 const BUCKET_NAME = env.MINIO_BUCKET || 'uploads';
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async () => {
 export const POST: RequestHandler = async ({ request }) => {
 	const formData = await request.formData();
 	const file = formData.get('file') as File | null;
-	const bucket = formData.get('bucket') as string || BUCKET_NAME;
+	const bucket = (formData.get('bucket') as string) || BUCKET_NAME;
 
 	if (!file) return json({ error: 'No file uploaded' }, { status: 400 });
 
@@ -36,14 +36,22 @@ export const PUT: RequestHandler = async ({ request }) => {
 	const formData = await request.formData();
 	const file = formData.get('file') as File | null;
 	const objectId = formData.get('id') as string | null;
+	const bucket = (formData.get('bucket') as string) || BUCKET_NAME;
+
 	if (!file || !objectId) return json({ error: 'File and ID required' }, { status: 400 });
-	try { const result = await updateFile(BUCKET_NAME, objectId, file); return json({ success: true, ...result }); }
-	catch (error) { return json({ error: 'Update failed' }, { status: 500 }); }
+
+	try { 
+		const result = await uploadFile(bucket, objectId, file); 
+		return json({ success: true, ...result }); 
+	} catch (error) { return json({ error: 'Update failed' }, { status: 500 }); }
 };
 
 export const DELETE: RequestHandler = async ({ request }) => {
-	const { id } = await request.json();
+	const { id, bucket } = await request.json();
+	const targetBucket = bucket || BUCKET_NAME;
 	if (!id) return json({ error: 'ID required' }, { status: 400 });
-	try { await deleteFileById(BUCKET_NAME, id); return json({ success: true, message: 'File deleted successfully' }); }
-	catch (error) { return json({ error: 'Delete failed' }, { status: 500 }); }
+	try { 
+		await deleteFileById(targetBucket, id); 
+		return json({ success: true, message: 'File deleted successfully' }); 
+	} catch (error) { return json({ error: 'Delete failed' }, { status: 500 }); }
 };
