@@ -1,26 +1,27 @@
 <script lang="ts">
   import { page } from '$app/state';
   import TVShowCard from '$lib/components/TVShowCard.svelte';
-  import { writable, derived } from 'svelte/store';
-  import { faithTVShows } from '$lib/data/shows';
+  import { writable } from 'svelte/store';
 
-  // Initialize with our faith-based TV shows
-  let allTVShows = faithTVShows;
+  const { data } = $props();
+
+  // Use shows from server data
+  let allTVShows = $derived(data.shows || []);
 
   // Create writable store for category selection
   let selectedCategory = writable<string | null>(null);
 
   // Derived store for filtered TV shows
-  let filteredTVShows = derived(selectedCategory, ($selectedCategory) => {
-      return allTVShows.filter(show => 
+  let filteredTVShows = $derived(
+      allTVShows.filter(show => 
           !$selectedCategory || show.genres?.includes($selectedCategory)
-      );
-  });
+      )
+  );
 
   // Categories derived from all available TV shows
-  let categories = derived(writable(faithTVShows), ($shows) => {
+  let categories = $derived.by(() => {
       const allCategories = new Set<string>();
-      $shows.forEach(show => show.genres?.forEach(g => allCategories.add(g)));
+      allTVShows.forEach(show => show.genres?.forEach(g => allCategories.add(g)));
       return Array.from(allCategories).sort();
   });
 

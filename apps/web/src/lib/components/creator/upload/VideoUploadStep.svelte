@@ -1,8 +1,8 @@
 <!-- Video Upload Step -->
 <script lang="ts">
-  import type { VideoUploadProgress } from '$lib/types/creator';
+  import type { VideoUploadProgress, UploadWizardState, UploadStep } from '$lib/types/creator';
   
-  export let data: any;
+  export let data: UploadWizardState['stepData'][UploadStep.VIDEO_UPLOAD];
   export let onUpdate: (data: any) => void;
   
   let videoFile: File | null = data.videoFile || null;
@@ -52,8 +52,68 @@
     }
   }
   
+  async function performActualUpload(type: 'video' | 'trailer', file: File) {
+    const currentProgress = type === 'video' ? videoProgress : trailerProgress;
+    if (!currentProgress) return;
+    
+    // Use a local variable that TS can narrow effectively
+    const progress: VideoUploadProgress = currentProgress;
+
+    try {
+      // 1. Get presigned URL
+      const res = await fetch('/api/encoder/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type })
+      });
+      
+      const { presignedUrl, objectName, publicUrl } = await res.json();
+      
+      // 2. Upload directly to MinIO
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', presignedUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          progress.progressPercentage = (event.loaded / event.total) * 100;
+          progress.uploadedBytes = event.loaded;
+          if (type === 'video') videoProgress = { ...progress };
+          else trailerProgress = { ...progress };
+        }
+      };
+      
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          progress.isUploading = false;
+          progress.isCompleted = true;
+          progress.uploadUrl = publicUrl;
+          progress.objectName = objectName;
+          if (type === 'video') videoProgress = { ...progress };
+          else trailerProgress = { ...progress };
+        } else {
+          handleError('Upload failed with status ' + xhr.status);
+        }
+      };
+      
+      xhr.onerror = () => handleError('Network error during upload');
+      xhr.send(file);
+      
+    } catch (error: any) {
+      handleError(error.message || 'Failed to start upload');
+    }
+
+    function handleError(msg: string) {
+      progress.hasError = true;
+      progress.errorMessage = msg;
+      progress.isUploading = false;
+      if (type === 'video') videoProgress = { ...progress };
+      else trailerProgress = { ...progress };
+    }
+  }
+
   function startVideoUpload(file: File) {
-    videoProgress = {
+    const initialProgress: VideoUploadProgress = {
       fileName: file.name,
       fileSize: file.size,
       uploadedBytes: 0,
@@ -62,13 +122,13 @@
       isCompleted: false,
       hasError: false
     };
+    videoProgress = initialProgress;
     
-    // Simulate upload progress
-    simulateUpload('video', file);
+    performActualUpload('video', file);
   }
   
   function startTrailerUpload(file: File) {
-    trailerProgress = {
+    const initialProgress: VideoUploadProgress = {
       fileName: file.name,
       fileSize: file.size,
       uploadedBytes: 0,
@@ -77,40 +137,9 @@
       isCompleted: false,
       hasError: false
     };
+    trailerProgress = initialProgress;
     
-    // Simulate upload progress
-    simulateUpload('trailer', file);
-  }
-  
-  function simulateUpload(type: 'video' | 'trailer', file: File) {
-    const progress = type === 'video' ? videoProgress : trailerProgress;
-    if (!progress) return;
-    
-    const interval = setInterval(() => {
-      if (progress.progressPercentage >= 100) {
-        progress.isUploading = false;
-        progress.isCompleted = true;
-        progress.uploadUrl = `https://cdn.sepharstudios.com/uploads/${type}/${Date.now()}-${file.name}`;
-        clearInterval(interval);
-        
-        if (type === 'video') {
-          videoProgress = { ...progress };
-        } else {
-          trailerProgress = { ...progress };
-        }
-        return;
-      }
-      
-      const increment = Math.random() * 15 + 5;
-      progress.progressPercentage = Math.min(100, progress.progressPercentage + increment);
-      progress.uploadedBytes = Math.floor((progress.progressPercentage / 100) * file.size);
-      
-      if (type === 'video') {
-        videoProgress = { ...progress };
-      } else {
-        trailerProgress = { ...progress };
-      }
-    }, 500);
+    performActualUpload('trailer', file);
   }
   
   function formatFileSize(bytes: number) {

@@ -85,7 +85,7 @@
     }
   }
   
-  function startAssetUpload(assetType: keyof ContentAssets, file: File) {
+  async function startAssetUpload(assetType: keyof ContentAssets, file: File) {
     // Add to progress tracking
     const progressItem: AssetUploadProgress = {
       assetType,
@@ -98,27 +98,53 @@
     
     assetProgress = [...assetProgress.filter(p => p.assetType !== assetType), progressItem];
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      const currentProgress = assetProgress.find(p => p.assetType === assetType);
-      if (!currentProgress) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'thumbnails');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/files');
       
-      if (currentProgress.progressPercentage >= 100) {
-        currentProgress.isCompleted = true;
-        currentProgress.url = `https://cdn.sepharstudios.com/assets/${assetType}/${Date.now()}-${file.name}`;
-        
-        // Update uploaded assets
-        uploadedAssets[assetType] = currentProgress.url;
-        uploadedAssets = { ...uploadedAssets };
-        
-        clearInterval(interval);
-        return;
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const current = assetProgress.find(p => p.assetType === assetType);
+          if (current) {
+            current.progressPercentage = (event.loaded / event.total) * 100;
+            assetProgress = [...assetProgress];
+          }
+        }
+      };
+      
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          const current = assetProgress.find(p => p.assetType === assetType);
+          if (current) {
+            current.isCompleted = true;
+            current.url = response.directUrl;
+            uploadedAssets[assetType] = response.directUrl;
+            uploadedAssets = { ...uploadedAssets };
+            assetProgress = [...assetProgress];
+          }
+        } else {
+          handleError('Upload failed');
+        }
+      };
+      
+      xhr.onerror = () => handleError('Network error');
+      xhr.send(formData);
+    } catch (error: any) {
+      handleError(error.message || 'Error starting upload');
+    }
+
+    function handleError(msg: string) {
+      const current = assetProgress.find(p => p.assetType === assetType);
+      if (current) {
+        current.hasError = true;
+        assetProgress = [...assetProgress];
       }
-      
-      const increment = Math.random() * 20 + 10;
-      currentProgress.progressPercentage = Math.min(100, currentProgress.progressPercentage + increment);
-      assetProgress = [...assetProgress];
-    }, 300);
+    }
   }
   
   function removeAsset(assetType: keyof ContentAssets) {

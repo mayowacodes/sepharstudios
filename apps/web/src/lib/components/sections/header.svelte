@@ -27,13 +27,13 @@
   let hasUnreadNotifications = $state(true); // Replace with actual fetch later
   let previousScrollY = 0;
   let hideHeader = $state(false);
-  let kidsMenuOpen = $state(false);
 
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/movies', label: 'Movies' },
     { href: '/shows', label: 'TV Shows' },
-    { href: '/documentaries', label: 'Documentaries' }
+    { href: '/documentaries', label: 'Documentaries' },
+    { href: '/kids', label: 'Kids' }
   ];
 
   const isActive = (path: string) => {
@@ -41,10 +41,6 @@
       return page.url.pathname === '/';
     }
     return page.url.pathname.startsWith(path);
-  };
-
-  const closeKidsMenu = () => {
-    kidsMenuOpen = false;
   };
 
   onMount(() => {
@@ -77,13 +73,18 @@
           {#each navItems as item}
             <a href={item.href} onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">{item.label}</a>
           {/each}
+          <hr />
+          <a href="/kids/kiddies" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4">👶 Kiddies</a>
+          <a href="/kids/teens" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4">👦👧 Teens</a>
+          <a href="/archive" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-sm text-muted-foreground">📚 Archive Videos</a>
+          <a href="/mayowa" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-sm text-muted-foreground">🎬 Mayowa's Films</a>
           {#if isAuthenticated}
             <hr />
-            <a href="/downloads" class="block text-lg font-semibold">Downloads</a>
-            <a href="/my-list" class="block text-lg font-semibold">My List</a>
-            <a href="/recently-watched" class="block text-lg font-semibold">Recently Watched</a>
-            <a href="/settings" class="block text-lg font-semibold">Settings</a>
-            <a href="/account" class="block text-lg font-semibold">Account</a>
+            <a href="/downloads" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Downloads</a>
+            <a href="/my-list" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">My List</a>
+            <a href="/recently-watched" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Recently Watched</a>
+            <a href="/settings" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Settings</a>
+            <a href="/account" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Account</a>
           {/if}
         </SheetContent>
       </Sheet>
@@ -107,20 +108,18 @@
         {/each}
 
         <!-- Accessible Dropdown -->
-        <details class="relative group" bind:open={kidsMenuOpen}>
+        <details class="relative group">
           <summary class="cursor-pointer list-none text-sm font-medium">Kids</summary>
           <div class="absolute left-0 mt-2 w-48 bg-background rounded shadow-lg z-50 border">
             <a 
               href="/kids/kiddies" 
               class="block px-4 py-2 hover:bg-muted transition-colors"
-              onclick={closeKidsMenu}
             >
               👶 Kiddies
             </a>
             <a 
               href="/kids/teens" 
               class="block px-4 py-2 hover:bg-muted transition-colors"
-              onclick={closeKidsMenu}
             >
               👦👧 Teens
             </a>
@@ -128,14 +127,12 @@
             <a 
               href="/archive" 
               class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
-              onclick={closeKidsMenu}
             >
               📚 Archive Videos
             </a>
             <a 
               href="/mayowa" 
               class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
-              onclick={closeKidsMenu}
             >
               🎬 Mayowa's Films
             </a>

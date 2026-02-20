@@ -13,13 +13,22 @@ const PORT = Number(env.MINIO_PORT) || 443;
 const USE_SSL = env.MINIO_USE_SSL === 'true' || PORT === 443;
 const PUBLIC_BASE_URL = 's3.sepharstudios.com';
 
-// Initialize MinIO Client
+// Initialize Main MinIO Client
 const minioClient = new Client({
 	endPoint: ENDPOINT,
 	port: PORT,
 	useSSL: USE_SSL,
 	accessKey: env.MINIO_ROOT_USER,
 	secretKey: env.MINIO_ROOT_PASSWORD
+});
+
+// Initialize Encoder MinIO Client (for Direct Upload)
+export const encoderMinioClient = new Client({
+	endPoint: env.ENCODER_MINIO_ENDPOINT || 'encoder-s3.sepharstudios.com',
+	port: Number(env.ENCODER_MINIO_PORT) || 443,
+	useSSL: env.ENCODER_MINIO_USE_SSL === 'true' || (Number(env.ENCODER_MINIO_PORT) || 443) === 443,
+	accessKey: env.ENCODER_MINIO_ACCESS_KEY,
+	secretKey: env.ENCODER_MINIO_SECRET_KEY
 });
 
 const DEFAULT_BUCKET = env.MINIO_BUCKET || BUCKETS.UPLOADS;
@@ -50,6 +59,22 @@ export async function getPresignedUrl(
 		return await minioClient.presignedGetObject(bucketName, objectName, expirySeconds);
 	} catch (error) {
 		console.error('Error generating presigned URL:', error);
+		throw error;
+	}
+}
+
+/**
+ * Generate a presigned PUT URL for the ENCODER MinIO
+ */
+export async function getEncoderPresignedUploadUrl(
+	bucketName: string,
+	objectName: string,
+	expirySeconds: number = 3600
+): Promise<string> {
+	try {
+		return await encoderMinioClient.presignedPutObject(bucketName, objectName, expirySeconds);
+	} catch (error) {
+		console.error('Error generating encoder presigned PUT URL:', error);
 		throw error;
 	}
 }

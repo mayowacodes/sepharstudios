@@ -1,68 +1,57 @@
 # Stage 1: Build the SvelteKit application
 FROM oven/bun:1 AS builder
 
-# Set the working directory
 WORKDIR /app
 
-# Copy lockfile and package.json to leverage Docker cache
-COPY bun.lock package.json ./
+# Copy ALL workspace package.json files before installing so bun can
+# resolve workspace:* dependencies (e.g. @sephar/web3)
+COPY package.json bun.lock ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/web3/package.json ./packages/web3/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/contracts/package.json ./packages/contracts/
 
-# Install dependencies with Bun
+# Install all workspace dependencies
 RUN bun install --frozen-lockfile
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Create a comprehensive .env file with ALL necessary dummy values for build
-RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > .env && \
-    echo "MINIO_ENDPOINT=localhost" >> .env && \
-    echo "MINIO_PORT=9000" >> .env && \
-    echo "MINIO_ACCESS_KEY=dummyaccesskey123" >> .env && \
-    echo "MINIO_SECRET_KEY=dummysecretkey123" >> .env && \
-    echo "MINIO_USE_SSL=false" >> .env && \
-    echo "MINIO_BUCKET=dummy-bucket" >> .env && \
-    echo "BETTER_AUTH_SECRET=dummy-secret-key-for-build-minimum-32-characters-long" >> .env && \
-    echo "BETTER_AUTH_URL=http://localhost:3000" >> .env && \
-    echo "NODE_ENV=production" >> .env && \
-    echo "EMAIL_WEBHOOK=https://email" >> .env && \
-    echo "BODY_SIZE_LIMIT=10485760" >> .env
+# Write build-time env vars into the web app directory
+RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > apps/web/.env && \
+    echo "MINIO_ENDPOINT=localhost" >> apps/web/.env && \
+    echo "MINIO_PORT=9000" >> apps/web/.env && \
+    echo "MINIO_ACCESS_KEY=dummyaccesskey123" >> apps/web/.env && \
+    echo "MINIO_SECRET_KEY=dummysecretkey123" >> apps/web/.env && \
+    echo "MINIO_USE_SSL=false" >> apps/web/.env && \
+    echo "MINIO_BUCKET=dummy-bucket" >> apps/web/.env && \
+    echo "BETTER_AUTH_SECRET=dummy-secret-key-for-build-minimum-32-characters-long" >> apps/web/.env && \
+    echo "BETTER_AUTH_URL=http://localhost:3000" >> apps/web/.env && \
+    echo "NODE_ENV=production" >> apps/web/.env && \
+    echo "EMAIL_WEBHOOK=https://email" >> apps/web/.env && \
+    echo "BODY_SIZE_LIMIT=10485760" >> apps/web/.env
 
-# Modify vite.config to skip SSR during build (temporary workaround)
-# Build with SSR disabled to prevent server code execution
-RUN bun run build || (echo "Regular build failed, trying alternative..." && \
-    sed -i 's/"build": "vite build"/"build": "vite build --ssr false"/g' package.json && \
-    bun run build)
+# Build the web app from its own directory
+RUN cd apps/web && bun run build
 
-# If that fails too, try building without prerendering
-RUN if [ ! -d "build" ]; then \
-    echo "Attempting build without SSR compilation..." && \
-    mkdir -p .svelte-kit && \
-    echo '{"compilerOptions":{"target":"ES2020","module":"ES2020"}}' > .svelte-kit/tsconfig.json && \
-    bun run build; \
-    fi
-
-# Stage 2: Create the final production image
+# Stage 2: Create the lean production image
 FROM oven/bun:1-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json
-COPY --from=builder /app/package.json ./package.json
+# Copy the web app package.json
+COPY --from=builder /app/apps/web/package.json ./package.json
 
-# Copy node_modules
+# Copy root node_modules (contains workspace packages like @sephar/web3)
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy the built application
-COPY --from=builder /app/build ./build
-
-# Copy package.json
-COPY --from=builder /app/package.json ./
+# Copy the built application (adapter-node output)
+COPY --from=builder /app/apps/web/build ./build
 
 # Expose the port
 EXPOSE 3000
 
-# Set environment variables for production
+# Set runtime environment variables
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000

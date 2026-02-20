@@ -7,47 +7,21 @@
   let media: MediaItem | null = null;
   let isOpen = false;
   let isImageLoaded = false;
-  let isVideoLoaded = false;
-
-  let videoEl: HTMLVideoElement;
 
   const unsubscribe = mediaModalStore.subscribe((state) => {
     isOpen = state.isOpen;
     media = state.media;
-
-    if (isOpen) {
-      isImageLoaded = false;
-      isVideoLoaded = false;
-      
-      // Fallback timeout - if video doesn't load within 3 seconds, show modal anyway
-      setTimeout(() => {
-        if (!isVideoLoaded) {
-          isVideoLoaded = true;
-        }
-      }, 3000);
-    }
+    if (isOpen) isImageLoaded = false;
   });
 
   onDestroy(unsubscribe);
 
-  const onImageLoad = () => {
-    isImageLoaded = true;
-  };
+  const onImageLoad = () => { isImageLoaded = true; };
+  const closeModal = () => { mediaModalStore.close(); };
 
-  const onVideoCanPlay = () => {
-    isVideoLoaded = true;
-  };
-
-  const onVideoError = () => {
-    isVideoLoaded = true; // Still allow modal to show even if video fails
-  };
-
-  const closeModal = () => {
-    mediaModalStore.close();
-  };
-
-  $: isModalReady = isImageLoaded && isVideoLoaded;
+  $: isModalReady = isImageLoaded;
 </script>
+
 {#if $mediaModalStore.isOpen && $mediaModalStore.media}
 <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
   {#if !isModalReady}
@@ -74,22 +48,19 @@
         </button>
 
         <h2 class="text-2xl font-bold">{$mediaModalStore.media.title}</h2>
-        <p class="mb-2">{$mediaModalStore.media.description}</p>
+        <p class="mb-4 text-zinc-400">{$mediaModalStore.media.description}</p>
 
-        <video
-          bind:this={videoEl}
-          src={$mediaModalStore.media.trailerUrl || $mediaModalStore.media.link}
-          class="w-full rounded mt-4"
-          autoplay
-          muted
-          loop
-          playsinline
-          on:canplaythrough={onVideoCanPlay}
-          on:error={onVideoError}
-        ></video>
+        <div class="aspect-video w-full rounded-lg overflow-hidden border border-zinc-800">
+          <EnhancedVideoPlayer
+            videoId={$mediaModalStore.media.id}
+            videoUrl={$mediaModalStore.media.trailerUrl || $mediaModalStore.media.link}
+            title={$mediaModalStore.media.title}
+            thumbnailUrl={$mediaModalStore.media.backdrop_url}
+          />
+        </div>
 
         {#if $mediaModalStore.media.ageRating}
-          <p class="mt-2 text-sm text-white/80">
+          <p class="mt-4 text-sm text-zinc-500">
             <strong>Age Rating:</strong> {$mediaModalStore.media.ageRating}
           </p>
         {/if}

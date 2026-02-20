@@ -25,7 +25,8 @@
   };
 
 
-  export let videoUrl: string;
+  export let videoId: string = ''; 
+  export let videoUrl: string = '';
   export let title: string;
   export let thumbnailUrl = '';
   export let chapters: Chapter[] = [];
@@ -49,18 +50,52 @@
   let currentAudioTrack: AudioTrack | null = null;
   let audioElement: HTMLAudioElement | null = null;
 
-  const STORAGE_KEY = `video-progress-${videoUrl}`;
+  const STORAGE_KEY = `video-progress-${videoId || videoUrl}`;
   let isLoaded = false;
+  let loadError = '';
 
-  onMount(() => {
-    if (Hls.isSupported() && videoUrl.includes('.m3u8')) {
-      hls = new Hls({ maxLoadingDelay: 4, maxBufferLength: 30, enableWorker: true });
-      hls.loadSource(videoUrl);
-      hls.attachMedia(videoElement);
+  // Analytics Metrics
+  let startTime = 0;
+  let startupTimeMs: number | null = null;
+
+  async function fetchSignedUrl(id: string) {
+    try {
+      const response = await fetch(`/api/watch/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch playback URL');
+      const data = await response.json();
+      return data.playbackUrl;
+    } catch (err) {
+      console.error('Playback API error:', err);
+      loadError = 'Failed to load secure stream.';
+      return null;
+    }
+  }
+
+  async function initializePlayer() {
+    let finalUrl = videoUrl;
+
+    if (videoId) {
+      const signedUrl = await fetchSignedUrl(videoId);
+      if (!signedUrl) return;
+      finalUrl = signedUrl;
+    }
+
+    if (Hls.isSupported() && finalUrl.includes('.m3u8')) {
+      hls = new Hls({ 
+        maxLoadingDelay: 4, 
+        maxBufferLength: 30, 
+        enableWorker: true,
+        // Optional: retry logic for segments
+        fragLoadingMaxRetry: 3,
+        levelLoadingMaxRetry: 3
+      });
+
+      // --- Analytics Hooks ---
+      startTime = performance.now();
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
         qualities = data.levels.map(level => `${level.height}p`);
-        if (subtitles.length > 0) {
+        if (subtitles && subtitles.length > 0) {
           subtitles.forEach((subtitle: any) => {
             const track = document.createElement('track');
             track.kind = 'subtitles';
@@ -71,7 +106,41 @@
           });
         }
       });
+
+      hls.on(Hls.Events.FRAG_CHANGED, () => {
+        if (startupTimeMs === null) {
+          startupTimeMs = performance.now() - startTime;
+          console.log(`[VideoPlayer] Startup Time: ${startupTimeMs.toFixed(2)}ms`);
+        }
+      });
+
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) {
+          console.error(`[VideoPlayer] Fatal Error: ${data.type} - ${data.details}`);
+          loadError = `Playback Error: ${data.details}`;
+          hls?.destroy();
+        } else {
+          console.warn(`[VideoPlayer] Non-fatal Error: ${data.details}`);
+          // Segment error tracking
+          if (data.details === Hls.ErrorDetails.FRAG_LOAD_ERROR || data.details === Hls.ErrorDetails.FRAG_LOAD_TIMEOUT) {
+            console.error(`[VideoPlayer] Segment Failure: ${data.frag?.url}`);
+          }
+        }
+      });
+
+      hls.loadSource(finalUrl);
+      hls.attachMedia(videoElement);
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari/iOS)
+      videoElement.src = finalUrl;
+    } else if (finalUrl) {
+      // Fallback for direct MP4 or other types
+      videoElement.src = finalUrl;
     }
+  }
+
+  onMount(() => {
+    initializePlayer();
 
     const savedProgress = localStorage.getItem(STORAGE_KEY);
     if (savedProgress) videoElement.currentTime = parseFloat(savedProgress);
@@ -200,6 +269,20 @@
   {#if !isLoaded}
     <div class="absolute inset-0 flex items-center justify-center bg-black">
       <span class="text-white animate-pulse">Loading video...</span>
+    </div>
+  {/if}
+
+  {#if loadError}
+    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 p-6 text-center">
+      <span class="text-red-500 text-4xl mb-4">⚠️</span>
+      <h3 class="text-white text-xl font-bold mb-2">Playback Error</h3>
+      <p class="text-zinc-400 mb-6">{loadError}</p>
+      <button 
+        on:click={() => window.location.reload()}
+        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition"
+      >
+        Retry
+      </button>
     </div>
   {/if}
 

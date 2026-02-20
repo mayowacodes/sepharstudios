@@ -1,11 +1,12 @@
 <script lang="ts">
   import { page } from '$app/state';
   import DocumentaryCard from '$lib/components/DocumentaryCard.svelte';
-  import { faithDocumentaries } from '$lib/data/documentaries';
-  import { writable, derived } from 'svelte/store';
+  import { writable } from 'svelte/store';
+
+  const { data } = $props();
 
   // Initialize with our documentary collection
-  let allDocumentaries = faithDocumentaries;
+  let allDocumentaries = $derived(data.documentaries || []);
 
   // Create writable store for category selection
   let selectedCategory = writable<string | null>(null);
@@ -14,28 +15,25 @@
   let selectedTopic = writable<string | null>(null);
 
   // Derived store for filtered documentaries
-  let filteredDocumentaries = derived(
-    [selectedCategory, selectedTopic],
-    ([$selectedCategory, $selectedTopic]) => {
-      return allDocumentaries.filter(doc => {
-        const categoryMatch = !$selectedCategory || doc.genres?.includes($selectedCategory);
-        const topicMatch = !$selectedTopic || doc.topics?.includes($selectedTopic);
-        return categoryMatch && topicMatch;
-      });
-    }
+  let filteredDocumentaries = $derived(
+    allDocumentaries.filter(doc => {
+      const categoryMatch = !$selectedCategory || doc.genres?.includes($selectedCategory);
+      const topicMatch = !$selectedTopic || doc.topics?.includes($selectedTopic);
+      return categoryMatch && topicMatch;
+    })
   );
 
   // Categories derived from all available documentaries
-  let categories = derived(writable(allDocumentaries), ($docs) => {
+  let categories = $derived.by(() => {
     const allCategories = new Set<string>();
-    $docs.forEach(doc => doc.genres?.forEach(g => allCategories.add(g)));
+    allDocumentaries.forEach(doc => doc.genres?.forEach(g => allCategories.add(g)));
     return Array.from(allCategories).sort();
   });
 
   // Topics derived from all available documentaries
-  let topics = derived(writable(allDocumentaries), ($docs) => {
+  let topics = $derived.by(() => {
     const allTopics = new Set<string>();
-    $docs.forEach(doc => doc.topics?.forEach(t => allTopics.add(t)));
+    allDocumentaries.forEach(doc => doc.topics?.forEach(t => allTopics.add(t)));
     return Array.from(allTopics).sort();
   });
 

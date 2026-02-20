@@ -132,6 +132,7 @@ export interface VideoUploadProgress {
   hasError: boolean;
   errorMessage?: string;
   uploadUrl?: string;
+  objectName?: string;
 }
 
 export interface AssetUploadProgress {
