@@ -29,8 +29,9 @@
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
       <div class="flex items-center space-x-4">
-        <button on:click={goToMainSite} class="text-2xl font-bold text-white hover:text-gray-300 transition-colors">
-          Sephar Studios
+        <button on:click={goToMainSite} class="flex items-center gap-3 text-white hover:text-gray-300 transition-colors">
+          <img src="/asl-logo.png" alt="ASL Logo" class="h-8 w-auto object-contain" />
+          <span class="text-2xl font-bold">Sephar Studios</span>
         </button>
         <span class="text-red-400 font-medium">Admin Panel</span>
       </div>

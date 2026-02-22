@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Spinner } from '$lib/components/ui/spin-loader';
+	import SpinLoader from '$lib/components/ui/spin-loader/spin-loader.svelte';
+	import type { Component } from 'svelte';
 
-	let WalletConnectComponent: any = $state(null);
+	let WalletConnectComponent = $state<Component | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	onMount(async () => {
 		try {
-			// Dynamically import Web3 package - only loads when this component mounts
-			const module = await import('@sephar/web3/components');
-			WalletConnectComponent = module.WalletConnect;
+			const module = await import('$lib/components/web3/WalletConnect.svelte');
+			WalletConnectComponent = module.default;
 		} catch (err) {
 			console.error('Failed to load Web3 components:', err);
 			error = 'Failed to load wallet connection. Please refresh the page.';
@@ -22,7 +22,7 @@
 
 {#if loading}
 	<div class="flex items-center justify-center p-8">
-		<Spinner />
+		<SpinLoader class="size-8" />
 		<p class="ml-3 text-muted-foreground">Loading wallet connection...</p>
 	</div>
 {:else if error}
@@ -30,5 +30,5 @@
 		<p class="text-sm text-destructive">{error}</p>
 	</div>
 {:else if WalletConnectComponent}
-	<svelte:component this={WalletConnectComponent} />
+	<WalletConnectComponent />
 {/if}

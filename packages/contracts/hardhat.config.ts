@@ -1,11 +1,12 @@
 import type { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-viem";
-import "@nomicfoundation/hardhat-verify";
+import hardhatViem from "@nomicfoundation/hardhat-viem";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
 import { config as dotenvConfig } from "dotenv";
 
 dotenvConfig();
 
 const config: HardhatUserConfig = {
+  plugins: [hardhatViem, hardhatVerify],
   solidity: {
     version: "0.8.28",
     settings: {
@@ -54,21 +55,20 @@ const config: HardhatUserConfig = {
     cache: "./cache",
     artifacts: "./artifacts",
   },
-  etherscan: {
-    apiKey: {
-      polygon: process.env.POLYGONSCAN_API_KEY || "",
-      polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
-    },
-    customChains: [
-      {
-        network: "polygonAmoy",
-        chainId: 80002,
-        urls: {
-          apiURL: "https://api-amoy.polygonscan.com/api",
-          browserURL: "https://amoy.polygonscan.com"
+  verify: {
+    etherscan: {
+      apiKey: process.env.POLYGONSCAN_API_KEY || "",
+      customChains: [
+        {
+          network: "polygonAmoy",
+          chainId: 80002,
+          urls: {
+            apiURL: "https://api-amoy.polygonscan.com/api",
+            browserURL: "https://amoy.polygonscan.com"
+          }
         }
-      }
-    ]
+      ]
+    }
   },
 };
 

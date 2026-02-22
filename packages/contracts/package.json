@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@nomicfoundation/hardhat-verify": "^3.0.0",
     "@openzeppelin/contracts": "^4.9.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/node": "^22.18.6",

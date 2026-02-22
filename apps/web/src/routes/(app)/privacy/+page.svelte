@@ -101,8 +101,8 @@
       <h2 class="text-2xl font-semibold mb-4">Contact Us</h2>
       <p class="text-muted-foreground">
         If you have any questions about our Privacy Policy, please contact us at:
-        <a href="mailto:sepherstudios@gmail.com" class="text-primary hover:underline">
-          sepharstudios@gmail.com
+        <a href="mailto:info@sepharstudios.com" class="text-primary hover:underline">
+          info@sepharstudios.com
         </a>
       </p>
     </div>

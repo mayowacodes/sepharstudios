@@ -2,18 +2,13 @@
   import { onMount, tick } from 'svelte';
   import { page } from '$app/state';
   import { writable } from 'svelte/store';
-  import { currentProfile } from '$lib/stores/profileStores';
   import MyStudiosDrawer from '$lib/components/sections/MyStudiosDrawer.svelte';
 
   import Logo from '$lib/components/Logo.svelte';
   import { Button } from '$lib/components/ui/button';
-  import Search from '$lib/components/Search.svelte';
-  import ProfileMenu from '$lib/components/profile/ProfileMenu.svelte';
-  import NotificationCenter from '$lib/components/NotificationCenter.svelte';
   import { Sheet, SheetTrigger, SheetContent } from '$lib/components/ui/sheet';
-  import { Menu, Bell } from '@lucide/svelte';
+  import { Menu } from '@lucide/svelte';
   import User from '../widgets/User.svelte';
-  import ModeToggle from '../widgets/ModeToggle.svelte';
   import type { User as UserType } from '$lib/auth';
 
   export const isNotificationOpen = writable(false);
@@ -24,16 +19,15 @@
   // Hide header completely on kids pages since they have their own navigation
   const isKidsPage = $derived(page.url.pathname.startsWith('/kids/'));
 
-  let hasUnreadNotifications = $state(true); // Replace with actual fetch later
   let previousScrollY = 0;
   let hideHeader = $state(false);
+  let kidsMenuRef = $state<HTMLDetailsElement | null>(null);
 
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/movies', label: 'Movies' },
     { href: '/shows', label: 'TV Shows' },
-    { href: '/documentaries', label: 'Documentaries' },
-    { href: '/kids', label: 'Kids' }
+    { href: '/documentaries', label: 'Documentaries' }
   ];
 
   const isActive = (path: string) => {
@@ -108,17 +102,19 @@
         {/each}
 
         <!-- Accessible Dropdown -->
-        <details class="relative group">
-          <summary class="cursor-pointer list-none text-sm font-medium">Kids</summary>
+        <details class="relative group" bind:this={kidsMenuRef}>
+          <summary class={`relative cursor-pointer list-none text-sm font-medium after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith('/kids/') ? 'after:w-full' : 'after:w-0 hover:after:w-full'}`}>Kids</summary>
           <div class="absolute left-0 mt-2 w-48 bg-background rounded shadow-lg z-50 border">
             <a 
               href="/kids/kiddies" 
+              onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
               class="block px-4 py-2 hover:bg-muted transition-colors"
             >
               👶 Kiddies
             </a>
             <a 
               href="/kids/teens" 
+              onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
               class="block px-4 py-2 hover:bg-muted transition-colors"
             >
               👦👧 Teens
@@ -126,12 +122,14 @@
             <hr class="my-1" />
             <a 
               href="/archive" 
+              onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
               class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
             >
               📚 Archive Videos
             </a>
             <a 
               href="/mayowa" 
+              onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
               class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
             >
               🎬 Mayowa's Films
@@ -146,31 +144,9 @@
       </nav>
     </div>
 
-    <!-- Right Controls -->
-    <div class="flex flex-1 items-center justify-end space-x-4">
-      {#if isAuthenticated}
-        <Search />
-        <ModeToggle />
-
-        <!-- Notifications -->
-        <Sheet open={$isNotificationOpen} onOpenChange={val => isNotificationOpen.set(val)}>
-          <SheetTrigger>
-            <Button variant="ghost" size="icon" class="relative">
-              <Bell class="h-5 w-5" />
-              {#if hasUnreadNotifications}
-                <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600 ring-2 ring-background animate-ping"></span>
-              {/if}
-              <span class="sr-only">Open notifications</span>
-            </Button>
-          </SheetTrigger>
-          <NotificationCenter open={$isNotificationOpen} onOpenChange={val => isNotificationOpen.set(val)} />
-        </Sheet>
-
-        <ProfileMenu />
-      {/if}
+    <div class="ml-auto">
+      <User />
     </div>
-
-    <User />
   </div>
 </header>
 {/if}

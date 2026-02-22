@@ -107,10 +107,10 @@
     </DropdownMenu>
   {:else}
     <!-- Sign In button for non-authenticated users -->
-    <Button href="/auth/login" variant="ghost">
+    <Button href="/auth/login" variant="ghost" class="h-9">
       Sign In
     </Button>
-    <Button href="/plans" size="sm" class="bg-primary hover:bg-primary/90">
+    <Button href="/plans" size="sm" class="h-9 bg-primary hover:bg-primary/90">
       Get Started
     </Button>
   {/if}

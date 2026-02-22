@@ -38,9 +38,14 @@ export async function handle({ event, resolve }) {
   }
 
   // 4. Session Handling
-  const session = await auth.api.getSession({
-    headers: event.request.headers,
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: event.request.headers,
+    });
+  } catch (error) {
+    console.error('Failed to load auth session:', error);
+  }
 
   if (session) {
     event.locals.session = session.session as Session;

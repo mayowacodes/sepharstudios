@@ -634,7 +634,7 @@
               <div class="bg-white/5 rounded-lg p-6">
                 <h3 class="text-lg font-bold text-white mb-4">📧 Email Support</h3>
                 <p class="text-gray-300 mb-4">For non-urgent questions and detailed support requests.</p>
-                <p class="text-purple-400 font-medium mb-2">creators@sepharstudios.com</p>
+                <p class="text-purple-400 font-medium mb-2">support@sepharstudios.com</p>
                 <p class="text-gray-400 text-sm">Response time: 4-8 hours</p>
               </div>
 

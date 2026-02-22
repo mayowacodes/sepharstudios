@@ -1,5 +1,5 @@
 # Stage 1: Build the SvelteKit application
-FROM oven/bun:1 AS builder
+FROM oven/bun:1.3.9 AS builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > apps/web
 RUN cd apps/web && bun run build
 
 # Stage 2: Create the lean production image
-FROM oven/bun:1-slim
+FROM oven/bun:1.3.9-slim
 
 WORKDIR /app
 

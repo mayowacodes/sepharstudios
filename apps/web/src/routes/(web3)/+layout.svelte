@@ -10,8 +10,7 @@
 
 	// Preload Web3 modules when entering Web3 routes
 	onMount(() => {
-		// Preload the Web3 package to reduce delay when user interacts
-		import('@sephar/web3/lib').catch(err => {
+		import('$lib/web3/wallet').catch(err => {
 			console.warn('Failed to preload Web3 modules:', err);
 		});
 	});

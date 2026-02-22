@@ -2,8 +2,7 @@ import hre from "hardhat";
 import * as fs from "fs";
 import type { Address } from "viem";
 
-// Type assertion for viem helpers
-const viemHelpers = (hre as unknown as { viem: Record<string, unknown> }).viem;
+type DeployResult = Address | { address: Address };
 
 interface DeploymentAddresses {
   studioToken: Address;
@@ -11,6 +10,10 @@ interface DeploymentAddresses {
   creatorPayments: Address;
   tokenAMM: Address;
   usdcToken?: Address;
+}
+
+function toAddress(result: DeployResult): Address {
+  return typeof result === "string" ? result : result.address;
 }
 
 function getNetworkName(chainId: number): string {
@@ -28,13 +31,13 @@ function getNetworkName(chainId: number): string {
 async function main() {
   console.log("🚀 Starting Sephar Studios tokenomics deployment...\n");
 
-  // Get viem instance and clients using Hardhat v3 pattern
-  const publicClient = await (viemHelpers.getPublicClient as () => Promise<unknown>)();
-  const [walletClient] = await (viemHelpers.getWalletClients as () => Promise<unknown[]>)();
+  const { viem } = await hre.network.connect();
+  const publicClient = await viem.getPublicClient();
+  const [walletClient] = await viem.getWalletClients();
 
   console.log("Deploying contracts with account:", (walletClient as { account: { address: string } }).account.address);
 
-  const balance = await (publicClient as { getBalance: (params: { address: string }) => Promise<bigint> }).getBalance({
+  const balance = await publicClient.getBalance({
     address: (walletClient as { account: { address: string } }).account.address
   });
   console.log("Account balance:", balance.toString());
@@ -47,7 +50,7 @@ async function main() {
   };
 
   // Detect network
-  const chainId = await (publicClient as { getChainId: () => Promise<number> }).getChainId();
+  const chainId = await publicClient.getChainId();
   const networkName = getNetworkName(chainId);
   console.log(`🌐 Deploying on network: ${networkName} (chainId: ${chainId})`);
   let usdcAddress: Address;
@@ -58,7 +61,7 @@ async function main() {
     usdcAddress = "0x2058A9D7613eEE744279e3856Ef0eAda5FCbaA7e" as Address;
   } else {
     console.log("📝 Deploying mock USDC token...");
-    usdcAddress = await (viemHelpers.deployContract as (name: string, args: unknown[]) => Promise<Address>)("MockUSDC", []);
+    usdcAddress = toAddress(await viem.deployContract("MockUSDC"));
     console.log("✅ Mock USDC deployed to:", usdcAddress);
   }
 
@@ -73,52 +76,52 @@ async function main() {
 
   // 1. Deploy Studio Token
   console.log("\n📝 Deploying Studio Token...");
-  deploymentAddresses.studioToken = await (viemHelpers.deployContract as (name: string, args: unknown[]) => Promise<Address>)("StudioToken", [
+  deploymentAddresses.studioToken = toAddress(await viem.deployContract("StudioToken", [
     platformTreasury,
     creatorRewardsPool,
     userRewardsPool,
     governancePool,
     usdcAddress
-  ]);
+  ]));
   console.log("✅ Studio Token deployed to:", deploymentAddresses.studioToken);
 
   // 2. Deploy Token AMM
   console.log("\n📝 Deploying Token AMM...");
-  deploymentAddresses.tokenAMM = await (viemHelpers.deployContract as (name: string, args: unknown[]) => Promise<Address>)("TokenAMM", [
+  deploymentAddresses.tokenAMM = toAddress(await viem.deployContract("TokenAMM", [
     deploymentAddresses.studioToken,
     usdcAddress,
     platformTreasury
-  ]);
+  ]));
   console.log("✅ Token AMM deployed to:", deploymentAddresses.tokenAMM);
 
   // 3. Deploy Subscription NFTs
   console.log("\n📝 Deploying Sephar Studios Subscription...");
-  deploymentAddresses.sepharSubscription = await (viemHelpers.deployContract as (name: string, args: unknown[]) => Promise<Address>)("SepharSubscription", [
+  deploymentAddresses.sepharSubscription = toAddress(await viem.deployContract("SepharSubscription", [
     deploymentAddresses.studioToken,
     usdcAddress,
     platformTreasury,
     creatorRewardsPool,
     userRewardsPool,
     deploymentAddresses.tokenAMM
-  ]);
+  ]));
   console.log("✅ Subscription deployed to:", deploymentAddresses.sepharSubscription);
 
   // 4. Deploy Creator Payments (AFTER TokenAMM)
   console.log("\n📝 Deploying Creator Payments...");
-  deploymentAddresses.creatorPayments = await (viemHelpers.deployContract as (name: string, args: unknown[]) => Promise<Address>)("CreatorPayments", [
+  deploymentAddresses.creatorPayments = toAddress(await viem.deployContract("CreatorPayments", [
     deploymentAddresses.studioToken,
     usdcAddress,
     platformTreasury,
     usdcTreasury,
     deploymentAddresses.tokenAMM
-  ]);
+  ]));
   console.log("✅ Creator Payments deployed to:", deploymentAddresses.creatorPayments);
 
   // 5. Configure contracts
   console.log("\n⚙️ Configuring contracts...");
 
   // Set TokenAMM address in StudioToken
-  const stcTokenContract = await (viemHelpers.getContractAt as (name: string, address: Address) => Promise<{ write: { setTokenAMM: (args: [Address]) => Promise<void> } }>)("StudioToken", deploymentAddresses.studioToken);
+  const stcTokenContract = await viem.getContractAt("StudioToken", deploymentAddresses.studioToken);
   await stcTokenContract.write.setTokenAMM([deploymentAddresses.tokenAMM]);
   console.log("✅ TokenAMM address set in StudioToken");
 

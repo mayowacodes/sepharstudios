@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Spinner } from '$lib/components/ui/spin-loader';
+	import SpinLoader from '$lib/components/ui/spin-loader/spin-loader.svelte';
+	import type { Component } from 'svelte';
 
-	let STCTokenDashboardComponent: any = $state(null);
+	let STCTokenDashboardComponent = $state<Component | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	onMount(async () => {
 		try {
-			// Dynamically import Web3 package
-			const module = await import('@sephar/web3/components');
-			STCTokenDashboardComponent = module.STCTokenDashboard;
+			const module = await import('$lib/components/web3/STCTokenDashboard.svelte');
+			STCTokenDashboardComponent = module.default;
 		} catch (err) {
 			console.error('Failed to load STC Token Dashboard:', err);
 			error = 'Failed to load token dashboard. Please refresh the page.';
@@ -22,7 +22,7 @@
 
 {#if loading}
 	<div class="flex items-center justify-center p-8">
-		<Spinner />
+		<SpinLoader class="size-8" />
 		<p class="ml-3 text-muted-foreground">Loading token dashboard...</p>
 	</div>
 {:else if error}
@@ -30,5 +30,5 @@
 		<p class="text-sm text-destructive">{error}</p>
 	</div>
 {:else if STCTokenDashboardComponent}
-	<svelte:component this={STCTokenDashboardComponent} />
+	<STCTokenDashboardComponent />
 {/if}

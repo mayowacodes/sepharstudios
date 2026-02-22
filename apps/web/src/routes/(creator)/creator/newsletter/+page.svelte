@@ -329,7 +329,7 @@
     <h3 class="text-lg font-bold text-white mb-2">📧 Newsletter Support</h3>
     <p class="text-yellow-200 text-sm">
       Questions about your subscription or suggestions for content? Email us at
-      <a href="mailto:newsletter@sepharstudios.com" class="text-yellow-100 underline">newsletter@sepharstudios.com</a>
+      <a href="mailto:info@sepharstudios.com" class="text-yellow-100 underline">info@sepharstudios.com</a>
     </p>
   </div>
 </div>

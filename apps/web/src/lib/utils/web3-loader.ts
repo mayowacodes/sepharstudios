@@ -5,32 +5,31 @@
  * This ensures Web3 code is only loaded when actually needed.
  */
 
-type Web3Module = typeof import('@sephar/web3/lib');
-type Web3Components = typeof import('@sephar/web3/components');
+type Web3WalletModule = typeof import('$lib/web3/wallet');
+type Web3ContractsModule = typeof import('$lib/web3/contracts');
 
-let web3LibPromise: Promise<Web3Module> | null = null;
-let web3ComponentsPromise: Promise<Web3Components> | null = null;
+let web3WalletPromise: Promise<Web3WalletModule> | null = null;
+let web3ContractsPromise: Promise<Web3ContractsModule> | null = null;
 
 /**
- * Load Web3 library functions
+ * Load Web3 wallet functions
  * Uses singleton pattern to avoid multiple loads
  */
-export async function loadWeb3Lib(): Promise<Web3Module> {
-	if (!web3LibPromise) {
-		web3LibPromise = import('@sephar/web3/lib');
+export async function loadWeb3Lib(): Promise<Web3WalletModule> {
+	if (!web3WalletPromise) {
+		web3WalletPromise = import('$lib/web3/wallet');
 	}
-	return web3LibPromise;
+	return web3WalletPromise;
 }
 
 /**
- * Load Web3 components
- * Uses singleton pattern to avoid multiple loads
+ * Load Web3 contract functions
  */
-export async function loadWeb3Components(): Promise<Web3Components> {
-	if (!web3ComponentsPromise) {
-		web3ComponentsPromise = import('@sephar/web3/components');
+async function loadWeb3Contracts(): Promise<Web3ContractsModule> {
+	if (!web3ContractsPromise) {
+		web3ContractsPromise = import('$lib/web3/contracts');
 	}
-	return web3ComponentsPromise;
+	return web3ContractsPromise;
 }
 
 /**
@@ -54,7 +53,7 @@ export async function lazyDisconnectWallet() {
  * Get user balances with lazy loading
  */
 export async function lazyGetUserBalances(address: string) {
-	const { getUserBalances } = await loadWeb3Lib();
+	const { getUserBalances } = await loadWeb3Contracts();
 	return getUserBalances(address);
 }
 
@@ -62,7 +61,7 @@ export async function lazyGetUserBalances(address: string) {
  * Check user access with lazy loading
  */
 export async function lazyCheckUserAccess(address: string) {
-	const { checkUserAccess } = await loadWeb3Lib();
+	const { checkUserAccess } = await loadWeb3Contracts();
 	return checkUserAccess(address);
 }
 
@@ -74,8 +73,8 @@ export function preloadWeb3() {
 	loadWeb3Lib().catch(err => {
 		console.warn('Failed to preload Web3 lib:', err);
 	});
-	loadWeb3Components().catch(err => {
-		console.warn('Failed to preload Web3 components:', err);
+	loadWeb3Contracts().catch(err => {
+		console.warn('Failed to preload Web3 contracts:', err);
 	});
 }
 

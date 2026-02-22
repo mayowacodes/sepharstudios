@@ -18,18 +18,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Ensure Web3 code is in separate chunks
-          'web3-core': ['@sephar/web3'],
           // Keep large UI libraries separate
-          'ui-libs': ['bits-ui', 'vaul-svelte'],
-          // Video player separate chunk
-          'video': ['hls.js']
+          'ui-libs': ['bits-ui', 'vaul-svelte']
         }
       }
     }
-  },
-  optimizeDeps: {
-    // Exclude Web3 from pre-bundling to ensure proper lazy loading
-    exclude: ['@sephar/web3']
   }
 });

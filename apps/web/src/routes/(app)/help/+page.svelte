@@ -116,8 +116,8 @@
         <Mail class="mx-auto h-12 w-12 text-primary" />
         <h3 class="text-xl font-semibold">Email Support</h3>
         <p class="text-muted-foreground">Get in touch with our support team via email.</p>
-        <a href="mailto:sepherstudios@gmail.com" class="text-primary hover:underline">
-          sepherstudios@gmail.com
+        <a href="mailto:support@sepharstudios.com" class="text-primary hover:underline">
+          support@sepharstudios.com
         </a>
       </CardContent>
     </Card>

@@ -3,10 +3,11 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
-	"packageManager": "bun@1.1.38",
+	"packageManager": "bun@1.3.9",
 	"workspaces": [
 		"apps/*",
-		"packages/*"
+		"packages/web3",
+		"packages/shared"
 	],
 	"scripts": {
 		"dev": "turbo run dev",

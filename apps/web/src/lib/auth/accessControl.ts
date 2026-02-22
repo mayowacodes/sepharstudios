@@ -1,6 +1,6 @@
-import { checkUserAccess, subscriptionContract } from '@sephar/web3/lib';
+import { checkUserAccess, subscriptionContract } from '$lib/web3/contracts';
 import { getAccount } from '@wagmi/core';
-import { config } from '@sephar/web3/lib';
+import { config } from '$lib/web3/config';
 
 export type AccessTier = 'free' | 'basic' | 'premium' | 'creator';
 

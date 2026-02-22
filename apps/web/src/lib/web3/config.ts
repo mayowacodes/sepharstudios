@@ -2,8 +2,8 @@ import { createConfig, http } from '@wagmi/core'
 import { mainnet, polygon, polygonMumbai, localhost } from '@wagmi/core/chains'
 import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors'
 
-// Use hardcoded fallbacks to avoid SSR issues
-const projectId = 'demo-project-id'
+// WalletConnect Project ID
+const projectId = 'bbcddcc5afbf6cd4b9daface6c2aa284'
 
 export const config = createConfig({
   chains: [polygon, polygonMumbai, localhost, mainnet],
@@ -24,7 +24,7 @@ export const config = createConfig({
     })
   ],
   transports: {
-    [polygon.id]: http('https://polygon-rpc.com'),
+    [polygon.id]: http('https://polygon-mainnet.g.alchemy.com/v2/jDZ151u9mGIroWRG3tE_9'),
     [polygonMumbai.id]: http('https://rpc-mumbai.maticvigil.com'),
     [localhost.id]: http('http://127.0.0.1:8545'),
     [mainnet.id]: http('https://eth.llamarpc.com')

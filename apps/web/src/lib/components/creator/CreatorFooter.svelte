@@ -47,9 +47,10 @@
       <div class="flex flex-col gap-4">
         <button 
           onclick={goToMainSite}
-          class="text-2xl font-bold text-white hover:text-purple-300 transition-colors text-left"
+          class="flex items-center gap-3 text-2xl font-bold text-white hover:text-purple-300 transition-colors text-left"
         >
-          Sephar Studios
+          <img src="/asl-logo.png" alt="ASL Logo" class="h-8 w-auto object-contain" />
+          <span>Sephar Studios</span>
         </button>
         <p class="text-sm text-gray-300">
           Empowering faith-based creators to share their ministry with the world.

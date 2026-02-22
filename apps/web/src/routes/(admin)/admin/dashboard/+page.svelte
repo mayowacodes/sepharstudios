@@ -84,6 +84,7 @@
 
     <div class="border rounded-2xl overflow-hidden bg-background divide-y">
       {#each data.recentSessions as session}
+        {@const DeviceIcon = getDeviceIcon(session.deviceType)}
         <div class="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-orange-500 group-hover:text-white transition-colors">
@@ -98,7 +99,6 @@
           <div class="hidden md:flex flex-col items-center gap-1">
             <Badge variant="outline" class={getDeviceColor(session.deviceType)}>
               <div class="flex items-center gap-1">
-                {@const DeviceIcon = getDeviceIcon(session.deviceType)}
                 <DeviceIcon class="w-3 h-3" />
                 <span class="capitalize">{session.deviceType || 'Desktop'}</span>
               </div>

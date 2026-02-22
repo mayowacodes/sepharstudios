@@ -27,8 +27,8 @@
 
 <footer class={cn("border-t bg-background", className)}>
   <div class="container py-8 md:py-12 mx-auto px-4">
-    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-      <div class="flex flex-col gap-4">
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4 items-start">
+      <div class="flex flex-col gap-4 text-left">
         <Logo />
         <p class="text-sm text-muted-foreground">
           Your trusted source for Christian content streaming.
@@ -45,9 +45,9 @@
         </a>
       </div>
       {#each Object.entries(links) as [category, items]}
-        <div class="space-y-4">
+        <div class="space-y-4 text-left justify-self-start">
           <h4 class="text-sm font-medium">{category}</h4>
-          <ul class="space-y-2">
+          <ul class="space-y-2 m-0 p-0">
             {#each items as item}
               <li>
                 <a
@@ -64,7 +64,7 @@
     </div>
     <div class="mt-8 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
       <p class="text-sm text-muted-foreground">
-        <span>© {new Date().getFullYear()} Sephar Studios.</span> All rights reserved.
+        <span>&copy; {new Date().getFullYear()} Sephar Studios.</span> All rights reserved.
       </p>
       <div class="flex items-center gap-4">
         <a

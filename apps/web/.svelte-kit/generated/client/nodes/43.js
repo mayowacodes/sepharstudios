@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/(app)/mayowa/+page.svelte";
+export { default as component } from "../../../../src/routes/(auth)/auth/forget-password/+page.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { Button } from '$lib/components/ui/button';
-  import { ChevronDown, Baby, Users } from 'lucide-react';
+  import { ChevronDown, Baby, Users } from '@lucide/svelte';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
   const { children } = $props();
@@ -19,16 +19,18 @@
       <a href="/" class="font-bold text-primary">Sephar Studios</a>
       
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild let:builder>
-          <Button variant="outline" class="flex items-center space-x-2" builders={[builder]}>
-            {#if isTeens}
-              <Users class="w-4 h-4" />
-            {:else}
-              <Baby class="w-4 h-4" />
-            {/if}
-            <span>{currentLabel} Section</span>
-            <ChevronDown class="w-4 h-4" />
-          </Button>
+        <DropdownMenu.Trigger>
+          {#snippet child({ props })}
+            <Button variant="outline" class="flex items-center space-x-2" {...props}>
+              {#if isTeens}
+                <Users class="w-4 h-4" />
+              {:else}
+                <Baby class="w-4 h-4" />
+              {/if}
+              <span>{currentLabel} Section</span>
+              <ChevronDown class="w-4 h-4" />
+            </Button>
+          {/snippet}
         </DropdownMenu.Trigger>
         <DropdownMenu.Content class="w-48">
           <DropdownMenu.Item>

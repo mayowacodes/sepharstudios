@@ -63,11 +63,23 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/creator/content": [
+		"src/routes/api/creator/content/+server.ts"
+	],
+	"/api/encoder/presigned": [
+		"src/routes/api/encoder/presigned/+server.ts"
+	],
+	"/api/encoder/process": [
+		"src/routes/api/encoder/process/+server.ts"
+	],
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
 	],
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
+	],
+	"/api/watch/[videoId]": [
+		"src/routes/api/watch/[videoId]/+server.ts"
 	],
 	"/(app)/archive": [
 		"src/routes/+layout.server.ts"
@@ -85,6 +97,9 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(auth)/auth/reset-password": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/careers": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/contact": [
@@ -147,6 +162,7 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/documentaries": [
+		"src/routes/(app)/documentaries/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)/documentation": [
@@ -165,32 +181,41 @@
 	"/(app)/help": [
 		"src/routes/+layout.server.ts"
 	],
-	"/(kids)/kids": [
-		"src/routes/(kids)/kids/+layout.ts",
+	"/kids": [
+		"src/routes/+layout.server.ts"
+	],
+	"/kids/kiddies": [
+		"src/routes/kids/kiddies/+page.server.ts",
+		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts",
-		"src/routes/(kids)/kids/+layout.ts",
+		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
-	"/(kids)/kids/documentaries": [
-		"src/routes/(kids)/kids/+layout.ts",
+	"/kids/kiddies/documentaries": [
+		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
-	"/(kids)/kids/movies": [
-		"src/routes/(kids)/kids/+layout.ts",
+	"/kids/kiddies/movies": [
+		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
-	"/(kids)/kids/profile": [
-		"src/routes/(kids)/kids/+layout.ts",
+	"/kids/kiddies/profile": [
+		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
-	"/(kids)/kids/shows": [
-		"src/routes/(kids)/kids/+layout.ts",
+	"/kids/kiddies/shows": [
+		"src/routes/kids/kiddies/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/kids/teens": [
+		"src/routes/kids/teens/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/mayowa": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/movies": [
+		"src/routes/(app)/movies/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/my-studios": [
@@ -209,11 +234,16 @@
 	"/(app)/privacy": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(protected)/profiles": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(protected)/profile": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/shows": [
+		"src/routes/(app)/shows/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/sponsorships": [
