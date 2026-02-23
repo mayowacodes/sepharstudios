@@ -30,12 +30,12 @@ BODY_SIZE_LIMIT=10485760  # 10MB
 
 ### 2. **Database (PostgreSQL + Drizzle ORM)** ✅ CONFIGURED
 ```bash
-DATABASE_URL=postgresql://mayowa:hotdbforsepharstudios2026@213.136.92.11:6060/sepharstudios
+
 ```
 
 ### 3. **Authentication (Better Auth)** ✅ CONFIGURED
 ```bash
-BETTER_AUTH_SECRET=sZaLfT175FzXWCWooAl9gUsLxevJFDsT  # Keep secret!
+
 BETTER_AUTH_URL=https://sepharstudios.com
 BETTER_API_URL=https://sepharstudios.com/api/auth
 PUBLIC_BETTER_AUTH_URL=https://sepharstudios.com
