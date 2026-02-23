@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { MediaItem } from '$lib/types/media';
+  import { Play, Bookmark } from '@lucide/svelte';
 
   export let documentary: MediaItem;
   export let onClick: () => void = () => {};
@@ -29,32 +30,18 @@
       onClick();
     }
   };
-
-  const genreColor = (genre: string) => {
-    switch (genre.toLowerCase()) {
-      case 'drama': return 'bg-purple-600 text-white';
-      case 'action': return 'bg-red-600 text-white';
-      case 'comedy': return 'bg-yellow-400 text-black';
-      case 'animation': return 'bg-pink-500 text-white';
-      case 'documentary': return 'bg-blue-500 text-white';
-      case 'family': return 'bg-green-500 text-white';
-      case 'faith':
-      case 'christian': return 'bg-indigo-600 text-white';
-      default: return 'bg-gray-600 text-white';
-    }
-  };
 </script>
 
 <div
   role="button"
   tabindex="0"
-  class="relative group w-40 sm:w-48 lg:w-52 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 focus:outline-none"
+  class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none hover:scale-[1.02]"
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
   on:click={onClick}
   on:keydown={handleKeyDown}
 >
-  <div class="relative aspect-[2/3] bg-muted rounded-xl overflow-hidden">
+  <div class="relative aspect-[2/3] bg-muted rounded-2xl overflow-hidden surface-card">
     {#if isHovered && documentary.trailerUrl}
       <video
         bind:this={videoRef}
@@ -72,51 +59,41 @@
         loading="lazy"
       />
     {/if}
+    <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div>
   </div>
 
   {#if documentary.isNew}
-    <div class="absolute top-2 left-2 bg-green-600 dark:bg-green-400 text-white dark:text-black text-xs px-2 py-0.5 rounded-full z-30">
+    <div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">
       New Episode
     </div>
   {/if}
 
-  <div class="absolute inset-0 p-3 flex flex-col justify-end z-20 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 opacity-0">
-    <h3 class="text-sm font-semibold line-clamp-2 text-gray-900 dark:text-white">{documentary.title}</h3>
+  <div class="absolute inset-0 p-3 flex flex-col justify-end z-20 transition-opacity duration-300 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+    <h3 class="text-sm font-semibold line-clamp-2 text-white">{documentary.title}</h3>
 
-    <div class="text-xs mt-1 flex flex-wrap gap-1 text-gray-700 dark:text-gray-300">
+    <div class="text-xs mt-1 flex flex-wrap gap-2 text-white/70">
       {#if documentary.rating}<span class="bg-[#FF5E0E] text-white text-[10px] px-1.5 py-0.5 rounded">{documentary.rating}</span>{/if}
       {#if documentary.duration}<span>{documentary.duration}</span>{/if}
       {#if documentary.quality}<span>{documentary.quality}</span>{/if}
     </div>
 
-    {#if documentary.genres?.length}
-      <div class="mt-2 flex flex-wrap gap-1">
-        {#each documentary.genres as genre}
-          <span class={`text-[10px] px-2 py-0.5 rounded-full ${genreColor(genre)}`}>
-            {genre}
-          </span>
-        {/each}
-      </div>
-    {/if}
-
-    <p class="text-xs mt-2 text-white-700 dark:text-gray-300 line-clamp-3 transition-opacity duration-300">
-      {documentary.description}
-    </p>
-  </div>
-
-  {#if isHovered}
-    <div class="absolute top-2 right-2 z-30 flex gap-1">
-      <button class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm">▶</button>
-      <button class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm">＋</button>
-    </div>
-
-    <div class="absolute bottom-2 left-2 z-30">
-      <a
-        href={documentary.link}
-        class="inline-block text-primary font-medium hover:underline text-xs"
+    <div class="mt-3 flex items-center gap-2">
+      <button
+        class="inline-flex items-center gap-1 rounded-full bg-[#FF5E0E] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition"
+        on:click|stopPropagation={onClick}
+        aria-label={`Play ${documentary.title}`}
       >
-        Watch Now
-      </a>
+        <Play class="h-3.5 w-3.5" />
+        Play
+      </button>
+      <button
+        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"
+        on:click|stopPropagation
+        aria-label={`Add ${documentary.title} to My List`}
+      >
+        <Bookmark class="h-3.5 w-3.5" />
+        My List
+      </button>
     </div>
-  {/if}
+  </div>
 </div>

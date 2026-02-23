@@ -26,7 +26,7 @@
       <CreatorFooter />
     </div>
   {:else}
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+    <div class="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted">
       <div class="text-center max-w-md px-6">
         <div class="mb-8">
           <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">

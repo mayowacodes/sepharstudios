@@ -229,7 +229,7 @@
   </div>
 
   <!-- Web3 Integration -->
-  <Card class="bg-gradient-to-r from-primary/10 to-secondary/10">
+  <Card class="bg-linear-to-r from-primary/10 to-secondary/10">
     <CardHeader>
       <CardTitle class="flex items-center space-x-2">
         <Coins class="h-6 w-6" />

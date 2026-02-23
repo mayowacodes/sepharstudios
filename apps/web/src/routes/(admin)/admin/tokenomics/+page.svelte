@@ -190,7 +190,7 @@
   </div>
 
   <!-- Token Supply Information -->
-  <Card class="bg-gradient-to-r from-primary/20 to-secondary/20">
+  <Card class="bg-linear-to-r from-primary/20 to-secondary/20">
     <CardHeader>
       <CardTitle class="text-white flex items-center">
         <Coins class="h-5 w-5 mr-2" />
@@ -230,7 +230,7 @@
   </Card>
 
   <!-- Staking Tiers Distribution -->
-  <Card class="bg-gradient-to-r from-accent/20 to-secondary/20">
+  <Card class="bg-linear-to-r from-accent/20 to-secondary/20">
     <CardHeader>
       <CardTitle class="text-white flex items-center">
         <Users class="h-5 w-5 mr-2" />

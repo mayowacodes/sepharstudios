@@ -8,7 +8,7 @@
   }
 </script>
 
-<main class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-100 to-pink-100 text-center">
+<main class="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-yellow-100 to-pink-100 text-center">
   <h1 class="text-4xl font-bold mb-6 text-pink-700">Who Are You?</h1>
   <div class="flex gap-8">
     <button on:click={() => choose('kiddies')} class="bg-yellow-300 text-white font-bold text-xl px-6 py-3 rounded-xl hover:bg-yellow-400">I'm a Kiddie!</button>

@@ -60,7 +60,7 @@
 </script>
 
 {#if mounted}
-<nav class="bg-gradient-to-r from-pink-100 to-yellow-100 border-b-4 border-yellow-300 shadow-sm">
+<nav class="bg-linear-to-r from-pink-100 to-yellow-100 border-b-4 border-yellow-300 shadow-sm">
   <div class="container flex items-center justify-between py-3">
   <div class="flex items-center gap-4">
     <button on:click={goHome} class="text-2xl font-bold text-pink-700 hover:text-pink-600 transition-colors">

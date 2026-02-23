@@ -190,7 +190,7 @@
 
             <!-- Wallet Connection Status -->
             {#if !$isConnected}
-              <Card class="bg-gradient-to-r from-orange-500/10 to-accent/10 border-orange-500/20">
+              <Card class="bg-linear-to-r from-orange-500/10 to-accent/10 border-orange-500/20">
                 <CardContent class="p-6 text-center">
                   <Wallet class="h-12 w-12 text-orange-500 mx-auto mb-4" />
                   <h3 class="text-lg font-semibold text-white mb-2">Connect Your Wallet</h3>
@@ -199,7 +199,7 @@
                 </CardContent>
               </Card>
             {:else}
-              <Card class="bg-gradient-to-r from-green-500/10 to-accent/10 border-green-500/20">
+              <Card class="bg-linear-to-r from-green-500/10 to-accent/10 border-green-500/20">
                 <CardContent class="p-4 text-center">
                   <div class="flex items-center justify-center space-x-3">
                     <Shield class="h-6 w-6 text-green-500" />
@@ -409,7 +409,7 @@
               </div>
 
               <!-- Resources -->
-              <Card class="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20">
+              <Card class="bg-linear-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20">
                 <CardHeader>
                   <CardTitle class="flex items-center space-x-2">
                     <ExternalLink class="h-5 w-5" />

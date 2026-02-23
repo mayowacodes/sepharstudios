@@ -72,7 +72,7 @@
   <meta name="description" content="Learn about our content guidelines and standards for faith-based content on Sephar Studios." />
 </svelte:head>
 
-<main class="container pt-32 pb-16">
+<main class="container mx-auto px-4 pt-32 pb-16">
   <section class="text-center space-y-6 pb-24">
     <h1 class="text-4xl sm:text-6xl font-bold tracking-tight">
       Faith-Based Entertainment

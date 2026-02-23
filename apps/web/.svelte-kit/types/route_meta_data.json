@@ -10,6 +10,7 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)": [
+		"src/routes/(app)/+page.server.ts",
 		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
@@ -256,6 +257,9 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(web3)/tokens": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/token": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)/users": [

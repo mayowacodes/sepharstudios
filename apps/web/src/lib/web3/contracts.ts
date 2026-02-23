@@ -111,6 +111,20 @@ export class STCTokenContract {
       args: [spender as `0x${string}`, parseUnits(amount, 18)]
     })
   }
+
+  async allowance(owner: string, spender: string): Promise<string> {
+    const allowance = await readContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: STUDIO_CHAIN_TOKEN_ABI,
+      functionName: 'allowance',
+      args: [owner as `0x${string}`, spender as `0x${string}`]
+    })
+    return formatUnits(allowance as bigint, 18)
+  }
+
+  contractAddress(): string {
+    return this.getAddress()
+  }
 }
 
 /**
@@ -186,6 +200,35 @@ export class SubscriptionContract {
       args: [address as `0x${string}`]
     })
     return Number(balance)
+  }
+
+  async mintSubscriptionWithSTC() {
+    const account = getAccount(config)
+    if (!account.address) throw new Error('No account connected')
+    return await writeContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: STUDIO_CHAIN_SUBSCRIPTION_ABI,
+      functionName: 'mintSubscriptionWithSTC',
+      args: []
+    })
+  }
+
+  async getSTCCooldownStatus(address: string) {
+    const result = await readContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: STUDIO_CHAIN_SUBSCRIPTION_ABI,
+      functionName: 'getSTCCooldownStatus',
+      args: [address as `0x${string}`]
+    })
+    const [secondsRemaining, nextCooldownDays] = result as [bigint, bigint]
+    return {
+      secondsRemaining: Number(secondsRemaining),
+      nextCooldownDays: Number(nextCooldownDays)
+    }
+  }
+
+  contractAddress(): string {
+    return this.getAddress()
   }
 }
 
@@ -332,6 +375,10 @@ export class TokenAMMContract {
       functionName: 'swapUSDCForSTC',
       args: [parseUnits(usdcAmount, 6), parseUnits(minStcOut, 18)]
     })
+  }
+
+  contractAddress(): string {
+    return this.getAddress()
   }
 
   async addLiquidity(stcAmount: string, usdcAmount: string, minLiquidity: number = 0) {

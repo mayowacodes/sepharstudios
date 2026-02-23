@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { goto } from '$app/navigation';
   import type { User } from '$lib/auth';
   import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
   import { Button } from "$lib/components/ui/button";
@@ -56,29 +57,33 @@
     <!-- Notifications -->
     <Sheet bind:open={isNotificationOpen}>
       <SheetTrigger>
-        <Button variant="ghost" size="icon">
-          <Bell class="h-5 w-5" />
-          <span class="sr-only">Open notifications</span>
-        </Button>
+        {#snippet child({ props })}
+          <Button variant="ghost" size="icon" {...props}>
+            <Bell class="h-5 w-5" />
+            <span class="sr-only">Open notifications</span>
+          </Button>
+        {/snippet}
       </SheetTrigger>
-      <NotificationCenter bind:open={isNotificationOpen} onOpenChange={val => isNotificationOpen = val} />
+      <NotificationCenter open={isNotificationOpen} onOpenChange={val => isNotificationOpen = val} />
     </Sheet>
 
     <!-- User Menu -->
     <DropdownMenu>
-      <DropdownMenuTrigger asChild let:builder>
-        <Button variant="ghost" class="relative h-10 w-10 rounded-full" builders={[builder]}>
-          <Avatar class="h-10 w-10">
-            {#if user.image}
-              <AvatarImage src={user.image} alt={user.name || user.email} />
-            {/if}
-            <AvatarFallback class="bg-primary text-primary-foreground">
-              {getUserInitials(user)}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
+      <DropdownMenuTrigger>
+        {#snippet child({ props })}
+          <Button variant="ghost" class="relative h-10 w-10 rounded-full" {...props}>
+            <Avatar class="h-10 w-10">
+              {#if user.image}
+                <AvatarImage src={user.image} alt={user.name || user.email} />
+              {/if}
+              <AvatarFallback class="bg-primary text-primary-foreground">
+                {getUserInitials(user)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        {/snippet}
       </DropdownMenuTrigger>
-      <DropdownMenuContent class="w-56" align="end">
+      <DropdownMenuContent class="w-56 surface-glass border-white/10" align="end">
         <DropdownMenuLabel class="font-normal">
           <div class="flex flex-col space-y-1">
             {#if user.name}
@@ -90,16 +95,16 @@
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem href="/profile">
+        <DropdownMenuItem onclick={() => goto('/profile')}>
           <UserIcon class="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem href="/settings">
+        <DropdownMenuItem onclick={() => goto('/settings')}>
           <Settings class="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem on:click={handleSignOut} disabled={isLoading}>
+        <DropdownMenuItem onclick={handleSignOut} disabled={isLoading}>
           <LogOut class="mr-2 h-4 w-4" />
           {isLoading ? 'Signing out...' : 'Sign out'}
         </DropdownMenuItem>
@@ -110,7 +115,7 @@
     <Button href="/auth/login" variant="ghost" class="h-9">
       Sign In
     </Button>
-    <Button href="/plans" size="sm" class="h-9 bg-primary hover:bg-primary/90">
+    <Button href="/plans" size="sm" class="h-9 ml-4 bg-primary hover:bg-primary/90">
       Get Started
     </Button>
   {/if}

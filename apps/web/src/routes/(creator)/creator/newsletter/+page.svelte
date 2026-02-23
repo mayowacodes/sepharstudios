@@ -31,7 +31,7 @@
 
   {#if !isSubscribed}
     <!-- Newsletter Signup -->
-    <div class="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-8">
+    <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-8">
       <div class="text-center">
         <div class="text-6xl mb-4">📧</div>
         <h2 class="text-2xl font-bold text-white mb-4">Join Our Creator Community</h2>

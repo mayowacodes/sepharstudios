@@ -39,9 +39,16 @@ export const STUDIO_CHAIN_SUBSCRIPTION_ABI = [
   'function getSubscriptionDetails(uint256 tokenId) view returns (address subscriber, uint8 tier, uint256 amountPaid, uint256 startDate, uint256 expiryDate, bool isActive, uint256 renewalCount, uint256 totalRevenue)',
   'function hasActiveSubscription(address user) view returns (bool hasAccess, uint8 tier)',
 
+  // STC subscription
+  'function mintSubscriptionWithSTC() returns (uint256)',
+  'function getSTCCooldownStatus(address user) view returns (uint256 secondsRemaining, uint256 nextCooldownDays)',
+  'function stcSubscriptionAmount() view returns (uint256)',
+  'function stcSubUsage(address user) view returns (uint256 redemptionCount, uint256 lastRedemptionTime)',
+
   // Events
   'event SubscriptionMinted(address indexed subscriber, uint256 indexed tokenId, uint8 tier, uint256 expiryDate)',
   'event SubscriptionRenewed(address indexed subscriber, uint256 indexed tokenId, uint256 newExpiryDate)',
+  'event SubscriptionMintedWithSTC(address indexed subscriber, uint256 indexed tokenId, uint256 stcAmount, uint256 nextCooldownDays)',
   'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'
 ] as const
 
@@ -78,6 +85,7 @@ export const TOKEN_AMM_ABI = [
   'function swapSTCForUSDC(uint256 stcAmountIn, uint256 minUsdcOut) returns (uint256)',
   'function swapUSDCForSTC(uint256 usdcAmountIn, uint256 minStcOut) returns (uint256)',
   'function getSTCPrice() view returns (uint256)',
+  'function getStcAmountOut(uint256 usdcAmount) view returns (uint256)',
 
   // Pool information
   'function getPoolInfo() view returns (uint256 stcBalance, uint256 usdcBalance, uint256 totalLiq, uint256 currentPrice, uint256 revenue)',

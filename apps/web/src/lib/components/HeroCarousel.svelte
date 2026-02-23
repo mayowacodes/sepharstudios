@@ -80,7 +80,7 @@
             />
           {/if}
 
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4" transition:fade>
+          <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-4" transition:fade>
             <h3 class="text-white text-lg font-bold">{item.title}</h3>
             <p class="text-white text-sm">{item.description}</p>
           </div>

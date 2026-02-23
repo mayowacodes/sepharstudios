@@ -148,7 +148,7 @@
   </div>
 
   <!-- Impact Statistics -->
-  <div class="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
+  <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
     <h2 class="text-xl font-bold text-white mb-4 text-center">🌟 Community Impact</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="text-center">
@@ -283,7 +283,7 @@
   </div>
 
   <!-- Submit Your Story -->
-  <div class="bg-gradient-to-r from-green-600/20 to-blue-600/20 border border-green-500/30 rounded-xl p-8">
+  <div class="bg-linear-to-r from-green-600/20 to-blue-600/20 border border-green-500/30 rounded-xl p-8">
     <div class="text-center">
       <div class="text-4xl mb-4">✨</div>
       <h2 class="text-2xl font-bold text-white mb-4">Share Your Success Story</h2>

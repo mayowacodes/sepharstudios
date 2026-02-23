@@ -32,7 +32,7 @@
       {#each myList as item}
         <a href={`/media/${item.id}`} class="group relative rounded overflow-hidden shadow-sm hover:scale-105 transition border border-primary/10">
           <img src={item.thumbnailUrl} alt={item.title} class="w-full h-40 object-cover rounded" />
-          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-white">
+          <div class="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-2 text-white">
             <strong class="text-xs line-clamp-1">{item.title}</strong>
             <span class="block text-[10px] text-white/70">{item.type}</span>
           </div>

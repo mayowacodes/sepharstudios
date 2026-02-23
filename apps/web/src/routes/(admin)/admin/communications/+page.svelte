@@ -332,7 +332,7 @@
       <div class="bg-white/10 rounded-xl p-6 hover:bg-white/15 transition-colors">
         <div class="flex justify-between items-start mb-3">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div class="w-10 h-10 bg-linear-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
               {message.isFromAdmin ? 'A' : message.creatorName.charAt(0)}
             </div>
             <div>

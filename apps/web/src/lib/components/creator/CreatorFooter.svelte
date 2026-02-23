@@ -56,7 +56,7 @@
           Empowering faith-based creators to share their ministry with the world.
         </p>
         <!-- Get Movie Sponsorship - Prominent placement -->
-        <div class="p-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
+        <div class="p-4 bg-linear-to-r from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
           <button
             onclick={handleSponsorshipClick}
             class="text-lg font-bold text-purple-300 hover:text-purple-100 transition-colors flex items-center gap-2"

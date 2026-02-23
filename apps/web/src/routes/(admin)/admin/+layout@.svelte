@@ -10,7 +10,7 @@
 	<title>Admin - Sephar Studios</title>
 </svelte:head>
 
-<div class="admin-section min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+<div class="admin-section min-h-screen bg-linear-to-b from-gray-900 to-black text-white">
 	<AdminNav />
 	<main class="pt-20">
 		{@render children()}

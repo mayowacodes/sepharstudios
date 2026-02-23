@@ -143,7 +143,7 @@
   }
 </script>
 
-<div class="container max-w-7xl py-8">
+<div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-7xl pt-32 pb-16">
   <div class="text-center space-y-4 mb-8">
     <h1 class="text-3xl font-bold gradient-text">Choose Your NFT Subscription</h1>
     <p class="text-muted-foreground max-w-2xl mx-auto">

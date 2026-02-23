@@ -357,7 +357,7 @@
 
   <!-- Web3 Tokenomics Dashboard -->
   {#if $isConnected}
-    <Card class="bg-gradient-to-r from-primary/20 to-accent/20 border-primary/30">
+    <Card class="bg-linear-to-r from-primary/20 to-accent/20 border-primary/30">
       <CardHeader>
         <CardTitle class="flex items-center space-x-2">
           <Coins class="h-6 w-6 text-accent" />
@@ -378,7 +378,7 @@
           </div>
         {:else}
           <!-- Admin Wallet Information -->
-          <div class="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+          <div class="mb-6 p-4 bg-linear-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <Wallet class="h-6 w-6 text-blue-400" />
@@ -499,7 +499,7 @@
       </CardContent>
     </Card>
   {:else}
-    <Card class="bg-gradient-to-r from-orange-500/10 to-accent/10 border-orange-500/20">
+    <Card class="bg-linear-to-r from-orange-500/10 to-accent/10 border-orange-500/20">
       <CardContent class="p-6 text-center">
         <Wallet class="h-12 w-12 text-orange-500 mx-auto mb-4" />
         <h3 class="text-lg font-semibold mb-2">Web3 Analytics Unavailable</h3>

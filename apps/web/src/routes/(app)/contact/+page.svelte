@@ -105,7 +105,7 @@
     <div class="space-y-2 text-[#AF6E4D]">
       <p>Email: <a href="mailto:info@sepharstudios.com" class="underline">info@sepharstudios.com</a></p>
       <p>Phone: <a href="tel:+1234567890" class="underline">+1 (234) 567-890</a></p>
-      <p>Address: 123 Faith Avenue, Hollywood, CA 90001</p>
+      <p>Address: Lagos, Nigeria</p>
     </div>
   </div>
 </div>

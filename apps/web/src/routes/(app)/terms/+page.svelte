@@ -51,7 +51,7 @@
   <meta name="description" content="Read our Terms of Service to understand your rights and responsibilities when using Sephar Studios." />
 </svelte:head>
 
-<main class="container pt-32 pb-16">
+<main class="container mx-auto px-4 pt-32 pb-16">
   <section class="space-y-6 pb-24">
     <h1 class="text-4xl font-bold tracking-tight">Terms of Service</h1>
     <p class="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>

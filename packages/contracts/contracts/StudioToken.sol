@@ -38,9 +38,9 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
     address public usdcToken;
 
     // Reward rates and limits
-    uint256 public dailyUserRewardLimit = 50 * 10**18; // 50 STC/day
-    uint256 public viewingRewardRate = 5 * 10**18; // 5 STC/hour
-    uint256 public referralReward = 100 * 10**18; // 100 STC/referral
+    uint256 public dailyUserRewardLimit = 5 * 10**18;  // 5 STC/day
+    uint256 public viewingRewardRate = 1 * 10**18;     // 1 STC/hour (cap hit after 5hrs)
+    uint256 public referralReward = 10 * 10**18;       // 10 STC/referral
 
     // Staking for subscription discounts
     mapping(address => StakingInfo) public stakingInfo;
@@ -185,10 +185,10 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
         pure
         returns (uint256)
     {
-        if (amount >= 150_000 * 10**18) return lockPeriod >= 730 days ? 4 : 4;
-        if (amount >= 50_000 * 10**18) return lockPeriod >= 730 days ? 4 : 3;
-        if (amount >= 15_000 * 10**18) return lockPeriod >= 730 days ? 3 : 2;
-        if (amount >= 5_000 * 10**18) return lockPeriod >= 730 days ? 2 : 1;
+        if (amount >= 35_000 * 10**18) return 4; // Tier 4 (50%) — top staker
+        if (amount >= 10_000 * 10**18) return lockPeriod >= 730 days ? 4 : 3;
+        if (amount >=  3_500 * 10**18) return lockPeriod >= 730 days ? 3 : 2;
+        if (amount >=  1_000 * 10**18) return lockPeriod >= 730 days ? 2 : 1;
         return 0;
     }
 

@@ -96,7 +96,7 @@
   <meta name="description" content="Get help and support for your Sephar Studios experience. Find answers to common questions and contact our support team." />
 </svelte:head>
 
-<main class="container pt-32 pb-16">
+<main class="container mx-auto px-4 pt-32 pb-16">
   <section class="text-center space-y-6 pb-24">
     <h1 class="text-4xl sm:text-6xl font-bold tracking-tight">
       How Can We Help?

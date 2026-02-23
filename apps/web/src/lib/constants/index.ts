@@ -14,7 +14,7 @@ export enum Fields { USER = 'user' }
 export const MAX_ITEMS_PER_PAGE = 12;
 
 export enum Constants {
-  BRANDNAME = 'sepharstudios',
+  BRANDNAME = 'Sephar Studios',
   CREDENTIAL = 'credential',
   GOOGLE = 'google',
   AFTERAUTH = '/dashboard',

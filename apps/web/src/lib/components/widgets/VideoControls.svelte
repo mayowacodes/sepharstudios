@@ -38,21 +38,19 @@
     return `${h ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
-  // Helper functions for event typing
   function handleSeek(e: MouseEvent): void {
-  const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-  const pos = (e.clientX - rect.left) / rect.width;
-  onSeek(pos * duration);
-}
-
-function handleKeydownSeek(e: KeyboardEvent): void {
-  if (e.key === 'Enter' || e.key === ' ') {
-    // For keyboard events, you need to compute the position based on the element width.
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const pos = (rect.width * 0.5) / rect.width; // Default to 50% for keyboard interaction
+    const pos = (e.clientX - rect.left) / rect.width;
     onSeek(pos * duration);
   }
-}
+
+  function handleKeydownSeek(e: KeyboardEvent): void {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const pos = (rect.width * 0.5) / rect.width;
+      onSeek(pos * duration);
+    }
+  }
 
   function handleKeydownTogglePlay(e: KeyboardEvent): void {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -99,10 +97,10 @@ function handleKeydownSeek(e: KeyboardEvent): void {
   }
 </script>
 
-<div class="absolute bottom-0 left-0 right-0 p-4 space-y-2 transition-opacity duration-300">
+<div class="absolute bottom-0 left-0 right-0 p-4 space-y-3 transition-opacity duration-300">
   <!-- Progress Bar -->
   <div
-    class="relative w-full h-1 bg-white/30 cursor-pointer group"
+    class="relative w-full h-1.5 bg-white/20 cursor-pointer group rounded-full"
     role="slider"
     tabindex="0"
     on:click={handleSeek}
@@ -112,12 +110,16 @@ function handleKeydownSeek(e: KeyboardEvent): void {
     aria-valuemax={duration}
   >
     <div
-      class="absolute h-full bg-[var(--primary)]"
+      class="absolute h-full bg-[#FF5E0E] rounded-full"
       style="width: {(currentTime / duration) * 100}%"
+    ></div>
+    <div
+      class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.35)]"
+      style="left: calc({(currentTime / duration) * 100}% - 6px)"
     ></div>
     {#each chapters as chapter}
       <div
-        class="absolute w-1 h-3 bg-white -top-1"
+        class="absolute w-1 h-3 bg-white -top-1 rounded-full"
         style="left: {(chapter.time / duration) * 100}%"
         title={chapter.title}
       ></div>
@@ -125,7 +127,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
   </div>
 
   <!-- Controls -->
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-2">
     <button
       class="text-white hover:text-[var(--primary)]"
       on:click={onTogglePlay}
@@ -158,7 +160,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
       +10s
     </button>
 
-    <div class="text-white text-sm">
+    <div class="text-white/80 text-sm">
       {formatTime(currentTime)} / {formatTime(duration)}
     </div>
 
@@ -178,7 +180,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
             {currentAudioTrack?.label || 'Audio'}
           </button>
           {#if showAudioTracks}
-            <div class="absolute bottom-full right-0 mb-2 bg-black/90 rounded-lg p-2 min-w-[200px]">
+            <div class="absolute bottom-full right-0 mb-2 bg-black/90 rounded-lg p-2 min-w-[200px] border border-white/10">
               {#each audioTracks as track}
                 <button
                   class="w-full px-3 py-2 text-left text-sm hover:bg-white/10 text-white"
@@ -208,7 +210,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
           {quality}
         </button>
         {#if showQualityOptions}
-          <div class="absolute bottom-full right-0 mb-2 bg-black/90 rounded-lg p-2 min-w-[120px]">
+          <div class="absolute bottom-full right-0 mb-2 bg-black/90 rounded-lg p-2 min-w-[120px] border border-white/10">
             {#each qualities as q}
               <button
                 class="w-full px-3 py-2 text-left text-sm hover:bg-white/10 text-white"
@@ -228,7 +230,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
         <DropdownMenuTrigger>
           <Button variant="ghost" class="text-white hover:text-[var(--primary)]">{playbackRate}x</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent class="bg-black/90 text-white min-w-[120px]">
+        <DropdownMenuContent class="bg-black/90 text-white min-w-[120px] border border-white/10">
           {#each playbackRates as rate}
             <DropdownMenuItem
               onclick={() => onPlaybackRateChange(rate)}
@@ -260,7 +262,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
             {/if}
           </svg>
         </button>
-        <input type="range" min="0" max="1" step="0.1" value={volume} on:input={(e) => onVolumeChange(parseFloat(e.currentTarget.value))} class="w-20" />
+        <input type="range" min="0" max="1" step="0.1" value={volume} on:input={(e) => onVolumeChange(parseFloat(e.currentTarget.value))} class="w-20 accent-[#FF5E0E]" />
       </div>
 
       <!-- Fullscreen -->
@@ -272,7 +274,7 @@ function handleKeydownSeek(e: KeyboardEvent): void {
         {#if isFullscreen}
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6h12v12H6z" /></svg>
         {:else}
-          ⛶
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3m-18 0v3a2 2 0 0 0 2 2h3"/></svg>
         {/if}
       </button>
     </div>

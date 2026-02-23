@@ -151,7 +151,7 @@
   {:else}
     <!-- Overview Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
+      <div class="bg-linear-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
             <div class="text-2xl font-bold">{formatNumber(analyticsData.overview.totalViews)}</div>
@@ -164,7 +164,7 @@
         </div>
       </div>
       
-      <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 text-white">
+      <div class="bg-linear-to-r from-green-600 to-green-700 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
             <div class="text-2xl font-bold">{formatDuration(analyticsData.overview.totalWatchTime)}</div>
@@ -177,7 +177,7 @@
         </div>
       </div>
       
-      <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white">
+      <div class="bg-linear-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
             <div class="text-2xl font-bold">{analyticsData.overview.completionRate}%</div>
@@ -190,7 +190,7 @@
         </div>
       </div>
       
-      <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white">
+      <div class="bg-linear-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
             <div class="text-2xl font-bold">{formatNumber(analyticsData.overview.totalLikes)}</div>
@@ -245,7 +245,7 @@
                 </div>
                 <div class="w-full bg-gray-700 rounded-full h-2">
                   <div 
-                    class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
+                    class="bg-linear-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
                     style="width: {content.engagement * 10}%"
                   ></div>
                 </div>
@@ -262,7 +262,7 @@
           {#each analyticsData.viewsByDevice as device}
             <div class="flex items-center justify-between">
               <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 mr-3"></div>
+                <div class="w-3 h-3 rounded-full bg-linear-to-r from-purple-600 to-blue-600 mr-3"></div>
                 <div>
                   <div class="text-white font-medium">{device.device}</div>
                   <div class="text-sm text-gray-400">{formatNumber(device.views)} views</div>
@@ -274,7 +274,7 @@
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
               <div 
-                class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
+                class="bg-linear-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
                 style="width: {device.percentage}%"
               ></div>
             </div>
@@ -296,7 +296,7 @@
                 <div class="text-white font-medium mr-2">{group.percentage}%</div>
                 <div class="w-16 bg-gray-700 rounded-full h-2">
                   <div 
-                    class="bg-gradient-to-r from-green-600 to-blue-600 h-2 rounded-full"
+                    class="bg-linear-to-r from-green-600 to-blue-600 h-2 rounded-full"
                     style="width: {group.percentage * 2}%"
                   ></div>
                 </div>
@@ -317,7 +317,7 @@
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
               <div 
-                class="bg-gradient-to-r from-pink-600 to-purple-600 h-2 rounded-full"
+                class="bg-linear-to-r from-pink-600 to-purple-600 h-2 rounded-full"
                 style="width: {gender.percentage}%"
               ></div>
             </div>
@@ -336,7 +336,7 @@
                 <div class="text-white font-medium mr-2">{country.percentage}%</div>
                 <div class="w-16 bg-gray-700 rounded-full h-2">
                   <div 
-                    class="bg-gradient-to-r from-yellow-600 to-orange-600 h-2 rounded-full"
+                    class="bg-linear-to-r from-yellow-600 to-orange-600 h-2 rounded-full"
                     style="width: {country.percentage}%"
                   ></div>
                 </div>

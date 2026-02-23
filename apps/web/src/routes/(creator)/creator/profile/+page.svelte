@@ -62,7 +62,7 @@
           denomination: 'Non-denominational',
           yearsInMinistry: '12',
           ministryDescription: 'Faith Studios Ministry is dedicated to producing high-quality Christian content that reaches hearts and transforms lives. We specialize in documentaries, worship content, and educational series.',
-          ministryAddress: '123 Faith Street, Christian City, CC 12345',
+          ministryAddress: 'Lagos, Nigeria',
           isVerified: true,
           verificationDocuments: ['ministry-license.pdf', 'tax-exempt-status.pdf']
         },

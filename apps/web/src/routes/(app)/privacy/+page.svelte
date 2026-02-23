@@ -70,7 +70,7 @@
   <meta name="description" content="Learn how Sephar Studios collects, uses, and protects your personal information." />
 </svelte:head>
 
-<main class="container pt-32 pb-16">
+<main class="container mx-auto px-4 pt-32 pb-16">
   <section class="space-y-6 pb-24">
     <h1 class="text-4xl font-bold tracking-tight">Privacy Policy</h1>
     <p class="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>

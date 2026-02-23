@@ -56,10 +56,23 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     // Subscription pricing
     mapping(SubscriptionTier => uint256) public subscriptionPricing;
 
+    // STC subscription: 200 STC = 1 month (Basic tier)
+    // Cooldown alternates: 100 days after odd redemptions, 200 days after even
+    uint256 public stcSubscriptionAmount = 200 * 10**18;
+    uint256 public constant STC_COOLDOWN_SHORT = 100 days; // after 1st, 3rd, 5th... redemption
+    uint256 public constant STC_COOLDOWN_LONG  = 200 days; // after 2nd, 4th, 6th... redemption
+
+    struct STCSubInfo {
+        uint256 redemptionCount;    // how many times redeemed with STC
+        uint256 lastRedemptionTime; // timestamp of last STC redemption
+    }
+    mapping(address => STCSubInfo) public stcSubUsage;
+
     // Events
     event SubscriptionMinted(address indexed subscriber, uint256 indexed tokenId, SubscriptionTier tier, uint256 expiryDate);
     event SubscriptionRenewed(address indexed subscriber, uint256 indexed tokenId, uint256 newExpiryDate);
     event RevenueDistributed(uint256 indexed tokenId, uint256 creatorShare, uint256 platformShare, uint256 buybackAmount, uint256 userRewards);
+    event SubscriptionMintedWithSTC(address indexed subscriber, uint256 indexed tokenId, uint256 stcAmount, uint256 nextCooldownDays);
 
     constructor(
         address _stcToken,
@@ -203,6 +216,99 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
         if (tier == SubscriptionTier.Premium) return "Premium";
         if (tier == SubscriptionTier.Creator) return "Creator";
         return "Unknown";
+    }
+
+    /**
+     * @dev Pay for one month Basic subscription using 200 STC.
+     *      Spent STC returns to platformTreasury (not burned) for recycling.
+     *      Cooldown alternates: 100 days after odd redemptions, 200 days after even.
+     *      Frontend must call stcToken.approve(subscriptionContract, 200e18) first.
+     */
+    function mintSubscriptionWithSTC() external nonReentrant whenNotPaused returns (uint256) {
+        STCSubInfo storage info = stcSubUsage[msg.sender];
+
+        // Enforce alternating cooldown
+        if (info.redemptionCount > 0) {
+            uint256 cooldown = (info.redemptionCount % 2 == 1)
+                ? STC_COOLDOWN_SHORT  // 100 days after 1st, 3rd, 5th...
+                : STC_COOLDOWN_LONG;  // 200 days after 2nd, 4th, 6th...
+            require(block.timestamp >= info.lastRedemptionTime + cooldown, "STC cooldown active");
+        }
+
+        // Transfer 200 STC from user back to platform treasury
+        require(stcToken.balanceOf(msg.sender) >= stcSubscriptionAmount, "Insufficient STC balance");
+        require(
+            stcToken.transferFrom(msg.sender, platformTreasury, stcSubscriptionAmount),
+            "STC transfer failed"
+        );
+
+        // Update redemption tracking
+        info.redemptionCount += 1;
+        info.lastRedemptionTime = block.timestamp;
+
+        // Next cooldown: odd count → 100 days, even count → 200 days
+        uint256 nextCooldownDays = (info.redemptionCount % 2 == 1) ? 100 : 200;
+
+        // Mint or extend subscription for 30 days at Basic tier
+        uint256 duration = 30 days;
+        uint256 tokenId;
+        uint256 existingTokenId = userSubscriptionTokenId[msg.sender];
+
+        if (existingTokenId != 0 &&
+            subscriptions[existingTokenId].isActive &&
+            block.timestamp <= subscriptions[existingTokenId].expiryDate) {
+            // Extend active subscription
+            subscriptions[existingTokenId].expiryDate += duration;
+            subscriptions[existingTokenId].renewalCount += 1;
+            tokenId = existingTokenId;
+            emit SubscriptionRenewed(msg.sender, tokenId, subscriptions[existingTokenId].expiryDate);
+        } else {
+            // Mint new subscription NFT
+            _tokenIdCounter++;
+            tokenId = _tokenIdCounter;
+
+            subscriptions[tokenId] = Subscription({
+                subscriber: msg.sender,
+                tier: SubscriptionTier.Basic,
+                amountPaid: 0, // paid in STC, not USDC
+                startDate: block.timestamp,
+                expiryDate: block.timestamp + duration,
+                isActive: true,
+                renewalCount: 0,
+                totalRevenue: 0
+            });
+
+            userSubscriptionTokenId[msg.sender] = tokenId;
+            _safeMint(msg.sender, tokenId);
+            _setTokenURI(tokenId, generateTokenURI(tokenId, SubscriptionTier.Basic));
+
+            emit SubscriptionMinted(msg.sender, tokenId, SubscriptionTier.Basic, block.timestamp + duration);
+        }
+
+        emit SubscriptionMintedWithSTC(msg.sender, tokenId, stcSubscriptionAmount, nextCooldownDays);
+        return tokenId;
+    }
+
+    /**
+     * @dev Check how long a user must wait before their next STC subscription redemption.
+     *      Returns (0, nextCooldownDays) if ready to redeem now.
+     */
+    function getSTCCooldownStatus(address user)
+        external view returns (uint256 secondsRemaining, uint256 nextCooldownDays)
+    {
+        STCSubInfo memory info = stcSubUsage[user];
+        if (info.redemptionCount == 0) return (0, 0);
+
+        uint256 cooldown = (info.redemptionCount % 2 == 1) ? STC_COOLDOWN_SHORT : STC_COOLDOWN_LONG;
+        uint256 unlockAt = info.lastRedemptionTime + cooldown;
+
+        secondsRemaining = block.timestamp >= unlockAt ? 0 : unlockAt - block.timestamp;
+        nextCooldownDays = (info.redemptionCount % 2 == 1) ? 100 : 200;
+    }
+
+    function updateSTCSubscriptionAmount(uint256 newAmount) external onlyOwner {
+        require(newAmount > 0, "Invalid amount");
+        stcSubscriptionAmount = newAmount;
     }
 
     function cancelSubscription(uint256 tokenId) external onlyOwner {

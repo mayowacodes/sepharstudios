@@ -154,7 +154,7 @@
   </div>
 
   <!-- Tokenomics Overview -->
-  <Card class="bg-gradient-to-r from-primary/20 to-secondary/20">
+  <Card class="bg-linear-to-r from-primary/20 to-secondary/20">
     <CardHeader>
       <CardTitle class="flex items-center space-x-2 text-white">
         <Coins class="h-6 w-6" />
@@ -209,37 +209,37 @@
 
   <!-- Quick Actions -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-    <a href="/admin/review" class="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-6 text-center hover:from-yellow-700 hover:to-orange-700 transition-all">
+    <a href="/admin/review" class="bg-linear-to-r from-yellow-600 to-orange-600 rounded-xl p-6 text-center hover:from-yellow-700 hover:to-orange-700 transition-all">
       <div class="text-3xl mb-3">👁️</div>
       <h3 class="text-lg font-bold text-white mb-1">Review Queue</h3>
       <p class="text-gray-200 text-sm">Review pending content</p>
     </a>
 
-    <a href="/admin/content" class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center hover:from-blue-700 hover:to-indigo-700 transition-all">
+    <a href="/admin/content" class="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center hover:from-blue-700 hover:to-indigo-700 transition-all">
       <div class="text-3xl mb-3">🎬</div>
       <h3 class="text-lg font-bold text-white mb-1">Content Library</h3>
       <p class="text-gray-200 text-sm">Manage all content</p>
     </a>
 
-    <a href="/admin/creators" class="bg-gradient-to-r from-green-600 to-teal-600 rounded-xl p-6 text-center hover:from-green-700 hover:to-teal-700 transition-all">
+    <a href="/admin/creators" class="bg-linear-to-r from-green-600 to-teal-600 rounded-xl p-6 text-center hover:from-green-700 hover:to-teal-700 transition-all">
       <div class="text-3xl mb-3">👥</div>
       <h3 class="text-lg font-bold text-white mb-1">Creators</h3>
       <p class="text-gray-200 text-sm">Manage creator accounts</p>
     </a>
 
-    <a href="/admin/tokenomics" class="bg-gradient-to-r from-orange-600 to-amber-600 rounded-xl p-6 text-center hover:from-orange-700 hover:to-amber-700 transition-all">
+    <a href="/admin/tokenomics" class="bg-linear-to-r from-orange-600 to-amber-600 rounded-xl p-6 text-center hover:from-orange-700 hover:to-amber-700 transition-all">
       <div class="text-3xl mb-3">💰</div>
       <h3 class="text-lg font-bold text-white mb-1">Tokenomics</h3>
       <p class="text-gray-200 text-sm">STC & Revenue Control</p>
     </a>
 
-    <a href="/admin/policies" class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-center hover:from-purple-700 hover:to-indigo-700 transition-all">
+    <a href="/admin/policies" class="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-center hover:from-purple-700 hover:to-indigo-700 transition-all">
       <div class="text-3xl mb-3">📋</div>
       <h3 class="text-lg font-bold text-white mb-1">Policies</h3>
       <p class="text-gray-200 text-sm">Content guidelines</p>
     </a>
 
-    <a href="/admin/communications" class="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl p-6 text-center hover:from-cyan-700 hover:to-blue-700 transition-all">
+    <a href="/admin/communications" class="bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl p-6 text-center hover:from-cyan-700 hover:to-blue-700 transition-all">
       <div class="text-3xl mb-3">💬</div>
       <h3 class="text-lg font-bold text-white mb-1">Messages</h3>
       <p class="text-gray-200 text-sm">Creator communication</p>

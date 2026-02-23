@@ -117,7 +117,7 @@
   </div>
 
   <!-- Event Highlights -->
-  <div class="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
+  <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-2xl font-bold text-white mb-2">🎪 Faith & Film Conference 2024</h2>

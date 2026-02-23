@@ -12,6 +12,11 @@
       { label: 'Careers', href: '/careers' },
       { label: 'Press', href: '/press' }
     ],
+    'Platform': [
+      { label: 'Plans & Pricing', href: '/plans' },
+      { label: 'STC Token', href: '/token' },
+      { label: 'Creator Hub', href: '/creator' }
+    ],
     'Support': [
       { label: 'Help Center', href: '/help' },
       { label: 'Contact Us', href: '/contact' },
@@ -27,7 +32,7 @@
 
 <footer class={cn("border-t bg-background", className)}>
   <div class="container py-8 md:py-12 mx-auto px-4">
-    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4 items-start">
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-5 items-start">
       <div class="flex flex-col gap-4 text-left">
         <Logo />
         <p class="text-sm text-muted-foreground">

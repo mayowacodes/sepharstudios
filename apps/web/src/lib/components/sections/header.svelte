@@ -15,7 +15,7 @@
 
   const user = $derived(page.data.user as UserType | undefined);
   const isAuthenticated = $derived(!!user);
-  
+
   // Hide header completely on kids pages since they have their own navigation
   const isKidsPage = $derived(page.url.pathname.startsWith('/kids/'));
 
@@ -27,7 +27,8 @@
     { href: '/', label: 'Home' },
     { href: '/movies', label: 'Movies' },
     { href: '/shows', label: 'TV Shows' },
-    { href: '/documentaries', label: 'Documentaries' }
+    { href: '/documentaries', label: 'Documentaries' },
+    { href: '/token', label: 'STC Token' }
   ];
 
   const isActive = (path: string) => {
@@ -51,51 +52,54 @@
 </script>
 
 {#if !isKidsPage}
-<header class={`transition-transform duration-300 ease-in-out sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${hideHeader ? '-translate-y-full' : ''}`}>
+<header class={`transition-transform duration-300 ease-in-out sticky top-0 z-40 w-full border-b border-white/10 surface-glass ${hideHeader ? '-translate-y-full' : ''}`}>
   <div class="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 mx-auto px-4">
     <div class="flex gap-6 md:gap-10 items-center">
-
       <!-- Mobile Menu -->
       <Sheet>
         <SheetTrigger>
-          <Button variant="ghost" size="icon" class="md:hidden">
-            <Menu class="h-5 w-5" />
-            <span class="sr-only">Toggle menu</span>
-          </Button>
+          {#snippet child({ props })}
+            <Button variant="ghost" size="icon" class="md:hidden text-white/80 hover:text-white" {...props}>
+              <Menu class="h-5 w-5" />
+              <span class="sr-only">Toggle menu</span>
+            </Button>
+          {/snippet}
         </SheetTrigger>
-        <SheetContent side="left" class="p-4 space-y-4">
+        <SheetContent side="left" class="p-4 space-y-4 surface-glass border-white/10">
           {#each navItems as item}
-            <a href={item.href} onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">{item.label}</a>
+            <a href={item.href} onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">{item.label}</a>
           {/each}
-          <hr />
-          <a href="/kids/kiddies" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4">👶 Kiddies</a>
-          <a href="/kids/teens" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4">👦👧 Teens</a>
-          <a href="/archive" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-sm text-muted-foreground">📚 Archive Videos</a>
-          <a href="/mayowa" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-sm text-muted-foreground">🎬 Mayowa's Films</a>
+          <hr class="border-white/10" />
+          <a href="/token" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-[#FFBF00] hover:text-[#FFBF00]/80">STC Token</a>
+          <hr class="border-white/10" />
+          <a href="/kids/kiddies" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-white/90 hover:text-white">Kiddies</a>
+          <a href="/kids/teens" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold pl-4 text-white/90 hover:text-white">Teens</a>
+          <a href="/archive" onclick={() => isNotificationOpen.set(false)} class="block font-semibold pl-4 text-sm text-muted-foreground">Archive Videos</a>
+          <a href="/mayowa" onclick={() => isNotificationOpen.set(false)} class="block font-semibold pl-4 text-sm text-muted-foreground">Mayowa's Films</a>
           {#if isAuthenticated}
-            <hr />
-            <a href="/downloads" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Downloads</a>
-            <a href="/my-list" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">My List</a>
-            <a href="/recently-watched" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Recently Watched</a>
-            <a href="/settings" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Settings</a>
-            <a href="/account" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold">Account</a>
+            <hr class="border-white/10" />
+            <a href="/downloads" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Downloads</a>
+            <a href="/my-list" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">My List</a>
+            <a href="/recently-watched" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Recently Watched</a>
+            <a href="/settings" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Settings</a>
+            <a href="/account" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Account</a>
           {/if}
         </SheetContent>
       </Sheet>
 
       <!-- Logo or Brand -->
       {#if isAuthenticated}
-         <MyStudiosDrawer />
-            {:else}
-         <Logo />
-     {/if}
+        <MyStudiosDrawer />
+      {:else}
+        <Logo />
+      {/if}
 
       <!-- Desktop Navigation -->
-      <nav class="hidden md:flex gap-6 items-center">
+      <nav class="hidden md:flex gap-6 items-center text-white/80">
         {#each navItems as { href, label }}
           <a
             href={href}
-            class={`relative text-sm font-medium after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-[#FF5E0E] after:transition-all after:duration-300 ${isActive(href) ? 'after:w-full' : 'after:w-0 hover:after:w-full'}`}
+            class={`relative text-sm font-medium transition-colors hover:text-white after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${isActive(href) ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}
           >
             {label}
           </a>
@@ -103,43 +107,43 @@
 
         <!-- Accessible Dropdown -->
         <details class="relative group" bind:this={kidsMenuRef}>
-          <summary class={`relative cursor-pointer list-none text-sm font-medium after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith('/kids/') ? 'after:w-full' : 'after:w-0 hover:after:w-full'}`}>Kids</summary>
-          <div class="absolute left-0 mt-2 w-48 bg-background rounded shadow-lg z-50 border">
+          <summary class={`relative cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith('/kids/') ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}>Kids</summary>
+          <div class="absolute left-0 mt-2 w-48 rounded-lg z-50 surface-glass border-white/10">
             <a 
               href="/kids/kiddies" 
               onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
-              class="block px-4 py-2 hover:bg-muted transition-colors"
+              class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors"
             >
-              👶 Kiddies
+              Kiddies
             </a>
             <a 
               href="/kids/teens" 
               onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
-              class="block px-4 py-2 hover:bg-muted transition-colors"
+              class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors"
             >
-              👦👧 Teens
+              Teens
             </a>
-            <hr class="my-1" />
+            <hr class="my-1 border-white/10" />
             <a 
               href="/archive" 
               onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
-              class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
+              class="block px-4 py-2 hover:bg-white/10 transition-colors text-sm text-muted-foreground"
             >
-              📚 Archive Videos
+              Archive Videos
             </a>
             <a 
               href="/mayowa" 
               onclick={() => { if (kidsMenuRef) kidsMenuRef.open = false; }}
-              class="block px-4 py-2 hover:bg-muted transition-colors text-sm text-muted-foreground"
+              class="block px-4 py-2 hover:bg-white/10 transition-colors text-sm text-muted-foreground"
             >
-              🎬 Mayowa's Films
+              Mayowa's Films
             </a>
           </div>
         </details>
 
         {#if isAuthenticated}
-          <a href="/my-list" class="text-sm font-medium" aria-current={isActive('/my-list') ? 'page' : undefined}>My List</a>
-          <a href="/library" class="text-sm font-medium" aria-current={isActive('/library') ? 'page' : undefined}>Library</a>
+          <a href="/my-list" class="text-sm font-medium text-white/80 hover:text-white" aria-current={isActive('/my-list') ? 'page' : undefined}>My List</a>
+          <a href="/library" class="text-sm font-medium text-white/80 hover:text-white" aria-current={isActive('/library') ? 'page' : undefined}>Library</a>
         {/if}
       </nav>
     </div>

@@ -99,7 +99,7 @@
       <!-- Show fallback content (like preview or trailer) -->
       <div class="relative">
         {@render fallbackContent()}
-        <div class="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
+        <div class="absolute inset-0 bg-linear-to-t from-background/90 to-transparent flex items-end">
           <div class="p-4 w-full">
             <div class="flex items-center space-x-2 mb-2">
               <Lock class="h-4 w-4 text-muted-foreground" />

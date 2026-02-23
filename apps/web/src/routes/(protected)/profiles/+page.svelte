@@ -38,7 +38,7 @@
 	];
 </script>
 
-<div class="min-h-screen bg-gradient-to-b from-background to-accent/10">
+<div class="min-h-screen bg-linear-to-b from-background to-accent/10">
 	<div class="container mx-auto px-4 py-16">
 		<div class="mb-8 flex items-center justify-between">
 			<div>

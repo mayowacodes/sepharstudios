@@ -24,7 +24,7 @@
   });
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-4">
+<div class="min-h-screen bg-linear-to-br from-indigo-50 to-blue-100 p-4">
   <div class="container mx-auto">
     <header class="text-center mb-8">
       <h1 class="text-4xl font-bold text-indigo-700 mb-2">Sephar Teens</h1>

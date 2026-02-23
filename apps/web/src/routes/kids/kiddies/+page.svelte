@@ -24,7 +24,7 @@
   });
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-yellow-50 to-pink-100 p-4">
+<div class="min-h-screen bg-linear-to-br from-yellow-50 to-pink-100 p-4">
   <div class="container mx-auto">
     <header class="text-center mb-8">
       <h1 class="text-4xl font-bold text-pink-700 mb-2">Faith Kids - Kiddies</h1>

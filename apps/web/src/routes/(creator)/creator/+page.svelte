@@ -60,19 +60,19 @@
 
   <!-- Quick Actions -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <a href="/creator/upload" class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-center hover:from-purple-700 hover:to-blue-700 transition-all">
+    <a href="/creator/upload" class="bg-linear-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-center hover:from-purple-700 hover:to-blue-700 transition-all">
       <div class="text-4xl mb-4">🎬</div>
       <h3 class="text-xl font-bold text-white mb-2">Upload New Content</h3>
       <p class="text-gray-200">Share your ministry with the world</p>
     </a>
     
-    <a href="/creator/content" class="bg-gradient-to-r from-green-600 to-teal-600 rounded-xl p-8 text-center hover:from-green-700 hover:to-teal-700 transition-all">
+    <a href="/creator/content" class="bg-linear-to-r from-green-600 to-teal-600 rounded-xl p-8 text-center hover:from-green-700 hover:to-teal-700 transition-all">
       <div class="text-4xl mb-4">📚</div>
       <h3 class="text-xl font-bold text-white mb-2">Manage Content</h3>
       <p class="text-gray-200">Edit and organize your library</p>
     </a>
     
-    <a href="/creator/analytics" class="bg-gradient-to-r from-orange-600 to-red-600 rounded-xl p-8 text-center hover:from-orange-700 hover:to-red-700 transition-all">
+    <a href="/creator/analytics" class="bg-linear-to-r from-orange-600 to-red-600 rounded-xl p-8 text-center hover:from-orange-700 hover:to-red-700 transition-all">
       <div class="text-4xl mb-4">📊</div>
       <h3 class="text-xl font-bold text-white mb-2">View Analytics</h3>
       <p class="text-gray-200">Track your impact and growth</p>

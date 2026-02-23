@@ -39,7 +39,7 @@ export async function connectWallet(connectorType: 'injected' | 'walletConnect' 
   try {
     const connectorMap = {
       injected: injected(),
-      walletConnect: walletConnect({ projectId: 'demo-project-id' }),
+      walletConnect: walletConnect({ projectId: 'bbcddcc5afbf6cd4b9daface6c2aa284' }),
       coinbase: coinbaseWallet({ appName: 'StudioChain' })
     }
 

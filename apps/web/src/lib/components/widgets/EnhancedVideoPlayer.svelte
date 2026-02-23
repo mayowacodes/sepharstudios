@@ -268,7 +268,10 @@
 >
   {#if !isLoaded}
     <div class="absolute inset-0 flex items-center justify-center bg-black">
-      <span class="text-white animate-pulse">Loading video...</span>
+      <div class="flex items-center gap-3 text-white/70">
+        <span class="h-2 w-2 rounded-full bg-[#FF5E0E] animate-pulse"></span>
+        <span class="text-sm tracking-widest uppercase">Loading</span>
+      </div>
     </div>
   {/if}
 
@@ -287,7 +290,7 @@
   {/if}
 
   {#if title}
-   <h2 class="text-2xl font-bold text-white mb-4 px-4 pt-4">{title}</h2>
+   <h2 class="text-xs uppercase tracking-[0.25em] text-white/60 mb-3 px-4 pt-4">{title}</h2>
   {/if}
 
 
