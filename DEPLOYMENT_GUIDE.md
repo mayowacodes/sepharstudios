@@ -44,8 +44,8 @@ PUBLIC_BETTER_AUTH_URL=https://sepharstudios.com
 ### 4. **OAuth Providers** ✅ CONFIGURED
 ```bash
 # Google OAuth
-GOOGLE_CLIENT_ID=298227223492-lkurh94kqp4srttgjlsqdcuvtea3th5q.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=xxxxxx
+GOOGLE_CLIENT_SECRET=xxxxxx
 REDIRECT_URI=https://sepharstudios.com/api/auth/callback/google
 
 # Optional: Apple OAuth
