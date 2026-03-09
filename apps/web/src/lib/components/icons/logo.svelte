@@ -4,4 +4,4 @@
   let { class: className, ...rest }: HTMLImgAttributes = $props();
 </script>
 
-<img src="/asl-logo.png" alt="ASL Logo" class={className || ""} {...rest} />
+<img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class={className || ""} {...rest} />

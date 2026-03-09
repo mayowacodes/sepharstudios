@@ -56,9 +56,13 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     // Subscription pricing
     mapping(SubscriptionTier => uint256) public subscriptionPricing;
 
-    // STC subscription: 200 STC = 1 month (Basic tier)
+    // STC subscription: 500 STC = 1 month Basic (Phase 1 launch pricing)
+    // Owner adjusts via updateSTCSubscriptionAmount() as STC price appreciates:
+    //   Phase 1 (STC < $0.02):  500 STC ≈ $5 — fair launch discount
+    //   Phase 2 ($0.02–$0.05):  300 STC ≈ $6–$15
+    //   Phase 3 (STC > $0.05):  200 STC ≈ $10+ (full price parity)
     // Cooldown alternates: 100 days after odd redemptions, 200 days after even
-    uint256 public stcSubscriptionAmount = 200 * 10**18;
+    uint256 public stcSubscriptionAmount = 500 * 10**18;
     uint256 public constant STC_COOLDOWN_SHORT = 100 days; // after 1st, 3rd, 5th... redemption
     uint256 public constant STC_COOLDOWN_LONG  = 200 days; // after 2nd, 4th, 6th... redemption
 
@@ -89,9 +93,9 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
         userRewardPool = _userRewardPool;
         tokenAMM = TokenAMM(_tokenAMM);
 
-        subscriptionPricing[SubscriptionTier.Basic] = 1000;   // $10
-        subscriptionPricing[SubscriptionTier.Premium] = 1500; // $15
-        subscriptionPricing[SubscriptionTier.Creator] = 2500; // $25
+        subscriptionPricing[SubscriptionTier.Basic] = 300;    // $3/month
+        subscriptionPricing[SubscriptionTier.Premium] = 1000; // $10/month
+        subscriptionPricing[SubscriptionTier.Creator] = 1500; // $15/month
     }
 
     function mintSubscription(

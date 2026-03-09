@@ -9,9 +9,11 @@
   let description = data.description || '';
   let contentType = data.contentType || '';
   let ageRating = data.ageRating || '';
-  
+  let isPpv = data.isPpv || false;
+  let ppvPriceDollars = data.ppvPriceDollars || '';
+
   // Update parent when data changes
-  $: onUpdate({ title, description, contentType, ageRating });
+  $: onUpdate({ title, description, contentType, ageRating, isPpv, ppvPriceDollars: isPpv ? ppvPriceDollars : '' });
   
   const contentTypes = [
     { value: ContentType.MOVIE, label: '🎬 Movie', description: 'Full-length feature film' },
@@ -118,6 +120,34 @@
     </div>
   </div>
   
+  <!-- Pay-Per-View -->
+  <div>
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input type="checkbox" bind:checked={isPpv} class="w-4 h-4 accent-purple-600" />
+      <span class="text-sm font-medium text-white">Suggest Pay-Per-View (PPV) pricing</span>
+    </label>
+    <p class="text-xs text-gray-400 mt-1 ml-7">Admin will review and set the final price. PPV content earns you a higher per-view revenue share.</p>
+
+    {#if isPpv}
+      <div class="mt-3 ml-7">
+        <label for="ppvPrice" class="block text-xs text-gray-300 mb-1">Suggested price (USD)</label>
+        <div class="flex items-center gap-2 w-40">
+          <span class="text-gray-400">$</span>
+          <input
+            type="number"
+            id="ppvPrice"
+            bind:value={ppvPriceDollars}
+            min="0.99"
+            max="49.99"
+            step="0.01"
+            placeholder="4.99"
+            class="flex-1 px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+          />
+        </div>
+      </div>
+    {/if}
+  </div>
+
   <!-- Faith-Based Content Notice -->
   <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
     <div class="flex items-start">

@@ -42,6 +42,14 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
     uint256 public viewingRewardRate = 1 * 10**18;     // 1 STC/hour (cap hit after 5hrs)
     uint256 public referralReward = 10 * 10**18;       // 10 STC/referral
 
+    // Fix 2: Referral monthly cap — prevents bot drain attacks
+    uint256 public maxMonthlyReferrals = 5;
+    mapping(address => uint256) public monthlyReferralCount;
+    mapping(address => uint256) public lastReferralMonth;
+
+    // Fix 5: STC subscription amount — starts high at launch, reduced as price rises
+    uint256 public stcSubscriptionAmount = 500 * 10**18; // 500 STC at launch
+
     // Staking for subscription discounts
     mapping(address => StakingInfo) public stakingInfo;
     uint256 public totalStaked;
@@ -56,10 +64,12 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
     // Events
     event RewardClaimed(address indexed user, uint256 amount, string rewardType);
     event TokensStaked(address indexed user, uint256 amount, uint256 lockPeriod);
+    event StakeAdded(address indexed user, uint256 additionalAmount, uint256 newTotal, uint256 newTier);
     event TokensUnstaked(address indexed user, uint256 amount);
     event CreatorIncentivePaid(address indexed creator, uint256 amount);
     event SubscriptionDiscount(address indexed user, uint256 discountPercentage);
     event BuybackExecuted(uint256 usdcAmount);
+    event ReferralRewarded(address indexed referrer, uint256 amount, uint256 monthCount);
 
     constructor(
         address _platformTreasury,
@@ -240,6 +250,66 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
         dailyUserRewardLimit = _dailyLimit;
         viewingRewardRate = _viewingRate;
         referralReward = _referralReward;
+    }
+
+    /**
+     * @dev Fix 2: Reward a referral with monthly cap enforcement.
+     * Replaces direct referralReward calls — prevents bot drain attacks.
+     */
+    function rewardReferral(address referrer) external onlyOwner whenNotPaused {
+        require(referrer != address(0), "Invalid referrer");
+
+        uint256 currentMonth = block.timestamp / 30 days;
+        if (lastReferralMonth[referrer] != currentMonth) {
+            monthlyReferralCount[referrer] = 0;
+            lastReferralMonth[referrer] = currentMonth;
+        }
+        require(monthlyReferralCount[referrer] < maxMonthlyReferrals, "Monthly referral cap reached");
+
+        monthlyReferralCount[referrer]++;
+        _transfer(userRewardsPool, referrer, referralReward);
+
+        emit ReferralRewarded(referrer, referralReward, monthlyReferralCount[referrer]);
+    }
+
+    /**
+     * @dev Fix 4: Top up an existing stake and recalculate discount tier.
+     * Users can upgrade tier without waiting for lock expiry.
+     */
+    function addToStake(uint256 additionalAmount) external nonReentrant whenNotPaused {
+        StakingInfo storage info = stakingInfo[msg.sender];
+        require(info.amount > 0, "No existing stake");
+        require(block.timestamp < info.stakingTime + info.lockPeriod, "Stake expired - use stakeForDiscount");
+        require(additionalAmount > 0, "Amount must be positive");
+        require(balanceOf(msg.sender) >= additionalAmount, "Insufficient balance");
+
+        _transfer(msg.sender, address(this), additionalAmount);
+        info.amount += additionalAmount;
+        totalStaked += additionalAmount;
+
+        uint256 newTier = calculateDiscountTier(info.amount, info.lockPeriod);
+        info.discountTier = newTier;
+
+        emit StakeAdded(msg.sender, additionalAmount, info.amount, newTier);
+        emit SubscriptionDiscount(msg.sender, getDiscountPercentage(newTier));
+    }
+
+    /**
+     * @dev Fix 5: Update STC subscription amount as token price grows.
+     * Phase 1 (launch): 500 STC
+     * Phase 2 ($0.02–$0.05): 300 STC
+     * Phase 3 (above $0.05): 200 STC
+     */
+    function updateSTCSubscriptionAmount(uint256 newAmount) external onlyOwner {
+        require(newAmount > 0, "Amount must be positive");
+        stcSubscriptionAmount = newAmount;
+    }
+
+    /**
+     * @dev Fix 2: Update monthly referral cap.
+     */
+    function updateMaxMonthlyReferrals(uint256 newMax) external onlyOwner {
+        maxMonthlyReferrals = newMax;
     }
 
     function getStakingInfo(address user)

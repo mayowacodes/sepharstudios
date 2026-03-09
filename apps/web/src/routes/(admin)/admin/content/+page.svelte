@@ -71,108 +71,101 @@
     return filtered.slice(startIndex, startIndex + itemsPerPage);
   });
   
-  onMount(() => {
-    // Load content from API - mock data for now
-    setTimeout(() => {
-      allContent = [
-        {
-          id: '1',
-          title: 'Faith in Action Documentary',
-          description: 'A compelling documentary about faith-based community service...',
-          creatorId: 'creator1',
-          creatorName: 'John Smith Ministry',
-          creatorEmail: 'john@faithstudios.com',
-          contentType: ContentType.DOCUMENTARY,
-          status: ContentStatus.THEOLOGICAL_REVIEW,
-          submittedAt: new Date('2024-01-15'),
-          lastUpdated: new Date('2024-01-16'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Faith+in+Action',
-          duration: 45,
-          fileSize: '2.1 GB',
-          views: 0,
-          priority: 'high',
-          tags: ['faith', 'community', 'service'],
-          ageRating: 'ALL_AGES'
-        },
-        {
-          id: '2',
-          title: 'Sunday Sermon Series',
-          description: 'Weekly sermon series on Romans exploring grace and redemption...',
-          creatorId: 'creator1',
-          creatorName: 'John Smith Ministry',
-          creatorEmail: 'john@faithstudios.com',
-          contentType: ContentType.SERMON,
-          status: ContentStatus.APPROVED,
-          submittedAt: new Date('2024-01-10'),
-          lastUpdated: new Date('2024-01-12'),
-          approvedAt: new Date('2024-01-12'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Sermon+Series',
-          duration: 35,
-          fileSize: '1.8 GB',
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/admin/content?limit=100');
+      if (res.ok) {
+        const data = await res.json();
+        allContent = data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: '',
+          creatorId: '',
+          creatorName: '',
+          creatorEmail: '',
+          contentType: item.mediaType ?? ContentType.MOVIE,
+          status: item.isActive ? ContentStatus.PUBLISHED : ContentStatus.SUBMITTED,
+          submittedAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+          lastUpdated: item.createdAt ? new Date(item.createdAt) : new Date(),
+          thumbnailUrl: item.thumbnail ?? '',
+          duration: 0,
+          fileSize: '',
           views: 0,
           priority: 'medium',
-          tags: ['sermon', 'romans', 'grace']
-        },
-        {
-          id: '3',
-          title: 'Worship Night Live',
-          description: 'Contemporary worship service with live music and praise...',
-          creatorId: 'creator2',
-          creatorName: 'Grace Community Church',
-          creatorEmail: 'worship@gracechurch.org',
-          contentType: ContentType.WORSHIP,
-          status: ContentStatus.PUBLISHED,
-          submittedAt: new Date('2024-01-05'),
-          lastUpdated: new Date('2024-01-08'),
-          publishedAt: new Date('2024-01-08'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Worship+Live',
-          duration: 60,
-          fileSize: '3.2 GB',
-          views: 1250,
-          priority: 'low',
-          tags: ['worship', 'live', 'music']
-        },
-        {
-          id: '4',
-          title: 'Children\'s Bible Adventure',
-          description: 'Animated series teaching Bible stories to children...',
-          creatorId: 'creator3',
-          creatorName: 'Kids Ministry Productions',
-          creatorEmail: 'kids@bibletales.com',
-          contentType: ContentType.KIDS_CONTENT,
-          status: ContentStatus.CONTENT_REVIEW,
-          submittedAt: new Date('2024-01-12'),
-          lastUpdated: new Date('2024-01-14'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Bible+Adventure',
-          duration: 15,
-          fileSize: '800 MB',
-          views: 0,
-          priority: 'high',
-          tags: ['kids', 'animation', 'bible']
-        },
-        {
-          id: '5',
-          title: 'Marriage Covenant Series',
-          description: 'Biblical principles for strong Christian marriages...',
-          creatorId: 'creator4',
-          creatorName: 'Family Life Ministry',
-          creatorEmail: 'contact@familylife.org',
-          contentType: ContentType.SERIES,
-          status: ContentStatus.REJECTED,
-          submittedAt: new Date('2024-01-08'),
-          lastUpdated: new Date('2024-01-11'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Marriage+Series',
-          duration: 28,
-          fileSize: '1.5 GB',
-          views: 0,
-          priority: 'medium',
-          tags: ['marriage', 'family', 'relationships'],
-          rejectionReason: 'Audio quality needs improvement for episode 3'
-        }
-      ];
+          tags: item.genres ?? [],
+          isActive: item.isActive
+        }));
+      }
+    } finally {
       isLoading = false;
-    }, 800);
+    }
   });
+
+  let publishing = $state<string | null>(null);
+  let publishError = $state('');
+
+  // PPV state
+  let ppvModalContentId = $state<string | null>(null);
+  let ppvPrice = $state('');
+  let ppvActive = $state(true);
+  let ppvSaving = $state(false);
+  let ppvError = $state('');
+
+  function openPpvModal(id: string) {
+    ppvModalContentId = id;
+    ppvPrice = '';
+    ppvActive = true;
+    ppvError = '';
+  }
+
+  async function savePpv() {
+    if (!ppvModalContentId) return;
+    const cents = Math.round(parseFloat(ppvPrice) * 100);
+    if (!cents || cents < 99) { ppvError = 'Minimum price is $0.99'; return; }
+    ppvSaving = true;
+    ppvError = '';
+    try {
+      const res = await fetch(`/api/admin/content/${ppvModalContentId}/ppv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ finalPriceCents: cents, isActive: ppvActive })
+      });
+      if (res.ok) {
+        allContent = allContent.map(c =>
+          c.id === ppvModalContentId ? { ...c, ppvPriceCents: cents, isPpv: ppvActive } : c
+        );
+        ppvModalContentId = null;
+      } else {
+        const d = await res.json();
+        ppvError = d.error ?? 'Failed to save PPV';
+      }
+    } finally {
+      ppvSaving = false;
+    }
+  }
+
+  async function removePpv(id: string) {
+    await fetch(`/api/admin/content/${id}/ppv`, { method: 'DELETE' });
+    allContent = allContent.map(c => c.id === id ? { ...c, isPpv: false, ppvPriceCents: null } : c);
+  }
+
+  async function publishContent(id: string) {
+    publishing = id;
+    publishError = '';
+    try {
+      const res = await fetch(`/api/admin/content/${id}/publish`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        allContent = allContent.map(c =>
+          c.id === id ? { ...c, isActive: true, status: ContentStatus.PUBLISHED } : c
+        );
+      } else {
+        publishError = data.error ?? 'Failed to publish';
+      }
+    } finally {
+      publishing = null;
+    }
+  }
   
   function getStatusColor(status: ContentStatus) {
     switch (status) {
@@ -476,19 +469,45 @@
               
               <!-- Actions -->
               <div class="flex gap-2">
-                <button 
+                <button
                   onclick={() => reviewContent(content.id)}
                   class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                 >
                   Review
                 </button>
-                <button 
-                  onclick={() => editContent(content.id)}
-                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                >
-                  Edit
-                </button>
+                {#if !content.isActive}
+                  <button
+                    onclick={() => publishContent(content.id)}
+                    disabled={publishing === content.id}
+                    class="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    {publishing === content.id ? '...' : 'Publish'}
+                  </button>
+                {:else}
+                  <button
+                    onclick={() => editContent(content.id)}
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Edit
+                  </button>
+                {/if}
               </div>
+              <!-- PPV button row -->
+              <div class="flex gap-1 mt-1">
+                {#if content.isPpv}
+                  <span class="text-xs bg-amber-600/20 text-amber-400 border border-amber-600/30 px-2 py-1 rounded">
+                    PPV ${(content.ppvPriceCents / 100).toFixed(2)}
+                  </span>
+                  <button onclick={() => removePpv(content.id)} class="text-xs text-red-400 hover:text-red-300 px-2 py-1">Remove PPV</button>
+                {:else}
+                  <button onclick={() => openPpvModal(content.id)} class="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30 px-2 py-1 rounded transition-colors">
+                    + Set PPV Price
+                  </button>
+                {/if}
+              </div>
+              {#if publishError && publishing === null}
+                <p class="text-xs text-red-400 mt-1">{publishError}</p>
+              {/if}
             </div>
           </div>
         {/each}
@@ -647,3 +666,43 @@
     {/if}
   {/if}
 </div>
+
+<!-- PPV Price Modal -->
+{#if ppvModalContentId}
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+      <h3 class="text-lg font-bold text-white mb-1">Set PPV Price</h3>
+      <p class="text-gray-400 text-sm mb-4">This price overrides any creator suggestion. Viewers without a subscription will pay this amount to watch.</p>
+
+      <label class="block text-sm text-gray-300 mb-1">Final Price (USD)</label>
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-gray-400">$</span>
+        <input
+          type="number"
+          bind:value={ppvPrice}
+          min="0.99" max="49.99" step="0.01"
+          placeholder="4.99"
+          class="flex-1 px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+        />
+      </div>
+
+      <label class="flex items-center gap-2 mb-4 cursor-pointer">
+        <input type="checkbox" bind:checked={ppvActive} class="w-4 h-4 accent-amber-500" />
+        <span class="text-sm text-gray-300">Activate immediately</span>
+      </label>
+
+      {#if ppvError}
+        <p class="text-red-400 text-sm mb-3">{ppvError}</p>
+      {/if}
+
+      <div class="flex gap-3">
+        <button onclick={() => ppvModalContentId = null} class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-colors">
+          Cancel
+        </button>
+        <button onclick={savePpv} disabled={ppvSaving} class="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors">
+          {ppvSaving ? 'Saving...' : 'Save PPV Price'}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

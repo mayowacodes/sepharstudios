@@ -1,14 +1,15 @@
 <script lang="ts">
   import { page } from '$app/state';
   import MovieCard from '$lib/components/MovieCard.svelte';
-  import { writable, derived } from 'svelte/store';
+  import { writable } from 'svelte/store';
   import { PlayCircle } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
+  import type { MediaItem } from '$lib/types/media';
 
   const { data } = $props();
-  
+
   // Use movies from server data, fallback to empty array
-  let allMovies = $derived(data.movies || []);
+  let allMovies = $derived((data.movies || []) as MediaItem[]);
   const getNewestTimestamp = (item: any) => {
     if (item?.release_date) {
       const parsed = Date.parse(item.release_date);
@@ -45,7 +46,7 @@
   const user = $derived(page.data.user);
 </script>
 
-<div class="relative overflow-hidden min-h-screen bg-[var(--surface-charcoal)] text-white">
+<div class="relative overflow-hidden min-h-screen bg-var(--surface-charcoal) text-white">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div>
   <main class="container mx-auto px-4 py-10 relative z-10">
     <section class="relative text-center space-y-4 pb-10 max-w-4xl mx-auto">
@@ -61,7 +62,7 @@
     {#if featuredMovie}
       <section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 surface-glass">
         <img
-          src={featuredMovie.backdrop_url || featuredMovie.thumbnail}
+          src={featuredMovie.backdropUrl || featuredMovie.thumbnail}
           alt={featuredMovie.title}
           class="absolute inset-0 h-full w-full object-cover opacity-40"
         />
@@ -80,12 +81,9 @@
               {#if featuredMovie.quality}<span>{featuredMovie.quality}</span>{/if}
             </div>
             <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]">
+              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredMovie.id}">
                 <PlayCircle class="mr-2 h-5 w-5" />
                 Watch Now
-              </Button>
-              <Button size="lg" variant="outline" class="border-white/20 text-white hover:bg-white/10">
-                + My List
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  export type Media = {
+  type Media = {
     id?: string;
     title: string;
     description: string;
@@ -22,6 +22,37 @@
   export let media: Media;
   export let onClick: () => void = () => {};
   export let onHover: () => void = () => {};
+
+  let addedToList = false;
+
+  async function toggleMyList() {
+    try {
+      if (addedToList) {
+        // Find the default playlist and remove
+        const playlists = await fetch('/api/playlists').then(r => r.json()).catch(() => []);
+        const def = playlists.find((p: {isDefault: boolean; id: string}) => p.isDefault);
+        if (def) {
+          await fetch(`/api/playlists/${def.id}/items?contentId=${media.id}`, { method: 'DELETE' });
+          addedToList = false;
+        }
+      } else {
+        // Ensure default playlist exists
+        const playlists = await fetch('/api/playlists').then(r => r.json()).catch(() => []);
+        let def = playlists.find((p: {isDefault: boolean; id: string}) => p.isDefault);
+        if (!def) {
+          def = await fetch('/api/playlists', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) }).then(r => r.json());
+        }
+        await fetch(`/api/playlists/${def.id}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId: media.id, contentType: 'movie' })
+        });
+        addedToList = true;
+      }
+    } catch {
+      // Non-critical - fail silently
+    }
+  }
 
   let videoRef: HTMLVideoElement;
   let isHovered = false;
@@ -66,13 +97,14 @@
 <div
   role="button"
   tabindex="0"
+  aria-label={media.title}
   class="relative group w-40 sm:w-48 lg:w-52 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 focus:outline-none"
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
   on:click={onClick}
   on:keydown={handleKeyDown}
 >
-  <div class="relative aspect-[2/3] bg-muted rounded-xl overflow-hidden">
+  <div class="relative aspect-2/3 bg-muted rounded-xl overflow-hidden">
     {#if isHovered && media.trailerUrl}
       <video
         bind:this={videoRef}
@@ -124,8 +156,19 @@
 
   {#if isHovered}
     <div class="absolute top-2 right-2 z-30 flex gap-1">
-      <button class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm">▶</button>
-      <button class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm">＋</button>
+      <button
+        type="button"
+        aria-label={`Play ${media.title}`}
+        on:click|stopPropagation={onClick}
+        class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm"
+      >&#9654;</button>
+      <button
+        type="button"
+        aria-label={addedToList ? `Remove ${media.title} from My List` : `Add ${media.title} to My List`}
+        title={addedToList ? 'In My List' : 'Add to My List'}
+        on:click|stopPropagation={toggleMyList}
+        class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm transition-colors {addedToList ? 'text-[#FFBF00]' : ''}"
+      >{addedToList ? '✓' : '+'}</button>
     </div>
 
     <div class="absolute bottom-2 left-2 z-30">

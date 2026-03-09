@@ -4,7 +4,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Progress } from "$lib/components/ui/progress";
   import { toast } from "svelte-sonner";
-  import { Upload, X, CheckCircle2, AlertCircle, FileVideo, FileImage, File } from "lucide-react";
+  import { Upload, X, FileVideo, FileImage, File as FileIcon } from "@lucide/svelte";
 
   export let bucket: string = "uploads";
   export let accept: string = "*/*";
@@ -69,7 +69,7 @@
   function getFileIcon(type: string) {
     if (type.startsWith('video/')) return FileVideo;
     if (type.startsWith('image/')) return FileImage;
-    return File;
+    return FileIcon;
   }
 </script>
 
@@ -86,7 +86,7 @@
       type="file" 
       {accept} 
       multiple={maxFiles > 1}
-      on:change={handleFileSelect}
+      onchange={handleFileSelect}
       disabled={uploading}
       class="max-w-xs cursor-pointer"
     />
@@ -104,14 +104,14 @@
               <span class="text-[10px] text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
             </div>
           </div>
-          <button on:click={() => files = files.filter(f => f !== file)} class="text-muted-foreground hover:text-destructive">
+          <button onclick={() => files = files.filter(f => f !== file)} class="text-muted-foreground hover:text-destructive">
             <X class="w-4 h-4" />
           </button>
         </div>
       {/each}
       
       {#if !uploading}
-        <Button class="w-full mt-4 bg-primary hover:bg-primary/90" on:click={startUpload}>
+        <Button class="w-full mt-4 bg-primary hover:bg-primary/90" onclick={startUpload}>
           Start Upload ({files.length} {files.length === 1 ? 'file' : 'files'})
         </Button>
       {/if}

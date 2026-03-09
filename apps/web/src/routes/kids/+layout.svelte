@@ -3,13 +3,15 @@
   import { Button } from '$lib/components/ui/button';
   import { ChevronDown, Baby, Users } from '@lucide/svelte';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import SafeExplorationMode from '$lib/components/kids/SafeExplorationMode.svelte';
 
   const { children } = $props();
-  
+
   const currentPath = $derived(page.url.pathname);
   const isKiddies = $derived(currentPath.includes('/kids/kiddies'));
   const isTeens = $derived(currentPath.includes('/kids/teens'));
-  
+  const profileType = $derived(isTeens ? 'teens' : 'kids');
+
   const currentLabel = $derived(isTeens ? 'Teens' : 'Kiddies');
 </script>
 
@@ -55,7 +57,9 @@
   </nav>
 
   <main class="flex-1">
-    {@render children()}
+    <SafeExplorationMode {profileType}>
+      {@render children()}
+    </SafeExplorationMode>
   </main>
 </div>
 

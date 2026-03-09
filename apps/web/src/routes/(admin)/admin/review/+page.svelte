@@ -7,8 +7,56 @@
   let reviewQueue = $state<ReviewQueueItem[]>([]);
   let selectedType = $state<ReviewType | 'all'>('all');
   let selectedPriority = $state<'urgent' | 'high' | 'normal' | 'low' | 'all'>('all');
-  
-  // Mock data - TODO: Replace with real API
+  let activeTab = $state<'content' | 'user-reviews'>('content');
+
+  // User reviews state
+  interface UserReview {
+    id: string;
+    userId: string;
+    contentId: string;
+    contentType: string;
+    rating: number;
+    reviewText: string | null;
+    isApproved: boolean;
+    helpfulCount: number;
+    createdAt: string;
+  }
+  let userReviews = $state<UserReview[]>([]);
+  let userReviewsLoading = $state(false);
+
+  async function loadUserReviews() {
+    userReviewsLoading = true;
+    try {
+      const res = await fetch('/api/admin/reviews?approved=false');
+      if (res.ok) userReviews = await res.json();
+    } finally {
+      userReviewsLoading = false;
+    }
+  }
+
+  async function moderateReview(id: string, approve: boolean) {
+    const res = await fetch('/api/admin/reviews', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, isApproved: approve })
+    });
+    if (res.ok) {
+      userReviews = userReviews.filter(r => r.id !== id);
+      if (approve) await loadUserReviews();
+    }
+  }
+
+  async function deleteReview(id: string) {
+    if (!confirm('Delete this review permanently?')) return;
+    const res = await fetch('/api/admin/reviews', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (res.ok) userReviews = userReviews.filter(r => r.id !== id);
+  }
+
+  // Mock data for content upload review queue
   onMount(() => {
     reviewQueue = [
       {
@@ -61,8 +109,9 @@
         estimatedReviewTime: 25
       }
     ];
+    loadUserReviews();
   });
-  
+
   // Filter functions
   const filteredQueue = $derived(
     reviewQueue.filter(item => {
@@ -119,7 +168,7 @@
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-4xl font-bold text-white mb-2">Review Queue</h1>
-      <p class="text-xl text-gray-300">Content awaiting review and approval</p>
+      <p class="text-xl text-gray-300">Content and user reviews awaiting moderation</p>
     </div>
     
     <!-- Queue Stats -->
@@ -143,6 +192,71 @@
     </div>
   </div>
   
+  <!-- Tabs -->
+  <div class="flex gap-2 border-b border-white/10 pb-0">
+    <button
+      onclick={() => activeTab = 'content'}
+      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'content' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}"
+    >
+      Content Queue ({reviewQueue.length})
+    </button>
+    <button
+      onclick={() => activeTab = 'user-reviews'}
+      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'user-reviews' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}"
+    >
+      User Reviews ({userReviews.filter(r => !r.isApproved).length} pending)
+    </button>
+  </div>
+
+  {#if activeTab === 'user-reviews'}
+    <!-- User Reviews Moderation -->
+    {#if userReviewsLoading}
+      <div class="text-center py-12 text-gray-400">Loading reviews...</div>
+    {:else if userReviews.length === 0}
+      <div class="text-center py-12">
+        <div class="text-4xl mb-4">✅</div>
+        <div class="text-xl text-white mb-2">All caught up</div>
+        <div class="text-gray-400">No pending user reviews to moderate</div>
+      </div>
+    {:else}
+      <div class="space-y-4">
+        {#each userReviews as review (review.id)}
+          <div class="bg-white/5 rounded-xl p-5 space-y-3">
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-yellow-400">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                  <span class="text-xs text-gray-400 uppercase">{review.contentType}</span>
+                  <span class="text-xs text-gray-500">Content: {review.contentId.slice(0, 8)}…</span>
+                </div>
+                {#if review.reviewText}
+                  <p class="text-white text-sm leading-relaxed">{review.reviewText}</p>
+                {:else}
+                  <p class="text-gray-500 text-sm italic">No text — rating only</p>
+                {/if}
+                <p class="text-xs text-gray-500">Submitted {new Date(review.createdAt).toLocaleDateString()}</p>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <button
+                  onclick={() => moderateReview(review.id, true)}
+                  class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm transition-colors"
+                >
+                  Approve
+                </button>
+                <button
+                  onclick={() => deleteReview(review.id)}
+                  class="bg-red-700 hover:bg-red-800 text-white px-3 py-1.5 rounded text-sm transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+  {:else}
+
   <!-- Filters -->
   <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,4 +408,6 @@
       <div class="text-sm opacity-80">{reviewQueue.filter(i => i.reviewType === ReviewType.TECHNICAL_QA).length} pending</div>
     </button>
   </div>
+
+  {/if}
 </div>

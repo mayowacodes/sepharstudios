@@ -1,7 +1,7 @@
 import { kidsMovies } from '$lib/data/kidsmovies';
 import { kidsShows } from '$lib/data/kidsshows';
 import { kidsDocumentaries } from '$lib/data/kidsdocumentaries';
-import { teenagersMovies } from '$lib/data/teenagersMovies';
+import { teenagersMovies } from '$lib/data/teenMovies';
 import { teenagersShows } from '$lib/data/teenagersShows';
 import { teenagersDocumentaries } from '$lib/data/teenagersDocumentaries';
 

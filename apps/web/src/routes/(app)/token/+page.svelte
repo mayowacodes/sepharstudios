@@ -26,6 +26,14 @@
   let stcBalance = $state('0');
   let usdcBalance = $state('0');
   let cooldownStatus = $state<{ secondsRemaining: number; nextCooldownDays: number } | null>(null);
+  let stcRedeemAmount = $state('500'); // default until loaded from chain
+  let stakingInfo = $state<{ amount: string; lockPeriod: number; discountTier: number; isUnlocked: boolean } | null>(null);
+  let topUpAmount = $state('');
+  let isTopUpApproving = $state(false);
+  let isTopUpStaking = $state(false);
+  let topUpNeedsApproval = $state(true);
+  let topUpSuccess = $state('');
+  let topUpError = $state('');
 
   let isLoadingPool = $state(true);
   let isLoadingBalances = $state(false);
@@ -80,12 +88,16 @@
     if (!browser) return;
     isLoadingPool = true;
     try {
-      const info = await tokenAMM.getPoolInfo();
+      const [info, redeemAmt] = await Promise.all([
+        tokenAMM.getPoolInfo(),
+        subscriptionContract.getSTCSubscriptionAmount().catch(() => '500')
+      ]);
       poolPrice = parseFloat(info.currentPrice).toFixed(6);
       poolStcBalance = parseFloat(info.stcBalance).toLocaleString(undefined, { maximumFractionDigits: 0 });
       poolUsdcBalance = parseFloat(info.usdcBalance).toLocaleString(undefined, { maximumFractionDigits: 2 });
       stcReserveRaw = parseUnits(info.stcBalance, 18);
       usdcReserveRaw = parseUnits(info.usdcBalance, 6);
+      stcRedeemAmount = parseFloat(redeemAmt).toLocaleString(undefined, { maximumFractionDigits: 0 });
       updateEstimate();
     } catch (e) {
       console.error('Pool load error:', e);
@@ -98,13 +110,15 @@
   async function loadBalances(addr: string) {
     isLoadingBalances = true;
     try {
-      const [stc, usdc] = await Promise.all([
+      const [stc, usdc, stakeData, status] = await Promise.all([
         stcToken.balanceOf(addr),
-        usdcToken.balanceOf(addr)
+        usdcToken.balanceOf(addr),
+        stcToken.getStakingInfo(addr),
+        subscriptionContract.getSTCCooldownStatus(addr)
       ]);
       stcBalance = parseFloat(stc).toLocaleString(undefined, { maximumFractionDigits: 2 });
       usdcBalance = parseFloat(usdc).toFixed(2);
-      const status = await subscriptionContract.getSTCCooldownStatus(addr);
+      stakingInfo = stakeData;
       cooldownStatus = status;
     } catch (e) {
       console.error('Balance load error:', e);
@@ -112,6 +126,52 @@
       isLoadingBalances = false;
     }
   }
+
+  async function handleTopUpApprove() {
+    if (!topUpAmount || Number(topUpAmount) <= 0) return;
+    topUpError = '';
+    isTopUpApproving = true;
+    try {
+      await stcToken.approve(stcToken.contractAddress(), topUpAmount);
+      topUpNeedsApproval = false;
+    } catch (e: any) {
+      topUpError = e?.message?.includes('rejected') ? 'Transaction cancelled.' : 'Approval failed.';
+    } finally {
+      isTopUpApproving = false;
+    }
+  }
+
+  async function handleTopUpStake() {
+    if (!topUpAmount || Number(topUpAmount) <= 0) return;
+    topUpError = '';
+    topUpSuccess = '';
+    isTopUpStaking = true;
+    try {
+      await stcToken.addToStake(topUpAmount);
+      topUpSuccess = `Added ${topUpAmount} STC to your stake. Tier recalculated.`;
+      topUpAmount = '';
+      topUpNeedsApproval = true;
+      if ($walletAddress) await loadBalances($walletAddress);
+    } catch (e: any) {
+      if (e?.message?.includes('expired')) {
+        topUpError = 'Your stake has expired. Use Stake for Discount to create a new stake.';
+      } else if (e?.message?.includes('rejected')) {
+        topUpError = 'Transaction cancelled.';
+      } else {
+        topUpError = 'Top-up failed. Check your balance and try again.';
+      }
+    } finally {
+      isTopUpStaking = false;
+    }
+  }
+
+  $effect(() => {
+    if (topUpAmount && $walletAddress) {
+      stcToken.allowance($walletAddress, stcToken.contractAddress()).then(allowance => {
+        topUpNeedsApproval = parseFloat(allowance) < parseFloat(topUpAmount || '0');
+      }).catch(() => { topUpNeedsApproval = true; });
+    }
+  });
 
   // --- Check allowance ---
   async function checkApproval() {
@@ -183,8 +243,9 @@
     try {
       // Step 1: Approve STC for subscription contract
       const allowance = await stcToken.allowance($walletAddress, subAddr);
-      if (parseFloat(allowance) < 200) {
-        await stcToken.approve(subAddr, '200');
+      const redeemAmt = stcRedeemAmount.replace(/,/g, '');
+      if (parseFloat(allowance) < parseFloat(redeemAmt)) {
+        await stcToken.approve(subAddr, redeemAmt);
       }
       // Step 2: Mint subscription
       await subscriptionContract.mintSubscriptionWithSTC();
@@ -194,7 +255,7 @@
       if (e?.message?.includes('cooldown')) {
         errorMsg = 'Cooldown active — check your remaining wait time below.';
       } else if (e?.message?.includes('Insufficient')) {
-        errorMsg = 'You need at least 200 STC to redeem a subscription.';
+        errorMsg = `You need at least ${stcRedeemAmount} STC to redeem a subscription.`;
       } else if (e?.message?.includes('rejected')) {
         errorMsg = 'Transaction cancelled.';
       } else {
@@ -473,10 +534,10 @@
             <div>
               <p class="font-semibold mb-1 flex items-center gap-2">
                 <Coins class="h-4 w-4 text-[#FFBF00]" />
-                Redeem 200 STC → 1 Free Month
+                Redeem {stcRedeemAmount} STC → 1 Free Month
               </p>
               <p class="text-sm text-white/55 leading-relaxed">
-                Spend 200 STC for one month Basic access. Cooldown: 100 days after 1st use, 200 days after 2nd, alternating. STC returns to platform pool.
+                Spend {stcRedeemAmount} STC for one month Basic access. Cooldown: 100 days after 1st use, 200 days after 2nd, alternating. STC returns to platform pool.
               </p>
               {#if $isConnected && cooldownStatus !== null}
                 <p class="text-xs mt-2 {cooldownStatus.secondsRemaining === 0 ? 'text-green-400' : 'text-amber-400'}">
@@ -601,7 +662,7 @@
               </div>
               <div>
                 <p class="font-medium">Free subscription</p>
-                <p class="text-white/45 text-xs">200 STC = 1 month Basic</p>
+                <p class="text-white/45 text-xs">{stcRedeemAmount} STC = 1 month Basic</p>
               </div>
             </div>
             <div class="flex items-start gap-3">
@@ -618,6 +679,59 @@
             </Button>
           </div>
         </div>
+
+        <!-- Top Up Stake — visible when user has active stake + unstaked STC -->
+        {#if $isConnected && stakingInfo && parseFloat(stakingInfo.amount) > 0 && !stakingInfo.isUnlocked}
+          <div class="rounded-2xl border border-purple-500/30 bg-purple-500/5 backdrop-blur-xl p-5">
+            <h3 class="font-semibold mb-1 text-sm text-purple-300 uppercase tracking-wider flex items-center gap-2">
+              <Lock class="h-4 w-4" /> Top Up Stake
+            </h3>
+            <p class="text-xs text-white/45 mb-3">
+              Add more STC to your existing stake to upgrade your discount tier without waiting for lock expiry.
+            </p>
+            <div class="mb-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white/60 space-y-1">
+              <div class="flex justify-between"><span>Staked</span><span class="text-white/80 font-medium">{parseFloat(stakingInfo.amount).toLocaleString(undefined, {maximumFractionDigits: 0})} STC</span></div>
+              <div class="flex justify-between"><span>Tier</span><span class="text-purple-300 font-medium">Tier {stakingInfo.discountTier} ({stakingInfo.discountTier === 1 ? 10 : stakingInfo.discountTier === 2 ? 20 : stakingInfo.discountTier === 3 ? 35 : stakingInfo.discountTier === 4 ? 50 : 0}% off)</span></div>
+              <div class="flex justify-between"><span>Unstaked balance</span><span class="text-white/80 font-medium">{stcBalance} STC</span></div>
+            </div>
+            <input
+              type="number"
+              placeholder="Amount to add"
+              bind:value={topUpAmount}
+              min="0"
+              class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none mb-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            {#if topUpError}
+              <div class="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400 mb-2">
+                <AlertCircle class="h-3.5 w-3.5 shrink-0" /> {topUpError}
+              </div>
+            {/if}
+            {#if topUpSuccess}
+              <div class="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs text-green-400 mb-2">
+                <CheckCircle2 class="h-3.5 w-3.5 shrink-0" /> {topUpSuccess}
+              </div>
+            {/if}
+            {#if !topUpAmount || Number(topUpAmount) <= 0}
+              <button disabled class="w-full rounded-lg bg-purple-500/20 text-purple-300/40 text-sm font-medium py-2 cursor-not-allowed">Enter amount</button>
+            {:else if topUpNeedsApproval}
+              <button
+                onclick={handleTopUpApprove}
+                disabled={isTopUpApproving}
+                class="w-full rounded-lg bg-amber-500 hover:bg-amber-500/90 text-black text-sm font-semibold py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {#if isTopUpApproving}<Loader2 class="h-4 w-4 animate-spin" /> Approving...{:else}Step 1: Approve STC{/if}
+              </button>
+            {:else}
+              <button
+                onclick={handleTopUpStake}
+                disabled={isTopUpStaking}
+                class="w-full rounded-lg bg-purple-500 hover:bg-purple-500/90 text-white text-sm font-semibold py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {#if isTopUpStaking}<Loader2 class="h-4 w-4 animate-spin" /> Adding to stake...{:else}Step 2: Top Up Stake{/if}
+              </button>
+            {/if}
+          </div>
+        {/if}
 
       </div>
     </div>

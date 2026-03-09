@@ -45,7 +45,7 @@
   const user = $derived(page.data.user);
 </script>
 
-<div class="relative overflow-hidden min-h-screen bg-[var(--surface-charcoal)] text-white">
+<div class="relative overflow-hidden min-h-screen bg-var(--surface-charcoal) text-white">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div>
   <main class="w-full max-w-7xl mx-auto px-6 md:px-8 py-10 relative z-10">
     <section class="relative text-center space-y-4 pb-10 max-w-4xl mx-auto">
@@ -61,7 +61,7 @@
     {#if featuredShow}
       <section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 surface-glass">
         <img
-          src={featuredShow.backdrop_url || featuredShow.thumbnail}
+          src={featuredShow.backdropUrl || featuredShow.thumbnail}
           alt={featuredShow.title}
           class="absolute inset-0 h-full w-full object-cover opacity-40"
         />
@@ -80,12 +80,9 @@
               {#if featuredShow.quality}<span>{featuredShow.quality}</span>{/if}
             </div>
             <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]">
+              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredShow.id}">
                 <PlayCircle class="mr-2 h-5 w-5" />
                 Watch Now
-              </Button>
-              <Button size="lg" variant="outline" class="border-white/20 text-white hover:bg-white/10">
-                + My List
               </Button>
             </div>
           </div>

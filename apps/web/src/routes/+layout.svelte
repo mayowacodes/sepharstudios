@@ -3,8 +3,18 @@
 	import { Toaster } from 'svelte-sonner';
 	import { ModeWatcher } from 'mode-watcher';
 	import { SiteMeta } from '$lib/constants';
-	
+	import { onMount } from 'svelte';
+	import PWAInstallPrompt from '$lib/components/widgets/PWAInstallPrompt.svelte';
+
 	let { children } = $props();
+
+	onMount(() => {
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js').catch(() => {
+				// SW registration failed — offline downloads will not work
+			});
+		}
+	});
 </script>
 
 <svelte:head>
@@ -30,6 +40,7 @@
 </svelte:head>
 
 <Toaster richColors position="top-center" />
-<ModeWatcher disableTransitions={true} />
+<ModeWatcher defaultMode="dark" disableTransitions={true} />
+<PWAInstallPrompt />
 
 {@render children?.()}

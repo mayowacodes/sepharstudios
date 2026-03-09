@@ -402,6 +402,41 @@
                 </div>
               </div>
 
+              <!-- STC Token Revenue Split Disclosure (Fix 3 — Required) -->
+              <div class="bg-yellow-600/20 border border-yellow-500 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-white mb-3">🪙 STC Token Payments — Important Notice</h3>
+                <p class="text-yellow-200 text-sm mb-3">
+                  Sephar Studios offers viewers two ways to pay for subscriptions: <strong>cash payments</strong> (card/USDC)
+                  and <strong>STC token redemptions</strong>. These work differently for creator revenue:
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div class="bg-green-600/20 border border-green-600/40 rounded p-3">
+                    <h4 class="text-green-300 font-semibold text-sm mb-2">Cash Payments (Card / USDC)</h4>
+                    <ul class="text-green-200 text-xs space-y-1">
+                      <li>✅ Revenue split fires on-chain automatically</li>
+                      <li>✅ 30% distributed to creators proportionally</li>
+                      <li>✅ 8% triggers STC buyback and burn</li>
+                      <li>✅ You earn from every paying subscriber</li>
+                    </ul>
+                  </div>
+                  <div class="bg-orange-600/20 border border-orange-600/40 rounded p-3">
+                    <h4 class="text-orange-300 font-semibold text-sm mb-2">STC Token Redemptions</h4>
+                    <ul class="text-orange-200 text-xs space-y-1">
+                      <li>⚠️ No cash revenue is generated for creators</li>
+                      <li>⚠️ Revenue split contract is NOT called</li>
+                      <li>⚠️ STC redemptions are a loyalty/rewards mechanism</li>
+                      <li>⚠️ Similar to airline miles — no monetary payout</li>
+                    </ul>
+                  </div>
+                </div>
+                <p class="text-yellow-200 text-xs">
+                  By accepting this agreement, you acknowledge that when viewers redeem STC tokens for subscription access,
+                  you will not receive a revenue share from those redemptions. This is a deliberate platform design —
+                  STC tokens are a viewer loyalty reward, not a cash payment instrument.
+                  Cash subscriptions (card, USDC) continue to pay creators as described in the revenue sharing terms above.
+                </p>
+              </div>
+
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
                 <h3 class="text-lg font-bold text-white mb-3">💳 Payment Terms</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

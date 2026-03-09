@@ -76,12 +76,12 @@ declare module '$env/static/private' {
 	export const CACHE_REDIS_SAVE_INSTANCES: string;
 	export const EMAIL_WEBHOOK: string;
 	export const ALLUSERSPROFILE: string;
+	export const ANTIGRAVITY_CLI_ALIAS: string;
 	export const APPDATA: string;
-	export const BUN_INSPECT_CONNECT_TO: string;
+	export const BUNDLED_DEBUGPY_PATH: string;
 	export const ChocolateyInstall: string;
 	export const ChocolateyLastPathUpdate: string;
 	export const CHROME_CRASHPAD_PIPE_NAME: string;
-	export const CLAUDE_CODE_SSE_PORT: string;
 	export const COLORTERM: string;
 	export const CommonProgramFiles: string;
 	export const CommonProgramW6432: string;
@@ -123,6 +123,7 @@ declare module '$env/static/private' {
 	export const PSModulePath: string;
 	export const PUBLIC: string;
 	export const PWD: string;
+	export const PYDEVD_DISABLE_FILE_VALIDATION: string;
 	export const PYTHONSTARTUP: string;
 	export const PYTHON_BASIC_REPL: string;
 	export const SESSIONNAME: string;
@@ -137,6 +138,7 @@ declare module '$env/static/private' {
 	export const USERNAME: string;
 	export const USERPROFILE: string;
 	export const VITE_USER_NODE_ENV: string;
+	export const VSCODE_DEBUGPY_ADAPTER_ENDPOINTS: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
@@ -223,12 +225,12 @@ declare module '$env/dynamic/private' {
 		CACHE_REDIS_SAVE_INSTANCES: string;
 		EMAIL_WEBHOOK: string;
 		ALLUSERSPROFILE: string;
+		ANTIGRAVITY_CLI_ALIAS: string;
 		APPDATA: string;
-		BUN_INSPECT_CONNECT_TO: string;
+		BUNDLED_DEBUGPY_PATH: string;
 		ChocolateyInstall: string;
 		ChocolateyLastPathUpdate: string;
 		CHROME_CRASHPAD_PIPE_NAME: string;
-		CLAUDE_CODE_SSE_PORT: string;
 		COLORTERM: string;
 		CommonProgramFiles: string;
 		CommonProgramW6432: string;
@@ -270,6 +272,7 @@ declare module '$env/dynamic/private' {
 		PSModulePath: string;
 		PUBLIC: string;
 		PWD: string;
+		PYDEVD_DISABLE_FILE_VALIDATION: string;
 		PYTHONSTARTUP: string;
 		PYTHON_BASIC_REPL: string;
 		SESSIONNAME: string;
@@ -284,6 +287,7 @@ declare module '$env/dynamic/private' {
 		USERNAME: string;
 		USERPROFILE: string;
 		VITE_USER_NODE_ENV: string;
+		VSCODE_DEBUGPY_ADAPTER_ENDPOINTS: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
 		VSCODE_GIT_ASKPASS_NODE: string;

@@ -6,6 +6,7 @@ type DeployResult = Address | { address: Address };
 
 interface DeploymentAddresses {
   studioToken: Address;
+  founderVesting: Address;
   sepharSubscription: Address;
   creatorPayments: Address;
   tokenAMM: Address;
@@ -44,6 +45,7 @@ async function main() {
 
   const deploymentAddresses: DeploymentAddresses = {
     studioToken: "0x" as Address,
+    founderVesting: "0x" as Address,
     sepharSubscription: "0x" as Address,
     creatorPayments: "0x" as Address,
     tokenAMM: "0x" as Address,
@@ -84,6 +86,28 @@ async function main() {
     usdcAddress
   ]));
   console.log("✅ Studio Token deployed to:", deploymentAddresses.studioToken);
+
+  // 1b. Deploy FounderVesting and transfer 300M platform dev allocation into it
+  // Fix 1: Locks the PLATFORM_DEVELOPMENT_ALLOCATION (300M STC) with:
+  //   - 6-month cliff (no tokens release before this)
+  //   - 48-month total linear vesting (~6.25M STC/month released after cliff)
+  console.log("\n📝 Deploying FounderVesting (300M STC, 6-month cliff, 48-month vesting)...");
+  deploymentAddresses.founderVesting = toAddress(await viem.deployContract("FounderVesting", [
+    deploymentAddresses.studioToken,
+    platformTreasury, // beneficiary = founding team multisig / treasury
+    6,  // cliffMonths
+    48  // vestingMonths
+  ]));
+  console.log("✅ FounderVesting deployed to:", deploymentAddresses.founderVesting);
+
+  // Transfer 300M platform dev tokens from platformTreasury → FounderVesting
+  const PLATFORM_DEV_ALLOCATION = BigInt("300000000000000000000000000"); // 300M * 10^18
+  const stcForVesting = await viem.getContractAt("StudioToken", deploymentAddresses.studioToken);
+  // Approve + deposit via FounderVesting.deposit()
+  await stcForVesting.write.approve([deploymentAddresses.founderVesting, PLATFORM_DEV_ALLOCATION]);
+  const vestingContract = await viem.getContractAt("FounderVesting", deploymentAddresses.founderVesting);
+  await vestingContract.write.deposit([PLATFORM_DEV_ALLOCATION]);
+  console.log("✅ 300M STC transferred to FounderVesting (cliff: 6 months, duration: 48 months)");
 
   // 2. Deploy Token AMM
   console.log("\n📝 Deploying Token AMM...");
@@ -146,6 +170,7 @@ async function main() {
   console.log("📋 Deployment Summary:");
   console.log(`- Network: ${networkName} (${chainId})`);
   console.log(`- Studio Token: ${deploymentAddresses.studioToken}`);
+  console.log(`- Founder Vesting: ${deploymentAddresses.founderVesting}`);
   console.log(`- Token AMM: ${deploymentAddresses.tokenAMM}`);
   console.log(`- Subscription NFT: ${deploymentAddresses.sepharSubscription}`);
   console.log(`- Creator Payments: ${deploymentAddresses.creatorPayments}`);

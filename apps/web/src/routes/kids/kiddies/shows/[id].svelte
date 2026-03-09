@@ -5,5 +5,5 @@
 
   $: id = page.params.id;
   $: dataset = resolveDataset('kiddies', 'shows');
-  $: openMediaById(id, dataset);
+  $: if (id) openMediaById(id, dataset);
 </script>

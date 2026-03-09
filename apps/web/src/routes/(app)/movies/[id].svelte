@@ -1,13 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { resolveAdultDataset } from '$lib/utils/resolveAdultDataset';
-  import { openMediaById } from '$lib/utils/openMediaById';
-
-  $: id = page.params.id;
+  import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
 
   onMount(() => {
-    const dataset = resolveAdultDataset('movies'); // <- This should return your movie dataset
-    openMediaById(id, dataset);
+    // Redirect to the unified watch page which uses real DB + VideoPlayer
+    goto(`/watch/${page.params.id}`, { replaceState: true });
   });
 </script>

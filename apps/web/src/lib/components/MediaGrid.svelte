@@ -3,7 +3,19 @@
   import MovieCard from './MovieCard.svelte';
   import { mediaModalStore } from '$lib/stores/mediaModalStore';
 
-  export let sections: MediaSection[] = [];
+  interface Props {
+    sections?: MediaSection[];
+    mediaItems?: MediaItem[];
+    title?: string;
+  }
+
+  let { sections = [], mediaItems = [], title = 'Featured' }: Props = $props();
+
+  const resolvedSections = $derived.by(() => {
+    if (sections.length > 0) return sections;
+    if (mediaItems.length > 0) return [{ title, items: mediaItems }];
+    return [];
+  });
 
   const openModal = (media: MediaItem) => {
     $mediaModalStore = {...$mediaModalStore, isOpen: true, media}
@@ -11,7 +23,7 @@
 </script>
 
 <div class="space-y-10">
-  {#each sections as section}
+  {#each resolvedSections as section}
     <section>
       <div class="flex items-center gap-3 mb-3 px-4">
         <span class="h-5 w-1 rounded-full bg-[#FFBF00] shadow-[0_0_12px_rgba(255,191,0,0.4)]"></span>

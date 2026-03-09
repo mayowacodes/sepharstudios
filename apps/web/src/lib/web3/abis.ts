@@ -11,6 +11,7 @@ export const STUDIO_CHAIN_TOKEN_ABI = [
 
   // Staking functions
   'function stakeForDiscount(uint256 amount, uint256 lockPeriod)',
+  'function addToStake(uint256 additionalAmount)',
   'function unstake()',
   'function getUserDiscount(address user) view returns (uint256)',
   'function getStakingInfo(address user) view returns (uint256 amount, uint256 stakingTime, uint256 lockPeriod, uint256 discountTier, bool isUnlocked)',

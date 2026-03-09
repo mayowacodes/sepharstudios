@@ -13,7 +13,7 @@ type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends 
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageServerParentData = Omit<EnsureDefined<import('../$types.js').LayoutServerData>, keyof LayoutServerData> & EnsureDefined<LayoutServerData>;
 type PageParentData = Omit<EnsureDefined<import('../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/(app)" | "/(app)/about" | "/(app)/archive" | "/(app)/careers" | "/(app)/contact" | "/(app)/documentaries" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/(app)/mayowa" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(app)/shows" | "/(app)/sponsorships" | "/(app)/terms" | "/(app)/token"
+type LayoutRouteId = RouteId | "/(app)" | "/(app)/about" | "/(app)/archive" | "/(app)/careers" | "/(app)/checkout" | "/(app)/contact" | "/(app)/device-support" | "/(app)/documentaries" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/(app)/mayowa" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(app)/shows" | "/(app)/sponsorships" | "/(app)/terms" | "/(app)/token"
 type LayoutParams = RouteParams & {  }
 type LayoutParentData = EnsureDefined<import('../$types.js').LayoutData>;
 

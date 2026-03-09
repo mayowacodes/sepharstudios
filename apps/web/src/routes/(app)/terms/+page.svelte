@@ -42,6 +42,10 @@
     {
       title: "10. Termination",
       content: `We reserve the right to terminate or suspend accounts that violate these terms or for any other reason at our discretion.`
+    },
+    {
+      title: "11. Pay-Per-View (PPV) Purchases & Refunds",
+      content: `PPV purchases are one-time payments that unlock access to the specific title. PPV purchases are non-refundable once playback has started. If playback never starts due to a verified platform-side failure, you may request a refund within 48 hours of purchase. Approved refunds are returned to the original Paystack payment method.`
     }
   ];
 </script>

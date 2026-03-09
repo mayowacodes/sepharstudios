@@ -55,7 +55,7 @@
         <h2 class="text-2xl font-semibold">Contact Information</h2>
 
         <div class="grid gap-4 md:grid-cols-2">
-          {#if !data?.session?.user}
+          {#if !data?.session}
             <div class="space-y-2">
               <label for="name" class="text-sm font-medium">Full Name</label>
               <Input id="name" name="name" required />

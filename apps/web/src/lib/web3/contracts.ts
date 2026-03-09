@@ -75,6 +75,18 @@ export class STCTokenContract {
     })
   }
 
+  async addToStake(additionalAmount: string) {
+    const account = getAccount(config)
+    if (!account.address) throw new Error('No account connected')
+
+    return await writeContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: STUDIO_CHAIN_TOKEN_ABI,
+      functionName: 'addToStake',
+      args: [parseUnits(additionalAmount, 18)]
+    })
+  }
+
   async unstake() {
     const account = getAccount(config)
     if (!account.address) throw new Error('No account connected')
@@ -211,6 +223,16 @@ export class SubscriptionContract {
       functionName: 'mintSubscriptionWithSTC',
       args: []
     })
+  }
+
+  async getSTCSubscriptionAmount(): Promise<string> {
+    const amount = await readContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: STUDIO_CHAIN_SUBSCRIPTION_ABI,
+      functionName: 'stcSubscriptionAmount',
+      args: []
+    })
+    return formatUnits(amount as bigint, 18)
   }
 
   async getSTCCooldownStatus(address: string) {

@@ -26,13 +26,13 @@
     className
   )}
 >
-  <img src="/asl-logo.png" alt="ASL Logo" class="h-8 w-auto object-contain" />
+  <img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
 
   {#key user?.id}
     <span
       in:fly={{ y: 8, duration: 200 }}
       out:fade={{ duration: 150 }}
-      class="font-extrabold tracking-tight text-base sm:text-lg md:text-xl text-neutral-900 dark:text-white"
+      class="font-extrabold tracking-tight text-base sm:text-lg md:text-xl text-white"
     >
       {isAuthenticated ? 'My Studios' : 'Sephar Studios'}
     </span>

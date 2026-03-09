@@ -66,6 +66,9 @@ export async function handle({ event, resolve }) {
     event.locals.user = undefined;
   }
 
+  // 5. Active Profile — read from cookie set on profile selection
+  event.locals.activeProfileId = event.cookies.get('activeProfileId') || undefined;
+
   const user = event.locals.user;
 
   // 5. RBAC & Platform Enforcement

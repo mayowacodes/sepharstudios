@@ -34,7 +34,7 @@
     {#if file}
       <div class="flex items-center gap-2 text-sm border rounded-md p-2">
         {file.name}
-        <Button size="icon" variant="ghost" on:click={removeFile}>
+        <Button size="icon" variant="ghost" onclick={removeFile}>
           <X size={16} />
         </Button>
       </div>

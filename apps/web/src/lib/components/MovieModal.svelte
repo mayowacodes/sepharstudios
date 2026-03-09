@@ -57,7 +57,7 @@
               videoId={$mediaModalStore.media.id}
               videoUrl={$mediaModalStore.media.trailerUrl || $mediaModalStore.media.link}
               title={$mediaModalStore.media.title}
-              thumbnailUrl={$mediaModalStore.media.backdrop_url}
+              thumbnailUrl={$mediaModalStore.media.backdrop_url ?? undefined}
             />
           </div>
           <div class="flex items-center gap-3">

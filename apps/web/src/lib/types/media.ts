@@ -2,34 +2,41 @@
 export type MediaItem = {
   id: string;
   title: string;
-  description: string;
-  thumbnail: string;
-  trailerUrl?: string;
-  link: string;
-  rating?: string;
-  duration?: string;
-  quality?: string;
-  year?: string;
-  genres?: string[];
-  backdrop_url?: string;
-  original_language?: string;
-  topics?: string[];
-  featured?: boolean;
+  description?: string | null;
+  thumbnail?: string | null;
+  trailerUrl?: string | null;
+  link?: string;
+  rating?: string | null;
+  duration?: string | null;
+  quality?: string | null;
+  year?: string | null;
+  genres?: string[] | null;
+  // camelCase (DB fields)
+  backdropUrl?: string | null;
+  posterUrl?: string | null;
+  releaseDate?: string | null;
+  voteAverage?: string | null;
+  voteCount?: string | null;
+  // legacy snake_case aliases (from old hardcoded data)
+  backdrop_url?: string | null;
+  poster_url?: string | null;
+  release_date?: string | null;
+  vote_average?: string | null;
+  vote_count?: string | null;
+  original_language?: string | null;
+  topics?: string[] | null;
+  featured?: boolean | null;
   overview?: string[];
-  popularity?: string;
-  poster_url?: string;
-  release_date?: string;
-  vote_average?: string;
-  vote_count?: string;
-  keywords?: string;
+  popularity?: string | null;
+  keywords?: string | string[] | null;
   keywords_list?: string[];
   keyword_ids?: string;
   genres_list?: string[];
-  bibleReference?: string; // Optional Bible verse related to content
-  ageRating?: string;   // 'All' | '7+' | '10+' | '12+' | '16+' | '18+';
-  slug?: string;
-  language?: string;
-  isNew?: boolean;
+  bibleReference?: string | null;
+  ageRating?: string | null;
+  slug?: string | null;
+  language?: string | null;
+  isNew?: boolean | null;
 };
 
 export type MediaSection = {

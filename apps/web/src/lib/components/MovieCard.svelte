@@ -7,7 +7,7 @@
 
   const openModal = (media: MediaItem) => {
     mediaModalStore.open(media);
-    goto(`/movies/${media.id}`, { replaceState: false });
+    goto(`/watch/${media.id}`, { replaceState: false });
   };
 
   export let movie: MediaItem;
@@ -35,6 +35,7 @@
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
+      onClick?.();
       openModal(movie);
     }
   };
@@ -50,10 +51,13 @@
   class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none hover:scale-[1.02]"
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
-  on:click={() => openModal(movie)}
+  on:click={() => {
+    onClick?.();
+    openModal(movie);
+  }}
   on:keydown={handleKeyDown}
 >
-  <div class="relative aspect-[2/3] bg-muted rounded-2xl overflow-hidden surface-card">
+  <div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">
     {#if isHovered && movie.trailerUrl}
       <video
         bind:this={videoRef}

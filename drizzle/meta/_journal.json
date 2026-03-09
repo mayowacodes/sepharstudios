@@ -43,6 +43,13 @@
       "when": 1771103495055,
       "tag": "0005_elite_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772149200000,
+      "tag": "0006_governance_persistence",
+      "breakpoints": true
     }
   ]
 }

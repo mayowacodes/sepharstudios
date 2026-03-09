@@ -7,11 +7,36 @@
   import Logo from '$lib/components/Logo.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Sheet, SheetTrigger, SheetContent } from '$lib/components/ui/sheet';
-  import { Menu } from '@lucide/svelte';
+  import { Menu, Download } from '@lucide/svelte';
   import User from '../widgets/User.svelte';
   import type { User as UserType } from '$lib/auth';
 
   export const isNotificationOpen = writable(false);
+
+  // PWA install
+  let canInstall = $state(false);
+  let deferredInstallPrompt = $state<any>(null);
+
+  onMount(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      canInstall = true;
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  });
+
+  async function triggerInstall() {
+    if (deferredInstallPrompt) {
+      await deferredInstallPrompt.prompt();
+      deferredInstallPrompt = null;
+      canInstall = false;
+    } else {
+      window.location.href = '/device-support#install';
+    }
+  }
 
   const user = $derived(page.data.user as UserType | undefined);
   const isAuthenticated = $derived(!!user);
@@ -84,6 +109,14 @@
             <a href="/settings" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Settings</a>
             <a href="/account" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Account</a>
           {/if}
+          <hr class="border-white/10" />
+          <button
+            onclick={triggerInstall}
+            class="flex items-center gap-2 text-lg font-semibold text-[#FFBF00] hover:text-[#FFBF00]/80 w-full text-left"
+          >
+            <Download class="w-4 h-4" />
+            Install App
+          </button>
         </SheetContent>
       </Sheet>
 
@@ -99,7 +132,7 @@
         {#each navItems as { href, label }}
           <a
             href={href}
-            class={`relative text-sm font-medium transition-colors hover:text-white after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${isActive(href) ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}
+            class={`relative inline-flex items-center h-9 text-sm font-medium leading-none transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${isActive(href) ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}
           >
             {label}
           </a>
@@ -107,7 +140,7 @@
 
         <!-- Accessible Dropdown -->
         <details class="relative group" bind:this={kidsMenuRef}>
-          <summary class={`relative cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith('/kids/') ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}>Kids</summary>
+          <summary class={`relative inline-flex items-center h-9 leading-none cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith('/kids/') ? 'after:w-full text-white' : 'after:w-0 hover:after:w-full'}`}>Kids</summary>
           <div class="absolute left-0 mt-2 w-48 rounded-lg z-50 surface-glass border-white/10">
             <a 
               href="/kids/kiddies" 
@@ -142,13 +175,23 @@
         </details>
 
         {#if isAuthenticated}
-          <a href="/my-list" class="text-sm font-medium text-white/80 hover:text-white" aria-current={isActive('/my-list') ? 'page' : undefined}>My List</a>
-          <a href="/library" class="text-sm font-medium text-white/80 hover:text-white" aria-current={isActive('/library') ? 'page' : undefined}>Library</a>
+          <a href="/my-list" class="inline-flex items-center h-9 text-sm font-medium leading-none text-white/80 hover:text-white" aria-current={isActive('/my-list') ? 'page' : undefined}>My List</a>
+          <a href="/library" class="inline-flex items-center h-9 text-sm font-medium leading-none text-white/80 hover:text-white" aria-current={isActive('/library') ? 'page' : undefined}>Library</a>
         {/if}
       </nav>
     </div>
 
-    <div class="ml-auto">
+    <div class="ml-auto flex items-center gap-2">
+      {#if canInstall}
+        <button
+          onclick={triggerInstall}
+          title="Install Sephar Studios app"
+          class="hidden md:flex items-center gap-1.5 text-xs font-semibold text-[#FFBF00] hover:text-[#FFBF00]/80 border border-[#FFBF00]/30 hover:border-[#FFBF00]/60 px-3 py-1.5 rounded-full transition-colors"
+        >
+          <Download class="w-3.5 h-3.5" />
+          Install App
+        </button>
+      {/if}
       <User />
     </div>
   </div>

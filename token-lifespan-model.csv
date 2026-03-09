@@ -1,0 +1,6 @@
+Scenario,UserRewardsPool_STC,ActiveUsers,AvgRewardPerUserPerDay_STC,QualifyingReferrerRate,ReferralReward_STC,MaxMonthlyReferrals,AnnualRevenue_USD,BuybackPct,RecycleShareToRewards,STCPrice_USD,AnnualBaseRewardsOut_STC,AnnualReferralOut_STC,AnnualOut_STC,AnnualIn_STC,NetDepletion_STC,LifespanYears
+Conservative,1000000000,100000,1.5,0.02,10,5,5000000,0.08,1,0.02,=C2*D2*365,=C2*E2*F2*G2*12,=L2+M2,=(H2*I2*J2)/K2,=N2-O2,=IF(P2<=0,"Sustainable",B2/P2)
+Base,1000000000,300000,2,0.05,10,5,25000000,0.08,1,0.02,=C3*D3*365,=C3*E3*F3*G3*12,=L3+M3,=(H3*I3*J3)/K3,=N3-O3,=IF(P3<=0,"Sustainable",B3/P3)
+Growth,1000000000,800000,2.5,0.07,10,5,100000000,0.08,1,0.03,=C4*D4*365,=C4*E4*F4*G4*12,=L4+M4,=(H4*I4*J4)/K4,=N4-O4,=IF(P4<=0,"Sustainable",B4/P4)
+Heavy Usage Low Revenue,1000000000,500000,3,0.08,10,5,10000000,0.08,1,0.015,=C5*D5*365,=C5*E5*F5*G5*12,=L5+M5,=(H5*I5*J5)/K5,=N5-O5,=IF(P5<=0,"Sustainable",B5/P5)
+With Burns (Bad),1000000000,300000,2,0.05,10,5,25000000,0.08,0.3,0.02,=C6*D6*365,=C6*E6*F6*G6*12,=L6+M6,=(H6*I6*J6)/K6,=N6-O6,=IF(P6<=0,"Sustainable",B6/P6)

@@ -1,4 +1,4 @@
-import { toast as sonner } from 'sonner';
+import { toast as sonner } from 'svelte-sonner';
 
 export const toast = {
   success: (message: string) => sonner.success(message),

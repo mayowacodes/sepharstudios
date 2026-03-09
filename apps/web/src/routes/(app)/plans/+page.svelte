@@ -21,61 +21,63 @@
   let plans = $state<Plan[]>([
     {
       id: 'basic',
-      name: 'Basic NFT',
-      price: 9.99,
+      name: 'Basic',
+      price: 3,
       features: [
-        'Access to basic content',
         'HD streaming',
-        '1 device',
+        '1 screen at a time',
+        'Access to standard library',
+        'Download on 1 device',
         'Cancel anytime'
       ],
       nftBenefits: [
-        'Own your subscription as NFT',
-        'Transfer to family',
-        'Cross-platform access'
+        'Subscription NFT on Polygon',
+        'Earn 5 STC/day watching',
+        'Stake STC for up to 10% off'
       ]
     },
     {
-      id: 'standard',
-      name: 'Premium NFT',
-      price: 15.99,
+      id: 'premium',
+      name: 'Premium',
+      price: 10,
       features: [
-        'Access to premium content',
-        '4K streaming',
-        '2 devices',
-        'Download available',
+        '4K Ultra HD streaming',
+        '2 screens at a time',
+        'Full content library',
+        'Downloads on 2 devices',
+        'Offline viewing',
         'Cancel anytime'
       ],
       nftBenefits: [
         'Enhanced NFT benefits',
-        'Exclusive member rewards',
-        'Priority customer support',
-        'Early access to new features'
+        'Earn 5 STC/day watching',
+        'Stake STC for up to 50% off',
+        'Early access to new content'
       ],
       isPopular: true
     },
     {
-      id: 'premium',
-      name: 'Creator NFT',
-      price: 25.99,
+      id: 'creator',
+      name: 'Creator',
+      price: 15,
       features: [
-        'Access to all content',
-        '4K + HDR streaming',
-        '4 devices',
-        'Creator tools access',
-        'Early access content',
+        'Everything in Premium',
+        'Upload & publish content',
+        'Revenue share dashboard',
+        'Creator analytics',
+        'Priority support',
         'Cancel anytime'
       ],
       nftBenefits: [
-        'Exclusive NFT rewards',
-        'Creator community access',
-        'Revenue sharing opportunities',
-        'Governance voting rights'
+        'Creator NFT badge',
+        'Revenue share: 30-55% based on STC staked',
+        'Governance voting rights',
+        'Exclusive creator community'
       ]
     }
   ]);
 
-  let selectedPlan = $state<string>('standard');
+  let selectedPlan = $state<string>('premium');
   let isLoading = $state(false);
   let userDiscount = $state(0);
   let stakingAmount = $state('0');
@@ -136,8 +138,8 @@
 
   function getPlanIcon(planId: string) {
     switch (planId) {
-      case 'premium': return Crown;
-      case 'standard': return Star;
+      case 'creator': return Crown;
+      case 'premium': return Star;
       default: return Coins;
     }
   }
@@ -145,15 +147,19 @@
 
 <div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-7xl pt-32 pb-16">
   <div class="text-center space-y-4 mb-8">
-    <h1 class="text-3xl font-bold gradient-text">Choose Your NFT Subscription</h1>
+    <h1 class="text-3xl font-bold gradient-text">Choose Your Plan</h1>
     <p class="text-muted-foreground max-w-2xl mx-auto">
-      Own your subscription as an NFT. Get exclusive benefits, cross-platform access, and true ownership.
+      Start with 3 months free — no charge today. Cancel anytime before your trial ends.
       {#if userDiscount > 0}
         <Badge class="ml-2 bg-primary text-primary-foreground">
           {userDiscount}% Staking Discount Applied!
         </Badge>
       {/if}
     </p>
+    <div class="inline-flex items-center gap-2 bg-green-600/10 text-green-400 border border-green-600/20 rounded-full px-4 py-1.5 text-sm">
+      <Gift class="h-4 w-4" />
+      3 months free on all plans
+    </div>
   </div>
 
   <!-- Wallet Integration Section -->
@@ -258,7 +264,7 @@
             <ul class="space-y-2">
               {#each plan.features as feature}
                 <li class="flex items-center">
-                  <Check class="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                  <Check class="h-4 w-4 text-primary mr-2 shrink-0" />
                   <span class="text-sm">{feature}</span>
                 </li>
               {/each}
@@ -274,7 +280,7 @@
             <ul class="space-y-2">
               {#each plan.nftBenefits as benefit}
                 <li class="flex items-center">
-                  <Star class="h-3 w-3 text-secondary mr-2 flex-shrink-0" />
+                  <Star class="h-3 w-3 text-secondary mr-2 shrink-0" />
                   <span class="text-xs text-muted-foreground">{benefit}</span>
                 </li>
               {/each}
@@ -284,14 +290,9 @@
           <Button
             class="w-full"
             variant={plan.isPopular ? 'default' : 'outline'}
-            disabled={isLoading}
-            onclick={() => handleSubscribe(plan.id)}
+            href="/checkout?plan={plan.id}"
           >
-            {#if isLoading && selectedPlan === plan.id}
-              Processing...
-            {:else}
-              Subscribe & Get NFT
-            {/if}
+            Start Free Trial
           </Button>
         </CardContent>
       </Card>
@@ -325,6 +326,31 @@
           <p class="text-xs text-muted-foreground">Exclusive perks & rewards</p>
         </div>
       </div>
+    </div>
+
+    <!-- Staking discount table -->
+    <div>
+      <h2 class="text-xl font-bold mb-4 text-center">Staking Discounts</h2>
+      <p class="text-sm text-muted-foreground text-center mb-6">Lock STC tokens to reduce your monthly price. Earn STC free by watching — no purchase needed.</p>
+      <div class="overflow-hidden rounded-xl border border-border">
+        <table class="w-full text-sm">
+          <thead class="bg-muted/30">
+            <tr>
+              <th class="text-left px-4 py-3 text-muted-foreground font-medium">Tier</th>
+              <th class="text-left px-4 py-3 text-muted-foreground font-medium">Discount</th>
+              <th class="text-left px-4 py-3 text-muted-foreground font-medium">How to reach</th>
+              <th class="text-left px-4 py-3 text-muted-foreground font-medium">Price on $10/mo</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr><td class="px-4 py-3">Tier 1</td><td class="px-4 py-3 text-green-400">10% off</td><td class="px-4 py-3 text-muted-foreground">1,000+ STC locked 90d+</td><td class="px-4 py-3">$9</td></tr>
+            <tr><td class="px-4 py-3">Tier 2</td><td class="px-4 py-3 text-green-400">20% off</td><td class="px-4 py-3 text-muted-foreground">3,500+ STC or 1,000+ for 2yr</td><td class="px-4 py-3">$8</td></tr>
+            <tr><td class="px-4 py-3">Tier 3</td><td class="px-4 py-3 text-green-400">35% off</td><td class="px-4 py-3 text-muted-foreground">10,000+ STC or 3,500+ for 2yr</td><td class="px-4 py-3">$6.50</td></tr>
+            <tr><td class="px-4 py-3">Tier 4</td><td class="px-4 py-3 text-green-400">50% off</td><td class="px-4 py-3 text-muted-foreground">35,000+ STC or 10,000+ for 2yr</td><td class="px-4 py-3">$5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-muted-foreground mt-3 text-center">Tier 1 is reachable in ~200 days of watching at 5 STC/day — no purchase needed.</p>
     </div>
 
     <!-- FAQ / Additional Benefits -->

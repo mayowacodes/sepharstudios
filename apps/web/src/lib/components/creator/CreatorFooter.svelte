@@ -49,7 +49,7 @@
           onclick={goToMainSite}
           class="flex items-center gap-3 text-2xl font-bold text-white hover:text-purple-300 transition-colors text-left"
         >
-          <img src="/asl-logo.png" alt="ASL Logo" class="h-8 w-auto object-contain" />
+          <img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
           <span>Sephar Studios</span>
         </button>
         <p class="text-sm text-gray-300">

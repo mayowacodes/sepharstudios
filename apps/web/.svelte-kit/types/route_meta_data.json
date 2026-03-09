@@ -20,6 +20,10 @@
 	"/(app)/about": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(protected)/achievements": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin": [
 		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
@@ -38,6 +42,30 @@
 	],
 	"/(admin)/admin/dashboard": [
 		"src/routes/(admin)/admin/dashboard/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/create": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/emergency": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/execution": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/proposals": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/reports": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/roles": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/governance/treasury": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(admin)/admin/policies": [
@@ -61,11 +89,65 @@
 	"/(admin)/admin/workflow": [
 		"src/routes/+layout.server.ts"
 	],
+	"/api/achievements": [
+		"src/routes/api/achievements/+server.ts"
+	],
+	"/api/admin/content": [
+		"src/routes/api/admin/content/+server.ts"
+	],
+	"/api/admin/content/[id]/ppv": [
+		"src/routes/api/admin/content/[id]/ppv/+server.ts"
+	],
+	"/api/admin/content/[id]/publish": [
+		"src/routes/api/admin/content/[id]/publish/+server.ts"
+	],
+	"/api/admin/governance/approve": [
+		"src/routes/api/admin/governance/approve/+server.ts"
+	],
+	"/api/admin/governance/audit": [
+		"src/routes/api/admin/governance/audit/+server.ts"
+	],
+	"/api/admin/governance/emergency/pause": [
+		"src/routes/api/admin/governance/emergency/pause/+server.ts"
+	],
+	"/api/admin/governance/execute": [
+		"src/routes/api/admin/governance/execute/+server.ts"
+	],
+	"/api/admin/governance/proposals": [
+		"src/routes/api/admin/governance/proposals/+server.ts"
+	],
+	"/api/admin/governance/queue": [
+		"src/routes/api/admin/governance/queue/+server.ts"
+	],
+	"/api/admin/governance/reports": [
+		"src/routes/api/admin/governance/reports/+server.ts"
+	],
+	"/api/admin/governance/roles": [
+		"src/routes/api/admin/governance/roles/+server.ts"
+	],
+	"/api/admin/governance/status": [
+		"src/routes/api/admin/governance/status/+server.ts"
+	],
+	"/api/admin/governance/timelock-queue": [
+		"src/routes/api/admin/governance/timelock-queue/+server.ts"
+	],
+	"/api/admin/governance/treasury": [
+		"src/routes/api/admin/governance/treasury/+server.ts"
+	],
+	"/api/admin/reviews": [
+		"src/routes/api/admin/reviews/+server.ts"
+	],
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/content/kids": [
+		"src/routes/api/content/kids/+server.ts"
+	],
 	"/api/creator/content": [
 		"src/routes/api/creator/content/+server.ts"
+	],
+	"/api/downloads/manifest/[id]": [
+		"src/routes/api/downloads/manifest/[id]/+server.ts"
 	],
 	"/api/encoder/presigned": [
 		"src/routes/api/encoder/presigned/+server.ts"
@@ -76,8 +158,86 @@
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
 	],
+	"/api/kids/quiz/generate": [
+		"src/routes/api/kids/quiz/generate/+server.ts"
+	],
+	"/api/kids/quiz/submit": [
+		"src/routes/api/kids/quiz/submit/+server.ts"
+	],
+	"/api/milestones": [
+		"src/routes/api/milestones/+server.ts"
+	],
+	"/api/notifications/preferences": [
+		"src/routes/api/notifications/preferences/+server.ts"
+	],
+	"/api/parental/report": [
+		"src/routes/api/parental/report/+server.ts"
+	],
+	"/api/payment/initialize": [
+		"src/routes/api/payment/initialize/+server.ts"
+	],
+	"/api/payment/verify": [
+		"src/routes/api/payment/verify/+server.ts"
+	],
+	"/api/payment/webhook": [
+		"src/routes/api/payment/webhook/+server.ts"
+	],
+	"/api/playlists": [
+		"src/routes/api/playlists/+server.ts"
+	],
+	"/api/playlists/[id]/items": [
+		"src/routes/api/playlists/[id]/items/+server.ts"
+	],
+	"/api/ppv/check-access/[contentId]": [
+		"src/routes/api/ppv/check-access/[contentId]/+server.ts"
+	],
+	"/api/ppv/purchase": [
+		"src/routes/api/ppv/purchase/+server.ts"
+	],
+	"/api/profiles": [
+		"src/routes/api/profiles/+server.ts"
+	],
+	"/api/profiles/[id]": [
+		"src/routes/api/profiles/[id]/+server.ts"
+	],
+	"/api/profiles/[id]/pin": [
+		"src/routes/api/profiles/[id]/pin/+server.ts"
+	],
+	"/api/recommendations": [
+		"src/routes/api/recommendations/+server.ts"
+	],
+	"/api/reviews": [
+		"src/routes/api/reviews/+server.ts"
+	],
+	"/api/reviews/[id]/helpful": [
+		"src/routes/api/reviews/[id]/helpful/+server.ts"
+	],
+	"/api/subscriptions/add-family": [
+		"src/routes/api/subscriptions/add-family/+server.ts"
+	],
+	"/api/subscriptions/cancel": [
+		"src/routes/api/subscriptions/cancel/+server.ts"
+	],
+	"/api/subscriptions/change-plan": [
+		"src/routes/api/subscriptions/change-plan/+server.ts"
+	],
+	"/api/subscriptions/send-otp": [
+		"src/routes/api/subscriptions/send-otp/+server.ts"
+	],
+	"/api/subscriptions/start-trial": [
+		"src/routes/api/subscriptions/start-trial/+server.ts"
+	],
+	"/api/subscriptions/status": [
+		"src/routes/api/subscriptions/status/+server.ts"
+	],
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
+	],
+	"/api/watch/history": [
+		"src/routes/api/watch/history/+server.ts"
+	],
+	"/api/watch/progress": [
+		"src/routes/api/watch/progress/+server.ts"
 	],
 	"/api/watch/[videoId]": [
 		"src/routes/api/watch/[videoId]/+server.ts"
@@ -101,6 +261,9 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/careers": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/checkout": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/contact": [
@@ -162,6 +325,9 @@
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/device-support": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/documentaries": [
 		"src/routes/(app)/documentaries/+page.server.ts",
 		"src/routes/+layout.server.ts"
@@ -192,6 +358,10 @@
 		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/kids/kiddies/bible-quiz": [
+		"src/routes/kids/kiddies/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/kids/kiddies/documentaries": [
 		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
@@ -215,6 +385,10 @@
 	"/(app)/mayowa": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(protected)/milestones": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/movies": [
 		"src/routes/(app)/movies/+page.server.ts",
 		"src/routes/+layout.server.ts"
@@ -223,6 +397,10 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/offline": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/parental-controls": [
+		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/plans": [
@@ -236,10 +414,15 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)/profiles": [
+		"src/routes/(protected)/profiles/+page.server.ts",
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)/profile": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/settings": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
@@ -268,6 +451,14 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(web3)/wallet": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(protected)/watchlist": [
+		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/watch/[id]": [
+		"src/routes/watch/[id]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	]
 }

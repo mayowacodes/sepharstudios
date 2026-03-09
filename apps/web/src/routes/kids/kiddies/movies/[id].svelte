@@ -4,5 +4,5 @@
   import { openMediaById } from '$lib/utils/openMediaById';
 
   const id = page.params.id;
-  openMediaById(id, kidsMovies);
+  if (id) openMediaById(id, kidsMovies);
 </script>

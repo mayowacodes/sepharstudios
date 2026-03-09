@@ -43,6 +43,6 @@
       />
     </div>
 
-    <Button variant="default" on:click={updateAccountDetails} class="mt-4">Save Changes</Button>
+    <Button variant="default" onclick={updateAccountDetails} class="mt-4">Save Changes</Button>
   </div>
 </section>

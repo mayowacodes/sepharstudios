@@ -5,6 +5,8 @@
   import { Button } from "$lib/components/ui/button";
   import { page } from "$app/state";
   import MediaGrid from "$lib/components/MediaGrid.svelte";
+  import RecentlyWatched from "$lib/components/sections/dashboard/RecentlyWatched.svelte";
+  import Recommendations from "$lib/components/sections/dashboard/Recommendations.svelte";
   import type { MediaSection } from "$lib/types/media";
 
   const { data } = $props();
@@ -110,6 +112,14 @@
           </div>
         </div>
       </section>
+
+      <!-- Personalised rows (only for signed-in users) -->
+      {#if user}
+        <section in:fly={{ y: 50, duration: 800, delay: 350 }} class="pb-12 max-w-7xl mx-auto w-full space-y-10">
+          <RecentlyWatched />
+          <Recommendations />
+        </section>
+      {/if}
 
       <!-- Content Preview Rows -->
       <section in:fly={{ y: 50, duration: 1000, delay: 400 }} class="pb-24 max-w-7xl mx-auto w-full">

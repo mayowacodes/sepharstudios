@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { debounce } from 'lodash-es';
   import { Search, X } from '@lucide/svelte';
 
   // Props
@@ -11,10 +10,15 @@
     return new CustomEvent('search', { detail: term });
   };
 
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
   // Debounced search function
-  const updateSearch = debounce((term: string) => {
-    window.dispatchEvent(createSearchEvent(term));
-  }, 300);
+  const updateSearch = (term: string) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      window.dispatchEvent(createSearchEvent(term));
+    }, 300);
+  };
 
   function handleInput(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -34,14 +38,14 @@
     bind:value
     class="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 pr-10 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary"
     placeholder={placeholder}
-    on:input={handleInput}
+    oninput={handleInput}
   />
   <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
     {#if value}
       <button
         type="button"
         class="text-white/60 hover:text-white"
-        on:click={clearSearch}
+        onclick={clearSearch}
       >
         <X class="h-4 w-4" />
       </button>

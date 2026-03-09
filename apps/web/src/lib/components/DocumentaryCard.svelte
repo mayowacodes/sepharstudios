@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { MediaItem } from '$lib/types/media';
   import { Play, Bookmark } from '@lucide/svelte';
+  import { goto } from '$app/navigation';
 
   export let documentary: MediaItem;
   export let onClick: () => void = () => {};
@@ -25,9 +26,14 @@
     }
   };
 
+  const navigate = () => {
+    if (documentary.id) goto(`/watch/${documentary.id}`);
+    else onClick();
+  };
+
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
-      onClick();
+      navigate();
     }
   };
 </script>
@@ -38,10 +44,10 @@
   class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none hover:scale-[1.02]"
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
-  on:click={onClick}
+  on:click={navigate}
   on:keydown={handleKeyDown}
 >
-  <div class="relative aspect-[2/3] bg-muted rounded-2xl overflow-hidden surface-card">
+  <div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">
     {#if isHovered && documentary.trailerUrl}
       <video
         bind:this={videoRef}
@@ -80,7 +86,7 @@
     <div class="mt-3 flex items-center gap-2">
       <button
         class="inline-flex items-center gap-1 rounded-full bg-[#FF5E0E] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition"
-        on:click|stopPropagation={onClick}
+        on:click|stopPropagation={navigate}
         aria-label={`Play ${documentary.title}`}
       >
         <Play class="h-3.5 w-3.5" />

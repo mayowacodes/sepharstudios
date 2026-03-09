@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sephar Studios — STC Token: Plain English Guide</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    @media print {
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #fff;
+      color: #1a1a2e;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    /* Print button */
+    .print-btn {
+      position: fixed; top: 20px; right: 20px;
+      background: #FF5E0E; color: #fff; border: none;
+      border-radius: 8px; padding: 10px 20px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      z-index: 999; box-shadow: 0 4px 16px rgba(255,94,14,.4);
+    }
+    .print-btn:hover { background: #e0500a; }
+
+    /* Cover */
+    .cover {
+      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a00 100%);
+      color: #fff; padding: 64px 56px; min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .cover::before {
+      content: ''; position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(255,191,0,.18) 0%, transparent 70%);
+    }
+    .cover-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,191,0,.12); border: 1px solid rgba(255,191,0,.4);
+      border-radius: 99px; padding: 5px 18px;
+      font-size: 11px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #FFBF00;
+      margin-bottom: 28px; width: fit-content;
+    }
+    .cover h1 { font-size: 44px; font-weight: 900; line-height: 1.1; margin-bottom: 18px; }
+    .cover h1 span { color: #FF5E0E; }
+    .cover .sub { font-size: 17px; color: rgba(255,255,255,.6); max-width: 500px; margin-bottom: 48px; line-height: 1.6; }
+    .cover-note {
+      max-width: 520px; padding: 16px 20px;
+      background: rgba(255,255,255,.06); border-left: 4px solid #FFBF00;
+      border-radius: 4px; font-size: 12.5px; color: rgba(255,255,255,.55); line-height: 1.6;
+    }
+
+    /* Body */
+    .wrap { max-width: 820px; margin: 0 auto; padding: 48px 28px; }
+
+    /* Section headers */
+    .sec-label {
+      font-size: 10.5px; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; color: #FF5E0E; margin-bottom: 6px;
+    }
+    h2 { font-size: 28px; font-weight: 800; color: #0d0d1a; margin-bottom: 14px; line-height: 1.15; }
+    h3 { font-size: 17px; font-weight: 700; color: #1a1a2e; margin: 32px 0 10px; padding-bottom: 8px; border-bottom: 2px solid #f3f3f3; }
+    h4 { font-size: 14px; font-weight: 700; color: #333; margin: 22px 0 8px; }
+    p { margin-bottom: 14px; color: #3a3a5c; }
+    ul, ol { margin: 0 0 14px 22px; color: #3a3a5c; line-height: 2; }
+    li { margin-bottom: 2px; }
+    .section { padding: 48px 0 32px; border-bottom: 1px solid #f0f0f0; }
+    .section:last-child { border-bottom: none; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 22px; font-size: 12.5px; }
+    thead tr { background: #0d0d1a; color: #fff; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 600; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid #efefef; color: #3a3a5c; }
+    .good { color: #16a34a; font-weight: 700; }
+    .warn { color: #ca8a04; font-weight: 700; }
+    .bad { color: #dc2626; font-weight: 700; }
+    .hi { font-weight: 700; color: #FF5E0E; }
+
+    /* Callouts */
+    .callout { border-radius: 10px; padding: 16px 20px; margin: 18px 0; font-size: 12.5px; line-height: 1.65; }
+    .callout strong { display: block; font-size: 13.5px; margin-bottom: 6px; }
+    .c-gold { background: #fffbeb; border-left: 4px solid #FFBF00; color: #78350f; }
+    .c-green { background: #f0fdf4; border-left: 4px solid #22c55e; color: #14532d; }
+    .c-orange { background: #fff7ed; border-left: 4px solid #FF5E0E; color: #7c2d12; }
+    .c-red { background: #fef2f2; border-left: 4px solid #ef4444; color: #7f1d1d; }
+    .c-blue { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e3a8a; }
+
+    /* Visual bar */
+    .bar-wrap { margin: 20px 0; }
+    .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .bar-lbl { width: 200px; font-size: 12px; font-weight: 600; color: #3a3a5c; flex-shrink: 0; }
+    .bar-track { flex: 1; background: #f3f4f6; border-radius: 99px; height: 22px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; display: flex; align-items: center; padding-left: 10px; font-size: 11px; font-weight: 700; color: #fff; }
+    .bar-amt { width: 120px; font-size: 11px; font-weight: 600; color: #6b7280; flex-shrink: 0; }
+
+    /* Emoji section icon */
+    .sec-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+
+    /* Card grid */
+    .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+    .card { border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+    .card-head { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .card p { font-size: 12.5px; margin-bottom: 8px; }
+    .card .big { font-size: 26px; font-weight: 900; color: #FF5E0E; margin: 6px 0 10px; }
+
+    /* Code block */
+    .code { background: #0d0d1a; color: #FFBF00; font-family: 'Courier New', monospace; font-size: 12px; border-radius: 10px; padding: 18px 22px; margin: 16px 0; line-height: 1.9; overflow-x: auto; white-space: pre; }
+
+    /* Steps */
+    .step-list { list-style: none; margin: 0 0 18px; padding: 0; }
+    .step-list li { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; align-items: flex-start; }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num { width: 30px; height: 30px; border-radius: 50%; background: #FF5E0E; color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-txt strong { display: block; font-size: 13.5px; color: #0d0d1a; margin-bottom: 4px; }
+    .step-txt span { font-size: 12.5px; color: #4a4a6a; }
+
+    /* Summary box */
+    .summary-box { background: #0d0d1a; color: #fff; border-radius: 14px; padding: 28px 32px; margin: 30px 0; }
+    .summary-box h3 { color: #FFBF00; border-bottom-color: rgba(255,255,255,.1); font-size: 16px; }
+    .summary-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12.5px; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-key { color: #FFBF00; font-weight: 700; min-width: 140px; flex-shrink: 0; }
+    .summary-val { color: rgba(255,255,255,.8); }
+
+    /* Footer */
+    .doc-footer { margin-top: 60px; padding-top: 24px; border-top: 2px solid #f0f0f0; display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; }
+    .doc-footer strong { color: #FF5E0E; }
+  </style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">⬇ Save as PDF</button>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-tag">📖 Plain English · No Jargon</div>
+  <h1>STC Token —<br><span>Simple Guide</span></h1>
+  <p class="sub">Everything you need to know about the Sephar Studios token — written so anyone can understand it, with no crypto knowledge required.</p>
+  <div class="cover-note">
+    Think of STC (Studio Token) like loyalty points you earn on Netflix — except these points have real value, can be traded, and the more popular the platform gets, the more valuable they become.
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- §1 -->
+  <div class="section">
+    <span class="sec-icon">🏺</span>
+    <div class="sec-label">Section 1</div>
+    <h2>The 2 Billion Token Jar</h2>
+
+    <p>Imagine all the STC tokens ever created as a giant jar of coins. There are <strong>2 billion coins</strong> in total — and that number is fixed forever. No new coins will ever be made.</p>
+    <p>The jar is split into four portions at the start:</p>
+
+    <div class="bar-wrap">
+      <div class="bar-row">
+        <div class="bar-lbl">🍊 For Users (You!)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%;background:#FF5E0E;">50%</div></div>
+        <div class="bar-amt">1,000,000,000 STC</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lbl">🟡 For Creators</div>
+        <div class="bar-track"><div class="bar-fill" style="width:25%;background:#FFBF00;">25%</div></div>
+        <div class="bar-amt">500,000,000 STC</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lbl">🔵 For the Company</div>
+        <div class="bar-track"><div class="bar-fill" style="width:15%;background:#6366f1;">15%</div></div>
+        <div class="bar-amt">300,000,000 STC</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lbl">🟢 For Voters (DAO)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:10%;background:#22c55e;">10%</div></div>
+        <div class="bar-amt">200,000,000 STC</div>
+      </div>
+    </div>
+
+    <div class="callout c-blue">
+      <strong>Why does scarcity matter?</strong>
+      A fixed supply means that as more people want STC, each token becomes worth more — like a limited-edition collectible. Every time the platform buys and destroys tokens (called "burning"), the remaining tokens become even scarcer and therefore more valuable.
+    </div>
+  </div>
+
+  <!-- §2 -->
+  <div class="section">
+    <span class="sec-icon">📺</span>
+    <div class="sec-label">Section 2</div>
+    <h2>How Do You Earn STC?</h2>
+
+    <p>Just by using the platform. No wallet setup required initially — you can connect a crypto wallet when you are ready.</p>
+
+    <table>
+      <thead><tr><th>Activity</th><th>STC Earned</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Watch 1 hour of content</td><td class="hi">1 STC</td><td>Automatic — just watch normally</td></tr>
+        <tr><td>Daily maximum</td><td class="hi">5 STC/day</td><td>Hit the cap after 5 hours — then the timer resets next day</td></tr>
+        <tr><td>Refer a friend who subscribes</td><td class="hi">10 STC</td><td>They have to actually subscribe for you to earn it</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout c-green">
+      <strong>✅ Real Example — Sarah's Journey</strong>
+      Sarah watches Sephar Studios every evening. She earns about 3 STC a day on average. After 200 days, she has saved up 600 STC. After 333 days she has 1,000 STC — enough to lock up for a 10% permanent discount on her $10/month bill. She saves $1 every month forever, just from watching.
+    </div>
+  </div>
+
+  <!-- §3 -->
+  <div class="section page-break">
+    <span class="sec-icon">🎯</span>
+    <div class="sec-label">Section 3</div>
+    <h2>Three Things You Can Do With STC</h2>
+
+    <h3>Option 1 — Get a Free Month</h3>
+    <p>Spend your STC to get one month of free Basic access. The amount needed changes based on how much STC is worth (see the phase plan below), but the mechanism is simple: hand over your STC, get a free month.</p>
+    <p>Your spent STC goes back to the platform — it is not destroyed. The platform can reuse it.</p>
+
+    <div class="callout c-gold">
+      <strong>⏳ The Cooldown Rule (Important!)</strong>
+      After getting your first free month, you must wait 100 days before doing it again. After the second time, wait 200 days. Then it alternates: 100 days, 200 days, 100 days... This stops people from abusing the system and draining the treasury.
+    </div>
+
+    <h3>Option 2 — Lock It Up for a Discount (Staking)</h3>
+    <p>"Staking" just means locking your STC in a digital safe for a period of time. While it's locked, you get a permanent percentage discount on your subscription. When the lock period ends, you get all your STC back.</p>
+
+    <table>
+      <thead><tr><th>STC Locked</th><th>Lock Duration</th><th>Monthly Discount</th><th>Annual Saving ($10 plan)</th></tr></thead>
+      <tbody>
+        <tr><td>1,000 STC</td><td>3 months – 1 year</td><td class="warn">10% off</td><td>$12/year</td></tr>
+        <tr><td>1,000 STC</td><td>2 years</td><td class="warn">20% off</td><td>$24/year</td></tr>
+        <tr><td>3,500 STC</td><td>3 months – 1 year</td><td class="warn">20% off</td><td>$24/year</td></tr>
+        <tr><td>3,500 STC</td><td>2 years</td><td class="good">35% off</td><td>$42/year</td></tr>
+        <tr><td>10,000 STC</td><td>3 months – 1 year</td><td class="good">35% off</td><td>$42/year</td></tr>
+        <tr><td>10,000 STC</td><td>2 years</td><td class="good">50% off</td><td>$60/year</td></tr>
+        <tr><td>35,000 STC</td><td>Any period</td><td class="good">50% off</td><td>$60/year</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-head">🕐 Time to earn Tier 1 stake</div>
+        <p>At 5 STC/day from watching:</p>
+        <div class="big">200 days</div>
+        <p>to earn 1,000 STC without spending a single dollar — just by watching content you already enjoy.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">💰 Annual saving at 50% off</div>
+        <p>Basic plan cut in half:</p>
+        <div class="big">$60/year</div>
+        <p>saved compared to paying full price. The discount continues every month while your STC stays locked.</p>
+      </div>
+    </div>
+
+    <h3>Option 3 — Buy or Sell on the Exchange</h3>
+    <p>The platform has its own built-in currency exchange (called an AMM — like a currency kiosk at an airport). You can swap USDC (a digital dollar that is always worth $1) for STC, or swap STC back for USDC. Every trade has a small 0.3% fee, similar to a currency conversion fee.</p>
+    <p>This is how people who want STC faster than they can earn it can buy it, and how people who want to cash out their STC can do so.</p>
+  </div>
+
+  <!-- §4 -->
+  <div class="section">
+    <span class="sec-icon">💸</span>
+    <div class="sec-label">Section 4</div>
+    <h2>Where Your Subscription Money Goes</h2>
+
+    <p>Every single subscription payment is automatically divided the moment it is received — it all happens through smart contracts (self-running code on the blockchain). No human decides where each dollar goes.</p>
+
+    <table>
+      <thead><tr><th>Where It Goes</th><th>%</th><th>From $10 Sub</th><th>What It Does</th></tr></thead>
+      <tbody>
+        <tr><td>Platform Operations</td><td>55%</td><td class="hi">$5.50</td><td>Pays for servers, staff, development</td></tr>
+        <tr><td>Creator Pool</td><td>30%</td><td class="hi">$3.00</td><td>Shared among creators based on what you watched</td></tr>
+        <tr><td class="hi">STC Buyback 🔥</td><td class="hi">8%</td><td class="hi">$0.80</td><td class="hi">Buys STC from the exchange and destroys it forever</td></tr>
+        <tr><td>User Rewards</td><td>4%</td><td>$0.40</td><td>Replenishes the pool that pays your watching rewards</td></tr>
+        <tr><td>Emergency Reserve</td><td>3%</td><td>$0.30</td><td>Safety fund for unexpected costs</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout c-orange">
+      <strong>🔥 Why the $0.80 Buyback Is the Most Important Line</strong>
+      Every single month, for every subscriber, 80 cents is used to purchase STC tokens from the exchange and permanently destroy them. With 100,000 subscribers that is $80,000 per month being spent to reduce the total supply of STC. Fewer tokens in existence + same or growing demand = each token is worth more. This is the engine of STC price growth.
+    </div>
+  </div>
+
+  <!-- §5 -->
+  <div class="section page-break">
+    <span class="sec-icon">📈</span>
+    <div class="sec-label">Section 5</div>
+    <h2>Why Does the Token Price Grow?</h2>
+
+    <p>Three forces work together to push STC price upward:</p>
+
+    <h3>Force 1: Burning (Fewer Tokens Exist)</h3>
+    <p>Every time STC is burned through the buyback, there are fewer tokens in existence. Imagine if every month someone shredded 80,000 limited-edition trading cards — the remaining cards become rarer and more valuable. Same principle here.</p>
+
+    <h3>Force 2: Staking (Tokens Are Locked Away)</h3>
+    <p>When users lock up STC for discounts, those tokens cannot be bought or sold until the lock period ends. If 50 million STC are locked by stakers, there are 50 million fewer tokens available on the market — pushing the price up naturally through reduced availability.</p>
+
+    <h3>Force 3: The Revenue Multiplier</h3>
+    <p>The platform's exchange has a built-in growth reward — as the platform earns more revenue, the displayed STC price gets a bonus multiplier applied. Think of it like a stock price premium tied to company performance:</p>
+
+    <table>
+      <thead><tr><th>Platform Monthly Revenue</th><th>Approx. Subscribers</th><th>Price Bonus</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>$0 / month</td><td>0</td><td>1.0× (no bonus)</td><td>Base price only</td></tr>
+        <tr><td>$10,000 / month</td><td>~1,000</td><td class="warn">1.5× bonus</td><td>Price shown is 50% higher</td></tr>
+        <tr><td>$20,000 / month</td><td>~2,000</td><td class="good">2.0× bonus</td><td>Price shown is doubled</td></tr>
+        <tr><td>$40,000+ / month</td><td>~4,000+</td><td class="good">3.0× MAX</td><td>Price shown is tripled — permanently</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout c-green">
+      <strong>✅ The Compounding Effect</strong>
+      More subscribers → more buyback burning → fewer tokens → higher price.<br>
+      Higher price → staking becomes more valuable → more people stake → fewer tokens available → price goes higher.<br>
+      It is a self-reinforcing cycle once the platform reaches critical mass.
+    </div>
+  </div>
+
+  <!-- §6 -->
+  <div class="section">
+    <span class="sec-icon">🤔</span>
+    <div class="sec-label">Section 6</div>
+    <h2>Should We Increase Supply to 5 Billion?</h2>
+
+    <p>This question came up because more creators joining the platform means they need more STC as bonuses. The simple answer is: <strong>no — increasing supply would hurt more than help.</strong></p>
+
+    <h3>The Pizza Analogy</h3>
+    <p>Imagine you own 1% of a pizza. Right now the pizza has 8 slices. You own 1 slice.</p>
+    <ul>
+      <li><strong>If we keep 2B:</strong> The pizza stays 8 slices. Your 1 slice keeps its value. As the pizza becomes more desirable (more people want it), your slice becomes more valuable.</li>
+      <li><strong>If we go to 5B:</strong> Now the pizza is cut into 20 slices. You still own 1% — but that is 2 slices, each thinner. The pizza hasn't gotten bigger or better. It has just been cut into more pieces.</li>
+    </ul>
+    <p>More importantly — every dollar the platform spends buying back and burning tokens has <strong>2.5× less impact</strong> with 5B tokens than with 2B tokens. The buyback (the main price engine) becomes weaker.</p>
+
+    <div class="callout c-orange">
+      <strong>The Real Solution: Make Creators Lock Up Tokens</strong>
+      Instead of printing more tokens, we change the incentive for creators. Give them a reason to hold and lock STC rather than sell it. For example: lock 15,000 STC → earn 50% revenue share instead of 30%. If 1,000 creators do this, 15 million tokens are locked — solving the supply problem without printing a single new token.
+    </div>
+  </div>
+
+  <!-- §7 -->
+  <div class="section page-break">
+    <span class="sec-icon">🎟️</span>
+    <div class="sec-label">Section 7</div>
+    <h2>The 200 STC Subscription — The Tricky Part Explained Simply</h2>
+
+    <p>This feature lets you spend 200 STC to get one month of Basic access for free. It sounds simple — but there is an important nuance that even experienced crypto people miss.</p>
+
+    <h3>The Core Problem: 200 STC Is Not Always Worth $10</h3>
+    <p>The platform charges $10/month for Basic. The STC subscription feature costs 200 STC. But 200 STC is not always worth $10 — it depends on the STC price at that moment:</p>
+
+    <table>
+      <thead><tr><th>STC Price</th><th>What 200 STC Costs You</th><th>vs. the $10 Fiat Price</th><th>Is This Fair?</th></tr></thead>
+      <tbody>
+        <tr><td>$0.001 (very early)</td><td class="good">$0.20</td><td>98% discount</td><td class="bad">❌ Platform gets cheated</td></tr>
+        <tr><td>$0.01 (early)</td><td class="warn">$2.00</td><td>80% discount</td><td class="warn">⚠️ Generous, but cooldown helps</td></tr>
+        <tr><td>$0.02</td><td class="warn">$4.00</td><td>60% discount</td><td class="warn">⚠️ Acceptable at scale</td></tr>
+        <tr><td>$0.05 (target)</td><td class="good">$10.00</td><td>No discount — perfect parity</td><td class="good">✅ Ideal balance</td></tr>
+        <tr><td>$0.10</td><td class="bad">$20.00</td><td>Twice the fiat price</td><td class="bad">❌ Nobody will use this</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Does the Cooldown Protect Us?</h3>
+    <p>Yes — partially. The 100/200 day alternating cooldown means one user can only do this about 2.4 times per year maximum. So even if STC is very cheap, each user can only get 2.4 free months per year through this method. That limits the damage significantly, but does not fully protect at very low prices.</p>
+
+    <div class="callout c-red">
+      <strong>❌ The Gap Nobody Talks About</strong>
+      When a user redeems STC for a subscription, the creators whose content they watch receive <em>zero</em> USDC from that transaction. The creator revenue split (30%), the buyback (8%), and the reward pool top-up (4%) only happen on fiat payments — not STC redemptions. The platform treasury gets the 200 STC, and that's it. Creators should know this.
+    </div>
+
+    <h3>The Smart Solution: Phase It in Three Steps</h3>
+    <p>The subscription cost can be changed by the owner at any time — no rebuilding required. Here is the recommended approach:</p>
+
+    <table>
+      <thead><tr><th>Phase</th><th>When</th><th>STC Required</th><th>User Pays (at target price)</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Phase 1 — Launch</strong></td><td>STC price below $0.02</td><td class="hi">500 STC</td><td>~$5.00</td><td>Protects treasury while price is low — users still get a 50% deal</td></tr>
+        <tr><td><strong>Phase 2 — Growth</strong></td><td>STC price $0.02–$0.05</td><td class="hi">300 STC</td><td>~$6–$15</td><td>Reducing cost rewards early community — feels like a gift as price grows</td></tr>
+        <tr><td><strong>Phase 3 — Mature</strong></td><td>STC price above $0.05</td><td class="hi">200 STC</td><td>~$10.00</td><td>Perfect balance — feature works exactly as intended</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout c-green">
+      <strong>✅ The Recycling Advantage</strong>
+      The spent STC does not get destroyed — it goes back to the platform treasury. The platform can then decide: use it to fund creator bonuses, add it back to the exchange for better trading depth, or burn it for deflation. This flexibility is far more powerful than automatic burning, which is irreversible.
+    </div>
+  </div>
+
+  <!-- §8 -->
+  <div class="section">
+    <span class="sec-icon">⏳</span>
+    <div class="sec-label">Section 8</div>
+    <h2>How Long Will the Reward Pool Last?</h2>
+
+    <p>Half of all STC (1 billion tokens) is set aside just for rewarding users. How quickly will it run out? That depends on two things: how many people are watching, and how many are paying for subscriptions.</p>
+
+    <table>
+      <thead><tr><th>Daily Active Watchers</th><th>Without any buyback refill</th><th>With the 8% buyback refill</th></tr></thead>
+      <tbody>
+        <tr><td>1,000 people</td><td class="good">548 years</td><td class="good">Lasts forever ∞</td></tr>
+        <tr><td>10,000 people</td><td class="good">55 years</td><td class="good">Lasts forever ∞</td></tr>
+        <tr><td>100,000 people</td><td class="warn">5.5 years</td><td class="warn">Needs 62,500 paying subs</td></tr>
+        <tr><td>500,000 people</td><td class="bad">1.1 years</td><td class="bad">Needs 312,500 paying subs</td></tr>
+        <tr><td>1,000,000 people</td><td class="bad">200 days</td><td class="bad">Needs 625,000 paying subs</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout c-green">
+      <strong>✅ The Self-Funding Loop</strong>
+      At 100,000 daily watchers, if just 62.5% of them are paying subscribers, the reward pool refills itself forever through the buyback mechanism — without ever touching the original 1 billion token reserve. The platform does not need to be Netflix-scale to be sustainable. It just needs a reasonable conversion rate from free to paid.
+    </div>
+  </div>
+
+  <!-- §9 -->
+  <div class="section page-break">
+    <span class="sec-icon">🏆</span>
+    <div class="sec-label">Section 9</div>
+    <h2>How the Founding Team Earns</h2>
+
+    <p>As the founders, there are four separate ways the business generates value — and they all grow together:</p>
+
+    <h3>1. Direct Monthly Income</h3>
+    <p>55% of every subscription goes directly to the company treasury in USDC (stable digital dollars):</p>
+    <table>
+      <thead><tr><th>Subscribers</th><th>Monthly Revenue</th><th>Goes to Company (55%)</th></tr></thead>
+      <tbody>
+        <tr><td>10,000</td><td>$100,000</td><td class="hi">$55,000/month</td></tr>
+        <tr><td>50,000</td><td>$500,000</td><td class="hi">$275,000/month</td></tr>
+        <tr><td>100,000</td><td>$1,200,000</td><td class="hi">$660,000/month</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2. Trading Fee Income</h3>
+    <p>The founders seed the exchange with the initial funds. Every trade on the exchange earns 0.3% — and as the initial funder, the founders earn a proportional share of every single trade, forever, passively.</p>
+
+    <h3>3. Token Value Growth</h3>
+    <p>The founders hold 300 million STC from the platform development pool. As the platform grows and buybacks push the price up, that 300M STC becomes increasingly valuable:</p>
+    <table>
+      <thead><tr><th>STC Price</th><th>Founders' 300M STC Is Worth</th></tr></thead>
+      <tbody>
+        <tr><td>$0.001 (at launch)</td><td>$300,000</td></tr>
+        <tr><td>$0.01</td><td>$3,000,000</td></tr>
+        <tr><td>$0.05</td><td>$15,000,000</td></tr>
+        <tr><td>$0.10</td><td>$30,000,000</td></tr>
+        <tr><td>$1.00</td><td>$300,000,000</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. Control of the Economy</h3>
+    <p>As the owner of the smart contracts, you control: how fast rewards are given out, how much STC a subscription costs, how much of each payment goes to buyback, and emergency rebalancing of pools. This is the ability to actively tune the economy in real time.</p>
+  </div>
+
+  <!-- §10 -->
+  <div class="section">
+    <span class="sec-icon">🗺️</span>
+    <div class="sec-label">Section 10</div>
+    <h2>The Step-by-Step Action Plan</h2>
+
+    <ul class="step-list">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-txt">
+          <strong>Before Launch — Lock the Founder Tokens</strong>
+          <span>Put the 300M company tokens on a 4-year release schedule using a standard lock contract. This tells investors and users: "We are not going to sell everything at once." It is the number one trust signal in the crypto world.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-txt">
+          <strong>Launch Day — Fund the Exchange</strong>
+          <span>Put $10,000 USDC + 1,000,000 STC into the exchange. This sets the starting price at $0.01/STC and gives the exchange enough depth to handle early trading without wild price swings.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-txt">
+          <strong>Launch Day — Set Subscription Cost to 500 STC</strong>
+          <span>While STC is still cheap (around $0.01), set the subscription cost to 500 STC. This means users pay about $5 — still a great deal, but the platform doesn't give away subscriptions for almost nothing.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-txt">
+          <strong>At 1,000 Subscribers — Run the First Buyback</strong>
+          <span>Use the accumulated 8% buyback fund to purchase and burn STC for the first time. Announce it publicly. This proves the system works and builds trust.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">5</div>
+        <div class="step-txt">
+          <strong>When STC Price Hits $0.02 — Lower Subscription to 300 STC</strong>
+          <span>Reward the early community. The price dropped from 500 to 300 STC — users feel the benefit of the token growing, and it creates great word-of-mouth marketing.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">6</div>
+        <div class="step-txt">
+          <strong>At 10,000 Subscribers — Launch Creator Staking Tiers</strong>
+          <span>Give creators the ability to lock STC and earn a higher revenue share. This converts creators from "people who sell STC" into "people who hold STC" — removing tokens from circulation and supporting the price.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">7</div>
+        <div class="step-txt">
+          <strong>At $50k/month Revenue — Increase Buyback to 15%</strong>
+          <span>Nearly double the amount going to buybacks. More STC burned every month = faster price appreciation. This is the highest-leverage move available once the platform is established.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">8</div>
+        <div class="step-txt">
+          <strong>When STC Hits $0.05 — Lower Subscription to 200 STC</strong>
+          <span>The feature is now at perfect economic balance — 200 STC = $10 = exactly the fiat subscription price. The platform gives nothing away for free at this point, and users still feel they are getting a deal because they earned the STC by watching.</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Summary Box -->
+  <div class="summary-box">
+    <h3>The One-Page Summary</h3>
+    <div class="summary-row">
+      <span class="summary-key">What is STC?</span>
+      <span class="summary-val">Loyalty points that have real value and can be traded on an exchange.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">How do I earn it?</span>
+      <span class="summary-val">Watch content: 1 STC/hour, max 5/day. Refer friends: 10 STC each.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">What can I do with it?</span>
+      <span class="summary-val">Pay for a free month subscription. Lock it up for 10–50% off your bill forever. Buy or sell it for digital dollars.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">Why does it go up?</span>
+      <span class="summary-val">Every subscription burns 8¢ of every $1. Fewer tokens + growing demand = higher price.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">Total supply?</span>
+      <span class="summary-val">2 billion STC. Fixed forever. No new coins will ever be created.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">Will rewards run out?</span>
+      <span class="summary-val">At 100,000 daily users: if 62,500 are paying subscribers, the pool refills itself forever.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">Founder benefit?</span>
+      <span class="summary-val">$55,000/month per 100,000 subscribers. 300M tokens that grow in value as platform scales.</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-key">Should we go to 5B?</span>
+      <span class="summary-val">No. More tokens means each buyback has less impact. Scarcity is the value engine.</span>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div><strong>Sephar Studios</strong> · Plain English Token Guide · March 2026</div>
+    <div>For full technical details, see TOKENOMICS_REPORT.md</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import { signIn } from "$lib/auth-client";
+import { authClient } from "$lib/auth-client";
 import { Constants } from "$lib/constants";
 import { toast } from "svelte-sonner";
 
@@ -16,8 +17,12 @@ export const getRedirectUrl = (): string => {
 
 export const handleSocialSignin = async (provider: 'apple' | 'google', callbackURL: string) => {
   await signIn.social({ provider, callbackURL }, {
-    onSuccess: () => toast.success("Success Alert", { description: "Successful Sign in" }),
-    onError: (ctx) => toast.error("Error Alert", { description: ctx.error.message })
+    onSuccess: () => {
+      toast.success("Success Alert", { description: "Successful Sign in" });
+    },
+    onError: (ctx) => {
+      toast.error("Error Alert", { description: ctx.error.message });
+    }
   });
 };
 
@@ -31,6 +36,6 @@ export const updateProfile = async (formData: FormData, userId: string) => {
   const name = formData.get('name') as string;
   await authClient.updateUser({ image, name }, {
     onSuccess: () => { toast.success('Profile updated successfully'); },
-    onError: (ctx) => { toast.error(ctx.error.message); }
+    onError: (ctx: { error: { message: string } }) => { toast.error(ctx.error.message); }
   });
 };

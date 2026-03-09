@@ -30,11 +30,15 @@
         },
         {
           question: "What payment methods do you accept?",
-          answer: "We accept major credit cards, PayPal, and selected mobile payment methods."
+          answer: "We process payments securely through Paystack using major credit and debit cards."
         },
         {
           question: "How do I cancel my subscription?",
           answer: "You can cancel your subscription at any time through your account settings. Navigate to 'Subscription' and click 'Cancel Subscription'."
+        },
+        {
+          question: "What is your PPV refund policy?",
+          answer: "PPV purchases are non-refundable after playback starts. If playback never starts because of a verified platform issue, contact support within 48 hours for review."
         }
       ]
     },
