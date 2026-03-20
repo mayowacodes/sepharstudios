@@ -3,7 +3,18 @@ setlocal enabledelayedexpansion
 
 REM Configuration
 set IMAGE_NAME=manimasaun/sepharstudios
-set VERSION=0.0.1
+REM VERSION can be passed as first arg, otherwise read from package.json
+if not "%1"=="" (
+    set VERSION=%1
+) else (
+    for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content package.json | ConvertFrom-Json).version"') do set VERSION=%%v
+)
+
+if "%VERSION%"=="" (
+    echo ERROR: version not set. Provide as first arg or ensure package.json has a version field.
+    exit /b 1
+)
+
 
 echo ============================================
 echo Building and Deploying Docker Image

@@ -326,7 +326,7 @@
         <Coins class="h-4 w-4" /> Studio Token · Polygon Network
       </div>
       <h1 class="text-4xl font-extrabold mb-2">STC Token</h1>
-      <p class="text-white/55 max-w-xl mx-auto">Buy STC with USDC, sell STC for USDC, or redeem 200 STC for a free month subscription.</p>
+      <p class="text-white/55 max-w-xl mx-auto">Buy STC with USDC, sell STC for USDC, or redeem {stcRedeemAmount} STC for a free month subscription.</p>
     </div>
 
     <!-- Pool stats bar -->

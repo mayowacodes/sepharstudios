@@ -56,59 +56,24 @@
     if (res.ok) userReviews = userReviews.filter(r => r.id !== id);
   }
 
-  // Mock data for content upload review queue
+  async function loadReviewQueue() {
+    const res = await fetch('/api/admin/content?pending=true&limit=200');
+    if (!res.ok) return;
+    const data = await res.json();
+    reviewQueue = data.map((item: any) => ({
+      id: item.id,
+      contentId: item.id,
+      title: item.title,
+      creatorName: item.creatorName || 'Platform',
+      contentType: item.mediaType || 'movie',
+      submittedAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+      priority: 'normal',
+      reviewType: ReviewType.CONTENT_MODERATION
+    }));
+  }
+
   onMount(() => {
-    reviewQueue = [
-      {
-        id: '1',
-        contentId: 'content-1',
-        title: 'The Gospel Truth: Modern Discipleship',
-        creatorName: 'Pastor John Smith',
-        contentType: 'Documentary',
-        submittedAt: new Date('2024-09-01'),
-        priority: 'urgent',
-        reviewType: ReviewType.THEOLOGICAL,
-        dueDate: new Date('2024-09-05'),
-        estimatedReviewTime: 45
-      },
-      {
-        id: '2',
-        contentId: 'content-2',
-        title: 'Youth Ministry: Reaching Generation Z',
-        creatorName: 'Grace Community Church',
-        contentType: 'Series',
-        submittedAt: new Date('2024-09-02'),
-        priority: 'high',
-        reviewType: ReviewType.CONTENT_MODERATION,
-        assignedTo: 'Sarah Johnson',
-        dueDate: new Date('2024-09-06'),
-        estimatedReviewTime: 30
-      },
-      {
-        id: '3',
-        contentId: 'content-3',
-        title: 'Worship & Praise Collection',
-        creatorName: 'Victory Ministries',
-        contentType: 'Worship',
-        submittedAt: new Date('2024-09-03'),
-        priority: 'normal',
-        reviewType: ReviewType.TECHNICAL_QA,
-        dueDate: new Date('2024-09-07'),
-        estimatedReviewTime: 20
-      },
-      {
-        id: '4',
-        contentId: 'content-4',
-        title: 'Bible Stories for Kids',
-        creatorName: 'Children\'s Ministry Team',
-        contentType: 'Kids Content',
-        submittedAt: new Date('2024-09-04'),
-        priority: 'high',
-        reviewType: ReviewType.FAMILY_SAFETY,
-        dueDate: new Date('2024-09-08'),
-        estimatedReviewTime: 25
-      }
-    ];
+    loadReviewQueue();
     loadUserReviews();
   });
 
@@ -153,7 +118,6 @@
   }
   
   function startReview(itemId: string) {
-    // TODO: Navigate to review interface
     window.location.href = `/admin/review/${itemId}`;
   }
   

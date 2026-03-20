@@ -42,6 +42,22 @@ export const creators = pgTable('creators', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => user.id),
 	displayName: varchar('display_name', { length: 255 }).notNull(),
+	creatorType: varchar('creator_type', { length: 20 }).default('individual'),
+	legalName: varchar('legal_name', { length: 255 }),
+	organizationName: varchar('organization_name', { length: 255 }),
+	organizationType: varchar('organization_type', { length: 100 }),
+	organizationWebsite: text('organization_website'),
+	organizationAddress: text('organization_address'),
+	taxId: varchar('tax_id', { length: 100 }),
+	contactEmail: text('contact_email'),
+	contactPhone: text('contact_phone'),
+	denomination: varchar('denomination', { length: 100 }),
+	yearsInMinistry: integer('years_in_ministry'),
+	ministryDescription: text('ministry_description'),
+	ministryAddress: text('ministry_address'),
+	verificationDocuments: jsonb('verification_documents').$type<Array<{ id: string; url: string; name: string; size?: number }>>(),
+	socialLinks: jsonb('social_links').$type<Record<string, string>>(),
+	preferences: jsonb('preferences').$type<Record<string, boolean>>(),
 	bio: text('bio'),
 	avatarUrl: text('avatar_url'),
 	bannerUrl: text('banner_url'),
@@ -50,6 +66,33 @@ export const creators = pgTable('creators', {
 	totalEarnings: integer('total_earnings').default(0), // in tokens
 	walletAddress: varchar('wallet_address', { length: 42 }),
 	isVerified: boolean('is_verified').default(false),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Creator applications - approvals before granting creator role
+export const creatorApplications = pgTable('creator_applications', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	creatorType: varchar('creator_type', { length: 20 }).notNull().default('individual'),
+	displayName: varchar('display_name', { length: 255 }),
+	legalName: varchar('legal_name', { length: 255 }),
+	organizationName: varchar('organization_name', { length: 255 }),
+	organizationType: varchar('organization_type', { length: 100 }),
+	organizationWebsite: text('organization_website'),
+	organizationAddress: text('organization_address'),
+	taxId: varchar('tax_id', { length: 100 }),
+	contactEmail: text('contact_email'),
+	contactPhone: text('contact_phone'),
+	bio: text('bio'),
+	portfolioUrl: text('portfolio_url'),
+	socialLinks: jsonb('social_links').$type<Record<string, string>>(),
+	documents: jsonb('documents').$type<Array<{ id: string; url: string; name: string; size?: number }>>(),
+	status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | approved | rejected
+	reviewNotes: text('review_notes'),
+	rejectionReason: text('rejection_reason'),
+	reviewedAt: timestamp('reviewed_at'),
+	reviewedBy: text('reviewed_by').references(() => user.id),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -101,6 +144,7 @@ export const mediaLibrary = pgTable('media_library', {
 	posterUrl: text('poster_url'),
 	trailerUrl: text('trailer_url'),
 	videoUrl: text('video_url'), // actual streaming link
+	creatorId: text('creator_id').references(() => user.id, { onDelete: 'set null' }),
 	
 	// Registry Links
 	videoId: text('video_file_id').references(() => files.id),
@@ -135,6 +179,11 @@ export const mediaLibrary = pgTable('media_library', {
 	featured: boolean('featured').default(false),
 	isNew: boolean('is_new').default(false),
 	isActive: boolean('is_active').default(true),
+	status: varchar('status', { length: 30 }).default('submitted').notNull(),
+	reviewNotes: text('review_notes'),
+	rejectionReason: text('rejection_reason'),
+	reviewedAt: timestamp('reviewed_at'),
+	reviewedBy: text('reviewed_by').references(() => user.id, { onDelete: 'set null' }),
 
 	// Statistics
 	viewCount: integer('view_count').default(0),
@@ -488,5 +537,74 @@ export const governanceMemberships = pgTable('governance_memberships', {
 	label: varchar('label', { length: 100 }).notNull().default('governance_admin'),
 	permissions: jsonb('permissions').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
 	active: boolean('active').notNull().default(true),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ADMIN MESSAGES + TEMPLATES
+export const adminMessages = pgTable('admin_messages', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').references(() => mediaLibrary.id, { onDelete: 'set null' }),
+	creatorId: text('creator_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	adminId: text('admin_id').references(() => user.id, { onDelete: 'set null' }),
+	subject: text('subject').notNull(),
+	message: text('message').notNull(),
+	type: varchar('type', { length: 30 }).notNull().default('general'),
+	status: varchar('status', { length: 20 }).notNull().default('sent'),
+	isFromAdmin: boolean('is_from_admin').notNull().default(true),
+	attachments: jsonb('attachments').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+export const adminMessageTemplates = pgTable('admin_message_templates', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	name: text('name').notNull(),
+	subject: text('subject').notNull(),
+	content: text('content').notNull(),
+	type: varchar('type', { length: 30 }).notNull().default('general'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ADMIN POLICIES
+export const adminPolicies = pgTable('admin_policies', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	title: text('title').notNull(),
+	category: varchar('category', { length: 40 }).notNull(),
+	description: text('description').notNull(),
+	requirements: jsonb('requirements').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	violations: jsonb('violations').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	severity: varchar('severity', { length: 20 }).notNull().default('medium'),
+	isActive: boolean('is_active').notNull().default(true),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ADMIN WORKFLOW RULES
+export const adminWorkflowRules = pgTable('admin_workflow_rules', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	name: text('name').notNull(),
+	description: text('description').notNull(),
+	conditions: jsonb('conditions').$type<{ field: string; operator: string; value: string }[]>().notNull().default(sql`'[]'::jsonb`),
+	actions: jsonb('actions').$type<{ type: string; target: string; value: string }[]>().notNull().default(sql`'[]'::jsonb`),
+	isActive: boolean('is_active').notNull().default(true),
+	priority: integer('priority').notNull().default(5),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ADMIN SETTINGS
+export const adminSettings = pgTable('admin_settings', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	platform: jsonb('platform').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+	payment: jsonb('payment').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+	notifications: jsonb('notifications').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+	security: jsonb('security').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ADMIN TOKENOMICS SETTINGS
+export const adminTokenomicsSettings = pgTable('admin_tokenomics_settings', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	revenueDistribution: jsonb('revenue_distribution').$type<Record<string, number>>().notNull().default(sql`'{}'::jsonb`),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });

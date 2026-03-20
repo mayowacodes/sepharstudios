@@ -7,13 +7,16 @@
   import { Button } from '$lib/components/ui/button';
   import { Coins, Crown, TrendingUp, Users, DollarSign, Activity } from '@lucide/svelte';
 
-  // Mock admin data - TODO: Replace with real API
   let adminStats = $state({
     pendingReviews: 0,
     totalCreators: 0,
     publishedContent: 0,
     rejectedContent: 0,
-    totalViews: 0
+    totalViews: 0,
+    pendingApplications: 0,
+    approvedApplications7d: 0,
+    approvedApplications30d: 0,
+    avgApprovalHours: 0
   });
 
   // Web3 platform metrics
@@ -35,16 +38,16 @@
     subscriptionTier: 0,
     subscriptionTokenId: 0
   });
+
+  let urgentReviews = $state<{ id: string; title: string; mediaType: string; createdAt: string }[]>([]);
   
   onMount(async () => {
-    // TODO: Load admin stats from API
-    adminStats = {
-      pendingReviews: 15,
-      totalCreators: 127,
-      publishedContent: 892,
-      rejectedContent: 23,
-      totalViews: 2456782
-    };
+    const [statsRes, pendingRes] = await Promise.all([
+      fetch('/api/admin/stats'),
+      fetch('/api/admin/content?pending=true&limit=3')
+    ]);
+    if (statsRes.ok) adminStats = await statsRes.json();
+    if (pendingRes.ok) urgentReviews = await pendingRes.json();
 
     // Load Web3 metrics
     try {
@@ -153,6 +156,23 @@
     </div>
   </div>
 
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+      <div class="text-3xl font-bold text-yellow-300">{adminStats.pendingApplications}</div>
+      <div class="text-gray-300 text-sm">Pending Creator Apps</div>
+    </div>
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+      <div class="text-3xl font-bold text-green-300">{adminStats.approvedApplications7d}</div>
+      <div class="text-gray-300 text-sm">Approved (7 days)</div>
+    </div>
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+      <div class="text-3xl font-bold text-blue-300">
+        {Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}
+      </div>
+      <div class="text-gray-300 text-sm">Avg Approval (hrs)</div>
+    </div>
+  </div>
+
   <!-- Tokenomics Overview -->
   <Card class="bg-linear-to-r from-primary/20 to-secondary/20">
     <CardHeader>
@@ -250,30 +270,20 @@
   <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
     <h2 class="text-2xl font-bold text-white mb-4">Urgent Reviews Required</h2>
     <div class="space-y-4">
-      <div class="flex items-center justify-between py-3 border-b border-gray-700">
-        <div>
-          <div class="text-white font-medium">"The Gospel Truth" - Documentary</div>
-          <div class="text-gray-400 text-sm">Submitted 3 days ago • Theological Review Required</div>
-        </div>
-        <span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm">Urgent</span>
-      </div>
-      
-      <div class="flex items-center justify-between py-3 border-b border-gray-700">
-        <div>
-          <div class="text-white font-medium">"Youth Ministry Series" - Episode 1</div>
-          <div class="text-gray-400 text-sm">Submitted 2 days ago • Content Review Required</div>
-        </div>
-        <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">High</span>
-      </div>
-      
-      <div class="flex items-center justify-between py-3">
-        <div>
-          <div class="text-white font-medium">"Worship & Praise Collection"</div>
-          <div class="text-gray-400 text-sm">Submitted 1 day ago • Technical Review Required</div>
-        </div>
-        <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">Normal</span>
-      </div>
-    </div>
+      {#if urgentReviews.length === 0}
+        <div class="text-gray-400 text-sm">No pending content reviews.</div>
+      {:else}
+        {#each urgentReviews as item, index (item.id)}
+          <div class={`flex items-center justify-between py-3 ${index < urgentReviews.length - 1 ? 'border-b border-gray-700' : ''}`}>
+            <div>
+              <div class="text-white font-medium">"{item.title}" - {item.mediaType}</div>
+              <div class="text-gray-400 text-sm">Submitted {new Date(item.createdAt).toLocaleDateString()}</div>
+            </div>
+            <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">Pending</span>
+          </div>
+        {/each}
+      {/if}
+</div>
     
     <div class="mt-6">
       <a href="/admin/review" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg inline-block transition-colors">

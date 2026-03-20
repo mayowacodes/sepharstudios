@@ -3,7 +3,6 @@
   import { onMount } from 'svelte';
   import { ContentStatus, ContentType } from '$lib/types/creator';
   
-  // Mock content library data - replace with real API
   let contentLibrary = $state<any[]>([]);
   let selectedFilter = $state('all');
   let searchTerm = $state('');
@@ -23,79 +22,31 @@
     })
   );
   
-  onMount(() => {
-    // Simulate loading content from API
-    setTimeout(() => {
-      contentLibrary = [
-        {
-          id: '1',
-          title: 'Faith in Action',
-          description: 'A documentary about faith-based community service and its impact on society.',
-          contentType: ContentType.DOCUMENTARY,
-          status: ContentStatus.THEOLOGICAL_REVIEW,
-          submittedAt: new Date('2024-01-15'),
-          lastUpdated: new Date('2024-01-16'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Faith+in+Action',
-          duration: 45,
-          tags: ['faith', 'community', 'service'],
-          reviewNotes: 'Currently under theological review. Expected completion in 2-3 days.'
-        },
-        {
-          id: '2',
-          title: 'Sunday Sermon Series',
-          description: 'Weekly sermon series on the book of Romans, exploring themes of grace and redemption.',
-          contentType: ContentType.SERMON,
-          status: ContentStatus.APPROVED,
-          submittedAt: new Date('2024-01-10'),
-          lastUpdated: new Date('2024-01-12'),
-          approvedAt: new Date('2024-01-12'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Sermon+Series',
-          duration: 35,
-          tags: ['sermon', 'romans', 'grace']
-        },
-        {
-          id: '3',
-          title: 'Worship Night Live',
-          description: 'Live worship service featuring contemporary Christian music and praise.',
-          contentType: ContentType.WORSHIP,
-          status: ContentStatus.PUBLISHED,
-          submittedAt: new Date('2024-01-05'),
-          lastUpdated: new Date('2024-01-08'),
-          publishedAt: new Date('2024-01-08'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Worship+Live',
-          duration: 60,
-          tags: ['worship', 'live', 'music'],
-          views: 1250,
-          likes: 89
-        },
-        {
-          id: '4',
-          title: 'The Prodigal Son',
-          description: 'A modern retelling of the biblical parable of the prodigal son.',
-          contentType: ContentType.SHORT_FILM,
-          status: ContentStatus.DRAFT,
-          submittedAt: null,
-          lastUpdated: new Date('2024-01-18'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Prodigal+Son',
-          duration: 25,
-          tags: ['parable', 'short-film', 'drama']
-        },
-        {
-          id: '5',
-          title: 'Children\'s Bible Stories',
-          description: 'Animated series teaching fundamental Bible stories to children.',
-          contentType: ContentType.KIDS_CONTENT,
-          status: ContentStatus.REJECTED,
-          submittedAt: new Date('2024-01-08'),
-          lastUpdated: new Date('2024-01-14'),
-          thumbnailUrl: 'https://via.placeholder.com/320x180?text=Bible+Stories',
-          duration: 15,
-          tags: ['kids', 'animation', 'bible'],
-          rejectionReason: 'Audio quality needs improvement. Please resubmit with clearer narration.'
-        }
-      ];
+  onMount(async () => {
+    isLoading = true;
+    try {
+      const res = await fetch('/api/creator/content');
+      if (res.ok) {
+        const data = await res.json();
+        contentLibrary = data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          contentType: item.mediaType ?? ContentType.MOVIE,
+          status: item.status ?? ContentStatus.SUBMITTED,
+          submittedAt: item.createdAt ? new Date(item.createdAt) : null,
+          lastUpdated: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          thumbnailUrl: item.thumbnail || item.posterUrl || item.backdropUrl || '',
+          duration: item.duration ? Number(item.duration) : 0,
+          tags: item.genres ?? item.keywords ?? [],
+          reviewNotes: item.reviewNotes || undefined,
+          rejectionReason: item.rejectionReason || undefined,
+          views: item.viewCount || 0
+        }));
+      }
+    } finally {
       isLoading = false;
-    }, 1000);
+    }
   });
   
   function getStatusColor(status: ContentStatus) {

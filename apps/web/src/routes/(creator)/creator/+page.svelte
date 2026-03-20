@@ -2,7 +2,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   
-  // Mock creator data - TODO: Replace with real API
   let creatorStats = {
     totalContent: 0,
     pendingReview: 0,
@@ -10,16 +9,24 @@
     totalViews: 0,
     monthlyEarnings: 0
   };
+
+  let recentActivity: { title: string; status: string; createdAt: string }[] = [];
   
-  onMount(() => {
-    // TODO: Load creator stats from API
-    creatorStats = {
-      totalContent: 12,
-      pendingReview: 3,
-      published: 9,
-      totalViews: 45782,
-      monthlyEarnings: 1247.50
-    };
+  onMount(async () => {
+    const [statsRes, contentRes] = await Promise.all([
+      fetch('/api/creator/stats'),
+      fetch('/api/creator/content')
+    ]);
+
+    if (statsRes.ok) creatorStats = await statsRes.json();
+    if (contentRes.ok) {
+      const items = await contentRes.json();
+      recentActivity = items.slice(0, 3).map((item: any) => ({
+        title: item.title,
+        status: item.status,
+        createdAt: item.createdAt
+      }));
+    }
   });
 </script>
 
@@ -83,29 +90,21 @@
   <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
     <h2 class="text-2xl font-bold text-white mb-4">Recent Activity</h2>
     <div class="space-y-4">
-      <div class="flex items-center justify-between py-3 border-b border-gray-700">
-        <div>
-          <div class="text-white font-medium">"Faith in Action" submitted for review</div>
-          <div class="text-gray-400 text-sm">2 hours ago</div>
-        </div>
-        <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">Pending</span>
-      </div>
-      
-      <div class="flex items-center justify-between py-3 border-b border-gray-700">
-        <div>
-          <div class="text-white font-medium">"Sunday Sermon Series" approved</div>
-          <div class="text-gray-400 text-sm">1 day ago</div>
-        </div>
-        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Approved</span>
-      </div>
-      
-      <div class="flex items-center justify-between py-3">
-        <div>
-          <div class="text-white font-medium">"Worship Night Live" published</div>
-          <div class="text-gray-400 text-sm">3 days ago</div>
-        </div>
-        <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">Published</span>
-      </div>
+      {#if recentActivity.length === 0}
+        <div class="text-gray-400 text-sm">No recent activity yet.</div>
+      {:else}
+        {#each recentActivity as activity, index (activity.title)}
+          <div class={`flex items-center justify-between py-3 ${index < recentActivity.length - 1 ? 'border-b border-gray-700' : ''}`}>
+            <div>
+              <div class="text-white font-medium">"{activity.title}"</div>
+              <div class="text-gray-400 text-sm">{new Date(activity.createdAt).toLocaleString()}</div>
+            </div>
+            <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+              {(activity.status || 'submitted').replace(/_/g, ' ')}
+            </span>
+          </div>
+        {/each}
+      {/if}
     </div>
   </div>
 </div>

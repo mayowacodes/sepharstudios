@@ -50,110 +50,17 @@
   });
   
   function loadCreators() {
-    // Mock data - TODO: Replace with actual API
-    setTimeout(() => {
-      creators = [
-        {
-          id: '1',
-          name: 'Pastor John Smith',
-          email: 'john.smith@faithchurch.org',
-          ministryName: 'Faith Community Church',
-          joinDate: '2024-01-15',
-          status: 'active',
-          contentCount: 45,
-          totalViews: 125000,
-          monthlyEarnings: 2450.75,
-          lastActivity: '2024-09-06T10:30:00Z',
-          verificationStatus: 'verified',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          walletAddress: '0x742d35Cc6634C0532925a3b8D400000000000001',
-          paymentPreference: 'mixed',
-          stcBalance: '25000',
-          stakingDiscount: 20,
-          revenueShare: 35,
-          tier: 'exclusive'
-        },
-        {
-          id: '2',
-          name: 'Sarah Johnson',
-          email: 'sarah@gospelmusic.com',
-          ministryName: 'Gospel Harmony Ministry',
-          joinDate: '2024-02-20',
-          status: 'active',
-          contentCount: 32,
-          totalViews: 89000,
-          monthlyEarnings: 1650.25,
-          lastActivity: '2024-09-05T14:20:00Z',
-          verificationStatus: 'verified',
-          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-          walletAddress: '0x742d35Cc6634C0532925a3b8D400000000000002',
-          paymentPreference: 'usdc',
-          stcBalance: '12500',
-          stakingDiscount: 10,
-          revenueShare: 30,
-          tier: 'standard'
-        },
-        {
-          id: '3',
-          name: 'Michael Rodriguez',
-          email: 'mike.rodriguez@youthministry.org',
-          ministryName: 'Youth for Christ',
-          joinDate: '2024-03-10',
-          status: 'pending',
-          contentCount: 8,
-          totalViews: 12500,
-          monthlyEarnings: 85.50,
-          lastActivity: '2024-09-04T09:15:00Z',
-          verificationStatus: 'pending',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-          paymentPreference: 'fiat',
-          revenueShare: 30,
-          tier: 'standard'
-        },
-        {
-          id: '4',
-          name: 'Dr. Elizabeth Davis',
-          email: 'elizabeth@biblicalstudies.edu',
-          ministryName: 'Biblical Studies Institute',
-          joinDate: '2023-11-05',
-          status: 'active',
-          contentCount: 78,
-          totalViews: 245000,
-          monthlyEarnings: 4200.00,
-          lastActivity: '2024-09-07T08:45:00Z',
-          verificationStatus: 'verified',
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-          walletAddress: '0x742d35Cc6634C0532925a3b8D400000000000004',
-          paymentPreference: 'mixed',
-          stcBalance: '150000',
-          stakingDiscount: 50,
-          revenueShare: 55,
-          tier: 'top_performer'
-        },
-        {
-          id: '5',
-          name: 'Pastor David Kim',
-          email: 'david.kim@koreanfaith.org',
-          ministryName: 'Korean Faith Community',
-          joinDate: '2024-01-28',
-          status: 'suspended',
-          contentCount: 15,
-          totalViews: 28000,
-          monthlyEarnings: 0,
-          lastActivity: '2024-08-15T16:30:00Z',
-          verificationStatus: 'verified',
-          avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face',
-          walletAddress: '0x742d35Cc6634C0532925a3b8D400000000000005',
-          paymentPreference: 'fiat',
-          stcBalance: '5000',
-          revenueShare: 30,
-          tier: 'standard'
-        }
-      ];
-      filteredCreators = [...creators];
-      loading = false;
-      applyFilters();
-    }, 800);
+    fetch('/api/admin/creators')
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => {
+        creators = data;
+        filteredCreators = [...creators];
+        loading = false;
+        applyFilters();
+      })
+      .catch(() => {
+        loading = false;
+      });
   }
   
   function applyFilters() {
@@ -241,14 +148,26 @@
     showCreatorModal = true;
   }
   
-  function updateCreatorStatus(creatorId: string, newStatus: Creator['status']) {
+  async function updateCreatorStatus(creatorId: string, newStatus: Creator['status']) {
+    await fetch('/api/admin/creators', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: creatorId, status: newStatus })
+    });
     creators = creators.map(creator => 
       creator.id === creatorId ? { ...creator, status: newStatus } : creator
     );
     applyFilters();
   }
   
-  function bulkUpdateStatus(newStatus: Creator['status']) {
+  async function bulkUpdateStatus(newStatus: Creator['status']) {
+    await Promise.all(selectedCreators.map(id =>
+      fetch('/api/admin/creators', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus })
+      })
+    ));
     creators = creators.map(creator => 
       selectedCreators.includes(creator.id) ? { ...creator, status: newStatus } : creator
     );

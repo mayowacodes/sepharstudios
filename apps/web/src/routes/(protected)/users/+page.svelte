@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Button } from "$lib/components/ui/button";
-  import { AlertCircleIcon, Loader2, Search } from "@lucide/svelte";
+  import { AlertCircleIcon, Loader2, Search, Users } from "@lucide/svelte";
   import { Input } from "$lib/components/ui/input";
   import EditDialog from "./components/EditDialog.svelte";
   import DeleteDialog from "./components/DeleteDialog.svelte";
@@ -21,6 +22,32 @@
   let handleInput = $state("");
   const debouncedHandle = new Debounced(() => handleInput, 500);
   const usersQuery = $derived(infiniteScroll.listQuery<User>(debouncedHandle.current, page.url.origin, "users"));
+
+  let statsLoading = $state(true);
+  let statsError = $state<string | null>(null);
+  let stats = $state({
+    totalUsers: 0,
+    creators: 0,
+    admins: 0,
+    editors: 0,
+    banned: 0,
+    newToday: 0,
+    newWeek: 0
+  });
+
+  onMount(async () => {
+    statsLoading = true;
+    statsError = null;
+    try {
+      const res = await fetch(`/api/admin/users/stats`);
+      if (!res.ok) throw new Error('Failed to load user analytics');
+      stats = await res.json();
+    } catch (err: any) {
+      statsError = err?.message || 'Failed to load user analytics';
+    } finally {
+      statsLoading = false;
+    }
+  });
 </script>
 
 <div class="flex flex-col gap-4">
@@ -30,6 +57,46 @@
     </h1>
     <p class="mt-2 text-muted-foreground">Manage users</p>
   </div>
+
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-background">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">Total Users</div>
+        <Users class="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div class="mt-2 text-2xl font-semibold">
+        {#if statsLoading}
+          <Loader2 class="h-4 w-4 animate-spin" />
+        {:else}
+          {stats.totalUsers}
+        {/if}
+      </div>
+      <div class="text-xs text-muted-foreground">+{stats.newToday} today</div>
+    </div>
+    <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-background">
+      <div class="text-sm text-muted-foreground">Creators</div>
+      <div class="mt-2 text-2xl font-semibold">{stats.creators}</div>
+      <div class="text-xs text-muted-foreground">+{stats.newWeek} in 7 days</div>
+    </div>
+    <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-background">
+      <div class="text-sm text-muted-foreground">Admins / Editors</div>
+      <div class="mt-2 text-2xl font-semibold">{stats.admins + stats.editors}</div>
+      <div class="text-xs text-muted-foreground">{stats.admins} admins • {stats.editors} editors</div>
+    </div>
+    <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-background">
+      <div class="text-sm text-muted-foreground">Banned Users</div>
+      <div class="mt-2 text-2xl font-semibold">{stats.banned}</div>
+      <div class="text-xs text-muted-foreground">Account blocks</div>
+    </div>
+  </div>
+
+  {#if statsError}
+    <Alert.Root variant="destructive">
+      <AlertCircleIcon />
+      <Alert.Title>Analytics Error</Alert.Title>
+      <Alert.Description>{statsError}</Alert.Description>
+    </Alert.Root>
+  {/if}
 
   <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
     <div class="relative grid w-full sm:max-w-md">

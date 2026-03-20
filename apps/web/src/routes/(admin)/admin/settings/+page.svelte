@@ -105,23 +105,42 @@
     loadSettings();
   });
   
-  function loadSettings() {
-    // Mock loading - TODO: Replace with actual API calls
+  async function loadSettings() {
     loading = true;
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      if (res.ok) {
+        const data = await res.json();
+        platformSettings = data.platform;
+        paymentSettings = data.payment;
+        notificationSettings = data.notifications;
+        securitySettings = data.security;
+      }
+    } finally {
       loading = false;
-    }, 500);
+    }
   }
   
-  function saveSettings() {
+  async function saveSettings() {
     loading = true;
-    
-    // Mock save - TODO: Replace with actual API calls
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          platform: platformSettings,
+          payment: paymentSettings,
+          notifications: notificationSettings,
+          security: securitySettings
+        })
+      });
+      if (res.ok) {
+        saveSuccess = true;
+        setTimeout(() => saveSuccess = false, 3000);
+      }
+    } finally {
       loading = false;
-      saveSuccess = true;
-      setTimeout(() => saveSuccess = false, 3000);
-    }, 1000);
+    }
   }
   
   function addSupportedFormat() {
@@ -146,9 +165,9 @@
     securitySettings.ipWhitelist = securitySettings.ipWhitelist.filter(i => i !== ip);
   }
   
-  function testEmailSettings() {
-    // Mock test - TODO: Replace with actual API call
-    alert('Test email sent successfully!');
+  async function testEmailSettings() {
+    const res = await fetch('/api/admin/settings/test-email', { method: 'POST' });
+    if (res.ok) alert('Test email queued successfully!');
   }
   
   function resetSettings() {

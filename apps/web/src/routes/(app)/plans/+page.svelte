@@ -70,7 +70,7 @@
       ],
       nftBenefits: [
         'Creator NFT badge',
-        'Revenue share: 30-55% based on STC staked',
+        '30% revenue share on your content',
         'Governance voting rights',
         'Exclusive creator community'
       ]

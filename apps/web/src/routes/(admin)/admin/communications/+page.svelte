@@ -29,6 +29,7 @@
   
   let messages: Message[] = $state([]);
   let templates: Template[] = $state([]);
+  let creatorOptions: { id: string; name: string }[] = $state([]);
   let selectedFilter = $state('all');
   let selectedType = $state('all');
   let showComposeModal = $state(false);
@@ -37,101 +38,26 @@
   let selectedTemplate: Template | null = null;
   let searchTerm = $state('');
   
-  // Mock data
-  onMount(() => {
-    messages = [
-      {
-        id: '1',
-        contentId: 'content-1',
-        contentTitle: 'The Gospel Truth: Modern Discipleship',
-        creatorId: 'creator-1',
-        creatorName: 'Pastor John Smith',
-        adminId: 'admin-1',
-        adminName: 'Sarah Johnson',
-        subject: 'Content Approved - Minor Suggestions',
-        message: 'Congratulations! Your documentary has been approved for publication. We have a few minor suggestions for future submissions:\n\n• Consider adding more closed captions for accessibility\n• The audio levels could be slightly more consistent\n\nOverall, excellent work on presenting biblical truths in a modern context.',
-        type: 'approval',
-        status: 'sent',
-        isFromAdmin: true,
-        createdAt: new Date('2024-09-02'),
-        attachments: []
-      },
-      {
-        id: '2',
-        contentId: 'content-2',
-        contentTitle: 'Youth Ministry: Reaching Generation Z',
-        creatorId: 'creator-2',
-        creatorName: 'Grace Community Church',
-        adminId: 'admin-2',
-        adminName: 'Michael Davis',
-        subject: 'Theological Review Feedback',
-        message: 'Thank you for your submission. During our theological review, we identified a few areas that need clarification:\n\n1. The reference to Romans 8:28 in minute 23:45 could use more context\n2. Please provide sources for the statistics mentioned about Generation Z\n\nOnce these items are addressed, we can move forward with approval.',
-        type: 'feedback',
-        status: 'read',
-        isFromAdmin: true,
-        createdAt: new Date('2024-09-01'),
-        attachments: []
-      },
-      {
-        id: '3',
-        creatorId: 'creator-2',
-        creatorName: 'Grace Community Church',
-        subject: 'Re: Theological Review Feedback',
-        message: 'Thank you for the detailed feedback. I have updated the content to address your concerns:\n\n1. Added more context to the Romans 8:28 reference with additional scripture\n2. Included sources from Pew Research and Barna Group for the statistics\n\nThe updated files have been uploaded. Please let me know if you need anything else.',
-        type: 'clarification',
-        status: 'sent',
-        isFromAdmin: false,
-        createdAt: new Date('2024-09-03'),
-        attachments: ['updated_script.pdf', 'sources.docx']
-      },
-      {
-        id: '4',
-        contentId: 'content-4',
-        contentTitle: 'Bible Stories for Kids',
-        creatorId: 'creator-4',
-        creatorName: 'Children\'s Ministry Team',
-        adminId: 'admin-3',
-        adminName: 'Jennifer Wilson',
-        subject: 'Content Rejected - Family Safety Concerns',
-        message: 'After careful review, we cannot approve this content in its current form due to family safety concerns:\n\n• Some scenes may be too intense for the declared age rating (G)\n• The depiction of certain biblical events needs to be more age-appropriate\n\nWe encourage you to revise and resubmit. Please refer to our Family Safety Guidelines for detailed requirements.',
-        type: 'rejection',
-        status: 'sent',
-        isFromAdmin: true,
-        createdAt: new Date('2024-08-30'),
-        attachments: ['family_safety_guidelines.pdf']
-      }
-    ];
-    
-    templates = [
-      {
-        id: '1',
-        name: 'Content Approved',
-        subject: 'Content Approved - {{contentTitle}}',
-        content: 'Congratulations! Your content "{{contentTitle}}" has been approved for publication.\n\n{{customMessage}}\n\nYour content will be live on the platform within 24 hours.\n\nThank you for contributing to our faith-based community!',
-        type: 'approval'
-      },
-      {
-        id: '2',
-        name: 'Theological Review Feedback',
-        subject: 'Theological Review Feedback - {{contentTitle}}',
-        content: 'Thank you for your submission. During our theological review of "{{contentTitle}}", we identified the following areas that need attention:\n\n{{feedbackItems}}\n\nPlease address these items and resubmit for final approval.',
-        type: 'feedback'
-      },
-      {
-        id: '3',
-        name: 'Content Rejection',
-        subject: 'Content Rejected - {{contentTitle}}',
-        content: 'After careful review, we cannot approve "{{contentTitle}}" in its current form due to the following concerns:\n\n{{rejectionReasons}}\n\nWe encourage you to revise and resubmit according to our content guidelines.',
-        type: 'rejection'
-      },
-      {
-        id: '4',
-        name: 'Request for Clarification',
-        subject: 'Clarification Needed - {{contentTitle}}',
-        content: 'We need additional information regarding your submission "{{contentTitle}}":\n\n{{clarificationItems}}\n\nPlease provide this information so we can continue with the review process.',
-        type: 'clarification'
-      }
-    ];
+  onMount(async () => {
+    const [messagesRes, templatesRes, creatorsRes] = await Promise.all([
+      fetch('/api/admin/communications'),
+      fetch('/api/admin/communications/templates'),
+      fetch('/api/admin/creators')
+    ]);
+
+    if (messagesRes.ok) {
+      const data = await messagesRes.json();
+      messages = data.map((row: any) => ({
+        ...row,
+        creatorName: row.creatorName || row.creatorEmail || 'Creator',
+        createdAt: new Date(row.createdAt)
+      }));
+    }
+    if (templatesRes.ok) templates = await templatesRes.json();
+    if (creatorsRes.ok) {
+      const creators = await creatorsRes.json();
+      creatorOptions = creators.map((c: any) => ({ id: c.id, name: c.name }));
+    }
   });
   
   const filteredMessages = $derived(
@@ -188,21 +114,44 @@
     showTemplateModal = false;
   }
   
-  function sendMessage() {
-    if (newMessage.subject && newMessage.message) {
-      const message: Message = {
-        ...newMessage as Message,
-        id: Date.now().toString(),
-        status: 'sent',
-        createdAt: new Date(),
-        adminId: 'current-admin',
-        adminName: 'Current Admin'
-      };
-      
-      messages = [message, ...messages];
+  async function sendMessage() {
+    if (!newMessage.subject || !newMessage.message) return;
+    const creatorId = newMessage.creatorId || creatorOptions.find(c => c.name === newMessage.creatorName)?.id;
+    if (!creatorId) {
+      alert('Please select a valid creator.');
+      return;
+    }
+
+    const res = await fetch('/api/admin/communications', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        creatorId,
+        contentId: newMessage.contentId,
+        subject: newMessage.subject,
+        message: newMessage.message,
+        type: newMessage.type
+      })
+    });
+
+    if (res.ok) {
+      const created = await res.json();
+      messages = [
+        {
+          ...(newMessage as Message),
+          id: created.id,
+          status: 'sent',
+          createdAt: new Date(),
+          creatorId,
+          creatorName: newMessage.creatorName || creatorOptions.find(c => c.id === creatorId)?.name || 'Creator',
+          isFromAdmin: true
+        },
+        ...messages
+      ];
       showComposeModal = false;
       newMessage = {};
     }
+  }
   }
   
   function replyToMessage(messageId: string) {
@@ -222,13 +171,23 @@
     }
   }
   
-  function markAsRead(messageId: string) {
+  async function markAsRead(messageId: string) {
+    await fetch('/api/admin/communications', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: messageId, status: 'read' })
+    });
     messages = messages.map(message => 
       message.id === messageId ? { ...message, status: 'read' } : message
     );
   }
   
-  function archiveMessage(messageId: string) {
+  async function archiveMessage(messageId: string) {
+    await fetch('/api/admin/communications', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: messageId, status: 'archived' })
+    });
     messages = messages.map(message => 
       message.id === messageId ? { ...message, status: 'archived' } : message
     );
@@ -438,10 +397,16 @@
               <input 
                 id="creator"
                 type="text" 
+                list="creatorOptions"
                 bind:value={newMessage.creatorName}
                 placeholder="Enter creator name..."
                 class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
               />
+              <datalist id="creatorOptions">
+                {#each creatorOptions as creator}
+                  <option value={creator.name}></option>
+                {/each}
+              </datalist>
             </div>
             
             <div>

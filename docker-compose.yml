@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   sepharstudios:
-    image: manimasaun/sepharstudios:0.0.1
+    image: manimasaun/sepharstudios:latest
     restart: always
     ports:
       - "3000"

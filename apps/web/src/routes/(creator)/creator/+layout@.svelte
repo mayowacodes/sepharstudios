@@ -20,7 +20,7 @@
   {#if user}
     <div class="min-h-screen bg-linear-to-br from-primary/20 via-secondary/10 to-accent/20 flex flex-col">
       <CreatorNav />
-      <main class="container mx-auto px-4 py-8 flex-grow">
+      <main class="container mx-auto px-4 py-8 grow">
         {@render children()}
       </main>
       <CreatorFooter />

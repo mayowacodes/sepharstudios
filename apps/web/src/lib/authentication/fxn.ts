@@ -3,6 +3,7 @@ import { Role } from "$lib/constants";
 export const roles = [
   { value: Role.ADMIN, label: 'Admin', color: 'destructive' },
   { value: Role.EDITOR, label: 'Editor', color: 'default' },
+  { value: Role.CREATOR, label: 'Creator', color: 'outline' },
   { value: Role.USER, label: 'User', color: 'secondary' }
 ];
 

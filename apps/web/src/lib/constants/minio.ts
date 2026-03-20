@@ -7,7 +7,8 @@ export const BUCKETS = {
 	UPLOADS: 'uploads',       // No special config
 	THUMBNAILS: 'thumbnails', // No special config
 	DRM: 'drm',               // No special config
-	VIDEOS: 'videos'          // Versioning: ON, Locking: ON
+	VIDEOS: 'videos',         // Versioning: ON, Locking: ON
+	CREATOR_DOCS: 'creator-documents' // Creator application docs
 } as const;
 
 export type BucketName = typeof BUCKETS[keyof typeof BUCKETS];

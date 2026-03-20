@@ -1,8 +1,5 @@
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { faithTVShows } from '$lib/data/shows';
-import { faithMovies } from '$lib/data/movies';
-import { faithDocumentaries } from '$lib/data/documentaries';
 import { eq, and, desc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
@@ -31,16 +28,16 @@ export const load: PageServerLoad = async () => {
             .limit(10);
 
         return {
-            shows: trendingShows.length > 0 ? trendingShows : faithTVShows.slice(0, 10),
-            movies: trendingMovies.length > 0 ? trendingMovies : faithMovies.slice(0, 10),
-            documentaries: faithDocumentaries.slice(0, 10)
+            shows: trendingShows,
+            movies: trendingMovies,
+            documentaries: []
         };
     } catch (error) {
         console.error('Homepage load failed, using fallback data:', error);
         return {
-            shows: faithTVShows.slice(0, 10),
-            movies: faithMovies.slice(0, 10),
-            documentaries: faithDocumentaries.slice(0, 10)
+            shows: [],
+            movies: [],
+            documentaries: []
         };
     }
 };

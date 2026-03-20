@@ -64,9 +64,20 @@
   });
 
   onMount(async () => {
+    await loadRevenueDistribution();
     await loadTokenomicsData();
-    loadCreatorStats();
+    await loadCreatorStats();
   });
+
+  async function loadRevenueDistribution() {
+    const res = await fetch('/api/admin/tokenomics');
+    if (res.ok) {
+      const data = await res.json();
+      revenueDistribution = data.revenueDistribution || revenueDistribution;
+      adminActions.newDistribution = { ...revenueDistribution };
+      if (data.creatorStats) creatorStats = data.creatorStats;
+    }
+  }
 
   async function loadTokenomicsData() {
     try {
@@ -93,44 +104,41 @@
       };
     } catch (error) {
       console.error('Error loading tokenomics data:', error);
-      // Fallback values if contract calls fail
-      const monthlyRev = 50000;
+      const monthlyRev = 0;
       tokenomicsData = {
-        stcPrice: '0.25',
-        totalSupply: '10000000',
-        circulatingSupply: '7500000',
-        totalStaked: '2500000',
-        monthlyRevenue: monthlyRev.toString(),
-        buybackAmount: (monthlyRev * (revenueDistribution.stcBuyback / 100)).toFixed(2),
-        creatorPool: (monthlyRev * (revenueDistribution.creatorRevenue / 100)).toFixed(2),
-        userRewardPool: (monthlyRev * (revenueDistribution.userRewards / 100)).toFixed(2),
+        stcPrice: '0',
+        totalSupply: '0',
+        circulatingSupply: '0',
+        totalStaked: '0',
+        monthlyRevenue: '0',
+        buybackAmount: '0',
+        creatorPool: '0',
+        userRewardPool: '0',
         stakingTiers: {
-          bronze: 15000, // Mock fallback data
-          silver: 8500,
-          gold: 2800,
-          platinum: 450
+          bronze: 0,
+          silver: 0,
+          gold: 0,
+          platinum: 0
         }
       };
     }
   }
 
   async function loadStakingTierData() {
-    // Mock staking tier distribution - TODO: Replace with actual contract calls
-    // This could involve calling stcToken.getStakingInfo for multiple addresses
-    // and aggregating the data by tier
-    return {
-      bronze: Math.floor(Math.random() * 10000) + 15000, // 1K-5K STC holders
-      silver: Math.floor(Math.random() * 5000) + 8000,   // 5K-25K STC holders
-      gold: Math.floor(Math.random() * 2000) + 2500,     // 25K-100K STC holders
-      platinum: Math.floor(Math.random() * 500) + 400    // 100K+ STC holders
-    };
+    const res = await fetch('/api/admin/tokenomics');
+    if (res.ok) {
+      const data = await res.json();
+      return data.stakingTiers || { bronze: 0, silver: 0, gold: 0, platinum: 0 };
+    }
+    return { bronze: 0, silver: 0, gold: 0, platinum: 0 };
   }
 
   async function refreshAllData() {
     adminActions.isAdjusting = true;
     try {
+      await loadRevenueDistribution();
       await loadTokenomicsData();
-      loadCreatorStats();
+      await loadCreatorStats();
       adminActions.actionResult = 'All tokenomics data refreshed successfully';
     } catch (error: any) {
       adminActions.actionResult = `Error refreshing data: ${error.message}`;
@@ -139,36 +147,35 @@
     }
   }
 
-  function loadCreatorStats() {
-    // Mock data - TODO: Replace with API
-    const monthlyRev = parseFloat(tokenomicsData.monthlyRevenue) || 50000;
-    creatorStats = {
-      totalCreators: 127,
-      averageRevenue: Math.round((monthlyRev * 0.30) / 127),
-      topCreatorEarnings: Math.round((monthlyRev * 0.30) * 0.15), // Top creator gets ~15% of total pool
-      totalPayments: Math.round(monthlyRev * 0.30)
-    };
+  async function loadCreatorStats() {
+    const res = await fetch('/api/admin/tokenomics');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.creatorStats) creatorStats = data.creatorStats;
+    }
   }
 
   async function adjustRevenueDistribution() {
     adminActions.isAdjusting = true;
 
     try {
-      // Validate new distribution totals 100%
       const total = Object.values(adminActions.newDistribution).reduce((sum, val) => sum + val, 0);
       if (Math.abs(total - 100) > 0.1) {
         throw new Error('Distribution must total 100%');
       }
 
-      // TODO: Call smart contract to update distribution
-      // await adminContract.updateRevenueDistribution(adminActions.newDistribution);
+      const res = await fetch('/api/admin/tokenomics/distribution', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ revenueDistribution: adminActions.newDistribution })
+      });
+      if (!res.ok) throw new Error('Failed to update distribution');
 
       revenueDistribution = { ...adminActions.newDistribution };
       adminActions.actionResult = 'Revenue distribution updated successfully';
 
-      // Reload data to reflect changes
       await loadTokenomicsData();
-      loadCreatorStats();
+      await loadCreatorStats();
 
     } catch (error: any) {
       adminActions.actionResult = `Error: ${error.message}`;
@@ -176,7 +183,7 @@
       adminActions.isAdjusting = false;
     }
   }
-
+  
   function resetDistribution() {
     adminActions.newDistribution = { ...revenueDistribution };
   }

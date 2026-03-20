@@ -6,7 +6,11 @@ import { session as sessionTable } from "$lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function handle({ event, resolve }) {
-  const host = event.request.headers.get('host') || '';
+  const rawHost = event.request.headers.get('x-forwarded-host')
+    || event.request.headers.get('host')
+    || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase();
+  const hostname = host.split(':')[0];
   const ua = event.request.headers.get('user-agent') || '';
   
   // 1. Device Detection
@@ -19,9 +23,9 @@ export async function handle({ event, resolve }) {
   event.locals.deviceType = deviceType;
 
   // 2. Subdomain Detection
-  const isCreatorsSubdomain = host.startsWith('creators.');
-  const isAdminSubdomain = host.startsWith('admin.');
-  const isKidsSubdomain = host.startsWith('kids.');
+  const isCreatorsSubdomain = hostname.startsWith('creator.') || hostname.startsWith('creators.');
+  const isAdminSubdomain = hostname.startsWith('admin.');
+  const isKidsSubdomain = hostname.startsWith('kids.');
   
   event.locals.subdomain = isCreatorsSubdomain ? 'creator' : 
                          isAdminSubdomain ? 'admin' : 
@@ -30,10 +34,10 @@ export async function handle({ event, resolve }) {
   const path = event.url.pathname;
 
   // 3. Path & Subdomain Consistency (Prevent cross-access)
-  if (path.startsWith('/admin') && !isAdminSubdomain && !host.includes('localhost')) {
+  if (path.startsWith('/admin') && !isAdminSubdomain && !hostname.includes('localhost')) {
     return new Response('Not Found', { status: 404 });
   }
-  if (path.startsWith('/creator') && !isCreatorsSubdomain && !host.includes('localhost')) {
+  if (path.startsWith('/creator') && !isCreatorsSubdomain && !hostname.includes('localhost')) {
     return new Response('Not Found', { status: 404 });
   }
 

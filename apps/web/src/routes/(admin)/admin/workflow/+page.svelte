@@ -42,83 +42,21 @@
   let showCreateModal = false;
   let editingRule: WorkflowRule | null = null;
   
-  // Mock data
-  onMount(() => {
-    workflowRules = [
-      {
-        id: '1',
-        name: 'Auto-assign Theological Reviews',
-        description: 'Automatically assigns theological reviewers to documentary and sermon content',
-        conditions: [
-          { field: 'contentType', operator: 'in', value: 'documentary,sermon' },
-          { field: 'status', operator: 'equals', value: 'submitted' }
-        ],
-        actions: [
-          { type: 'assign_reviewer', target: 'theological_reviewer', value: 'auto' },
-          { type: 'status_change', target: 'status', value: 'theological_review' },
-          { type: 'send_notification', target: 'creator', value: 'review_started' }
-        ],
-        isActive: true,
-        priority: 1,
-        createdAt: new Date('2024-08-01')
-      },
-      {
-        id: '2',
-        name: 'Family Safety for Kids Content',
-        description: 'Routes all kids content through family safety review first',
-        conditions: [
-          { field: 'ageRating', operator: 'in', value: 'G,PG,7+' },
-          { field: 'contentType', operator: 'equals', value: 'kids_content' }
-        ],
-        actions: [
-          { type: 'assign_reviewer', target: 'family_safety_reviewer', value: 'priority' },
-          { type: 'status_change', target: 'status', value: 'family_safety_review' }
-        ],
-        isActive: true,
-        priority: 2,
-        createdAt: new Date('2024-08-05')
-      },
-      {
-        id: '3',
-        name: 'Technical QA for HD Content',
-        description: 'Automatic technical review for high-definition uploads',
-        conditions: [
-          { field: 'videoQuality', operator: 'greater_than', value: '720p' },
-          { field: 'fileSize', operator: 'greater_than', value: '1GB' }
-        ],
-        actions: [
-          { type: 'assign_reviewer', target: 'technical_reviewer', value: 'auto' },
-          { type: 'status_change', target: 'status', value: 'technical_qa' }
-        ],
-        isActive: true,
-        priority: 3,
-        createdAt: new Date('2024-08-10')
-      },
-      {
-        id: '4',
-        name: 'Escalation for Rejected Content',
-        description: 'Escalates content that has been rejected twice to senior reviewers',
-        conditions: [
-          { field: 'rejectionCount', operator: 'greater_than', value: '1' },
-          { field: 'status', operator: 'equals', value: 'rejected' }
-        ],
-        actions: [
-          { type: 'escalate', target: 'senior_reviewer', value: 'urgent' },
-          { type: 'send_notification', target: 'admin', value: 'escalation_notice' }
-        ],
-        isActive: true,
-        priority: 0,
-        createdAt: new Date('2024-08-15')
-      }
-    ];
-    
-    // Mock workflow stats
-    workflowStats = {
-      totalProcessed: 234,
-      avgProcessingTime: 4.2,
-      approvalRate: 87,
-      pendingReviews: 12
-    };
+  onMount(async () => {
+    const [rulesRes, statsRes] = await Promise.all([
+      fetch('/api/admin/workflow'),
+      fetch('/api/admin/workflow/stats')
+    ]);
+
+    if (rulesRes.ok) {
+      const data = await rulesRes.json();
+      workflowRules = data.map((rule: any) => ({
+        ...rule,
+        createdAt: new Date(rule.createdAt)
+      }));
+    }
+
+    if (statsRes.ok) workflowStats = await statsRes.json();
   });
   
   function createNewRule() {
@@ -140,18 +78,45 @@
     showCreateModal = true;
   }
   
-  function saveRule() {
-    if (editingRule) {
-      const existingIndex = workflowRules.findIndex(r => r.id === editingRule!.id);
-      if (existingIndex >= 0) {
-        workflowRules[existingIndex] = editingRule!;
-      } else {
-        workflowRules = [...workflowRules, editingRule!];
+  async function saveRule() {
+    if (!editingRule) return;
+    const payload = {
+      id: editingRule.id,
+      name: editingRule.name,
+      description: editingRule.description,
+      conditions: editingRule.conditions,
+      actions: editingRule.actions,
+      isActive: editingRule.isActive,
+      priority: editingRule.priority
+    };
+
+    if (workflowRules.some(r => r.id === editingRule!.id)) {
+      await fetch('/api/admin/workflow', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      const res = await fetch('/api/admin/workflow', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const created = await res.json();
+        editingRule.id = created.id;
       }
-      workflowRules = workflowRules.sort((a, b) => a.priority - b.priority);
-      editingRule = null;
-      showCreateModal = false;
     }
+
+    const existingIndex = workflowRules.findIndex(r => r.id === editingRule!.id);
+    if (existingIndex >= 0) {
+      workflowRules[existingIndex] = editingRule!;
+    } else {
+      workflowRules = [...workflowRules, editingRule!];
+    }
+    workflowRules = workflowRules.sort((a, b) => a.priority - b.priority);
+    editingRule = null;
+    showCreateModal = false;
   }
   
   function cancelEdit() {
@@ -159,7 +124,14 @@
     showCreateModal = false;
   }
   
-  function toggleRuleStatus(ruleId: string) {
+  async function toggleRuleStatus(ruleId: string) {
+    const target = workflowRules.find(r => r.id === ruleId);
+    if (!target) return;
+    await fetch('/api/admin/workflow', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: ruleId, isActive: !target.isActive })
+    });
     workflowRules = workflowRules.map(rule => 
       rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
     );
@@ -269,7 +241,14 @@
             >
               Edit
             </button>
-            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+            <button onclick={async () => {
+              await fetch('/api/admin/workflow', {
+                method: 'DELETE',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ id: rule.id })
+              });
+              workflowRules = workflowRules.filter(r => r.id !== rule.id);
+            }} class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
               Delete
             </button>
           </div>

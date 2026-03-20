@@ -20,102 +20,16 @@
   let editingPolicy = $state<ContentPolicy | null>(null);
   let showCreateModal = $state(false);
   
-  // Mock data
-  onMount(() => {
-    policies = [
-      {
-        id: '1',
-        title: 'Biblical Accuracy Standards',
-        category: 'theological',
-        description: 'Ensures content aligns with core Christian biblical principles',
-        requirements: [
-          'Scripture references must be accurate and contextual',
-          'Theological statements must align with evangelical Christian doctrine',
-          'No promotion of non-Christian religious practices',
-          'Clear presentation of the Gospel message when applicable'
-        ],
-        violations: [
-          'Misquoted or taken out of context Bible verses',
-          'Promotion of heretical doctrines',
-          'Syncretism with other religions',
-          'Denial of core Christian beliefs'
-        ],
-        severity: 'critical',
-        isActive: true,
-        createdAt: new Date('2024-08-01'),
-        updatedAt: new Date('2024-09-01')
-      },
-      {
-        id: '2',
-        title: 'Age-Appropriate Content Standards',
-        category: 'family_safety',
-        description: 'Guidelines for content suitable for different age groups',
-        requirements: [
-          'Content must match declared age rating',
-          'Language appropriate for target audience',
-          'Violence levels within acceptable limits',
-          'Educational value for children\'s content'
-        ],
-        violations: [
-          'Inappropriate language for age group',
-          'Excessive violence or disturbing imagery',
-          'Adult themes in children\'s content',
-          'Misleading age rating declarations'
-        ],
-        severity: 'high',
-        isActive: true,
-        createdAt: new Date('2024-08-01'),
-        updatedAt: new Date('2024-08-15')
-      },
-      {
-        id: '3',
-        title: 'Technical Quality Standards',
-        category: 'technical',
-        description: 'Minimum technical requirements for uploaded content',
-        requirements: [
-          'Video resolution minimum 720p HD',
-          'Clear audio without distortion',
-          'Proper aspect ratio (16:9 preferred)',
-          'File formats: MP4, MOV, or AVI',
-          'Subtitle files in SRT format if provided'
-        ],
-        violations: [
-          'Poor video quality below 720p',
-          'Distorted or unclear audio',
-          'Incorrect aspect ratios',
-          'Unsupported file formats',
-          'Corrupted or incomplete files'
-        ],
-        severity: 'medium',
-        isActive: true,
-        createdAt: new Date('2024-08-01'),
-        updatedAt: new Date('2024-08-10')
-      },
-      {
-        id: '4',
-        title: 'Content Moderation Guidelines',
-        category: 'content',
-        description: 'General content review standards for platform suitability',
-        requirements: [
-          'Family-friendly presentation and messaging',
-          'Professional production quality',
-          'Respectful treatment of all people',
-          'Constructive and uplifting content',
-          'Clear and understandable messaging'
-        ],
-        violations: [
-          'Discriminatory or hateful language',
-          'Inappropriate imagery or symbolism',
-          'Poor production quality',
-          'Offensive or inflammatory content',
-          'Misleading or false information'
-        ],
-        severity: 'high',
-        isActive: true,
-        createdAt: new Date('2024-08-01'),
-        updatedAt: new Date('2024-08-20')
-      }
-    ];
+  onMount(async () => {
+    const res = await fetch('/api/admin/policies');
+    if (res.ok) {
+      const data = await res.json();
+      policies = data.map((p: any) => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt)
+      }));
+    }
   });
   
   const filteredPolicies = $derived(
@@ -148,7 +62,14 @@
     editingPolicy = { ...policy };
   }
   
-  function togglePolicyStatus(policyId: string) {
+  async function togglePolicyStatus(policyId: string) {
+    const target = policies.find(p => p.id === policyId);
+    if (!target) return;
+    await fetch('/api/admin/policies', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: policyId, isActive: !target.isActive })
+    });
     policies = policies.map(policy => 
       policy.id === policyId ? { ...policy, isActive: !policy.isActive } : policy
     );
@@ -170,18 +91,46 @@
     };
   }
   
-  function savePolicy() {
-    if (editingPolicy) {
-      const existingIndex = policies.findIndex(p => p.id === editingPolicy!.id);
-      if (existingIndex >= 0) {
-        policies[existingIndex] = { ...editingPolicy!, updatedAt: new Date() };
-      } else {
-        policies = [...policies, editingPolicy!];
+  async function savePolicy() {
+    if (!editingPolicy) return;
+    const payload = {
+      id: editingPolicy.id,
+      title: editingPolicy.title,
+      category: editingPolicy.category,
+      description: editingPolicy.description,
+      requirements: editingPolicy.requirements,
+      violations: editingPolicy.violations,
+      severity: editingPolicy.severity,
+      isActive: editingPolicy.isActive
+    };
+
+    if (policies.some(p => p.id === editingPolicy!.id)) {
+      await fetch('/api/admin/policies', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      const res = await fetch('/api/admin/policies', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const created = await res.json();
+        editingPolicy.id = created.id;
+        editingPolicy.createdAt = new Date(created.createdAt);
       }
-      policies = policies;
-      editingPolicy = null;
-      showCreateModal = false;
     }
+
+    const existingIndex = policies.findIndex(p => p.id === editingPolicy!.id);
+    if (existingIndex >= 0) {
+      policies[existingIndex] = { ...editingPolicy!, updatedAt: new Date() };
+    } else {
+      policies = [...policies, { ...editingPolicy!, updatedAt: new Date() }];
+    }
+    editingPolicy = null;
+    showCreateModal = false;
   }
   
   function cancelEdit() {

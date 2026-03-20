@@ -159,7 +159,6 @@
         tokenAMM.getSTCPrice()
       ]);
 
-      // Mock comprehensive tokenomics data - TODO: Replace with actual contract calls
       tokenomicsMetrics = {
         totalStcSupply: totalSupply,
         circulatingSupply: (parseFloat(totalSupply) * 0.75).toString(),
@@ -196,80 +195,23 @@
     }
   }
   
-  function loadAnalytics() {
+  async function loadAnalytics() {
     loading = true;
-    
-    // Mock data - TODO: Replace with actual API calls
-    setTimeout(() => {
-      platformMetrics = {
-        totalUsers: 45789,
-        activeCreators: 342,
-        totalContent: 2847,
-        totalViews: 3847291,
-        totalRevenue: 287459.75,
-        newUsersToday: 127,
-        contentPublishedToday: 23,
-        viewsToday: 18472
-      };
-      
-      contentAnalytics = [
-        { category: 'Sermons', count: 1247, views: 1847291, engagement: 0.087 },
-        { category: 'Bible Studies', count: 689, views: 923847, engagement: 0.124 },
-        { category: 'Worship', count: 445, views: 672934, engagement: 0.098 },
-        { category: 'Youth Ministry', count: 278, views: 234891, engagement: 0.156 },
-        { category: 'Testimonies', count: 188, views: 168328, engagement: 0.203 }
-      ];
-      
-      userGrowthData = [
-        { date: '2024-08-01', users: 42345, creators: 298 },
-        { date: '2024-08-08', users: 43120, creators: 305 },
-        { date: '2024-08-15', users: 43890, creators: 315 },
-        { date: '2024-08-22', users: 44567, creators: 324 },
-        { date: '2024-08-29', users: 45234, creators: 335 },
-        { date: '2024-09-05', users: 45789, creators: 342 }
-      ];
-      
-      revenueData = [
-        { month: 'Jan', revenue: 245678, payouts: 184759 },
-        { month: 'Feb', revenue: 267834, payouts: 201234 },
-        { month: 'Mar', revenue: 289456, payouts: 217092 },
-        { month: 'Apr', revenue: 312789, payouts: 234591 },
-        { month: 'May', revenue: 334567, payouts: 250925 },
-        { month: 'Jun', revenue: 356890, payouts: 267667 },
-        { month: 'Jul', revenue: 378234, payouts: 283675 },
-        { month: 'Aug', revenue: 398567, payouts: 298925 }
-      ];
-      
-      geographicData = [
-        { country: 'United States', users: 18456, percentage: 40.3 },
-        { country: 'Nigeria', users: 8934, percentage: 19.5 },
-        { country: 'United Kingdom', users: 4567, percentage: 10.0 },
-        { country: 'Canada', users: 3890, percentage: 8.5 },
-        { country: 'South Africa', users: 2845, percentage: 6.2 },
-        { country: 'Kenya', users: 2134, percentage: 4.7 },
-        { country: 'Ghana', users: 1845, percentage: 4.0 },
-        { country: 'Australia', users: 1567, percentage: 3.4 },
-        { country: 'Others', users: 1551, percentage: 3.4 }
-      ];
-      
-      topCreators = [
-        { name: 'Pastor John Smith', ministry: 'Faith Community Church', views: 125000, content: 45, revenue: 2450.75 },
-        { name: 'Dr. Elizabeth Davis', ministry: 'Biblical Studies Institute', views: 245000, content: 78, revenue: 4200.00 },
-        { name: 'Sarah Johnson', ministry: 'Gospel Harmony Ministry', views: 89000, content: 32, revenue: 1650.25 },
-        { name: 'Pastor Mark Thompson', ministry: 'Grace Fellowship', views: 167000, content: 56, revenue: 3100.50 },
-        { name: 'Rebecca Martinez', ministry: 'Youth for Christ', views: 76500, content: 28, revenue: 1275.80 }
-      ];
-      
-      topContent = [
-        { title: 'The Power of Prayer', creator: 'Pastor John Smith', views: 45782, engagement: 0.156, category: 'Sermons' },
-        { title: 'Understanding Grace', creator: 'Dr. Elizabeth Davis', views: 38294, engagement: 0.142, category: 'Bible Studies' },
-        { title: 'Worship in Spirit & Truth', creator: 'Sarah Johnson', views: 34891, engagement: 0.187, category: 'Worship' },
-        { title: 'Faith in Hard Times', creator: 'Pastor Mark Thompson', views: 29847, engagement: 0.134, category: 'Sermons' },
-        { title: 'Youth Ministry Essentials', creator: 'Rebecca Martinez', views: 25634, engagement: 0.203, category: 'Youth Ministry' }
-      ];
-      
+    try {
+      const res = await fetch(`/api/admin/analytics?range=${selectedTimeRange}`);
+      if (res.ok) {
+        const data = await res.json();
+        platformMetrics = data.platformMetrics;
+        contentAnalytics = data.contentAnalytics;
+        userGrowthData = data.userGrowthData;
+        revenueData = data.revenueData;
+        geographicData = data.geographicData;
+        topCreators = data.topCreators;
+        topContent = data.topContent;
+      }
+    } finally {
       loading = false;
-    }, 1000);
+    }
   }
   
   function formatNumber(num: number): string {

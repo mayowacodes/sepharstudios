@@ -4,6 +4,7 @@
   
   // Profile form data
   let profileData = {
+    creatorType: 'individual',
     personalInfo: {
       firstName: '',
       lastName: '',
@@ -20,7 +21,7 @@
       ministryDescription: '',
       ministryAddress: '',
       isVerified: false,
-      verificationDocuments: [] as string[]
+      verificationDocuments: [] as Array<{ id: string; url: string; name: string; size?: number } | string>
     },
     socialLinks: {
       youtube: '',
@@ -44,46 +45,20 @@
   let saveStatus = '';
   let activeTab = 'personal';
   
-  onMount(() => {
-    // Load existing profile data
-    setTimeout(() => {
-      profileData = {
-        personalInfo: {
-          firstName: 'John',
-          lastName: 'Smith',
-          email: 'john.smith@faithstudios.com',
-          phone: '+1 (555) 123-4567',
-          bio: 'Passionate filmmaker dedicated to creating faith-based content that inspires and transforms lives. With over 10 years of experience in video production and ministry, I believe in the power of storytelling to share God\'s love.',
-          profileImage: 'https://via.placeholder.com/150x150?text=JS'
-        },
-        ministryInfo: {
-          ministryName: 'Faith Studios Ministry',
-          ministryWebsite: 'https://faithstudios.com',
-          denomination: 'Non-denominational',
-          yearsInMinistry: '12',
-          ministryDescription: 'Faith Studios Ministry is dedicated to producing high-quality Christian content that reaches hearts and transforms lives. We specialize in documentaries, worship content, and educational series.',
-          ministryAddress: 'Lagos, Nigeria',
-          isVerified: true,
-          verificationDocuments: ['ministry-license.pdf', 'tax-exempt-status.pdf']
-        },
-        socialLinks: {
-          youtube: 'https://youtube.com/@faithstudios',
-          facebook: 'https://facebook.com/faithstudios',
-          instagram: 'https://instagram.com/faithstudios',
-          twitter: 'https://twitter.com/faithstudios',
-          website: 'https://faithstudios.com',
-          podcast: 'https://faithstudios.com/podcast'
-        },
-        preferences: {
-          publicProfile: true,
-          emailNotifications: true,
-          reviewNotifications: true,
-          marketingEmails: false,
-          showContactInfo: false
-        }
-      };
+  onMount(async () => {
+    isLoading = true;
+    try {
+      const res = await fetch('/api/creator/profile');
+      if (!res.ok) throw new Error('Failed to load profile');
+      const data = await res.json();
+      if (data?.profile) {
+        profileData = data.profile;
+      }
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+    } finally {
       isLoading = false;
-    }, 800);
+    }
   });
   
   async function saveProfile() {
@@ -91,8 +66,12 @@
     saveStatus = '';
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch('/api/creator/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData)
+      });
+      if (!res.ok) throw new Error('Failed to save profile');
       
       saveStatus = 'success';
       setTimeout(() => saveStatus = '', 3000);
@@ -119,11 +98,11 @@
   }
   
   function addVerificationDocument() {
-    // This would open a file picker and upload verification documents
+    // Placeholder until document upload is wired to storage
     const fileName = `verification-doc-${Date.now()}.pdf`;
     profileData.ministryInfo.verificationDocuments = [
       ...profileData.ministryInfo.verificationDocuments,
-      fileName
+      { id: fileName, url: fileName, name: fileName }
     ];
   }
   
@@ -215,9 +194,22 @@
         {#if activeTab === 'personal'}
           <!-- Personal Information -->
           <div class="space-y-6">
+            <div class="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div class="text-white font-medium mb-2">Creator Type</div>
+              <div class="flex flex-wrap gap-4 text-gray-200">
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="creatorType" value="individual" bind:group={profileData.creatorType} />
+                  Individual
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="creatorType" value="organization" bind:group={profileData.creatorType} />
+                  Organization
+                </label>
+              </div>
+            </div>
             <!-- Profile Image -->
             <div class="flex items-start space-x-6">
-              <div class="flex-shrink-0">
+              <div class="shrink-0">
                 <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-600">
                   {#if profileData.personalInfo.profileImage}
                     <img 
@@ -429,10 +421,11 @@
               {#if profileData.ministryInfo.verificationDocuments.length > 0}
                 <div class="space-y-2">
                   {#each profileData.ministryInfo.verificationDocuments as doc, index}
+                    {@const docName = typeof doc === "string" ? doc : doc.name}
                     <div class="flex items-center justify-between bg-white/5 rounded-lg p-3">
                       <div class="flex items-center">
                         <span class="text-blue-400 mr-2">📄</span>
-                        <span class="text-white">{doc}</span>
+                        <span class="text-white">{docName}</span>
                       </div>
                       <button 
                         onclick={() => removeVerificationDocument(index)}
@@ -621,3 +614,4 @@
     </div>
   {/if}
 </div>
+

@@ -17,42 +17,52 @@
   
   let videoCurrentTime = 0;
   let isPlaying = false;
+  let isLoading = true;
+  let submitError = '';
   
-  // Mock data - TODO: Replace with real API
-  onMount(() => {
+  onMount(async () => {
     const contentId = page.params.id;
-    
-    // Mock content data
-    contentData = {
-      id: contentId,
-      creatorId: 'creator-1',
-      title: 'The Gospel Truth: Modern Discipleship',
-      description: 'An in-depth exploration of what it means to be a disciple in today\'s world. This documentary follows several believers as they navigate modern challenges while staying true to biblical principles.',
-      contentType: 'documentary' as any,
-      ageRating: '7+' as any,
-      videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-      assets: {
-        posterPortrait: 'https://via.placeholder.com/400x600/4A5568/FFFFFF?text=Gospel+Truth',
-        backdropHero: 'https://via.placeholder.com/1920x1080/2D3748/FFFFFF?text=Gospel+Truth+Backdrop'
-      },
-      bibleReferences: ['Matthew 28:19-20', 'Luke 9:23', '2 Timothy 3:16'],
-      themes: ['Faith', 'Discipleship', 'Modern Christianity'],
-      ministryAffiliation: 'Grace Community Church',
-      duration: 87,
-      language: 'English',
-      hasSubtitles: true,
-      hasClosedCaptions: false,
-      status: 'theological_review' as any,
-      tags: ['discipleship', 'faith', 'christian living'],
-      keywords: ['discipleship', 'modern christianity', 'faith'],
-      genre: ['Documentary', 'Educational'],
-      createdAt: new Date('2024-09-01'),
-      updatedAt: new Date('2024-09-01'),
-      submittedAt: new Date('2024-09-01')
-    };
-    
-    // Mock review history
-    reviewHistory = [];
+    isLoading = true;
+    try {
+      const res = await fetch(`/api/admin/content/${contentId}`);
+      if (!res.ok) throw new Error('Failed to load content');
+      const item = await res.json();
+      contentData = {
+        id: item.id,
+        creatorId: item.creatorId || '',
+        title: item.title,
+        description: item.description || '',
+        contentType: item.mediaType as any,
+        ageRating: item.ageRating as any,
+        videoUrl: item.videoUrl || item.trailerUrl || '',
+        assets: {
+          posterPortrait: item.posterUrl || '',
+          backdropHero: item.backdropUrl || '',
+          thumbnail: item.thumbnail || ''
+        },
+        bibleReferences: item.bibleReference ? [item.bibleReference] : [],
+        themes: item.topics || [],
+        ministryAffiliation: item.creatorName || '',
+        duration: item.duration ? Number(item.duration) : undefined,
+        language: item.language || 'English',
+        hasSubtitles: false,
+        hasClosedCaptions: false,
+        status: item.status as any,
+        tags: item.keywords || [],
+        keywords: item.keywords || [],
+        genre: item.genres || [],
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.createdAt),
+        submittedAt: new Date(item.createdAt),
+        reviewNotes: item.reviewNotes || undefined,
+        rejectionReason: item.rejectionReason || undefined
+      };
+      reviewHistory = [];
+    } catch (err) {
+      console.error(err);
+    } finally {
+      isLoading = false;
+    }
   });
   
   function addTimestampNote() {
@@ -76,11 +86,31 @@
     }
   }
   
-  function submitReview() {
-    // TODO: Submit review to API
-    console.log('Submitting review:', currentReview);
-    alert('Review submitted successfully!');
-    window.location.href = '/admin/review';
+  async function submitReview() {
+    if (!contentData) return;
+    submitError = '';
+    try {
+      const res = await fetch(`/api/admin/content/${contentData.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          result: currentReview.result,
+          feedback: currentReview.feedback,
+          rejectionReason: currentReview.result === ReviewResult.REJECTED ? currentReview.feedback : undefined,
+          publishNow: currentReview.result === ReviewResult.APPROVED
+        })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        submitError = data.error || 'Failed to submit review';
+        return;
+      }
+      alert('Review submitted successfully!');
+      window.location.href = '/admin/review';
+    } catch (error) {
+      console.error('Review submission error:', error);
+      submitError = 'Failed to submit review';
+    }
   }
   
   function formatTime(seconds: number) {
@@ -303,6 +333,9 @@
       
       <!-- Submit Review -->
       <div class="space-y-3">
+        {#if submitError}
+          <div class="text-sm text-red-400">{submitError}</div>
+        {/if}
         <button 
           onclick={submitReview}
           class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-medium"

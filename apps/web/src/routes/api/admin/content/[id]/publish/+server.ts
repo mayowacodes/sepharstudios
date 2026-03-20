@@ -26,8 +26,16 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!content) return json({ error: 'Content not found' }, { status: 404 });
 	if (content.isActive) return json({ message: 'Already published', notified: 0 });
 
-	// Publish: set isActive = true
-	await db.update(mediaLibrary).set({ isActive: true }).where(eq(mediaLibrary.id, contentId));
+	// Publish: set isActive = true and mark status
+	await db
+		.update(mediaLibrary)
+		.set({
+			isActive: true,
+			status: 'published',
+			reviewedAt: new Date(),
+			reviewedBy: session.user.id
+		})
+		.where(eq(mediaLibrary.id, contentId));
 
 	// Fan-out notifications — find all users who opted in to new release emails
 	const recipients = await db

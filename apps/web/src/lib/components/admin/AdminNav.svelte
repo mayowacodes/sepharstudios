@@ -8,6 +8,7 @@
     { href: '/admin/review', label: 'Review Queue', icon: 'Review' },
     { href: '/admin/content', label: 'Content', icon: 'Content' },
     { href: '/admin/creators', label: 'Creators', icon: 'Users' },
+    { href: '/admin/creator-applications', label: 'Applications', icon: 'Apply' },
     { href: '/admin/analytics', label: 'Analytics', icon: 'Stats' },
     { href: '/admin/governance', label: 'Governance', icon: 'Gov' },
     { href: '/admin/settings', label: 'Settings', icon: 'Settings' }
