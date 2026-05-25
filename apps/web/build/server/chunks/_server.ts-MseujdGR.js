@@ -1,0 +1,32 @@
+import { j as json } from './index-BcOZ6EV9.js';
+import { eq } from 'drizzle-orm';
+import { d as db, m as mediaLibrary } from './drizzle-CW7hPjGG.js';
+import { b as getEncoderPlayback } from './encoder-orchestrator-BjJh_NPv.js';
+import './utils-FiC4zhrQ.js';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import './shared-server-BeisX7n9.js';
+import 'drizzle-orm/pg-core';
+
+const POST = async ({ params, request, locals }) => {
+  const session = await locals.auth.validate();
+  if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+  const jobId = params.jobId;
+  if (!jobId) return json({ error: "jobId is required" }, { status: 400 });
+  const [content] = await db.select({ id: mediaLibrary.id, isActive: mediaLibrary.isActive }).from(mediaLibrary).where(eq(mediaLibrary.encoderJobId, jobId)).limit(1);
+  if (!content || !content.isActive) {
+    return json({ error: "Content is not available" }, { status: 404 });
+  }
+  const body = await request.json().catch(() => ({}));
+  const ttlSeconds = Number(body.ttlSeconds || 3600);
+  try {
+    const playback = await getEncoderPlayback(jobId, ttlSeconds);
+    return json({ contentId: content.id, ...playback });
+  } catch (error) {
+    console.error(`Failed to create playback URL for encoder job ${jobId}:`, error);
+    return json({ error: "Failed to create playback URL" }, { status: 500 });
+  }
+};
+
+export { POST };
+//# sourceMappingURL=_server.ts-MseujdGR.js.map

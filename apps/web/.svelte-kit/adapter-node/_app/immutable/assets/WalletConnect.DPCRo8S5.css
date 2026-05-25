@@ -1,0 +1,1 @@
+.bg-primary{background-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}.bg-secondary{background-color:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}.bg-accent{background-color:hsl(var(--accent));color:hsl(var(--accent-foreground))}

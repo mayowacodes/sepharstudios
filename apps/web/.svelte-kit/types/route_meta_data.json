@@ -37,6 +37,9 @@
 	"/(admin)/admin/content": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/creator-applications": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/creators": [
 		"src/routes/+layout.server.ts"
 	],
@@ -92,14 +95,47 @@
 	"/api/achievements": [
 		"src/routes/api/achievements/+server.ts"
 	],
+	"/api/admin/ai/config": [
+		"src/routes/api/admin/ai/config/+server.ts"
+	],
+	"/api/admin/ai/models": [
+		"src/routes/api/admin/ai/models/+server.ts"
+	],
+	"/api/admin/ai/test": [
+		"src/routes/api/admin/ai/test/+server.ts"
+	],
+	"/api/admin/analytics": [
+		"src/routes/api/admin/analytics/+server.ts"
+	],
+	"/api/admin/communications": [
+		"src/routes/api/admin/communications/+server.ts"
+	],
+	"/api/admin/communications/templates": [
+		"src/routes/api/admin/communications/templates/+server.ts"
+	],
 	"/api/admin/content": [
 		"src/routes/api/admin/content/+server.ts"
+	],
+	"/api/admin/content/[id]": [
+		"src/routes/api/admin/content/[id]/+server.ts"
 	],
 	"/api/admin/content/[id]/ppv": [
 		"src/routes/api/admin/content/[id]/ppv/+server.ts"
 	],
 	"/api/admin/content/[id]/publish": [
 		"src/routes/api/admin/content/[id]/publish/+server.ts"
+	],
+	"/api/admin/content/[id]/review": [
+		"src/routes/api/admin/content/[id]/review/+server.ts"
+	],
+	"/api/admin/creator-applications": [
+		"src/routes/api/admin/creator-applications/+server.ts"
+	],
+	"/api/admin/creator-applications/[id]/review": [
+		"src/routes/api/admin/creator-applications/[id]/review/+server.ts"
+	],
+	"/api/admin/creators": [
+		"src/routes/api/admin/creators/+server.ts"
 	],
 	"/api/admin/governance/approve": [
 		"src/routes/api/admin/governance/approve/+server.ts"
@@ -134,8 +170,56 @@
 	"/api/admin/governance/treasury": [
 		"src/routes/api/admin/governance/treasury/+server.ts"
 	],
+	"/api/admin/policies": [
+		"src/routes/api/admin/policies/+server.ts"
+	],
 	"/api/admin/reviews": [
 		"src/routes/api/admin/reviews/+server.ts"
+	],
+	"/api/admin/settings": [
+		"src/routes/api/admin/settings/+server.ts"
+	],
+	"/api/admin/settings/test-email": [
+		"src/routes/api/admin/settings/test-email/+server.ts"
+	],
+	"/api/admin/stats": [
+		"src/routes/api/admin/stats/+server.ts"
+	],
+	"/api/admin/tokenomics": [
+		"src/routes/api/admin/tokenomics/+server.ts"
+	],
+	"/api/admin/tokenomics/distribution": [
+		"src/routes/api/admin/tokenomics/distribution/+server.ts"
+	],
+	"/api/admin/users/stats": [
+		"src/routes/api/admin/users/stats/+server.ts"
+	],
+	"/api/admin/workflow": [
+		"src/routes/api/admin/workflow/+server.ts"
+	],
+	"/api/admin/workflow/stats": [
+		"src/routes/api/admin/workflow/stats/+server.ts"
+	],
+	"/api/ai/companion": [
+		"src/routes/api/ai/companion/+server.ts"
+	],
+	"/api/ai/creator-insights": [
+		"src/routes/api/ai/creator-insights/+server.ts"
+	],
+	"/api/ai/moderate": [
+		"src/routes/api/ai/moderate/+server.ts"
+	],
+	"/api/ai/nft": [
+		"src/routes/api/ai/nft/+server.ts"
+	],
+	"/api/ai/search": [
+		"src/routes/api/ai/search/+server.ts"
+	],
+	"/api/ai/tag": [
+		"src/routes/api/ai/tag/+server.ts"
+	],
+	"/api/ai/token-score": [
+		"src/routes/api/ai/token-score/+server.ts"
 	],
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
@@ -143,17 +227,44 @@
 	"/api/content/kids": [
 		"src/routes/api/content/kids/+server.ts"
 	],
+	"/api/creator/application": [
+		"src/routes/api/creator/application/+server.ts"
+	],
 	"/api/creator/content": [
 		"src/routes/api/creator/content/+server.ts"
 	],
+	"/api/creator/profile": [
+		"src/routes/api/creator/profile/+server.ts"
+	],
+	"/api/creator/stats": [
+		"src/routes/api/creator/stats/+server.ts"
+	],
 	"/api/downloads/manifest/[id]": [
 		"src/routes/api/downloads/manifest/[id]/+server.ts"
+	],
+	"/api/encoder/jobs": [
+		"src/routes/api/encoder/jobs/+server.ts"
+	],
+	"/api/encoder/jobs/[jobId]": [
+		"src/routes/api/encoder/jobs/[jobId]/+server.ts"
+	],
+	"/api/encoder/jobs/[jobId]/commit": [
+		"src/routes/api/encoder/jobs/[jobId]/commit/+server.ts"
+	],
+	"/api/encoder/jobs/[jobId]/playback": [
+		"src/routes/api/encoder/jobs/[jobId]/playback/+server.ts"
+	],
+	"/api/encoder/pending": [
+		"src/routes/api/encoder/pending/+server.ts"
 	],
 	"/api/encoder/presigned": [
 		"src/routes/api/encoder/presigned/+server.ts"
 	],
 	"/api/encoder/process": [
 		"src/routes/api/encoder/process/+server.ts"
+	],
+	"/api/encoder/ready": [
+		"src/routes/api/encoder/ready/+server.ts"
 	],
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
@@ -233,6 +344,9 @@
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
 	],
+	"/api/users/[id]": [
+		"src/routes/api/users/[id]/+server.ts"
+	],
 	"/api/watch/history": [
 		"src/routes/api/watch/history/+server.ts"
 	],
@@ -241,6 +355,10 @@
 	],
 	"/api/watch/[videoId]": [
 		"src/routes/api/watch/[videoId]/+server.ts"
+	],
+	"/(app)/apply/creator": [
+		"src/routes/(app)/apply/creator/+page.server.ts",
+		"src/routes/+layout.server.ts"
 	],
 	"/(app)/archive": [
 		"src/routes/+layout.server.ts"

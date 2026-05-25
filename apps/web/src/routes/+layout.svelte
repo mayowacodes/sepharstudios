@@ -5,8 +5,12 @@
 	import { SiteMeta } from '$lib/constants';
 	import { onMount } from 'svelte';
 	import PWAInstallPrompt from '$lib/components/widgets/PWAInstallPrompt.svelte';
+	import AICopilot from '$lib/components/widgets/AICopilot.svelte';
 
-	let { children } = $props();
+	let { data, children } = $props();
+
+	// AICopilot is only mounted for logged-in users
+	let isLoggedIn = $derived(!!data?.user);
 
 	onMount(() => {
 		if ('serviceWorker' in navigator) {
@@ -44,3 +48,6 @@
 <PWAInstallPrompt />
 
 {@render children?.()}
+
+<!-- AI Copilot — visible to everyone; shows login prompt for unauthenticated users -->
+<AICopilot {isLoggedIn} />

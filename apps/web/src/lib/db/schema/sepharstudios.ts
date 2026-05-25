@@ -144,6 +144,10 @@ export const mediaLibrary = pgTable('media_library', {
 	posterUrl: text('poster_url'),
 	trailerUrl: text('trailer_url'),
 	videoUrl: text('video_url'), // actual streaming link
+	encoderJobId: text('encoder_job_id'),
+	processingStatus: varchar('processing_status', { length: 30 }).default('not_started').notNull(),
+	processingError: text('processing_error'),
+	processedAt: timestamp('processed_at'),
 	creatorId: text('creator_id').references(() => user.id, { onDelete: 'set null' }),
 	
 	// Registry Links

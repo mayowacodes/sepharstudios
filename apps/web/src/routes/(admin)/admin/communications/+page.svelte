@@ -152,7 +152,6 @@
       newMessage = {};
     }
   }
-  }
   
   function replyToMessage(messageId: string) {
     const originalMessage = messages.find(m => m.id === messageId);

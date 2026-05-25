@@ -1,0 +1,1 @@
+import{c as r,p as t,l as o,d as s,F as c}from"../chunks/Dm3kmBgO.js";a[c]="src/routes/(app)/mayowa/+page.svelte";function a(n,e){r(new.target),t(e,!0,a);var p={...o()};return s(p)}export{a as component};

@@ -80,8 +80,9 @@
   </div>
 
   <div class="flex flex-wrap items-center gap-3">
-    <label class="text-sm text-gray-300">Status</label>
+    <label for="statusFilter" class="text-sm text-gray-300">Status</label>
     <select
+      id="statusFilter"
       class="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
       bind:value={statusFilter}
       onchange={loadApplications}
@@ -145,14 +146,15 @@
 </div>
 
 {#if showModal && selectedApplication}
+  {@const app = selectedApplication}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
     <div class="w-full max-w-3xl rounded-xl border border-white/10 bg-black/90 p-6 text-gray-200">
       <div class="flex items-start justify-between">
         <div>
           <h2 class="text-2xl font-bold text-white">
-            {selectedApplication.displayName || selectedApplication.userName || 'Creator'}
+            {app.displayName || app.userName || 'Creator'}
           </h2>
-          <div class="text-sm text-gray-400">{selectedApplication.userEmail || selectedApplication.contactEmail}</div>
+          <div class="text-sm text-gray-400">{app.userEmail || app.contactEmail}</div>
         </div>
         <button class="text-gray-400 hover:text-white" onclick={closeModal}>✕</button>
       </div>
@@ -160,35 +162,35 @@
       <div class="mt-6 grid gap-4 md:grid-cols-2">
         <div>
           <div class="text-xs uppercase text-gray-500">Creator Type</div>
-          <div class="mt-1 capitalize">{selectedApplication.creatorType}</div>
+          <div class="mt-1 capitalize">{app.creatorType}</div>
         </div>
         <div>
           <div class="text-xs uppercase text-gray-500">Organization</div>
-          <div class="mt-1">{selectedApplication.organizationName || '—'}</div>
+          <div class="mt-1">{app.organizationName || '—'}</div>
         </div>
         <div>
           <div class="text-xs uppercase text-gray-500">Organization Type</div>
-          <div class="mt-1">{selectedApplication.organizationType || '—'}</div>
+          <div class="mt-1">{app.organizationType || '—'}</div>
         </div>
         <div>
           <div class="text-xs uppercase text-gray-500">Website</div>
-          <div class="mt-1">{selectedApplication.organizationWebsite || '—'}</div>
+          <div class="mt-1">{app.organizationWebsite || '—'}</div>
         </div>
         <div class="md:col-span-2">
           <div class="text-xs uppercase text-gray-500">Bio</div>
-          <div class="mt-1 text-sm">{selectedApplication.bio || '—'}</div>
+          <div class="mt-1 text-sm">{app.bio || '—'}</div>
         </div>
         <div class="md:col-span-2">
           <div class="text-xs uppercase text-gray-500">Portfolio</div>
-          <div class="mt-1">{selectedApplication.portfolioUrl || '—'}</div>
+          <div class="mt-1">{app.portfolioUrl || '—'}</div>
         </div>
       </div>
 
       <div class="mt-6">
         <div class="text-xs uppercase text-gray-500">Documents</div>
-        {#if selectedApplication.documents && selectedApplication.documents.length > 0}
+        {#if app.documents && app.documents.length > 0}
           <div class="mt-2 space-y-2">
-            {#each selectedApplication.documents as doc}
+            {#each app.documents as doc}
               {@const docUrl = typeof doc === 'string' ? doc : doc.url}
               {@const docName = typeof doc === 'string' ? doc : doc.name}
               <a class="block rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-blue-300 hover:underline" href={docUrl} target="_blank" rel="noreferrer">{docName}</a>
@@ -200,11 +202,11 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        {#if selectedApplication.status === 'pending'}
-          <Button onclick={() => reviewApplication(selectedApplication.id, 'approved')}>Approve</Button>
-          <Button variant="destructive" onclick={() => reviewApplication(selectedApplication.id, 'rejected')}>Reject</Button>
+        {#if app.status === 'pending'}
+          <Button onclick={() => reviewApplication(app.id, 'approved')}>Approve</Button>
+          <Button variant="destructive" onclick={() => reviewApplication(app.id, 'rejected')}>Reject</Button>
         {:else}
-          <span class="rounded-full bg-white/10 px-3 py-1 text-xs uppercase text-gray-300">{selectedApplication.status}</span>
+          <span class="rounded-full bg-white/10 px-3 py-1 text-xs uppercase text-gray-300">{app.status}</span>
         {/if}
       </div>
     </div>

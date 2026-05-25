@@ -1,0 +1,50 @@
+# Dependencies – never send to Docker; bun install runs inside the image
+node_modules
+**/node_modules
+
+# Build outputs
+**/build
+**/.svelte-kit
+.output
+.vercel
+.netlify
+.wrangler
+
+# Git
+.git
+.gitattributes
+.gitignore
+
+# Environment files (real secrets must never go in)
+.env
+.env.*
+!.env.example
+DOKPLOY_ENV.txt
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test / coverage
+coverage/
+*.test.ts
+*.spec.ts
+
+# Docs & non-essential markdown (optional – saves a few KB)
+# Uncomment if you want to slim the context further:
+# *.md
+# drizzle/
+
+# Python scripts
+*.py

@@ -18,13 +18,24 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 	// Fetch the content item
 	const content = await db
-		.select({ id: mediaLibrary.id, title: mediaLibrary.title, mediaType: mediaLibrary.mediaType, isActive: mediaLibrary.isActive })
+		.select({
+			id: mediaLibrary.id,
+			title: mediaLibrary.title,
+			mediaType: mediaLibrary.mediaType,
+			isActive: mediaLibrary.isActive,
+			processingStatus: mediaLibrary.processingStatus,
+			videoUrl: mediaLibrary.videoUrl,
+			encoderJobId: mediaLibrary.encoderJobId
+		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.id, contentId))
 		.then(r => r[0]);
 
 	if (!content) return json({ error: 'Content not found' }, { status: 404 });
 	if (content.isActive) return json({ message: 'Already published', notified: 0 });
+	if (!content.videoUrl && content.encoderJobId && content.processingStatus !== 'ready') {
+		return json({ error: 'Video is still processing and cannot be published yet' }, { status: 409 });
+	}
 
 	// Publish: set isActive = true and mark status
 	await db

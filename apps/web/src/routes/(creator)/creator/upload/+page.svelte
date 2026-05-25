@@ -89,12 +89,18 @@
   async function submitContent() {
     isSubmitting = true;
     try {
+      const videoData = wizardState.stepData[UploadStep.VIDEO_UPLOAD];
+      const videoFile = videoData.videoFile;
+
+      if (!videoFile) {
+        throw new Error('Video file is required');
+      }
+
       // 1. Save content metadata to DB
       const submissionData = {
           ...wizardState.stepData[UploadStep.BASIC_INFO],
           ...wizardState.stepData[UploadStep.METADATA],
           assets: wizardState.stepData[UploadStep.ASSET_MANAGEMENT].uploadedAssets,
-          videoUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].videoProgress?.uploadUrl,
           trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl,
       };
       
@@ -107,18 +113,39 @@
       if (!res.ok) throw new Error('Failed to save metadata');
       const { contentId } = await res.json();
 
-      // 2. Trigger Encoder
-      const videoData = wizardState.stepData[UploadStep.VIDEO_UPLOAD];
-      if (videoData.videoProgress?.objectName) {
-          await fetch('/api/encoder/process', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  inputKey: videoData.videoProgress.objectName,
-                  title: submissionData.title
-              })
-          });
+      // 2. Create an orchestrator job attached to this content row.
+      const jobRes = await fetch('/api/encoder/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              contentId,
+              filename: videoFile.name,
+              profile: 'vod-multi',
+              durationHint: submissionData.duration ? Number(submissionData.duration) * 60 : undefined
+          })
+      });
+
+      if (!jobRes.ok) throw new Error('Failed to create encoder job');
+      const { jobId, upload } = await jobRes.json();
+
+      // 3. Upload directly to orchestrator-controlled object storage.
+      const uploadRes = await fetch(upload.url, {
+          method: upload.method || 'PUT',
+          headers: { 'Content-Type': videoFile.type || 'application/octet-stream' },
+          body: videoFile
+      });
+
+      if (!uploadRes.ok) {
+          throw new Error(`Failed to upload video to encoder storage (${uploadRes.status})`);
       }
+
+      // 4. Commit the job so workers can encode it.
+      const commitRes = await fetch(`/api/encoder/jobs/${jobId}/commit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!commitRes.ok) throw new Error('Failed to queue encoder job');
 
       alert('Content submitted successfully!');
       localStorage.removeItem('upload_draft');

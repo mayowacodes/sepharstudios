@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
+import { getEncoderPlayback } from '$lib/server/encoder-orchestrator';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const session = locals.session;
@@ -20,6 +21,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			backdropUrl: mediaLibrary.backdropUrl,
 			videoUrl: mediaLibrary.videoUrl,
 			videoId: mediaLibrary.videoId,
+			encoderJobId: mediaLibrary.encoderJobId,
+			processingStatus: mediaLibrary.processingStatus,
 			mediaType: mediaLibrary.mediaType,
 			genres: mediaLibrary.genres,
 			duration: mediaLibrary.duration,
@@ -38,8 +41,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		error(404, 'Content not found');
 	}
 
+	let playbackUrl = content.videoUrl;
+	if (!playbackUrl && content.encoderJobId && content.processingStatus === 'ready') {
+		try {
+			const playback = await getEncoderPlayback(content.encoderJobId);
+			playbackUrl = playback.playback.master;
+		} catch (err) {
+			console.error(`Failed to sign playback URL for ${content.id}:`, err);
+		}
+	}
+
 	return {
-		content,
+		content: { ...content, playbackUrl },
 		activeProfileId: locals.activeProfileId
 	};
 };

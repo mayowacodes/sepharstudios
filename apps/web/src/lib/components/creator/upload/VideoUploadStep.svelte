@@ -60,47 +60,16 @@
     const progress: VideoUploadProgress = currentProgress;
 
     try {
-      // 1. Get presigned URL
-      const res = await fetch('/api/encoder/presigned', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type })
-      });
-      
-      const { presignedUrl, objectName, publicUrl } = await res.json();
-      
-      // 2. Upload directly to MinIO
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', presignedUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
-      
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          progress.progressPercentage = (event.loaded / event.total) * 100;
-          progress.uploadedBytes = event.loaded;
-          if (type === 'video') videoProgress = { ...progress };
-          else trailerProgress = { ...progress };
-        }
-      };
-      
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          progress.isUploading = false;
-          progress.isCompleted = true;
-          progress.uploadUrl = publicUrl;
-          progress.objectName = objectName;
-          if (type === 'video') videoProgress = { ...progress };
-          else trailerProgress = { ...progress };
-        } else {
-          handleError('Upload failed with status ' + xhr.status);
-        }
-      };
-      
-      xhr.onerror = () => handleError('Network error during upload');
-      xhr.send(file);
-      
+      // Final upload happens after the content row exists, during submit.
+      progress.progressPercentage = 100;
+      progress.uploadedBytes = file.size;
+      progress.isUploading = false;
+      progress.isCompleted = true;
+      progress.uploadUrl = 'staged-for-encoding';
+      if (type === 'video') videoProgress = { ...progress };
+      else trailerProgress = { ...progress };
     } catch (error: any) {
-      handleError(error.message || 'Failed to start upload');
+      handleError(error.message || 'Failed to stage upload');
     }
 
     function handleError(msg: string) {
@@ -208,7 +177,7 @@
           </div>
           {#if videoProgress.isCompleted}
             <div class="text-green-400 flex items-center">
-              <span class="mr-2">✓</span> Uploaded
+              <span class="mr-2">✓</span> Ready
             </div>
           {:else if videoProgress.hasError}
             <div class="text-red-400 flex items-center">
@@ -222,7 +191,7 @@
         {#if videoProgress.isUploading || !videoProgress.isCompleted}
           <div class="mb-2">
             <div class="flex justify-between text-sm text-gray-400 mb-1">
-              <span>Uploading...</span>
+              <span>{videoProgress.isCompleted ? 'Ready to encode' : 'Preparing...'}</span>
               <span>{Math.round(videoProgress.progressPercentage)}%</span>
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
@@ -285,7 +254,7 @@
           </div>
           {#if trailerProgress.isCompleted}
             <div class="text-green-400 flex items-center">
-              <span class="mr-2">✓</span> Uploaded
+              <span class="mr-2">✓</span> Ready
             </div>
           {:else if trailerProgress.hasError}
             <div class="text-red-400 flex items-center">

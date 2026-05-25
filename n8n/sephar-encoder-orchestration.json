@@ -1,0 +1,451 @@
+{
+  "name": "Sephar Studios Encoder Orchestration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sephar/encoder/jobs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2f4a4a5a-0a08-4f03-b610-df465b9a6c78",
+      "name": "Create Encode Job Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        -120
+      ],
+      "webhookId": "sephar-encoder-create-job"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.ORCHESTRATOR_BASE_URL}}/v1/jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ORCHESTRATOR_API_SECRET}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filename\": $json.body.filename,\n  \"profile\": $json.body.profile || \"vod-multi\",\n  \"durationHint\": $json.body.durationHint\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "dd02e1e1-8207-4b0f-b6de-c93f5b6c8300",
+      "name": "Create Job In Orchestrator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"contentId\": $('Create Encode Job Webhook').first().json.body.contentId,\n  \"jobId\": $json.body.jobId,\n  \"upload\": $json.body.upload,\n  \"next\": {\n    \"method\": \"PUT\",\n    \"uploadUrl\": $json.body.upload.url,\n    \"commitUrl\": $env.ORCHESTRATOR_BASE_URL + \"/v1/jobs/\" + $json.body.jobId + \"/commit\"\n  }\n}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "785cfbbf-240d-4af7-8441-e0eff08e2db6",
+      "name": "Return Upload URL",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sephar/encoder/commit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "14a1aa81-bec5-460f-92e2-cd193f095144",
+      "name": "Commit Uploaded Job Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        160
+      ],
+      "webhookId": "sephar-encoder-commit-job"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.ORCHESTRATOR_BASE_URL}}/v1/jobs/{{$json.body.jobId}}/commit",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ORCHESTRATOR_API_SECRET}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "8f65b7ec-2b77-4372-89dc-5f38cd1e75a1",
+      "name": "Commit Job In Orchestrator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"contentId\": $('Commit Uploaded Job Webhook').first().json.body.contentId,\n  \"jobId\": $json.body.jobId,\n  \"status\": $json.body.status,\n  \"encoderJobId\": $json.body.encoderJobId\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "5e8401c8-4665-412a-a18c-c67f1de37a8a",
+      "name": "Return Commit Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "f3f6fba2-1ad1-4212-a3ef-7ae617a027bb",
+      "name": "Poll Ready Jobs",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.SEPHAR_BACKEND_URL}}/api/encoder/pending",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SEPHAR_BACKEND_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8cf06933-22f6-4e89-bb6a-d46b7ae100b1",
+      "name": "Get Pending Sephar Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        440
+      ],
+      "notes": "Expected response shape: { \"jobs\": [{ \"contentId\": \"...\", \"jobId\": \"...\" }] }. Add this endpoint to the SvelteKit backend."
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {}
+      },
+      "id": "bb7a32c5-874b-4fd5-b431-1cd1c15c86c7",
+      "name": "Split Jobs",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.ORCHESTRATOR_BASE_URL}}/v1/jobs/{{$json.jobs.jobId}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ORCHESTRATOR_API_SECRET}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f155eb5e-0ad7-42c0-8be3-1b5276a3a4f0",
+      "name": "Get Orchestrator Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8a72efac-117f-4f19-afdc-0214f34e4b5c",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "READY",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "28c4cc37-990f-4e98-82f5-10982677db4e",
+      "name": "Is Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.ORCHESTRATOR_BASE_URL}}/v1/jobs/{{$('Split Jobs').item.json.jobs.jobId}}/playback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ORCHESTRATOR_API_SECRET}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"ttlSeconds\": 3600 }",
+        "options": {}
+      },
+      "id": "e47c7b99-19b2-4cb5-b854-93e47ab36a29",
+      "name": "Generate Playback URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SEPHAR_BACKEND_URL}}/api/encoder/ready",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SEPHAR_BACKEND_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contentId\": $('Split Jobs').item.json.jobs.contentId,\n  \"jobId\": $('Split Jobs').item.json.jobs.jobId,\n  \"playback\": $json.playback\n}",
+        "options": {}
+      },
+      "id": "3dc925a8-a1ce-41db-9f8b-eae785e9bccc",
+      "name": "Mark Content Ready In Sephar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        340
+      ],
+      "notes": "Implement this endpoint in the SvelteKit backend to set media_library.video_url / encoder_job_id / processing status."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create Encode Job Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Job In Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Job In Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Return Upload URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Uploaded Job Webhook": {
+      "main": [
+        [
+          {
+            "node": "Commit Job In Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Job In Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Return Commit Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Ready Jobs": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Sephar Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Sephar Jobs": {
+      "main": [
+        [
+          {
+            "node": "Split Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Jobs": {
+      "main": [
+        [
+          {
+            "node": "Get Orchestrator Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Orchestrator Status": {
+      "main": [
+        [
+          {
+            "node": "Is Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Ready?": {
+      "main": [
+        [
+          {
+            "node": "Generate Playback URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Playback URL": {
+      "main": [
+        [
+          {
+            "node": "Mark Content Ready In Sephar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6d706833-e8e7-4881-beb4-24750f16ae1f",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "sephar-encoder-orchestration",
+  "tags": [
+    {
+      "name": "sephar-studios"
+    },
+    {
+      "name": "encoder"
+    }
+  ]
+}

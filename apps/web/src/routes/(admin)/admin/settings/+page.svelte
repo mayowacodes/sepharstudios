@@ -1,7 +1,28 @@
 <!-- Admin Settings Panel -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  
+
+  // ── Types ──────────────────────────────────────────────────────────────────
+  interface OpenRouterModel {
+    id: string;
+    name: string;
+    description: string;
+    contextLength: number;
+    promptPrice: string;
+    completionPrice: string;
+    isFree: boolean;
+    category: 'chat' | 'agent' | 'both';
+    tags: string[];
+  }
+
+  interface AIConfig {
+    chatModel: string;
+    agentModel: string;
+    ollamaChatModel: string;
+    ollamaAgentModel: string;
+    providerPreference: 'auto' | 'ollama' | 'openrouter';
+  }
+
   interface PlatformSettings {
     siteName: string;
     siteDescription: string;
@@ -93,17 +114,152 @@
   let activeTab = 'platform';
   let newIp = '';
   let newFormat = '';
-  
+
+  // ── AI Models state ────────────────────────────────────────────────────────
+  let aiConfig: AIConfig = {
+    chatModel: 'google/gemini-2.0-flash-001',
+    agentModel: 'deepseek/deepseek-r1',
+    ollamaChatModel: 'gemma4',
+    ollamaAgentModel: 'hermes3',
+    providerPreference: 'auto'
+  };
+  let allModels: OpenRouterModel[] = [];
+  let modelsLoading = false;
+  let modelsWarning = '';
+  let hasApiKey = false;
+  let aiSaving = false;
+  let aiSaveSuccess = false;
+
+  // Model search filters
+  let chatSearch = '';
+  let agentSearch = '';
+  let showChatDropdown = false;
+  let showAgentDropdown = false;
+
+  // Test state
+  let testingChat = false;
+  let testingAgent = false;
+  let chatTestResult: { response?: string; latencyMs?: number; error?: string } | null = null;
+  let agentTestResult: { response?: string; latencyMs?: number; error?: string } | null = null;
+
   const tabs = [
     { id: 'platform', label: 'Platform', icon: '⚙️' },
     { id: 'payment', label: 'Payments', icon: '💳' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'security', label: 'Security', icon: '🔒' }
+    { id: 'security', label: 'Security', icon: '🔒' },
+    { id: 'ai', label: 'AI Models', icon: '🤖' }
   ];
   
   onMount(() => {
     loadSettings();
   });
+
+  // ── AI helpers ─────────────────────────────────────────────────────────────
+  async function loadAIModels() {
+    if (allModels.length > 0) return; // already loaded
+    modelsLoading = true;
+    modelsWarning = '';
+    try {
+      const res = await fetch('/api/admin/ai/models');
+      if (res.ok) {
+        const data = await res.json();
+        allModels = data.models ?? [];
+        hasApiKey = data.hasApiKey ?? false;
+        modelsWarning = data.warning ?? '';
+      }
+    } finally {
+      modelsLoading = false;
+    }
+  }
+
+  async function loadAIConfig() {
+    const res = await fetch('/api/admin/ai/config');
+    if (res.ok) {
+      const data = await res.json();
+      aiConfig = data.config;
+    }
+  }
+
+  async function saveAIConfig() {
+    aiSaving = true;
+    try {
+      const res = await fetch('/api/admin/ai/config', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(aiConfig)
+      });
+      if (res.ok) {
+        aiSaveSuccess = true;
+        setTimeout(() => (aiSaveSuccess = false), 3000);
+      }
+    } finally {
+      aiSaving = false;
+    }
+  }
+
+  async function testModel(type: 'chat' | 'agent') {
+    const model = type === 'chat' ? aiConfig.chatModel : aiConfig.agentModel;
+    if (!model) return;
+
+    if (type === 'chat') { testingChat = true; chatTestResult = null; }
+    else { testingAgent = true; agentTestResult = null; }
+
+    try {
+      const res = await fetch('/api/admin/ai/test', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model, type })
+      });
+      const data = await res.json();
+      if (type === 'chat') chatTestResult = data;
+      else agentTestResult = data;
+    } finally {
+      if (type === 'chat') testingChat = false;
+      else testingAgent = false;
+    }
+  }
+
+  function filteredModels(search: string, category: 'chat' | 'agent') {
+    const q = search.toLowerCase();
+    return allModels.filter(m =>
+      (m.category === category || m.category === 'both') &&
+      (m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.tags.some(t => t.includes(q)))
+    );
+  }
+
+  function selectModel(type: 'chat' | 'agent', id: string) {
+    if (type === 'chat') {
+      aiConfig.chatModel = id;
+      showChatDropdown = false;
+      chatSearch = '';
+      chatTestResult = null;
+    } else {
+      aiConfig.agentModel = id;
+      showAgentDropdown = false;
+      agentSearch = '';
+      agentTestResult = null;
+    }
+  }
+
+  function modelName(id: string) {
+    return allModels.find(m => m.id === id)?.name ?? id;
+  }
+
+  function tagColor(tag: string) {
+    if (tag === 'free') return 'bg-green-600/30 text-green-300 border-green-600/40';
+    if (tag === 'cheap') return 'bg-blue-600/30 text-blue-300 border-blue-600/40';
+    if (tag === 'top-tier') return 'bg-purple-600/30 text-purple-300 border-purple-600/40';
+    if (tag === 'fast') return 'bg-yellow-600/30 text-yellow-300 border-yellow-600/40';
+    if (tag === 'reasoning') return 'bg-orange-600/30 text-orange-300 border-orange-600/40';
+    if (tag === 'premium') return 'bg-red-600/30 text-red-300 border-red-600/40';
+    return 'bg-gray-600/30 text-gray-300 border-gray-600/40';
+  }
+
+  // Load AI config + models when tab is activated
+  $: if (activeTab === 'ai') {
+    loadAIConfig();
+    loadAIModels();
+  }
   
   async function loadSettings() {
     loading = true;
@@ -571,6 +727,320 @@
               <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
             </label>
           </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- AI Models Settings -->
+  {#if activeTab === 'ai'}
+    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white">AI Model Configuration</h2>
+          <p class="text-gray-400 text-sm mt-1">
+            Select which models power each AI feature. API key stays in Dokploy — only model selection is stored here.
+          </p>
+        </div>
+        <button
+          onclick={saveAIConfig}
+          disabled={aiSaving}
+          class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {aiSaving ? '⏳ Saving...' : '💾 Save AI Config'}
+        </button>
+      </div>
+
+      {#if aiSaveSuccess}
+        <div class="bg-green-900/20 border border-green-500/30 rounded-xl p-3 flex items-center gap-2">
+          <span class="text-green-400">✅</span>
+          <span class="text-green-400 text-sm">AI model config saved! Changes take effect within 60 seconds.</span>
+        </div>
+      {/if}
+
+      {#if !hasApiKey}
+        <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
+          <span class="text-yellow-400 text-lg">⚠️</span>
+          <div>
+            <p class="text-yellow-300 font-medium text-sm">OpenRouter API key not configured</p>
+            <p class="text-yellow-400/70 text-xs mt-1">Add <code class="bg-white/10 px-1 rounded">OPENROUTER_API_KEY</code> to your Dokploy environment variables to enable cloud AI models. The list below shows a curated selection.</p>
+          </div>
+        </div>
+      {/if}
+
+      {#if modelsWarning}
+        <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-3 flex items-center gap-2">
+          <span class="text-yellow-400">ℹ️</span>
+          <span class="text-yellow-400 text-sm">{modelsWarning}</span>
+        </div>
+      {/if}
+
+      <!-- Provider Preference -->
+      <div class="bg-white/5 rounded-xl p-5 space-y-3">
+        <h3 class="text-white font-semibold">Provider Preference</h3>
+        <p class="text-gray-400 text-sm">Controls whether to use Ollama (local) or OpenRouter (cloud) first.</p>
+        <div class="flex gap-3 flex-wrap">
+          {#each [
+            { value: 'auto', label: '🔄 Auto (Ollama → OpenRouter fallback)', desc: 'Try local first, cloud fallback' },
+            { value: 'openrouter', label: '☁️ OpenRouter only', desc: 'Always use cloud models' },
+            { value: 'ollama', label: '💻 Ollama only', desc: 'Local inference only' }
+          ] as opt}
+            <button
+              onclick={() => aiConfig.providerPreference = opt.value as AIConfig['providerPreference']}
+              class="flex-1 min-w-[180px] text-left p-4 rounded-lg border transition-all {aiConfig.providerPreference === opt.value ? 'bg-purple-600/20 border-purple-500/60 text-white' : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'}"
+            >
+              <div class="font-medium text-sm">{opt.label}</div>
+              <div class="text-xs mt-1 opacity-60">{opt.desc}</div>
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Chat Model (Copilot) -->
+      <div class="bg-white/5 rounded-xl p-5 space-y-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-white font-semibold flex items-center gap-2">💬 Chat Model <span class="text-xs bg-purple-600/30 text-purple-300 border border-purple-600/40 px-2 py-0.5 rounded-full">Copilot · Scene Insights</span></h3>
+            <p class="text-gray-400 text-sm mt-1">Used for: AI Watch Companion, scene faith insights, portfolio narration.</p>
+          </div>
+          <button
+            onclick={() => testModel('chat')}
+            disabled={testingChat || !aiConfig.chatModel}
+            class="text-sm bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 px-4 py-2 rounded-lg transition-all disabled:opacity-40 whitespace-nowrap"
+          >
+            {testingChat ? '⏳ Testing...' : '▶ Test Model'}
+          </button>
+        </div>
+
+        <!-- Current selection display -->
+        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+          <div class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white text-sm font-medium truncate">{modelName(aiConfig.chatModel)}</p>
+            <p class="text-gray-400 text-xs truncate">{aiConfig.chatModel}</p>
+          </div>
+          <button
+            onclick={() => { showChatDropdown = !showChatDropdown; if (showChatDropdown) showAgentDropdown = false; }}
+            class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-1.5 rounded-lg transition-all"
+          >
+            {showChatDropdown ? 'Close' : 'Change'}
+          </button>
+        </div>
+
+        <!-- Chat Model Dropdown -->
+        {#if showChatDropdown}
+          <div class="border border-white/10 rounded-xl overflow-hidden">
+            <div class="p-3 border-b border-white/10 bg-white/5">
+              <input
+                type="text"
+                bind:value={chatSearch}
+                placeholder="Search models (e.g. gemini, free, fast)…"
+                class="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div class="max-h-72 overflow-y-auto">
+              {#if modelsLoading}
+                <div class="p-4 text-center text-gray-400 text-sm">Loading models…</div>
+              {:else}
+                {#each filteredModels(chatSearch, 'chat') as m (m.id)}
+                  <button
+                    onclick={() => selectModel('chat', m.id)}
+                    class="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 {aiConfig.chatModel === m.id ? 'bg-purple-600/10' : ''}"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-white text-sm font-medium">{m.name}</span>
+                          {#if aiConfig.chatModel === m.id}
+                            <span class="text-xs text-purple-400">✓ Active</span>
+                          {/if}
+                        </div>
+                        <p class="text-gray-400 text-xs mt-0.5 truncate">{m.id}</p>
+                        {#if m.description}
+                          <p class="text-gray-500 text-xs mt-1 line-clamp-2">{m.description}</p>
+                        {/if}
+                        <div class="flex gap-1 flex-wrap mt-1.5">
+                          {#each m.tags as tag}
+                            <span class="text-xs px-1.5 py-0.5 rounded border {tagColor(tag)}">{tag}</span>
+                          {/each}
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="text-xs text-gray-300">{m.promptPrice}</div>
+                        <div class="text-gray-500 text-xs">per 1M in</div>
+                        <div class="text-xs text-gray-300 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
+                      </div>
+                    </div>
+                  </button>
+                {:else}
+                  <div class="p-4 text-center text-gray-400 text-sm">No chat models match your search</div>
+                {/each}
+              {/if}
+            </div>
+          </div>
+        {/if}
+
+        <!-- Chat test result -->
+        {#if chatTestResult}
+          <div class="rounded-xl border p-4 {chatTestResult.error ? 'bg-red-900/20 border-red-500/30' : 'bg-green-900/10 border-green-500/20'}">
+            <div class="flex items-center gap-2 mb-2">
+              {#if chatTestResult.error}
+                <span class="text-red-400">❌</span>
+                <span class="text-red-400 text-sm font-medium">Test failed</span>
+              {:else}
+                <span class="text-green-400">✅</span>
+                <span class="text-green-400 text-sm font-medium">Test passed — {chatTestResult.latencyMs}ms</span>
+              {/if}
+            </div>
+            {#if chatTestResult.error}
+              <p class="text-red-300 text-xs">{chatTestResult.error}</p>
+            {:else}
+              <p class="text-gray-300 text-xs italic">"{chatTestResult.response}"</p>
+            {/if}
+          </div>
+        {/if}
+      </div>
+
+      <!-- Agent Model (Structured) -->
+      <div class="bg-white/5 rounded-xl p-5 space-y-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-white font-semibold flex items-center gap-2">🤖 Agent Model <span class="text-xs bg-orange-600/30 text-orange-300 border border-orange-600/40 px-2 py-0.5 rounded-full">Tagging · Moderation · Scoring</span></h3>
+            <p class="text-gray-400 text-sm mt-1">Used for: Content tagging, moderation, token scoring, NFT metadata, creator insights.</p>
+          </div>
+          <button
+            onclick={() => testModel('agent')}
+            disabled={testingAgent || !aiConfig.agentModel}
+            class="text-sm bg-orange-600/20 hover:bg-orange-600/40 border border-orange-500/30 text-orange-300 px-4 py-2 rounded-lg transition-all disabled:opacity-40 whitespace-nowrap"
+          >
+            {testingAgent ? '⏳ Testing...' : '▶ Test Model'}
+          </button>
+        </div>
+
+        <!-- Current selection display -->
+        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+          <div class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white text-sm font-medium truncate">{modelName(aiConfig.agentModel)}</p>
+            <p class="text-gray-400 text-xs truncate">{aiConfig.agentModel}</p>
+          </div>
+          <button
+            onclick={() => { showAgentDropdown = !showAgentDropdown; if (showAgentDropdown) showChatDropdown = false; }}
+            class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-1.5 rounded-lg transition-all"
+          >
+            {showAgentDropdown ? 'Close' : 'Change'}
+          </button>
+        </div>
+
+        <!-- Agent Model Dropdown -->
+        {#if showAgentDropdown}
+          <div class="border border-white/10 rounded-xl overflow-hidden">
+            <div class="p-3 border-b border-white/10 bg-white/5">
+              <input
+                type="text"
+                bind:value={agentSearch}
+                placeholder="Search models (e.g. deepseek, reasoning, free)…"
+                class="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+            <div class="max-h-72 overflow-y-auto">
+              {#if modelsLoading}
+                <div class="p-4 text-center text-gray-400 text-sm">Loading models…</div>
+              {:else}
+                {#each filteredModels(agentSearch, 'agent') as m (m.id)}
+                  <button
+                    onclick={() => selectModel('agent', m.id)}
+                    class="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 {aiConfig.agentModel === m.id ? 'bg-orange-600/10' : ''}"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-white text-sm font-medium">{m.name}</span>
+                          {#if aiConfig.agentModel === m.id}
+                            <span class="text-xs text-orange-400">✓ Active</span>
+                          {/if}
+                        </div>
+                        <p class="text-gray-400 text-xs mt-0.5 truncate">{m.id}</p>
+                        {#if m.description}
+                          <p class="text-gray-500 text-xs mt-1 line-clamp-2">{m.description}</p>
+                        {/if}
+                        <div class="flex gap-1 flex-wrap mt-1.5">
+                          {#each m.tags as tag}
+                            <span class="text-xs px-1.5 py-0.5 rounded border {tagColor(tag)}">{tag}</span>
+                          {/each}
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="text-xs text-gray-300">{m.promptPrice}</div>
+                        <div class="text-gray-500 text-xs">per 1M in</div>
+                        <div class="text-xs text-gray-300 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
+                      </div>
+                    </div>
+                  </button>
+                {:else}
+                  <div class="p-4 text-center text-gray-400 text-sm">No agent models match your search</div>
+                {/each}
+              {/if}
+            </div>
+          </div>
+        {/if}
+
+        <!-- Agent test result -->
+        {#if agentTestResult}
+          <div class="rounded-xl border p-4 {agentTestResult.error ? 'bg-red-900/20 border-red-500/30' : 'bg-green-900/10 border-green-500/20'}">
+            <div class="flex items-center gap-2 mb-2">
+              {#if agentTestResult.error}
+                <span class="text-red-400">❌</span>
+                <span class="text-red-400 text-sm font-medium">Test failed</span>
+              {:else}
+                <span class="text-green-400">✅</span>
+                <span class="text-green-400 text-sm font-medium">Test passed — {agentTestResult.latencyMs}ms</span>
+              {/if}
+            </div>
+            {#if agentTestResult.error}
+              <p class="text-red-300 text-xs">{agentTestResult.error}</p>
+            {:else}
+              <p class="text-gray-300 text-xs font-mono">{agentTestResult.response}</p>
+            {/if}
+          </div>
+        {/if}
+      </div>
+
+      <!-- Ollama Local Model Names -->
+      {#if aiConfig.providerPreference !== 'openrouter'}
+        <div class="bg-white/5 rounded-xl p-5 space-y-4">
+          <h3 class="text-white font-semibold">💻 Local Ollama Model Names</h3>
+          <p class="text-gray-400 text-sm">Override which pulled Ollama models to use. Must match the model names you have pulled (<code class="bg-white/10 px-1 rounded text-xs">ollama list</code>).</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-gray-300 text-sm font-medium mb-2">Chat model (e.g. gemma4)</label>
+              <input
+                type="text"
+                bind:value={aiConfig.ollamaChatModel}
+                placeholder="gemma4"
+                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label class="block text-gray-300 text-sm font-medium mb-2">Agent model (e.g. hermes3)</label>
+              <input
+                type="text"
+                bind:value={aiConfig.ollamaAgentModel}
+                placeholder="hermes3"
+                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Info box -->
+      <div class="bg-blue-900/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
+        <span class="text-blue-400 text-lg mt-0.5">ℹ️</span>
+        <div class="text-blue-300/80 text-xs space-y-1">
+          <p><strong class="text-blue-300">API key security:</strong> Your <code class="bg-white/10 px-1 rounded">OPENROUTER_API_KEY</code> is stored securely in Dokploy environment variables — never in the database.</p>
+          <p><strong class="text-blue-300">Live changes:</strong> Model selections are stored in the database. Changes take effect within 60 seconds without redeployment.</p>
+          <p><strong class="text-blue-300">Free models:</strong> Models marked "Free" have zero token cost on OpenRouter but may have rate limits.</p>
         </div>
       </div>
     </div>

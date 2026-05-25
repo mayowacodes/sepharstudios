@@ -14,6 +14,7 @@
 
   // Build HLS src — use videoUrl directly, or fall back to encoder API if only videoId
   const src = $derived(() => {
+    if (content.playbackUrl) return content.playbackUrl;
     if (content.videoUrl) return content.videoUrl;
     if (content.videoId) return `/api/watch/${content.videoId}`;
     return '';
@@ -43,7 +44,9 @@
       />
     {:else}
       <div class="aspect-video flex items-center justify-center bg-zinc-900">
-        <p class="text-zinc-400">Video not available yet.</p>
+        <p class="text-zinc-400">
+          {content.processingStatus === 'ready' ? 'Video not available yet.' : 'Video is still processing.'}
+        </p>
       </div>
     {/if}
   </div>

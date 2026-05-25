@@ -1,0 +1,1 @@
+import{c as d,p as i,l as c,a as l,j as p,k as v,h as u,b as h,d as m,F as s,g as _,r as g}from"../chunks/Dm3kmBgO.js";a[s]="src/routes/(auth)/+layout.svelte";var f=l(_('<div class="animate-in"><!></div>'),a[s],[[4,0]]);function a(r,t){d(new.target),i(t,!0,a);var o={...c()},e=f(),n=u(e);return p(()=>v(n,()=>t.children),"render",a,5,1),g(e),h(r,e),m(o)}export{a as component};

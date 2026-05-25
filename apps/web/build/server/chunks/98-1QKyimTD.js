@@ -1,0 +1,69 @@
+import { e as error } from './index-BcOZ6EV9.js';
+import { d as db, m as mediaLibrary } from './drizzle-CW7hPjGG.js';
+import { eq } from 'drizzle-orm';
+import { b as getEncoderPlayback } from './encoder-orchestrator-BjJh_NPv.js';
+import './utils-FiC4zhrQ.js';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import './shared-server-BeisX7n9.js';
+import 'drizzle-orm/pg-core';
+
+const load = async ({ params, locals }) => {
+  const session = locals.session;
+  if (!session) {
+    error(401, "Please sign in to watch content");
+  }
+  const content = await db.select({
+    id: mediaLibrary.id,
+    title: mediaLibrary.title,
+    description: mediaLibrary.description,
+    thumbnail: mediaLibrary.thumbnail,
+    posterUrl: mediaLibrary.posterUrl,
+    backdropUrl: mediaLibrary.backdropUrl,
+    videoUrl: mediaLibrary.videoUrl,
+    videoId: mediaLibrary.videoId,
+    encoderJobId: mediaLibrary.encoderJobId,
+    processingStatus: mediaLibrary.processingStatus,
+    mediaType: mediaLibrary.mediaType,
+    genres: mediaLibrary.genres,
+    duration: mediaLibrary.duration,
+    year: mediaLibrary.year,
+    rating: mediaLibrary.rating,
+    ageRating: mediaLibrary.ageRating,
+    bibleReference: mediaLibrary.bibleReference,
+    language: mediaLibrary.language,
+    isActive: mediaLibrary.isActive
+  }).from(mediaLibrary).where(eq(mediaLibrary.id, params.id)).then((r) => r[0]);
+  if (!content || !content.isActive) {
+    error(404, "Content not found");
+  }
+  let playbackUrl = content.videoUrl;
+  if (!playbackUrl && content.encoderJobId && content.processingStatus === "ready") {
+    try {
+      const playback = await getEncoderPlayback(content.encoderJobId);
+      playbackUrl = playback.playback.master;
+    } catch (err) {
+      console.error(`Failed to sign playback URL for ${content.id}:`, err);
+    }
+  }
+  return {
+    content: { ...content, playbackUrl },
+    activeProfileId: locals.activeProfileId
+  };
+};
+
+var _page_server_ts = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  load: load
+});
+
+const index = 98;
+let component_cache;
+const component = async () => component_cache ??= (await import('./_page.svelte-gdvrWIVk.js')).default;
+const server_id = "src/routes/watch/[id]/+page.server.ts";
+const imports = ["_app/immutable/nodes/98.tdqXKl6u.js","_app/immutable/chunks/Dm3kmBgO.js","_app/immutable/chunks/_r6ywi_I.js","_app/immutable/chunks/Cp2x8l1r.js"];
+const stylesheets = ["_app/immutable/assets/ui-libs.BmaF0Alh.css"];
+const fonts = [];
+
+export { component, fonts, imports, index, _page_server_ts as server, server_id, stylesheets };
+//# sourceMappingURL=98-1QKyimTD.js.map

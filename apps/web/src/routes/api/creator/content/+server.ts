@@ -74,7 +74,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			creatorId: session.user.id,
 			slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${id.slice(0, 5)}`,
 			link: `/watch/${id}`,
-			videoUrl: data.videoUrl || ''
+			videoUrl: data.videoUrl || null,
+			processingStatus: 'not_started'
 		});
 
 		return json({ success: true, contentId: id });
