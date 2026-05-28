@@ -20,13 +20,13 @@
 </script>
 
 <a
-  href={isAuthenticated ? '/dashboard' : '/'}
+  href={isAuthenticated ? '/browse' : '/'}
   class={cn(
     'flex items-center space-x-2 transition-opacity hover:opacity-80',
     className
   )}
 >
-  <img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
+  <img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
 
   {#key user?.id}
     <span

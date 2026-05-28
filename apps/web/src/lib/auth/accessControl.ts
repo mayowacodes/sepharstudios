@@ -1,6 +1,5 @@
 import { checkUserAccess, subscriptionContract } from '$lib/web3/contracts';
-import { getAccount } from '@wagmi/core';
-import { config } from '$lib/web3/config';
+import { getCachedAccount } from '$lib/web3/wallet';
 
 export type AccessTier = 'free' | 'basic' | 'premium' | 'creator';
 
@@ -33,7 +32,7 @@ export async function checkContentAccess(
   // If no address provided, try to get from connected wallet
   if (!userAddress) {
     try {
-      const account = getAccount(config);
+      const account = getCachedAccount();
       if (account.address) {
         userAddress = account.address;
       } else {
@@ -255,7 +254,7 @@ export async function validateUserAccessComprehensive(
   hasSubscription?: boolean;
 }> {
   try {
-    const account = getAccount(config);
+    const account = getCachedAccount();
 
     if (!account.address || !account.isConnected) {
       return {
@@ -310,7 +309,7 @@ export async function validateUserAccessComprehensive(
     console.error('Comprehensive access validation failed:', error);
 
     try {
-      const account = getAccount(config);
+      const account = getCachedAccount();
       return {
         level: 'free',
         hasAccess: false,
@@ -334,7 +333,7 @@ export async function validateUserAccessComprehensive(
  */
 export function getWalletStatus() {
   try {
-    const account = getAccount(config);
+    const account = getCachedAccount();
     return {
       isConnected: account.isConnected,
       address: account.address,

@@ -19,7 +19,10 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Keep large UI libraries separate
-          'ui-libs': ['bits-ui', 'vaul-svelte']
+          'ui-libs': ['bits-ui', 'vaul-svelte'],
+          // layerchart is ~80 KB and only consumed by /admin/analytics; split
+          // it so non-admin routes never download it.
+          'chart-lib': ['layerchart']
         }
       }
     }

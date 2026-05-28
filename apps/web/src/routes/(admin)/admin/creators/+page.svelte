@@ -6,7 +6,6 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-  import { stcToken, tokenAMM } from '$lib/web3/contracts';
   import { Coins, DollarSign, Wallet, Settings, CreditCard, TrendingUp } from '@lucide/svelte';
 
   interface Creator {

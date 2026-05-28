@@ -53,7 +53,7 @@
 <div class="flex flex-col gap-4">
   <div class="flex flex-col gap-4">
     <h1 class="text-2xl font-bold sm:text-3xl">
-      Users ({#if $usersQuery.isPending}<Loader2 class="inline h-4 w-4 animate-spin" />{:else}{$usersQuery?.data?.total ?? 0}{/if})
+      Users ({#if usersQuery.isPending}<Loader2 class="inline h-4 w-4 animate-spin" />{:else}{usersQuery?.data?.total ?? 0}{/if})
     </h1>
     <p class="mt-2 text-muted-foreground">Manage users</p>
   </div>
@@ -105,19 +105,19 @@
     </div>
   </div>
 
-  {#if $usersQuery.isPending}
+  {#if usersQuery.isPending}
     <div class="p-6"><div class="flex h-80 items-center justify-center"><div class="size-20 animate-spin rounded-full border-b-2 border-primary"></div></div></div>
   {/if}
 
-  {#if $usersQuery.error}
+  {#if usersQuery.error}
     <Alert.Root variant="destructive">
       <AlertCircleIcon />
-      <Alert.Title>{$usersQuery.error.name}</Alert.Title>
-      <Alert.Description>{$usersQuery.error.cause}<br />{$usersQuery.error.message}</Alert.Description>
+      <Alert.Title>{usersQuery.error.name}</Alert.Title>
+      <Alert.Description>{usersQuery.error.cause}<br />{usersQuery.error.message}</Alert.Description>
     </Alert.Root>
   {/if}
 
-  {#if $usersQuery.isSuccess}
+  {#if usersQuery.isSuccess}
     <div>
       <!-- desktop table -->
       <div class="hidden overflow-x-auto border bg-white lg:block dark:bg-background">
@@ -132,7 +132,7 @@
             </TableRow>
           </TableHeader>
           <TableBody>
-            {#each $usersQuery.data.results as user, i}
+            {#each usersQuery.data.results as user, i}
               <ListCard {onDelete} screen="desktop" {i} {user} />
             {/each}
           </TableBody>
@@ -141,21 +141,21 @@
 
       <!-- mobile cards -->
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden">
-        {#each $usersQuery.data.results as user, i}
+        {#each usersQuery.data.results as user, i}
           <ListCard {onDelete} screen="mobile" {i} {user} />
         {/each}
       </div>
     </div>
 
     <div>
-      {#if $usersQuery.isFetching}
+      {#if usersQuery.isFetching}
         <div class="flex items-center justify-center">
           <Loader2 class="h-6 w-6 animate-spin text-muted-foreground" />
           <span class="ml-2 text-muted-foreground">Loading more...</span>
         </div>
-      {:else if $usersQuery.hasNextPage}
+      {:else if usersQuery.hasNextPage}
         <div class="justify-center">
-          <Button class="w-full sm:w-fit" onclick={() => $usersQuery.fetchNextPage()} disabled={!$usersQuery.hasNextPage || $usersQuery.isFetchingNextPage}>Load More</Button>
+          <Button class="w-full sm:w-fit" onclick={() => usersQuery.fetchNextPage()} disabled={!usersQuery.hasNextPage || usersQuery.isFetchingNextPage}>Load More</Button>
         </div>
       {:else}
         <p class="text-center text-sm text-muted-foreground">Nothing more to load</p>

@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { askCompanion, getSceneInsight } from '$lib/server/ai-companion';
+import { enforceRateLimit, AI_CHAT_LIMIT } from '$lib/server/rate-limit';
 
 /**
  * POST /api/ai/companion
@@ -17,6 +18,7 @@ import { askCompanion, getSceneInsight } from '$lib/server/ai-companion';
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:companion:${locals.user.id}`, AI_CHAT_LIMIT);
 
 	const body = await request.json();
 	const {

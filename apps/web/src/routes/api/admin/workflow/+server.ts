@@ -3,14 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { adminWorkflowRules } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { asc, eq } from 'drizzle-orm';
-
-async function requireAdmin(locals: App.Locals) {
-	const session = await locals.auth.getSession();
-	if (!session) return { session: null, error: json({ error: 'Unauthorized' }, { status: 401 }) };
-	const adminUser = await db.select({ role: user.role }).from(user).where(eq(user.id, session.user.id)).then(r => r[0]);
-	if (adminUser?.role !== 'admin') return { session: null, error: json({ error: 'Forbidden' }, { status: 403 }) };
-	return { session, error: null };
-}
+import { requireAdmin } from '$lib/server/admin-auth';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const { error } = await requireAdmin(locals);

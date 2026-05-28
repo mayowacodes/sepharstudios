@@ -1,8 +1,7 @@
 import type * as Kit from '@sveltejs/kit';
 
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-// @ts-ignore
-type MatcherParam<M> = M extends (param : string) => param is infer U ? U extends string ? U : string : string;
+type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 type RouteParams = {  };
 type RouteId = '/(creator)/creator';
 type MaybeWithVoid<T> = {} extends T ? T | void : T;
@@ -12,7 +11,7 @@ type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = Omit<EnsureDefined<import('../../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics" | "/(creator)/creator/analytics-help" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload"
+type LayoutRouteId = RouteId | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics" | "/(creator)/creator/analytics-help" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/copyright" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload"
 type LayoutParams = RouteParams & {  }
 type LayoutParentData = EnsureDefined<import('../../$types.js').LayoutData>;
 

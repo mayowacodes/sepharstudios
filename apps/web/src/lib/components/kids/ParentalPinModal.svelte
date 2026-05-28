@@ -65,7 +65,6 @@
 			bind:value={pin}
 			onkeydown={handleKey}
 			class="sr-only"
-			autofocus
 		/>
 
 		<!-- PIN pad -->

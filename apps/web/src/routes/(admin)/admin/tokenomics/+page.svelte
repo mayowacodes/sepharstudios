@@ -6,7 +6,11 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-  import { stcToken, tokenAMM } from '$lib/web3/contracts';
+  // contracts.ts pulls all ABIs + viem helpers — deferred so the tokenomics
+  // admin page shell renders without paying for the contract chunk eagerly.
+  import type { stcToken as StcToken, tokenAMM as TokenAmm } from '$lib/web3/contracts';
+  let stcToken: typeof StcToken | null = null;
+  let tokenAMM: typeof TokenAmm | null = null;
   import {
     Coins,
     TrendingUp,
@@ -81,6 +85,11 @@
 
   async function loadTokenomicsData() {
     try {
+      if (!stcToken || !tokenAMM) {
+        const mod = await import('$lib/web3/contracts');
+        stcToken = mod.stcToken;
+        tokenAMM = mod.tokenAMM;
+      }
       const [price, poolInfo, totalSupply] = await Promise.all([
         tokenAMM.getSTCPrice(),
         tokenAMM.getPoolInfo(),

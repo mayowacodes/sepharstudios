@@ -79,11 +79,10 @@
           <a href="/mayowa" onclick={() => isNotificationOpen.set(false)} class="block font-semibold pl-4 text-sm text-muted-foreground">Mayowa's Films</a>
           {#if isAuthenticated}
             <hr class="border-white/10" />
-            <a href="/my-list" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">My List</a>
-            <a href="/downloads" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Downloads</a>
-            <a href="/recently-watched" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Recently Watched</a>
+            <a href="/watchlist" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">My List</a>
+            <a href="/my-studios?tab=downloads" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Downloads</a>
+            <a href="/my-studios?tab=recent" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Recently Watched</a>
             <a href="/settings" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Settings</a>
-            <a href="/account" onclick={() => isNotificationOpen.set(false)} class="block text-lg font-semibold text-white/90 hover:text-white">Account</a>
           {/if}
         </SheetContent>
       </Sheet>
@@ -138,13 +137,15 @@
         </details>
 
         {#if isAuthenticated}
-          <a href="/my-list" class={navLinkClass('/my-list')}>My List</a>
-          <a href="/library" class={navLinkClass('/library')}>Library</a>
+          <a href="/watchlist" class={navLinkClass('/watchlist')}>My List</a>
         {/if}
       </nav>
     </div>
 
     <div class="ml-auto flex items-center gap-2">
+      <a href="/search" aria-label="Search" title="Search" class="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </a>
       <User />
     </div>
   </div>

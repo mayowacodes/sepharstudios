@@ -110,6 +110,8 @@
   >
     <div
       class="studios-panel"
+      role="region"
+      aria-label="My Studios"
       ontouchstart={handleTouchStart}
       ontouchend={handleTouchEnd}
     >
@@ -183,7 +185,7 @@
 
       <!-- Footer quick-links -->
       <div class="studios-footer">
-        <a href="/my-list" onclick={() => isOpen = false} class="studios-footer-link">
+        <a href="/watchlist" onclick={() => isOpen = false} class="studios-footer-link">
           <ListVideo size={14} />
           Full My List
         </a>

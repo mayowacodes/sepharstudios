@@ -8,6 +8,7 @@ import { Role } from '$lib/constants';
 import { roles, ac } from '$lib/db/permissions';
 import { sendEmailAction } from '$lib/authentication/server';
 import { getAccountByUserId } from '$lib/db/account';
+import { track } from '$lib/server/analytics';
 
 const VALID_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com'];
 const normalizeName = (name: string) => {
@@ -19,6 +20,16 @@ const normalizeName = (name: string) => {
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL || 'http://localhost:3000',
+  trustedOrigins: env.NODE_ENV === 'production'
+    ? [
+        'https://sepharstudios.com',
+        'https://www.sepharstudios.com',
+        'https://admin.sepharstudios.com',
+        'https://creators.sepharstudios.com',
+        'https://creator.sepharstudios.com',
+        'https://kids.sepharstudios.com',
+      ]
+    : ['http://localhost:3000', 'http://localhost:5173'],
   database: drizzleAdapter(db, { provider: 'pg', schema }),
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
@@ -93,6 +104,19 @@ export const auth = betterAuth({
       if (ctx.path === '/sign-in/magic-link') {
         const name = normalizeName(ctx.body.name);
         return { context: { ...ctx, body: { ...ctx.body, name } } };
+      }
+    }),
+    after: createAuthMiddleware(async (ctx) => {
+      // Track successful sign-ups. The `after` hook only runs when the upstream
+      // handler completed without throwing, so this fires exactly on the rows
+      // that landed in the DB. Best-effort: `track` never throws.
+      if (ctx.path === '/sign-up/email') {
+        const newUserId = (ctx.context.newSession?.user?.id ?? null) as string | null;
+        const email = (ctx.body?.email as string | undefined) ?? null;
+        await track(newUserId, 'sign_up', {
+          method: 'email',
+          domain: email ? email.split('@')[1] : null
+        });
       }
     }),
   },

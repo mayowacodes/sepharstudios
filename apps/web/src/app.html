@@ -4,13 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Sephar Studios</title>
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0b0c10" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo-alone-sepharstudios.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo-alone-sepharstudios-bgless.png?v=2" />
+    <link rel="icon" type="image/png" href="/logo-alone-sepharstudios-bgless.png?v=2" />
+    <link rel="shortcut icon" href="/logo-alone-sepharstudios-bgless.png?v=2" />
     %sveltekit.head%
-    <link rel="icon" type="image/png" href="/logo-alone-sepharstudios.png" />
-    <link rel="shortcut icon" href="/logo-alone-sepharstudios.png" />
     <meta name="apple-mobile-web-app-title" content="Sephar Studios" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,6 +24,23 @@
         "name": "sepharstudios",
         "url": "/"
       }
+    </script>
+
+    <!-- Openpanel — product analytics. Auto-tracks page views; we fire
+         explicit server-side events from $lib/server/analytics.ts. The
+         clientId is public-safe. Set via PUBLIC_OPENPANEL_CLIENT_ID env. -->
+    <script>
+      (function () {
+        var clientId = '%sveltekit.env.PUBLIC_OPENPANEL_CLIENT_ID%';
+        if (!clientId || clientId.indexOf('%') === 0) return;
+        var s = document.createElement('script');
+        s.src = 'https://openpanel.dev/op1.js';
+        s.defer = true;
+        s.setAttribute('data-client-id', clientId);
+        s.setAttribute('data-track-screen-views', 'true');
+        s.setAttribute('data-track-outgoing-links', 'true');
+        document.head.appendChild(s);
+      })();
     </script>
   </head>
   <body data-sveltekit-preload-data="hover" data-sveltekit-reload>

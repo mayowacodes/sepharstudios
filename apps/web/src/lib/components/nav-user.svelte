@@ -16,6 +16,16 @@
   let { user }: { user: User } = $props();
   const sidebar = useSidebar();
   const navItems = getNavigation(page.url.pathname);
+
+  async function signOut() {
+    try {
+      await fetch('/api/auth/sign-out', { method: 'POST' });
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    } finally {
+      location.href = '/';
+    }
+  }
 </script>
 
 <Sidebar.Menu>
@@ -63,7 +73,7 @@
           {/each}
         </DropdownMenu.Group>
         <DropdownMenu.Separator />
-        <DropdownMenu.Item onclick={() => (location.href = '/auth/logout')}>
+        <DropdownMenu.Item onclick={signOut}>
           <LogOutIcon />Log out
         </DropdownMenu.Item>
       </DropdownMenu.Content>

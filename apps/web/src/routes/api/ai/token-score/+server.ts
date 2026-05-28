@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { scoreWatchEngagement, analyzeUserEngagementPattern } from '$lib/server/ai-token-scoring';
+import { enforceRateLimit, AI_AGENT_LIMIT } from '$lib/server/rate-limit';
 
 /**
  * POST /api/ai/token-score
@@ -12,6 +13,7 @@ import { scoreWatchEngagement, analyzeUserEngagementPattern } from '$lib/server/
  */
 export const POST = async ({ request, locals }: RequestEvent) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:token-score:${locals.user.id}`, AI_AGENT_LIMIT);
 
 	const body = await request.json();
 	const { type } = body;

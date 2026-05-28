@@ -3,6 +3,7 @@ version: "3.8"
 services:
   sepharstudios:
     image: manimasaun/sepharstudios:latest
+    pull_policy: always
     restart: always
     ports:
       - "3000"
@@ -25,6 +26,9 @@ services:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=https://sepharstudios.com
       - BETTER_API_URL=https://sepharstudios.com/api/auth
+
+      # Redis (Dokploy-managed instance — used for OTP + rate-limit)
+      - REDIS_URL=${REDIS_URL}
       
       # Google OAuth
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -41,6 +45,29 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin123}
       - MINIO_BUCKET=${MINIO_BUCKET:-sephar-uploads}
       
+      # Encoder Orchestrator
+      - ORCHESTRATOR_BASE_URL=${ORCHESTRATOR_BASE_URL}
+      - ORCHESTRATOR_API_SECRET=${ORCHESTRATOR_API_SECRET}
+
+      # Encoder MinIO
+      - ENCODER_MINIO_ENDPOINT=${ENCODER_MINIO_ENDPOINT}
+      - ENCODER_MINIO_PORT=${ENCODER_MINIO_PORT:-443}
+      - ENCODER_MINIO_USE_SSL=${ENCODER_MINIO_USE_SSL:-true}
+      - ENCODER_MINIO_ACCESS_KEY=${ENCODER_MINIO_ACCESS_KEY}
+      - ENCODER_MINIO_SECRET_KEY=${ENCODER_MINIO_SECRET_KEY}
+      - ENCODER_INPUT_BUCKET=${ENCODER_INPUT_BUCKET:-encoder-input}
+      - PUBLIC_ENCODER_MINIO_URL=${PUBLIC_ENCODER_MINIO_URL}
+
+      # Encoder API (internal)
+      - ENCODER_API_URL=${ENCODER_API_URL:-http://encoder-api:3000}
+
+      # Bunny CDN
+      - BUNNY_CDN_HOST=${BUNNY_CDN_HOST:-video.sepharstudios.com}
+      - BUNNY_SECRET_KEY=${BUNNY_SECRET_KEY}
+
+      # Backend auth
+      - SEPHAR_BACKEND_TOKEN=${SEPHAR_BACKEND_TOKEN}
+
       # Webhooks
       - EMAIL_WEBHOOK=${EMAIL_WEBHOOK}
       - BODY_SIZE_LIMIT=10485760
@@ -85,6 +112,18 @@ services:
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.regex=^https://www\\.sepharstudios\\.com/(.*)"
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.replacement=https://sepharstudios.com/$${1}"
       - "traefik.http.middlewares.sepharstudios-www-redirect.redirectregex.permanent=true"
+
+      # Admin subdomain
+      - "traefik.http.routers.sepharstudios-admin.rule=Host(`admin.sepharstudios.com`)"
+      - "traefik.http.routers.sepharstudios-admin.entrypoints=websecure"
+      - "traefik.http.routers.sepharstudios-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sepharstudios-admin.priority=10"
+
+      # Creator subdomains (with and without 's')
+      - "traefik.http.routers.sepharstudios-creators.rule=Host(`creators.sepharstudios.com`) || Host(`creators.sepharstudios.com`)"
+      - "traefik.http.routers.sepharstudios-creators.entrypoints=websecure"
+      - "traefik.http.routers.sepharstudios-creators.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sepharstudios-creators.priority=10"
 
   # ── Ollama — Local AI Engine ─────────────────────────────────────────────────
   # Runs TWO models:

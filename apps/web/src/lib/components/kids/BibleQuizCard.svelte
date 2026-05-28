@@ -15,7 +15,11 @@
   }
 
   let { contentId, sessionId, questions, onComplete }: Props = $props();
+  // svelte-ignore state_referenced_locally — quiz state is owned locally after
+  // mount (user is answering questions, scores accumulate). A parent re-render
+  // mid-quiz must not reset progress.
   let activeSessionId = $state(sessionId ?? '');
+  // svelte-ignore state_referenced_locally — same as above.
   let quizQuestions = $state<Question[]>(questions ?? []);
   let loadingQuiz = $state(false);
 

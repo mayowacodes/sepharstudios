@@ -5,7 +5,7 @@ import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { commitEncoderJob } from '$lib/server/encoder-orchestrator';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
+	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
 	const jobId = (params as Record<string, string>).jobId;

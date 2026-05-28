@@ -1,8 +1,8 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary, notificationPreferences } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, notificationPreferences, notifications } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { sendNewReleaseNotification } from '$lib/server/notifications';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
@@ -48,27 +48,43 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		})
 		.where(eq(mediaLibrary.id, contentId));
 
-	// Fan-out notifications — find all users who opted in to new release emails
+	// Fan-out notifications — find all users who opted in to new release emails.
+	// We also insert in-app notifications for the SAME audience (it doesn't make
+	// sense to opt out of email but get an in-app ping for the same event).
 	const recipients = await db
-		.select({ email: user.email, name: user.name })
+		.select({ userId: user.id, email: user.email, name: user.name })
 		.from(notificationPreferences)
 		.innerJoin(user, eq(notificationPreferences.userId, user.id))
 		.where(eq(notificationPreferences.newReleases, true));
 
+	// Bulk-insert in-app notifications first (cheap, indexed, one round-trip).
+	if (recipients.length > 0) {
+		await db.insert(notifications).values(
+			recipients.map((r) => ({
+				userId: r.userId,
+				kind: 'content_publish',
+				title: `New: ${content.title}`,
+				message: `A new ${content.mediaType ?? 'release'} just dropped on Sephar Studios. Tap to watch.`,
+				actionUrl: `/watch/${contentId}`
+			}))
+		).catch((err) => console.error('publish in-app notification batch failed:', err));
+	}
+
 	// Send emails in the background — don't block the response
-	let notified = 0;
 	const emailPromises = recipients.map(async (r) => {
 		try {
 			await sendNewReleaseNotification(r.email, r.name, content.title, content.mediaType ?? 'content', contentId);
-			notified++;
 		} catch {
 			// Non-critical — log and continue
 			console.error(`Failed to notify ${r.email} for content ${contentId}`);
 		}
 	});
 
-	// Fire-and-forget — respond immediately, emails send async
-	Promise.all(emailPromises).catch(() => {});
+	// Fire-and-forget — respond immediately, emails send async. Each promise
+	// already catches its own failure; this outer catch is just defensive.
+	Promise.all(emailPromises).catch((err) => {
+		console.error('publish notification batch failed unexpectedly:', err);
+	});
 
 	return json({ success: true, contentId, notifying: recipients.length });
 };

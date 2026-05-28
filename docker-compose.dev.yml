@@ -14,5 +14,17 @@ services:
       - minio-dev-data:/data
     command: server /data --console-address ":9001"
 
+  # Local Redis for dev — backs OTP store + rate-limit buckets.
+  # Production uses the Dokploy-managed Redis at 213.136.92.11:4076.
+  redis:
+    image: redis:7-alpine
+    container_name: sephar-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    command: redis-server --appendonly yes
+
 volumes:
   minio-dev-data:
+  redis-dev-data:

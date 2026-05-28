@@ -5,6 +5,7 @@ import { paystackSubscriptions, trialBlacklist, familyAddons, notificationPrefer
 import { eq, or } from 'drizzle-orm';
 import { sendTrialWelcome } from '$lib/server/notifications';
 import { user } from '$lib/db/schema';
+import { track } from '$lib/server/analytics';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const session = await locals.auth.getSession();
@@ -20,8 +21,20 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			return json({ error: 'Payment not successful' }, { status: 402 });
 		}
 
-		const meta = tx as unknown as { metadata: { userId: string; plan: string; addFamily: boolean; isTrial: boolean } };
-		const { plan, addFamily, isTrial } = meta.metadata;
+		// Validate the structure Paystack returns before destructuring. The previous
+		// double-cast (`as unknown as ...`) bypassed the type system entirely; a
+		// missing `metadata` would crash the handler with `Cannot read property
+		// 'plan' of undefined` and return 500 to the user.
+		const meta = (tx as { metadata?: unknown }).metadata as
+			| { plan?: string; addFamily?: boolean; isTrial?: boolean }
+			| undefined;
+		if (!meta || typeof meta.plan !== 'string') {
+			console.error('Paystack tx is missing metadata.plan:', { reference });
+			return json({ error: 'Payment is missing plan information' }, { status: 502 });
+		}
+		const plan = meta.plan;
+		const addFamily = meta.addFamily === true;
+		const isTrial = meta.isTrial === true;
 		const userId = session.user.id;
 		const cardSig = tx.authorization?.signature;
 
@@ -78,6 +91,10 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 		// Send welcome email
 		await sendTrialWelcome(session.user.email, session.user.name, plan, trialEnd);
+
+		// Analytics — track the subscribe event server-side so we capture it
+		// even if the client never finishes the page redirect.
+		await track(userId, 'subscribe', { plan, isTrial, addFamily });
 
 		return json({ success: true, plan, trialEndDate: trialEnd });
 	} catch (err) {

@@ -1,14 +1,51 @@
 <!-- Creator Analytics Dashboard -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  
+
   // Mock analytics data - replace with real API
   let analyticsData: any = {};
   let isLoading = true;
   let selectedPeriod = '30d';
   let selectedContent = 'all';
-  
+
+  // AI Insights — real data from /api/ai/creator-insights
+  type AIInsights = {
+    summary?: string;
+    strengths?: string[];
+    improvements?: string[];
+    recommendations?: string[];
+    nextContentIdea?: string;
+    message?: string;
+  };
+  let aiInsights: AIInsights | null = null;
+  let aiLoading = false;
+  let aiError = '';
+
+  async function loadAIInsights() {
+    aiLoading = true;
+    aiError = '';
+    try {
+      const res = await fetch('/api/ai/creator-insights');
+      if (!res.ok) {
+        if (res.status === 404) {
+          aiError = 'Complete your creator profile to unlock AI insights.';
+        } else if (res.status === 503) {
+          aiError = 'AI insights service is unavailable. Try again shortly.';
+        } else {
+          aiError = 'Could not load insights.';
+        }
+        return;
+      }
+      aiInsights = await res.json();
+    } catch (err) {
+      aiError = err instanceof Error ? err.message : 'Could not load insights.';
+    } finally {
+      aiLoading = false;
+    }
+  }
+
   onMount(() => {
+    void loadAIInsights();
     // Simulate loading analytics from API
     setTimeout(() => {
       analyticsData = {
@@ -140,6 +177,80 @@
         <option value="2">Sunday Sermon Series</option>
       </select>
     </div>
+  </div>
+
+  <!-- AI Insights panel — real data from /api/ai/creator-insights -->
+  <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1">
+          <span>✨</span> AI Insights
+        </div>
+        <h2 class="text-xl font-bold text-white">What your data is telling us</h2>
+      </div>
+      <button
+        type="button"
+        onclick={loadAIInsights}
+        disabled={aiLoading}
+        class="text-xs text-purple-200 hover:text-white border border-purple-500/40 hover:border-purple-400 rounded-md px-3 py-1.5 transition-colors disabled:opacity-40"
+      >
+        {aiLoading ? 'Analysing…' : 'Refresh'}
+      </button>
+    </div>
+
+    {#if aiLoading && !aiInsights}
+      <div class="grid sm:grid-cols-2 gap-3">
+        {#each [1,2,3,4] as _}
+          <div class="h-20 bg-white/5 rounded-lg animate-pulse"></div>
+        {/each}
+      </div>
+    {:else if aiError}
+      <p class="text-sm text-purple-200/80">{aiError}</p>
+    {:else if aiInsights?.message}
+      <p class="text-sm text-purple-100">{aiInsights.message}</p>
+    {:else if aiInsights}
+      {#if aiInsights.summary}
+        <p class="text-sm text-purple-50 mb-4 leading-relaxed">{aiInsights.summary}</p>
+      {/if}
+      <div class="grid sm:grid-cols-2 gap-4">
+        {#if aiInsights.strengths?.length}
+          <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-emerald-300 mb-2">Strengths</h3>
+            <ul class="space-y-1 text-sm text-emerald-50">
+              {#each aiInsights.strengths as item}
+                <li>• {item}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if aiInsights.improvements?.length}
+          <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-amber-300 mb-2">Areas to improve</h3>
+            <ul class="space-y-1 text-sm text-amber-50">
+              {#each aiInsights.improvements as item}
+                <li>• {item}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if aiInsights.recommendations?.length}
+          <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 sm:col-span-2">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-blue-300 mb-2">Recommendations</h3>
+            <ul class="space-y-1 text-sm text-blue-50">
+              {#each aiInsights.recommendations as item}
+                <li>• {item}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if aiInsights.nextContentIdea}
+          <div class="bg-pink-500/10 border border-pink-500/30 rounded-lg p-4 sm:col-span-2">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-pink-300 mb-2">Idea for your next piece</h3>
+            <p class="text-sm text-pink-50">{aiInsights.nextContentIdea}</p>
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 
   {#if isLoading}

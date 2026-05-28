@@ -1,6 +1,7 @@
 <!-- Creator Platform Footer -->
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { navigateToMainSite } from '$lib/utils/portal-navigation';
   
   const creatorLinks = {
     'Creator Resources': [
@@ -25,7 +26,7 @@
       { label: 'Creator Agreement', href: '/creator/agreement' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Content Guidelines', href: '/guidelines' },
-      { label: 'Copyright Policy', href: '/copyright' }
+      { label: 'Copyright Policy', href: '/creator/copyright' }
     ]
   };
   
@@ -35,7 +36,7 @@
   }
   
   function goToMainSite() {
-    goto('/');
+    navigateToMainSite();
   }
 </script>
 
@@ -49,7 +50,7 @@
           onclick={goToMainSite}
           class="flex items-center gap-3 text-2xl font-bold text-white hover:text-purple-300 transition-colors text-left"
         >
-          <img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
+          <img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
           <span>Sephar Studios</span>
         </button>
         <p class="text-sm text-gray-300">

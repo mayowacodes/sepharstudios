@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	// Verify OTP if provided (required for new trial signups)
 	if (phone && otp) {
-		const valid = verifyOtp(phone, otp);
+		const valid = await verifyOtp(phone, otp);
 		if (!valid) {
 			return json({ error: 'Invalid or expired verification code' }, { status: 400 });
 		}

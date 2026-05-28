@@ -5,10 +5,13 @@ node_modules
 # Build outputs
 **/build
 **/.svelte-kit
+**/.turbo
 .output
 .vercel
 .netlify
 .wrangler
+.mypy_cache
+.kilo
 
 # Git
 .git
@@ -25,6 +28,7 @@ DOKPLOY_ENV.txt
 *.log
 npm-debug.log*
 bun-debug.log*
+install-log*
 
 # OS junk
 .DS_Store
@@ -41,10 +45,21 @@ coverage/
 *.test.ts
 *.spec.ts
 
-# Docs & non-essential markdown (optional – saves a few KB)
-# Uncomment if you want to slim the context further:
-# *.md
-# drizzle/
+# Documentation & non-essential files
+*.md
+*.pdf
+*.html
+*.csv
+*.txt
+logos
+drizzle
+n8n
+scripts
 
 # Python scripts
 *.py
+
+# Docker/deployment
+docker-compose*.yml
+Dockerfile*
+.dockerignore

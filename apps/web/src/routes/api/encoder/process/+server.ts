@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const session = await locals.auth.validate();
+	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
 	const data = await request.json();

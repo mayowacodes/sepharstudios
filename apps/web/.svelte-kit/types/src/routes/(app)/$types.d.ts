@@ -1,8 +1,7 @@
 import type * as Kit from '@sveltejs/kit';
 
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-// @ts-ignore
-type MatcherParam<M> = M extends (param : string) => param is infer U ? U extends string ? U : string : string;
+type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 type RouteParams = {  };
 type RouteId = '/(app)';
 type MaybeWithVoid<T> = {} extends T ? T | void : T;
@@ -13,7 +12,7 @@ type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends 
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageServerParentData = Omit<EnsureDefined<import('../$types.js').LayoutServerData>, keyof LayoutServerData> & EnsureDefined<LayoutServerData>;
 type PageParentData = Omit<EnsureDefined<import('../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/(app)" | "/(app)/about" | "/(app)/apply/creator" | "/(app)/archive" | "/(app)/careers" | "/(app)/checkout" | "/(app)/contact" | "/(app)/device-support" | "/(app)/documentaries" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/(app)/mayowa" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(app)/shows" | "/(app)/sponsorships" | "/(app)/terms" | "/(app)/token"
+type LayoutRouteId = RouteId | "/(app)" | "/(app)/about" | "/(app)/apply/creator" | "/(app)/archive" | "/(app)/browse" | "/(app)/careers" | "/(app)/checkout" | "/(app)/contact" | "/(app)/device-support" | "/(app)/documentaries" | "/(app)/exchange" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/(app)/liquidity" | "/(app)/mayowa" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(app)/search" | "/(app)/shows" | "/(app)/sponsorships" | "/(app)/staking" | "/(app)/terms" | "/(app)/token" | "/(app)/webinars"
 type LayoutParams = RouteParams & {  }
 type LayoutParentData = EnsureDefined<import('../$types.js').LayoutData>;
 

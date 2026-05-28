@@ -101,7 +101,7 @@ export interface UserType {
 export interface Profile {
   id: string;
   name: string;
-  type: 'adult' | 'teen' | 'kid';
+  type: 'adult' | 'teen' | 'kids';
   avatar: string;
   email?: string;
   image?: string;

@@ -5,17 +5,20 @@ import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load = async () => {
-    const content = await db.select()
-        .from(mediaLibrary)
-        .where(
-            and(
-                eq(mediaLibrary.category, 'kids'),
-                eq(mediaLibrary.isActive, true)
-            )
-        );
+    try {
+        const content = await db.select()
+            .from(mediaLibrary)
+            .where(
+                and(
+                    eq(mediaLibrary.category, 'kids'),
+                    eq(mediaLibrary.isActive, true)
+                )
+            );
 
-    return {
-        content
-    };
+        return { content };
+    } catch (e) {
+        console.error('Failed to load kiddies content', e);
+        return { content: [] };
+    }
 };
 ;null as any as PageServerLoad;

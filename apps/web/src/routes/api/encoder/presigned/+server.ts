@@ -5,7 +5,7 @@ import { env } from '$env/dynamic/private';
 const INPUT_BUCKET = env.ENCODER_INPUT_BUCKET || 'encoder-input';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const session = await locals.auth.validate();
+	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
 	const { filename, contentType } = await request.json();

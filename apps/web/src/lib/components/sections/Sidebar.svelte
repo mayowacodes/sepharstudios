@@ -21,12 +21,12 @@
     },
     {
       title: 'My List',
-      href: '/my-list',
+      href: '/watchlist',
       icon: Heart
     },
     {
       title: 'History',
-      href: '/library',
+      href: '/my-studios?tab=recent',
       icon: History
     },
     {

@@ -1,7 +1,13 @@
 <!-- Admin Dashboard Home -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { stcToken, tokenAMM, subscriptionContract } from '$lib/web3/contracts';
+  // contracts.ts pulls all ABIs + viem helpers — deferred to onMount so the
+  // admin shell loads without paying for the contract chunk eagerly.
+  import type {
+    stcToken as StcToken,
+    tokenAMM as TokenAmm,
+    subscriptionContract as SubContract
+  } from '$lib/web3/contracts';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
@@ -41,6 +47,10 @@
 
   let urgentReviews = $state<{ id: string; title: string; mediaType: string; createdAt: string }[]>([]);
   
+  let stcToken: typeof StcToken | null = null;
+  let tokenAMM: typeof TokenAmm | null = null;
+  let subscriptionContract: typeof SubContract | null = null;
+
   onMount(async () => {
     const [statsRes, pendingRes] = await Promise.all([
       fetch('/api/admin/stats'),
@@ -51,6 +61,11 @@
 
     // Load Web3 metrics
     try {
+      const mod = await import('$lib/web3/contracts');
+      stcToken = mod.stcToken;
+      tokenAMM = mod.tokenAMM;
+      subscriptionContract = mod.subscriptionContract;
+
       const [price, poolInfo, totalSupply] = await Promise.all([
         tokenAMM.getSTCPrice(),
         tokenAMM.getPoolInfo(),

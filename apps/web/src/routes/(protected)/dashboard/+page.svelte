@@ -1,10 +1,23 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import * as Card from '$lib/components/ui/card/index.js';
   import { LayoutDashboard, Users, FileText, User as UserIcon } from '@lucide/svelte';
   import type { User } from '$lib/auth';
   import { page } from '$app/state';
 
   const user = page.data.user as User;
+
+  onMount(() => {
+    // /dashboard acts as a role-based router: send each user to their proper home.
+    if (user?.role === 'creator') {
+      window.location.href = 'https://creators.sepharstudios.com/creator';
+    } else if (user?.role === 'admin') {
+      window.location.href = 'https://admin.sepharstudios.com/admin';
+    } else {
+      // Plain users (and editors) belong on the content browse page, not on this dashboard.
+      window.location.href = '/browse';
+    }
+  });
 </script>
 
 <div class="flex flex-col gap-6">

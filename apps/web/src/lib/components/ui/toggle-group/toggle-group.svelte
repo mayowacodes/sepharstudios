@@ -32,9 +32,14 @@
 		...restProps
 	}: ToggleGroupPrimitive.RootProps & ToggleVariants & { spacing?: number } = $props();
 
+	// svelte-ignore state_referenced_locally — presentational variants captured
+	// into Svelte context once at mount. Toggle groups don't change size/variant
+	// at runtime, and Svelte context isn't designed to update reactively.
 	setToggleGroupCtx({
 		variant,
+		// svelte-ignore state_referenced_locally — see above.
 		size,
+		// svelte-ignore state_referenced_locally — see above.
 		spacing,
 	});
 </script>

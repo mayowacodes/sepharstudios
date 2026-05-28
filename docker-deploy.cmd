@@ -3,6 +3,7 @@ setlocal enabledelayedexpansion
 
 REM Configuration
 set IMAGE_NAME=manimasaun/sepharstudios
+set VERSION=1.0.2
 REM VERSION can be passed as first arg, otherwise read from package.json
 if not "%1"=="" (
     set VERSION=%1

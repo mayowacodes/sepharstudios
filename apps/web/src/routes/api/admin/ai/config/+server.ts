@@ -1,21 +1,11 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { db } from '$lib/db/drizzle';
-import { user } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { getAIConfig, saveAIConfig, DEFAULT_AI_CONFIG } from '$lib/server/ai-settings';
+import { requireAdmin } from '$lib/server/admin-auth';
 
 /**
  * GET  /api/admin/ai/config  — returns current AI model config
  * PUT  /api/admin/ai/config  — saves new AI model config
  */
-
-async function requireAdmin(locals: App.Locals) {
-	const session = await locals.auth.getSession();
-	if (!session) return { error: json({ error: 'Unauthorized' }, { status: 401 }) };
-	const adminUser = await db.select({ role: user.role }).from(user).where(eq(user.id, session.user.id)).then(r => r[0]);
-	if (adminUser?.role !== 'admin') return { error: json({ error: 'Forbidden' }, { status: 403 }) };
-	return { error: null };
-}
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const { error } = await requireAdmin(locals);

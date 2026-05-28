@@ -40,8 +40,11 @@
     <img
       src={movie.thumbnailUrl}
       alt={movie.title}
-      class="w-full h-48 object-cover"
+      width="320"
+      height="192"
       loading="lazy"
+      decoding="async"
+      class="w-full h-48 object-cover"
     />
   {/if}
 

@@ -1,8 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { db } from '$lib/db/drizzle';
-import { user } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { requireAdmin } from '$lib/server/admin-auth';
 
 /**
  * POST /api/admin/ai/test
@@ -13,14 +11,6 @@ import { eq } from 'drizzle-orm';
  * Body: { model: string; type: 'chat' | 'agent' }
  * Response: { response: string; latencyMs: number; model: string; provider: 'openrouter' }
  */
-
-async function requireAdmin(locals: App.Locals) {
-	const session = await locals.auth.getSession();
-	if (!session) return { error: json({ error: 'Unauthorized' }, { status: 401 }) };
-	const adminUser = await db.select({ role: user.role }).from(user).where(eq(user.id, session.user.id)).then(r => r[0]);
-	if (adminUser?.role !== 'admin') return { error: json({ error: 'Forbidden' }, { status: 403 }) };
-	return { error: null };
-}
 
 const CHAT_TEST_PROMPT = `You are an AI assistant for Sephar Studios, a faith-based streaming platform. 
 Give me a 1-sentence description of what makes a great Christian movie.`;

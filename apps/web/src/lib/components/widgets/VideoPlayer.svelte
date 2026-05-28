@@ -1,6 +1,17 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import Hls from 'hls.js';
+  import type HlsType from 'hls.js';
+
+  // hls.js is ~120 KB minified — only loaded when an .m3u8 source is actually
+  // played and the browser doesn't support HLS natively (Safari does).
+  // Cached after first dynamic import so re-init on src change reuses it.
+  let HlsCtor: typeof HlsType | null = null;
+  async function loadHls() {
+    if (!HlsCtor) {
+      HlsCtor = (await import('hls.js')).default;
+    }
+    return HlsCtor;
+  }
 
   interface Props {
     src: string;           // HLS manifest URL (.m3u8) or direct video URL
@@ -16,7 +27,7 @@
 
   let videoEl = $state<HTMLVideoElement | undefined>();
   let containerEl = $state<HTMLDivElement | undefined>();
-  let hls: Hls | null = null;
+  let hls: HlsType | null = null;
 
   // Playback state
   let playing = $state(false);
@@ -61,10 +72,22 @@
     } catch { /* non-critical */ }
   }
 
-  function initHls(video: HTMLVideoElement, url: string) {
+  async function initHls(video: HTMLVideoElement, url: string) {
     if (hls) { hls.destroy(); hls = null; }
 
-    if (Hls.isSupported() && url.includes('.m3u8')) {
+    const isHlsUrl = url.includes('.m3u8');
+    const canPlayNative = video.canPlayType('application/vnd.apple.mpegurl');
+
+    // Only pay the 120 KB cost when we actually need hls.js (HLS source + no
+    // native support). Safari and direct MP4 sources skip the dynamic import.
+    if (isHlsUrl && !canPlayNative) {
+      const Hls = await loadHls();
+      if (!Hls.isSupported()) {
+        video.src = url;
+        if (startAt > 0) video.currentTime = startAt;
+        return;
+      }
+
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: false,
@@ -98,7 +121,7 @@
           }
         }
       });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    } else if (isHlsUrl && canPlayNative) {
       // Native HLS (Safari)
       video.src = url;
       if (startAt > 0) {
@@ -106,7 +129,7 @@
       }
       video.play().catch(() => {});
     } else {
-      // Fallback: direct src
+      // Direct MP4/WebM — no HLS machinery needed
       video.src = url;
       if (startAt > 0) video.currentTime = startAt;
     }
@@ -206,7 +229,24 @@
 
     initHls(v, src);
 
-    v.addEventListener('play', () => { playing = true; showControls(); });
+    // Track the first play of this session — used for funnel analysis (sign-up
+    // → subscribe → watch-start → watch-complete). Subsequent plays (pause →
+    // resume) don't re-fire. Guard against the global Openpanel script not
+    // having loaded yet (no env vars set).
+    let watchStartTracked = false;
+    v.addEventListener('play', () => {
+      playing = true;
+      showControls();
+      if (!watchStartTracked) {
+        watchStartTracked = true;
+        try {
+          // Openpanel's client-side `op` is added by app.html; if the env vars
+          // aren't set, the script never loads and `op` is undefined — safe.
+          const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
+          op?.('watch_start', { contentId, title });
+        } catch { /* analytics is best-effort */ }
+      }
+    });
     v.addEventListener('pause', () => { playing = false; controlsVisible = true; clearTimeout(controlsTimer); });
     v.addEventListener('timeupdate', () => { currentTime = v.currentTime; });
     v.addEventListener('durationchange', () => { duration = v.duration; });
@@ -243,11 +283,23 @@
 <svelte:window onkeydown={handleKeyDown} />
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- role="application" tells AT to defer keyboard handling to this widget.
+     Keyboard control lives on <svelte:window onkeydown={handleKeyDown}/> above
+     so play/pause/seek work with the keyboard even when this div isn't focused.
+     The onkeydown noop satisfies the rule that any clickable element also have
+     a keyboard-event handler. svelte-check's a11y rules don't yet recognise
+     role="application" as interactive, so the warnings above are suppressed. -->
 <div
   bind:this={containerEl}
   class="relative bg-black w-full aspect-video select-none group"
   onmousemove={showControls}
   onclick={() => { togglePlay(); showControls(); }}
+  onkeydown={() => {}}
+  role="application"
+  aria-label="Video player"
+  tabindex="0"
 >
   <!-- Video element -->
   <video
@@ -261,22 +313,31 @@
     {/each}
   </video>
 
-  <!-- Controls overlay -->
+  <!-- Controls overlay — click is only used to stop propagation to the container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 {controlsVisible ? 'opacity-100' : 'opacity-0'}"
     onclick={(e) => e.stopPropagation()}
+    onkeydown={() => {}}
+    role="presentation"
   >
     <!-- Title -->
     {#if title}
       <div class="absolute top-4 left-4 text-white text-sm font-medium drop-shadow">{title}</div>
     {/if}
 
-    <!-- Progress bar -->
+    <!-- Progress bar — keyboard arrow keys handled globally by handleKeyDown -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="mx-4 mb-2 h-1.5 bg-white/20 rounded-full cursor-pointer group/bar hover:h-3 transition-all relative"
       onclick={seek}
+      onkeydown={() => {}}
+      role="slider"
+      aria-label="Video progress"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow={Math.round(progressPct)}
+      tabindex="0"
     >
       <!-- Buffered -->
       <div class="absolute inset-y-0 left-0 bg-white/30 rounded-full" style="width: {bufferedPct}%"></div>

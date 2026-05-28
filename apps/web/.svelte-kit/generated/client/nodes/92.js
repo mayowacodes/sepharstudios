@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/kids/kiddies/bible-quiz/+page.svelte";
+export { default as component } from "../../../../src/routes/(protected)/profile/+page.svelte";

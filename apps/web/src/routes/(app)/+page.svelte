@@ -7,6 +7,7 @@
   import MediaGrid from "$lib/components/MediaGrid.svelte";
   import RecentlyWatched from "$lib/components/sections/dashboard/RecentlyWatched.svelte";
   import Recommendations from "$lib/components/sections/dashboard/Recommendations.svelte";
+  import AccessDeniedBanner from "$lib/components/widgets/AccessDeniedBanner.svelte";
   import type { MediaSection } from "$lib/types/media";
 
   const { data } = $props();
@@ -28,6 +29,7 @@
 <div class="relative overflow-hidden min-h-screen bg-(--surface-charcoal) text-white">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div>
 
+  <AccessDeniedBanner />
 
   <main class="container relative z-10 pt-32 pb-16 mx-auto px-4">
     <!-- Hero Section -->
@@ -45,7 +47,7 @@
         </p>
         <div class="flex flex-wrap justify-center gap-4 pt-4">
           {#if user}
-            <Button size="lg" href="/dashboard" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white border-0 shadow-[0_0_20px_rgba(255,94,14,0.4)] hover:shadow-[0_0_30px_rgba(255,94,14,0.6)] transition-all hover:scale-105">
+            <Button size="lg" href="/browse" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white border-0 shadow-[0_0_20px_rgba(255,94,14,0.4)] hover:shadow-[0_0_30px_rgba(255,94,14,0.6)] transition-all hover:scale-105">
               <PlayCircle class="mr-2 h-5 w-5" />
               Continue Watching
             </Button>

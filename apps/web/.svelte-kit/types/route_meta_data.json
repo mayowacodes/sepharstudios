@@ -1,10 +1,14 @@
 {
 	"/(web3)": [
+		"src/routes/(web3)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
+	],
+	"/(creator)": [
+		"src/routes/(creator)/+layout.server.ts"
 	],
 	"/(auth)": [
 		"src/routes/+layout.server.ts"
@@ -13,6 +17,9 @@
 		"src/routes/(app)/+page.server.ts",
 		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
+	],
+	"/(admin)": [
+		"src/routes/(admin)/+layout.server.ts"
 	],
 	"/": [
 		"src/routes/+layout.server.ts"
@@ -224,6 +231,9 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/contact": [
+		"src/routes/api/contact/+server.ts"
+	],
 	"/api/content/kids": [
 		"src/routes/api/content/kids/+server.ts"
 	],
@@ -269,6 +279,9 @@
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
 	],
+	"/api/health": [
+		"src/routes/api/health/+server.ts"
+	],
 	"/api/kids/quiz/generate": [
 		"src/routes/api/kids/quiz/generate/+server.ts"
 	],
@@ -278,8 +291,17 @@
 	"/api/milestones": [
 		"src/routes/api/milestones/+server.ts"
 	],
+	"/api/notifications": [
+		"src/routes/api/notifications/+server.ts"
+	],
 	"/api/notifications/preferences": [
 		"src/routes/api/notifications/preferences/+server.ts"
+	],
+	"/api/notifications/[id]": [
+		"src/routes/api/notifications/[id]/+server.ts"
+	],
+	"/api/notifications/[id]/read": [
+		"src/routes/api/notifications/[id]/read/+server.ts"
 	],
 	"/api/parental/report": [
 		"src/routes/api/parental/report/+server.ts"
@@ -307,6 +329,9 @@
 	],
 	"/api/profiles": [
 		"src/routes/api/profiles/+server.ts"
+	],
+	"/api/profiles/current": [
+		"src/routes/api/profiles/current/+server.ts"
 	],
 	"/api/profiles/[id]": [
 		"src/routes/api/profiles/[id]/+server.ts"
@@ -344,6 +369,12 @@
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
 	],
+	"/api/users/me/stc-balance": [
+		"src/routes/api/users/me/stc-balance/+server.ts"
+	],
+	"/api/users/me/stc-claim": [
+		"src/routes/api/users/me/stc-claim/+server.ts"
+	],
 	"/api/users/[id]": [
 		"src/routes/api/users/[id]/+server.ts"
 	],
@@ -378,6 +409,10 @@
 	"/(auth)/auth/reset-password": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/browse": [
+		"src/routes/(app)/browse/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/careers": [
 		"src/routes/+layout.server.ts"
 	],
@@ -404,6 +439,9 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/content": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/copyright": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/earnings": [
@@ -454,6 +492,9 @@
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/exchange": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/faq": [
 		"src/routes/+layout.server.ts"
 	],
@@ -500,6 +541,9 @@
 		"src/routes/kids/teens/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/liquidity": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/mayowa": [
 		"src/routes/+layout.server.ts"
 	],
@@ -540,6 +584,9 @@
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/search": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(protected)/settings": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
@@ -551,13 +598,18 @@
 	"/(app)/sponsorships": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/staking": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(web3)/subscription": [
+		"src/routes/(web3)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/terms": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(web3)/tokens": [
+		"src/routes/(web3)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/token": [
@@ -569,6 +621,7 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(web3)/wallet": [
+		"src/routes/(web3)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(protected)/watchlist": [
@@ -577,6 +630,9 @@
 	],
 	"/watch/[id]": [
 		"src/routes/watch/[id]/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/webinars": [
 		"src/routes/+layout.server.ts"
 	]
 }

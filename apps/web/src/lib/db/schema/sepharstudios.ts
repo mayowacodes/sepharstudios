@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, integer, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index } from 'drizzle-orm/pg-core';
 
 import { sql } from 'drizzle-orm';
 
@@ -612,3 +612,21 @@ export const adminTokenomicsSettings = pgTable('admin_tokenomics_settings', {
 	revenueDistribution: jsonb('revenue_distribution').$type<Record<string, number>>().notNull().default(sql`'{}'::jsonb`),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// In-app notifications. Frontend reads via /api/notifications and renders in
+// NotificationCenter.svelte. Each row is per-user; opt-in flags live in the
+// existing notificationPreferences table and gate the email side-effect.
+// ─────────────────────────────────────────────────────────────────────────────
+export const notifications = pgTable('notifications', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	kind: varchar('kind', { length: 40 }).notNull(),       // 'subscription' | 'creator_application' | 'content_publish' | 'achievement' | etc.
+	title: text('title').notNull(),
+	message: text('message').notNull(),
+	actionUrl: text('action_url'),                          // optional deep-link
+	read: boolean('read').notNull().default(false),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	userCreatedIdx: index('notifications_user_created_idx').on(t.userId, t.createdAt)
+}));

@@ -9,7 +9,13 @@ import { adminSettings } from '$lib/db/schema/sepharstudios';
  * API keys stay in environment variables (Dokploy).
  * Model selection is stored in the DB so admins can change it without redeployment.
  *
- * Cache TTL = 60 seconds to avoid hitting the DB on every AI call.
+ * Previously this had a 60-second in-memory cache per pod. We dropped it: with
+ * multiple replicas the cache caused up to 60 seconds of inconsistency after
+ * an admin changed the model, and the underlying query is a single indexed-row
+ * select (~0.3 ms) so the cache was a premature optimisation.
+ *
+ * If we ever need a cache layer later, the right answer is Postgres
+ * LISTEN/NOTIFY so every replica invalidates together.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -34,25 +40,17 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
 	providerPreference: 'auto'
 };
 
-// ── In-memory cache (avoids DB hit on every AI call) ─────────────────────────
-let configCache: AIConfig | null = null;
-let cacheExpiry = 0;
-const CACHE_TTL_MS = 60_000; // 60 seconds
-
 /**
- * Get the current AI config from the DB (cached for 60s).
- * Falls back to DEFAULT_AI_CONFIG if nothing is saved yet.
+ * Get the current AI config from the DB. Falls back to DEFAULT_AI_CONFIG if
+ * nothing is saved yet or the DB is unreachable.
  */
 export async function getAIConfig(): Promise<AIConfig> {
-	const now = Date.now();
-	if (configCache && now < cacheExpiry) return configCache;
-
 	try {
-		const row = await db.select().from(adminSettings).then(r => r[0]);
+		const row = await db.select().from(adminSettings).then((r) => r[0]);
 		const platform = (row?.platform ?? {}) as Record<string, unknown>;
 		const saved = platform.ai as Partial<AIConfig> | undefined;
 
-		configCache = {
+		return {
 			chatModel: (saved?.chatModel ?? DEFAULT_AI_CONFIG.chatModel) as string,
 			agentModel: (saved?.agentModel ?? DEFAULT_AI_CONFIG.agentModel) as string,
 			ollamaChatModel: (saved?.ollamaChatModel ?? DEFAULT_AI_CONFIG.ollamaChatModel) as string,
@@ -61,44 +59,27 @@ export async function getAIConfig(): Promise<AIConfig> {
 		};
 	} catch {
 		// DB unavailable — use defaults
-		configCache = { ...DEFAULT_AI_CONFIG };
+		return { ...DEFAULT_AI_CONFIG };
 	}
-
-	cacheExpiry = now + CACHE_TTL_MS;
-	return configCache;
 }
 
-/**
- * Save AI config into the admin_settings.platform JSONB column.
- * Also busts the in-memory cache so the next call gets fresh data.
- */
+/** Save AI config into the admin_settings.platform JSONB column. */
 export async function saveAIConfig(config: Partial<AIConfig>): Promise<void> {
-	const existing = await db.select().from(adminSettings).then(r => r[0]);
+	const existing = await db.select().from(adminSettings).then((r) => r[0]);
 
 	const currentPlatform = (existing?.platform ?? {}) as Record<string, unknown>;
 	const updatedPlatform = {
 		...currentPlatform,
 		ai: {
-			...(currentPlatform.ai as object ?? {}),
+			...((currentPlatform.ai as object) ?? {}),
 			...config
 		}
 	};
 
 	if (existing) {
-		await db
-			.update(adminSettings)
-			.set({ platform: updatedPlatform, updatedAt: new Date() });
+		await db.update(adminSettings).set({ platform: updatedPlatform, updatedAt: new Date() });
 	} else {
 		await db.insert(adminSettings).values({ platform: updatedPlatform });
 	}
-
-	// Bust cache
-	configCache = null;
-	cacheExpiry = 0;
 }
 
-/** Manually bust the cache (e.g., after saving new settings) */
-export function bustAIConfigCache(): void {
-	configCache = null;
-	cacheExpiry = 0;
-}

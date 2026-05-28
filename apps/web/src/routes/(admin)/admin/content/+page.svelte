@@ -674,10 +674,11 @@
       <h3 class="text-lg font-bold text-white mb-1">Set PPV Price</h3>
       <p class="text-gray-400 text-sm mb-4">This price overrides any creator suggestion. Viewers without a subscription will pay this amount to watch.</p>
 
-      <label class="block text-sm text-gray-300 mb-1">Final Price (USD)</label>
+      <label for="ppv-price-input" class="block text-sm text-gray-300 mb-1">Final Price (USD)</label>
       <div class="flex items-center gap-2 mb-3">
         <span class="text-gray-400">$</span>
         <input
+          id="ppv-price-input"
           type="number"
           bind:value={ppvPrice}
           min="0.99" max="49.99" step="0.01"

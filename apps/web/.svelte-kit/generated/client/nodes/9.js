@@ -1,3 +1,1 @@
-import * as universal from "../../../../src/routes/kids/kiddies/+layout.ts";
-export { universal };
-export { default as component } from "../../../../src/routes/kids/kiddies/+layout@.svelte";
+export { default as component } from "../../../../src/routes/(web3)/+layout.svelte";

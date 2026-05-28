@@ -1,8 +1,7 @@
 import type * as Kit from '@sveltejs/kit';
 
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-// @ts-ignore
-type MatcherParam<M> = M extends (param : string) => param is infer U ? U extends string ? U : string : string;
+type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 type RouteParams = {  };
 type RouteId = '/(admin)/admin';
 type MaybeWithVoid<T> = {} extends T ? T | void : T;
@@ -13,7 +12,7 @@ type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends 
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = Omit<EnsureDefined<import('../../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
 type LayoutRouteId = RouteId | "/(admin)/admin" | "/(admin)/admin/analytics" | "/(admin)/admin/communications" | "/(admin)/admin/content" | "/(admin)/admin/creator-applications" | "/(admin)/admin/creators" | "/(admin)/admin/dashboard" | "/(admin)/admin/governance" | "/(admin)/admin/governance/create" | "/(admin)/admin/governance/emergency" | "/(admin)/admin/governance/execution" | "/(admin)/admin/governance/proposals" | "/(admin)/admin/governance/reports" | "/(admin)/admin/governance/roles" | "/(admin)/admin/governance/treasury" | "/(admin)/admin/policies" | "/(admin)/admin/review" | "/(admin)/admin/review/[id]" | "/(admin)/admin/settings" | "/(admin)/admin/test" | "/(admin)/admin/tokenomics" | "/(admin)/admin/workflow"
-type LayoutParams = RouteParams & { id?: string }
+type LayoutParams = RouteParams & { id?: string | undefined }
 type LayoutParentData = EnsureDefined<import('../../$types.js').LayoutData>;
 
 export type PageServerData = null;

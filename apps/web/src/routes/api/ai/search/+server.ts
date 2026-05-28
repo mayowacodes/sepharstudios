@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { semanticSearch } from '$lib/server/recommendations';
+import { enforceRateLimit, AI_SEARCH_LIMIT } from '$lib/server/rate-limit';
 
 /**
  * GET /api/ai/search?q=something+emotional+but+uplifting&limit=12
@@ -8,6 +9,7 @@ import { semanticSearch } from '$lib/server/recommendations';
  */
 export const GET = async ({ url, locals }: RequestEvent) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:search:${locals.user.id}`, AI_SEARCH_LIMIT);
 
 	const query = url.searchParams.get('q')?.trim();
 	if (!query || query.length < 3) throw error(400, 'q must be at least 3 characters');

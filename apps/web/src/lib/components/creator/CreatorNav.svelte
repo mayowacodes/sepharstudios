@@ -1,8 +1,8 @@
 <!-- Creator Navigation -->
 <script lang="ts">
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
-  
+  import { navigateToMainSite } from '$lib/utils/portal-navigation';
+
   const navItems = [
     { href: '/creator', label: 'Dashboard', icon: '🏠' },
     { href: '/creator/upload', label: 'Upload', icon: '📤' },
@@ -11,16 +11,16 @@
     { href: '/creator/profile', label: 'Profile', icon: '👤' },
     { href: '/creator/guidelines', label: 'Guidelines', icon: '📋' }
   ];
-  
+
   const isActive = (path: string) => {
     if (path === '/creator') {
       return page.url.pathname === '/creator';
     }
     return page.url.pathname.startsWith(path);
   };
-  
+
   function goToMainSite() {
-    goto('/');
+    navigateToMainSite();
   }
 </script>
 
@@ -30,7 +30,7 @@
       <!-- Logo -->
       <div class="flex items-center space-x-4">
         <button on:click={goToMainSite} class="flex items-center gap-3 text-white hover:text-gray-300 transition-colors">
-          <img src="/logo-alone-sepharstudios.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
+          <img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
           <span class="text-2xl font-bold">Sephar Studios</span>
         </button>
         <span class="text-purple-400 font-medium">Creator Studio</span>

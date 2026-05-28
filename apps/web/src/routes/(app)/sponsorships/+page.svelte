@@ -55,7 +55,7 @@
         <h2 class="text-2xl font-semibold">Contact Information</h2>
 
         <div class="grid gap-4 md:grid-cols-2">
-          {#if !data?.session}
+          {#if !data?.user}
             <div class="space-y-2">
               <label for="name" class="text-sm font-medium">Full Name</label>
               <Input id="name" name="name" required />
@@ -86,7 +86,7 @@
                   {selectedGenre || "Select genre"} <ChevronDown size={16} />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent class="w-[200px] p-2">
+              <PopoverContent class="w-50 p-2">
                 <Command>
                   <CommandInput placeholder="Search genre..." />
                   <CommandList>

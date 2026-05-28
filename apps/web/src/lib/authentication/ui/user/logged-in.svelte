@@ -14,7 +14,7 @@
 	const logout = async () => {
 		await signOut({ fetchOptions: {
 			onError: (ctx) => { toast.error('Error Alert', { description: ctx.error.message }); },
-			onSuccess: () => { toast.success('Success Alert', { description: 'Successfully signed out' }); location.href = '/auth/login'; }
+			onSuccess: () => { toast.success('Success Alert', { description: 'Successfully signed out' }); location.href = '/'; }
 		}});
 	};
 	const profile = () => { location.href = '/profile'; };

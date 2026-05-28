@@ -16,7 +16,14 @@
   };
 </script>
 
-<div class="relative group cursor-pointer inline-block" onclick={() => input.click()}>
+<div
+  role="button"
+  tabindex="0"
+  aria-label="Change profile picture"
+  class="relative group cursor-pointer inline-block"
+  onclick={() => input.click()}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } }}
+>
   <Avatar class="h-24 w-24 border-2 border-border transition-opacity group-hover:opacity-80">
     <AvatarImage {src} />
     <AvatarFallback>User</AvatarFallback>

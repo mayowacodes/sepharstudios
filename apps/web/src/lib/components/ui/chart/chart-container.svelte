@@ -17,6 +17,8 @@
 		config: ChartConfig;
 	} = $props();
 
+	// svelte-ignore state_referenced_locally — DOM IDs are stable per mount; you
+	// can't safely change the DOM `id` of a live element via prop reactivity.
 	const chartId = `chart-${id || uid.replace(/:/g, "")}`;
 
 	setChartContext({

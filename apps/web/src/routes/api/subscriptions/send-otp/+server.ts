@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { trialBlacklist } from '$lib/db/schema/sepharstudios';
-import { createOtp, getPhoneHash } from '$lib/server/otp';
+import { createOtp, getPhoneHash, OtpCooldownError } from '$lib/server/otp';
 import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 
@@ -21,7 +21,19 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ error: 'This phone number has already been used for a free trial' }, { status: 409 });
   }
 
-  const otp = createOtp(phone, 10 * 60 * 1000);
+  let otp: string;
+  try {
+    otp = await createOtp(phone, 10 * 60 * 1000);
+  } catch (err) {
+    if (err instanceof OtpCooldownError) {
+      return json(
+        { error: `Please wait ${err.retryAfterSec} seconds before requesting another code.` },
+        { status: 429, headers: { 'Retry-After': String(err.retryAfterSec) } }
+      );
+    }
+    console.error('OTP creation failed:', err);
+    return json({ error: 'Could not issue verification code right now' }, { status: 503 });
+  }
 
   if (env.SMS_WEBHOOK_URL) {
     try {

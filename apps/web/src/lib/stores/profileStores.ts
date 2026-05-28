@@ -5,7 +5,7 @@ export const currentProfile = writable<Profile | null>(null);
 
 export async function fetchCurrentProfile() {
   try {
-    const response = await fetch('/api/profile/current');
+    const response = await fetch('/api/profiles/current');
     if (response.ok) {
       const profile = await response.json();
       currentProfile.set(profile);
@@ -20,7 +20,7 @@ export async function fetchCurrentProfile() {
 
 export async function updateProfile(data: Partial<Profile>) {
   try {
-    const response = await fetch('/api/profile/current', {
+    const response = await fetch('/api/profiles/current', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'

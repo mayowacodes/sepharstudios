@@ -7,7 +7,37 @@ import {
   TOKEN_AMM_ABI,
   USDC_ABI
 } from './abis'
-import { parseUnits, formatUnits } from 'viem'
+import { parseUnits, formatUnits, isAddress } from 'viem'
+
+/**
+ * Validate a contract address is present + well-formed before any call.
+ * Centralised so we get a clear error instead of cryptic viem failures when
+ * the relevant CONTRACT_ADDRESSES entry is empty (e.g. contracts not deployed
+ * to the current chain yet).
+ */
+function requireAddress(address: string | undefined, contractName: string): `0x${string}` {
+  if (!address || !isAddress(address)) {
+    throw new Error(
+      `${contractName} address is not configured for this network. ` +
+      `Set the matching entry in lib/web3/config.ts CONTRACT_ADDRESSES (or the deploy-time env var) before calling.`
+    );
+  }
+  return address;
+}
+
+/**
+ * Wrap a contract write so errors carry the contract + function context.
+ * viem's revert messages are useful but lose track of which surface threw,
+ * which is annoying when several writes happen back-to-back.
+ */
+async function withCtx<T>(contractName: string, fn: string, op: () => Promise<T>): Promise<T> {
+  try {
+    return await op();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`${contractName}.${fn} failed: ${msg}`);
+  }
+}
 
 /**
  * Studio Token (STC) contract interactions
@@ -15,7 +45,7 @@ import { parseUnits, formatUnits } from 'viem'
 export class STCTokenContract {
   private getAddress() {
     const chainId = getChainId(config) as SupportedChainId
-    return getContractAddresses(chainId).studioToken
+    return requireAddress(getContractAddresses(chainId).studioToken, 'STCToken')
   }
 
   async balanceOf(address: string): Promise<string> {
@@ -67,36 +97,36 @@ export class STCTokenContract {
     const account = getAccount(config)
     if (!account.address) throw new Error('No account connected')
 
-    return await writeContract(config, {
+    return withCtx('STCToken', 'stakeForDiscount', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: STUDIO_CHAIN_TOKEN_ABI,
       functionName: 'stakeForDiscount',
       args: [parseUnits(amount, 18), BigInt(lockPeriod)]
-    })
+    }))
   }
 
   async addToStake(additionalAmount: string) {
     const account = getAccount(config)
     if (!account.address) throw new Error('No account connected')
 
-    return await writeContract(config, {
+    return withCtx('STCToken', 'addToStake', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: STUDIO_CHAIN_TOKEN_ABI,
       functionName: 'addToStake',
       args: [parseUnits(additionalAmount, 18)]
-    })
+    }))
   }
 
   async unstake() {
     const account = getAccount(config)
     if (!account.address) throw new Error('No account connected')
 
-    return await writeContract(config, {
+    return withCtx('STCToken', 'unstake', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: STUDIO_CHAIN_TOKEN_ABI,
       functionName: 'unstake',
       args: []
-    })
+    }))
   }
 
   async totalSupply(): Promise<string> {
@@ -145,7 +175,7 @@ export class STCTokenContract {
 export class SubscriptionContract {
   private getAddress() {
     const chainId = getChainId(config) as SupportedChainId
-    return getContractAddresses(chainId).sepharSubscription
+    return requireAddress(getContractAddresses(chainId).sepharSubscription, 'Subscription')
   }
 
   async getSubscriptionStatus(address: string) {
@@ -217,12 +247,12 @@ export class SubscriptionContract {
   async mintSubscriptionWithSTC() {
     const account = getAccount(config)
     if (!account.address) throw new Error('No account connected')
-    return await writeContract(config, {
+    return withCtx('Subscription', 'mintSubscriptionWithSTC', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: STUDIO_CHAIN_SUBSCRIPTION_ABI,
       functionName: 'mintSubscriptionWithSTC',
       args: []
-    })
+    }))
   }
 
   async getSTCSubscriptionAmount(): Promise<string> {
@@ -260,7 +290,7 @@ export class SubscriptionContract {
 export class CreatorPaymentsContract {
   private getAddress() {
     const chainId = getChainId(config) as SupportedChainId
-    return getContractAddresses(chainId).creatorPayments
+    return requireAddress(getContractAddresses(chainId).creatorPayments, 'CreatorPayments')
   }
 
   async getCreatorProfile(address: string) {
@@ -343,7 +373,7 @@ export class CreatorPaymentsContract {
 export class TokenAMMContract {
   private getAddress() {
     const chainId = getChainId(config) as SupportedChainId
-    return getContractAddresses(chainId).tokenAMM
+    return requireAddress(getContractAddresses(chainId).tokenAMM, 'TokenAMM')
   }
 
   async getSTCPrice(): Promise<string> {
@@ -382,21 +412,21 @@ export class TokenAMMContract {
   }
 
   async swapSTCForUSDC(stcAmount: string, minUsdcOut: string) {
-    return await writeContract(config, {
+    return withCtx('TokenAMM', 'swapSTCForUSDC', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: TOKEN_AMM_ABI,
       functionName: 'swapSTCForUSDC',
       args: [parseUnits(stcAmount, 18), parseUnits(minUsdcOut, 6)]
-    })
+    }))
   }
 
   async swapUSDCForSTC(usdcAmount: string, minStcOut: string) {
-    return await writeContract(config, {
+    return withCtx('TokenAMM', 'swapUSDCForSTC', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: TOKEN_AMM_ABI,
       functionName: 'swapUSDCForSTC',
       args: [parseUnits(usdcAmount, 6), parseUnits(minStcOut, 18)]
-    })
+    }))
   }
 
   contractAddress(): string {
@@ -404,12 +434,12 @@ export class TokenAMMContract {
   }
 
   async addLiquidity(stcAmount: string, usdcAmount: string, minLiquidity: number = 0) {
-    return await writeContract(config, {
+    return withCtx('TokenAMM', 'addLiquidity', () => writeContract(config, {
       address: this.getAddress() as `0x${string}`,
       abi: TOKEN_AMM_ABI,
       functionName: 'addLiquidity',
       args: [parseUnits(stcAmount, 18), parseUnits(usdcAmount, 6), BigInt(minLiquidity)]
-    })
+    }))
   }
 }
 
@@ -419,7 +449,7 @@ export class TokenAMMContract {
 export class USDCContract {
   private getAddress() {
     const chainId = getChainId(config) as SupportedChainId
-    return getContractAddresses(chainId).usdcToken
+    return requireAddress(getContractAddresses(chainId).usdcToken, 'USDC')
   }
 
   async balanceOf(address: string): Promise<string> {

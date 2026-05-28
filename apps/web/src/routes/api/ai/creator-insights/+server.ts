@@ -4,6 +4,7 @@ import { generateCreatorInsights, optimizeContentTitle, narrateBlockchainActivit
 import { db } from '$lib/db/drizzle';
 import { creators, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
+import { enforceRateLimit, AI_AGENT_LIMIT } from '$lib/server/rate-limit';
 
 /**
  * GET /api/ai/creator-insights
@@ -12,6 +13,7 @@ import { eq } from 'drizzle-orm';
  */
 export const GET = async ({ locals }: RequestEvent) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:creator-insights:${locals.user.id}`, AI_AGENT_LIMIT);
 
 	// Fetch creator profile
 	const [creator] = await db
@@ -78,6 +80,7 @@ export const GET = async ({ locals }: RequestEvent) => {
  */
 export const POST = async ({ request, locals }: RequestEvent) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:creator-insights:${locals.user.id}`, AI_AGENT_LIMIT);
 
 	const body = await request.json();
 	const { type } = body;

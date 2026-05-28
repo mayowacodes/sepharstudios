@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 import { MAX_ITEMS_PER_PAGE } from '$lib/constants';
 import type { iFetchMeta } from '$lib/interface';
-import { createInfiniteQuery, QueryClient, type CreateInfiniteQueryResult, type InfiniteData } from '@tanstack/svelte-query';
+import { createInfiniteQuery, QueryClient } from '@tanstack/svelte-query';
 
 export class InfiniteScroll {
   private static instance: InfiniteScroll;
@@ -29,7 +29,9 @@ export class InfiniteScroll {
 
   listQuery<T>(searchTerm: string, host: string = '', field: string = '') {
     const self = this;
-    return createInfiniteQuery({
+    type Page = { results: T[]; hasMore: boolean; pageParam: number; total: number };
+    type Selected = { results: T[]; total: number };
+    return createInfiniteQuery<Page, Error, Selected, [string, string], number>({
       queryKey: [field, searchTerm],
       staleTime: 30000,
       initialPageParam: 1,
@@ -38,7 +40,9 @@ export class InfiniteScroll {
         let offset = (pageParam - 1) * MAX_ITEMS_PER_PAGE;
         const metalist = await self.queryEndpoint(offset, host, field, searchTerm);
         const { data, meta, total } = metalist;
-        return meta ? { results: data as T[], hasMore: meta.more, pageParam, total } : { results: [], hasMore: false, pageParam, total };
+        return meta
+          ? { results: data as T[], hasMore: meta.more, pageParam, total }
+          : { results: [], hasMore: false, pageParam, total };
       },
       getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.pageParam + 1 : undefined,
       select: (data) => {

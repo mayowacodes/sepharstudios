@@ -113,6 +113,16 @@
       if (!res.ok) throw new Error('Failed to save metadata');
       const { contentId } = await res.json();
 
+      // 1.5 Fire AI auto-tagging in the background. The endpoint reads from DB
+      // by contentId, generates genres/topics/Bible refs/ageRating, and writes
+      // them back. Non-blocking: if AI is down, the upload still completes — a
+      // human can fill metadata in afterwards.
+      void fetch('/api/ai/tag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentId })
+      }).catch((err) => console.warn('AI tagging skipped:', err));
+
       // 2. Create an orchestrator job attached to this content row.
       const jobRes = await fetch('/api/encoder/jobs', {
           method: 'POST',
@@ -149,7 +159,7 @@
 
       alert('Content submitted successfully!');
       localStorage.removeItem('upload_draft');
-      window.location.href = '/creator/dashboard';
+      window.location.href = '/creator';
 
     } catch (error) {
         console.error('Submission error:', error);

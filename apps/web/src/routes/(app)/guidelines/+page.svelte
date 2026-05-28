@@ -83,7 +83,7 @@
       Stream thousands of faith-inspiring movies, shows, and documentaries. Start your free trial today.
     </p>
     <div class="flex justify-center gap-4">
-      <Button size="lg" href="/sign-up" class="bg-primary hover:bg-primary/90">
+      <Button size="lg" href="/auth/register" class="bg-primary hover:bg-primary/90">
         <PlayCircle class="mr-2 h-5 w-5" />
         Start Watching
       </Button>

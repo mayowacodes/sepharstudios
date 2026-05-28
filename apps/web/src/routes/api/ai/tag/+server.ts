@@ -4,6 +4,7 @@ import { generateContentMetadata } from '$lib/server/ai-tagging';
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
+import { enforceRateLimit, AI_AGENT_LIMIT } from '$lib/server/rate-limit';
 
 /**
  * POST /api/ai/tag
@@ -17,6 +18,7 @@ import { eq } from 'drizzle-orm';
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
+	await enforceRateLimit(`ai:tag:${locals.user.id}`, AI_AGENT_LIMIT);
 
 	const body = await request.json();
 	const { contentId, title, description, contentType = 'movie' } = body;

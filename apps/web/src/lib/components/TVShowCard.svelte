@@ -74,13 +74,17 @@
         loop
         muted
         playsinline
+        preload="none"
       ></video>
     {:else}
       <img
         src={show.thumbnail || '/placeholder-vertical.jpg'}
         alt={show.title}
-        class="w-full h-full object-cover"
+        width="280"
+        height="420"
         loading="lazy"
+        decoding="async"
+        class="w-full h-full object-cover"
       />
     {/if}
     <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div>

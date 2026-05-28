@@ -1013,8 +1013,9 @@
           <p class="text-gray-400 text-sm">Override which pulled Ollama models to use. Must match the model names you have pulled (<code class="bg-white/10 px-1 rounded text-xs">ollama list</code>).</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-gray-300 text-sm font-medium mb-2">Chat model (e.g. gemma4)</label>
+              <label for="ollama-chat-model" class="block text-gray-300 text-sm font-medium mb-2">Chat model (e.g. gemma4)</label>
               <input
+                id="ollama-chat-model"
                 type="text"
                 bind:value={aiConfig.ollamaChatModel}
                 placeholder="gemma4"
@@ -1022,8 +1023,9 @@
               />
             </div>
             <div>
-              <label class="block text-gray-300 text-sm font-medium mb-2">Agent model (e.g. hermes3)</label>
+              <label for="ollama-agent-model" class="block text-gray-300 text-sm font-medium mb-2">Agent model (e.g. hermes3)</label>
               <input
+                id="ollama-agent-model"
                 type="text"
                 bind:value={aiConfig.ollamaAgentModel}
                 placeholder="hermes3"

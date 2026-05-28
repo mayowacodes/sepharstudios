@@ -5,7 +5,18 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { isConnected, walletAddress } from '$lib/web3/wallet';
-  import { stcToken, tokenAMM } from '$lib/web3/contracts';
+  // contracts.ts pulls all ABIs + viem helpers (~150 KB). Type-only import here
+  // keeps it out of the initial admin chunk; the dynamic import below pays the
+  // cost only when an admin with a connected wallet hits this page.
+  import type { stcToken as StcToken, tokenAMM as TokenAmm } from '$lib/web3/contracts';
+  let stcToken: typeof StcToken | null = null;
+  let tokenAMM: typeof TokenAmm | null = null;
+  async function loadContracts() {
+    if (stcToken && tokenAMM) return;
+    const mod = await import('$lib/web3/contracts');
+    stcToken = mod.stcToken;
+    tokenAMM = mod.tokenAMM;
+  }
   import { Coins, TrendingUp, Users, Crown, DollarSign, Activity, RefreshCw, Wallet } from '@lucide/svelte';
   
   interface PlatformMetrics {
@@ -125,15 +136,24 @@
   });
   
   onMount(() => {
+    // Critical above-the-fold first — analytics fills the visible KPI cards.
     loadAnalytics();
+
+    // Tokenomics + admin wallet info live below the fold and require an extra
+    // dynamic module + on-chain reads. Defer past the initial paint so the
+    // dashboard becomes interactive before we kick off the slow web3 reads.
     if ($isConnected && $walletAddress) {
-      loadTokenomicsData();
-      loadAdminWalletInfo();
+      setTimeout(() => {
+        loadContracts().then(() => {
+          loadTokenomicsData();
+          loadAdminWalletInfo();
+        });
+      }, 1500);
     }
   });
 
   async function loadAdminWalletInfo() {
-    if (!$walletAddress) return;
+    if (!$walletAddress || !stcToken) return;
 
     adminWalletInfo.isLoading = true;
     try {
@@ -152,6 +172,7 @@
   }
 
   async function loadTokenomicsData() {
+    if (!stcToken || !tokenAMM) return;
     tokenomicsLoading = true;
     try {
       const [totalSupply, price] = await Promise.all([

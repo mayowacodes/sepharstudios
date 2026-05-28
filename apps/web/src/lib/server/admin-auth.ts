@@ -1,4 +1,4 @@
-import type { RequestEvent } from '@sveltejs/kit';
+import { json, type RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { user } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -28,3 +28,39 @@ export async function getAdminActor(locals: RequestEvent['locals']): Promise<Adm
 	};
 }
 
+/**
+ * Shared admin-only API gate. Used by every `routes/api/admin/*` endpoint to
+ * avoid copy-pasting the auth check. Returns `{ error: null, session }` when
+ * the caller is an admin; returns `{ error: Response, session: null }` with a
+ * pre-built 401/403 JSON response otherwise.
+ *
+ * Usage pattern:
+ *   export const POST: RequestHandler = async ({ locals, request }) => {
+ *     const { error, session } = await requireAdmin(locals);
+ *     if (error || !session) return error!;
+ *     // ...handler body, has session available...
+ *   };
+ *
+ * This duplicates the role check that `(admin)/+layout.server.ts` already does
+ * for *page* routes — admin API routes don't go through the layout chain, so
+ * they still need their own guard. The hook in `hooks.server.ts` blocks
+ * non-admin requests on the admin subdomain, but admin API routes are also
+ * reachable on the apex domain.
+ */
+export async function requireAdmin(
+	locals: RequestEvent['locals']
+): Promise<{ error: Response | null; session: Awaited<ReturnType<RequestEvent['locals']['auth']['getSession']>> | null }> {
+	const session = await locals.auth.getSession();
+	if (!session) {
+		return { error: json({ error: 'Unauthorized' }, { status: 401 }), session: null };
+	}
+	const [account] = await db
+		.select({ role: user.role })
+		.from(user)
+		.where(eq(user.id, session.user.id))
+		.limit(1);
+	if (account?.role !== 'admin') {
+		return { error: json({ error: 'Forbidden' }, { status: 403 }), session: null };
+	}
+	return { error: null, session };
+}

@@ -20,8 +20,8 @@
     { id: '4', type: 'adult', name: 'Jane', avatar: '', parental: false },
     { id: '5', type: 'teen', name: 'Alex', avatar: '', parental: true },
     { id: '6', type: 'teen', name: 'Sam', avatar: '', parental: true },
-    { id: '7', type: 'kid', name: 'Lily', avatar: '', parental: true },
-    { id: '8', type: 'kid', name: 'Tommy', avatar: '', parental: true }
+    { id: '7', type: 'kids', name: 'Lily', avatar: '', parental: true },
+    { id: '8', type: 'kids', name: 'Tommy', avatar: '', parental: true }
   ]);
 
   function switchProfile(profile: Profile) {

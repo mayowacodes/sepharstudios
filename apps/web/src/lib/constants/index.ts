@@ -17,7 +17,7 @@ export enum Constants {
   BRANDNAME = 'Sephar Studios',
   CREDENTIAL = 'credential',
   GOOGLE = 'google',
-  AFTERAUTH = '/dashboard',
+  AFTERAUTH = '/browse',
   SUPPORTEMAIL = 'support@sepharstudios.com',
   BRANDWEBSITE = 'https://sepharstudios.com',
 }
@@ -39,9 +39,9 @@ export const HomepageContent = {
     subtitle: 'sepharstudios',
     title: 'Build Something Amazing',
     description: 'A modern platform designed to help you achieve your goals with powerful tools and seamless experiences.',
-    primaryCta: { text: 'Get Started', href: '/auth/login?redirectTo=/dashboard' },
+    primaryCta: { text: 'Get Started', href: '/auth/login?redirectTo=/browse' },
     secondaryCta: { text: 'Learn More', href: '#features' },
-    loggedInCta: { text: 'Dashboard', href: '/dashboard' },
+    loggedInCta: { text: 'Continue Watching', href: '/browse' },
     backgroundImage: '/hero-bg.webp',
   },
   stats: [

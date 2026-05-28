@@ -32,13 +32,15 @@ export async function handle({ event, resolve }) {
                          isKidsSubdomain ? 'kids' : 'app';
 
   const path = event.url.pathname;
+  const isAuthPath = path.startsWith('/auth') || path.startsWith('/api/auth');
 
-  // 3. Path & Subdomain Consistency (Prevent cross-access)
+  // 3. Path & Subdomain Consistency — redirect to correct subdomain instead of 404
+  // This handles the case where better-auth post-login redirect lands on the main domain
   if (path.startsWith('/admin') && !isAdminSubdomain && !hostname.includes('localhost')) {
-    return new Response('Not Found', { status: 404 });
+    return Response.redirect(`https://admin.sepharstudios.com${path}`, 307);
   }
   if (path.startsWith('/creator') && !isCreatorsSubdomain && !hostname.includes('localhost')) {
-    return new Response('Not Found', { status: 404 });
+    return Response.redirect(`https://creators.sepharstudios.com${path}`, 307);
   }
 
   // 4. Session Handling
@@ -75,12 +77,25 @@ export async function handle({ event, resolve }) {
 
   const user = event.locals.user;
 
-  // 5. RBAC & Platform Enforcement
+  // Helper: build the apex URL ("sepharstudios.com") so we can bounce logged-in
+  // users who lack the required role *off* the portal subdomain instead of looping
+  // them through /auth/login on the same subdomain forever.
+  const apexHost = hostname.includes('localhost')
+    ? hostname
+    : hostname.split('.').slice(-2).join('.');
+  const apexOrigin = `https://${apexHost}`;
+
+  // 5. RBAC & Platform Enforcement — skip for auth flow so the login page itself doesn't loop
   // ADMIN PORTAL
-  if (isAdminSubdomain) {
-    // Role Check
-    if (!user || user.role !== 'admin') {
-      return Response.redirect(`${event.url.origin}/auth/login`, 307);
+  if (isAdminSubdomain && !isAuthPath) {
+    if (!user) {
+      // Not signed in → send to login. Login is on the apex so the form has access
+      // to the auth API without cross-origin gymnastics, then comes back to /admin.
+      return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent('https://admin.sepharstudios.com/admin')}`, 307);
+    }
+    if (user.role !== 'admin') {
+      // Signed in but wrong role → bounce to apex with a denial flag so we don't loop.
+      return Response.redirect(`${apexOrigin}/?denied=admin`, 307);
     }
     // Platform Check: No Admin on TV or Mobile
     if (deviceType === 'tv' || deviceType === 'mobile') {
@@ -89,10 +104,15 @@ export async function handle({ event, resolve }) {
   }
 
   // CREATOR PORTAL
-  if (isCreatorsSubdomain) {
-    // Role Check: Creators or Admins only
-    if (!user || (user.role !== 'creator' && user.role !== 'admin')) {
-      return Response.redirect(`${event.url.origin}/auth/login`, 307);
+  if (isCreatorsSubdomain && !isAuthPath) {
+    if (!user) {
+      return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent('https://creators.sepharstudios.com/creator')}`, 307);
+    }
+    if (user.role !== 'creator' && user.role !== 'admin') {
+      // Signed in but not a creator → bounce to the apex creator application page.
+      // This is the only legitimate way for a regular user to become a creator,
+      // so we send them straight there instead of stranding them on the home page.
+      return Response.redirect(`${apexOrigin}/apply/creator`, 307);
     }
     // Platform Check: No Creator Tools on TV or Mobile
     if (deviceType === 'tv' || deviceType === 'mobile') {

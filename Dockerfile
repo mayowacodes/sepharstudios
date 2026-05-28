@@ -27,7 +27,6 @@ RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > apps/web
     echo "MINIO_BUCKET=dummy-bucket" >> apps/web/.env && \
     echo "BETTER_AUTH_SECRET=dummy-secret-key-for-build-minimum-32-characters-long" >> apps/web/.env && \
     echo "BETTER_AUTH_URL=http://localhost:3000" >> apps/web/.env && \
-    echo "NODE_ENV=production" >> apps/web/.env && \
     echo "EMAIL_WEBHOOK=https://email" >> apps/web/.env && \
     echo "BODY_SIZE_LIMIT=10485760" >> apps/web/.env
 
@@ -57,9 +56,10 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 ENV ORIGIN=http://localhost:3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD bun run -e "fetch('http://localhost:3000').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+# Health check — hits the real readiness endpoint that verifies DB + MinIO
+# reachability, not just "the Node process is up".
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD bun run -e "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 # Run the application
 CMD ["bun", "run", "build/index.js"]

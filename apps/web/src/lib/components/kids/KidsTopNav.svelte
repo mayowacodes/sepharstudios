@@ -3,11 +3,12 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  
+  import { navigateToMainSite } from '$lib/utils/portal-navigation';
+
   let avatar = '';
   let avatarType = '';
   let mounted = false;
-  
+
   const avatars = [
     { name: 'Lambie', emoji: '🐑' },
     { name: 'Dove', emoji: '🕊️' },
@@ -20,30 +21,30 @@
     avatar = localStorage.getItem('avatar') || '0';
     avatarType = localStorage.getItem('avatarType') || 'emoji';
   });
-  
+
   // Get current age group from the URL path
   $: currentAgeGroup = page.url.pathname.includes('/teens') ? 'teens' : 'kiddies';
-  
+
   function navigateTo(section: string) {
     goto(`/kids/${currentAgeGroup}/${section}`);
   }
-  
+
   function changeProfile() {
     goto('/kids/profile');
   }
-  
+
   function goHome() {
     goto(`/kids/${currentAgeGroup}`);
   }
-  
+
   function switchAgeGroup(newAgeGroup: 'kiddies' | 'teens') {
     // Update localStorage to remember user's preference
     localStorage.setItem('ageGroup', newAgeGroup);
     goto(`/kids/${newAgeGroup}`);
   }
-  
+
   function goToMain() {
-    goto('/');
+    navigateToMainSite();
   }
   
   // Get avatar display based on type
@@ -63,6 +64,11 @@
 <nav class="bg-linear-to-r from-pink-100 to-yellow-100 border-b-4 border-yellow-300 shadow-sm">
   <div class="container flex items-center justify-between py-3">
   <div class="flex items-center gap-4">
+    <button on:click={goToMain} class="flex items-center gap-2 text-purple-700 hover:text-purple-600 transition-colors" aria-label="Back to Sephar Studios main site">
+      <img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-6 w-auto object-contain" />
+      <span class="font-bold text-sm hidden sm:inline">Sephar Studios</span>
+    </button>
+    <span class="text-pink-300 hidden sm:inline" aria-hidden="true">|</span>
     <button on:click={goHome} class="text-2xl font-bold text-pink-700 hover:text-pink-600 transition-colors">
       Faith Kids
     </button>

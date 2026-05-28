@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/(protected)/watchlist/+page.svelte";
+export { default as component } from "../../../../src/routes/(protected)/achievements/+page.svelte";

@@ -1,10 +1,28 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { onDestroy } from 'svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import ReviewSection from '$lib/components/widgets/ReviewSection.svelte';
+  import { copilotContext } from '$lib/stores/copilot';
 
   const { data } = $props();
   const content = $derived(data.content);
+
+  // Feed the AI Copilot what we're watching so it can answer in-context
+  // ("what's the main message?", "what verses apply?", etc.).
+  $effect(() => {
+    if (!content) return;
+    copilotContext.set({
+      contentTitle: content.title,
+      contentDescription: content.description ?? '',
+      contentType: content.mediaType ?? 'movie',
+      bibleReference: content.bibleReference ?? '',
+      genres: (content.genres ?? []) as string[],
+      topics: (content.topics ?? []) as string[]
+    });
+  });
+
+  onDestroy(() => copilotContext.set(null));
 
   // Resume position from ?t= query param
   const startAt = $derived(() => {

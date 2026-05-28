@@ -109,31 +109,13 @@
   });
 
   async function handleSubscribe(planId: string) {
-    isLoading = true;
     selectedPlan = planId;
-
-    try {
-      const response = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          planId,
-          walletAddress: $walletAddress,
-          discount: userDiscount
-        })
-      });
-
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error('Failed to subscribe:', error);
-    } finally {
-      isLoading = false;
-    }
+    // Route through the dedicated checkout page — it handles OTP, Paystack init,
+    // wallet linkage and trial setup. Pre-fill the plan via query string.
+    const params = new URLSearchParams({ plan: planId });
+    if ($walletAddress) params.set('wallet', $walletAddress);
+    if (userDiscount > 0) params.set('discount', String(userDiscount));
+    window.location.href = `/checkout?${params.toString()}`;
   }
 
   function getPlanIcon(planId: string) {

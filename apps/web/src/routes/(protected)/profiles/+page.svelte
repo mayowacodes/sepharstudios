@@ -42,8 +42,12 @@
 
   const AVATAR_EMOJIS = ['😊', '🦁', '🐺', '🦊', '🐻', '🦅', '🌟', '🎭'];
 
+  // svelte-ignore state_referenced_locally — server-loaded list, then locally
+  // mutated by create/delete. Reactivity to `data.profiles` would wipe pending
+  // local mutations every time the page reloads.
   let profiles = $state<Profile[]>(data.profiles as Profile[]);
   let loading = $state(false);
+  // svelte-ignore state_referenced_locally — same as above for max-profile limit.
   let maxProfiles = $state(data.maxProfiles);
   let newName = $state('');
   let newType = $state<'adult' | 'teen' | 'kids'>('adult');
@@ -86,7 +90,8 @@
 
   function selectProfile(profile: Profile) {
     document.cookie = `activeProfileId=${profile.id}; path=/; max-age=86400`;
-    window.location.href = '/dashboard';
+    // After choosing a profile, kids land in the kids area, everyone else in browse.
+    window.location.href = profile.type === 'kids' ? '/kids/kiddies' : '/browse';
   }
 </script>
 

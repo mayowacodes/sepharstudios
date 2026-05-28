@@ -31,15 +31,24 @@
       'https://archive.org/advancedsearch.php' +
       '?q=collection%3Achristian-movies' +
       '&fl[]=identifier&fl[]=title&fl[]=description&fl[]=year' +
-      '&rows=20&page=1&output=json';
+      '&rows=12&page=1&output=json';
+
+    // archive.org is routinely slow. Without a hard timeout this mount would
+    // block the entire Browse page until the upstream response (or never)
+    // resolved. 2.5s lets us bail out and render an empty list instead.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
 
     try {
-      const res = await fetch(query);
+      const res = await fetch(query, { signal: controller.signal });
       const data = await res.json();
       videos = data.response.docs;
     } catch (err) {
-      console.error('Failed to fetch videos:', err);
+      // Includes both AbortError on timeout and any network/parse failure.
+      console.warn('archive.org fetch failed or timed out:', err);
+      videos = [];
     } finally {
+      clearTimeout(timeoutId);
       loading = false;
     }
   };

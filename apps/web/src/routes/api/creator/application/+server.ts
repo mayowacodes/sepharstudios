@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { adminSettings, creatorApplications, creators } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { track } from '$lib/server/analytics';
 
 const defaultSettings = {
 	platform: {
@@ -47,6 +48,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		.where(eq(user.id, session.user.id));
 	if (currentUser?.role === 'creator') return json({ error: 'You are already a creator.' }, { status: 400 });
 
+	const ALLOWED_CREATOR_TYPES = ['individual', 'organization'] as const;
+	type CreatorType = typeof ALLOWED_CREATOR_TYPES[number];
+
 	const payload = await request.json() as {
 		creatorType?: string;
 		displayName?: string;
@@ -63,6 +67,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		socialLinks?: Record<string, string>;
 		documents?: Array<{ id: string; url: string; name: string; size?: number }> | string[];
 	};
+
+	if (payload.creatorType !== undefined && !ALLOWED_CREATOR_TYPES.includes(payload.creatorType as CreatorType)) {
+		return json({ error: `Invalid creatorType. Must be one of: ${ALLOWED_CREATOR_TYPES.join(', ')}` }, { status: 400 });
+	}
 
 	const [existing] = await db
 		.select()
@@ -102,6 +110,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			.where(eq(creatorApplications.id, existing.id))
 			.returning();
 
+		await track(session.user.id, 'creator_apply', { creatorType: payload.creatorType, resubmission: true });
 		return json({ success: true, application: updated });
 	}
 
@@ -124,5 +133,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		documents: payload.documents ?? null
 	}).returning();
 
+	await track(session.user.id, 'creator_apply', { creatorType: payload.creatorType, resubmission: false });
 	return json({ success: true, application: created }, { status: 201 });
 };

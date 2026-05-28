@@ -12,11 +12,11 @@
 	<!-- Back Navigation -->
 	<div class="mb-6">
 		<a
-			href="/dashboard"
+			href="/browse"
 			class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
 		>
 			<ArrowLeft class="mr-2 h-4 w-4" />
-			Back to Dashboard
+			Back to Browse
 		</a>
 	</div>
 

@@ -17,9 +17,19 @@
 
   const user = page.data?.user;
 
+  const VALID_TABS = ['overview', 'mylist', 'recent', 'downloads', 'recommendations', 'settings'] as const;
+  type TabKey = typeof VALID_TABS[number];
+  function resolveTab(value: string | null | undefined): TabKey {
+    return (VALID_TABS as readonly string[]).includes(value ?? '') ? (value as TabKey) : 'overview';
+  }
+
   let userTokenBalance = $state('0');
   let userStakingDiscount = $state(0);
-  let activeTab = $state('overview');
+  let activeTab = $state<TabKey>(resolveTab(page.url.searchParams.get('tab')));
+
+  $effect(() => {
+    activeTab = resolveTab(page.url.searchParams.get('tab'));
+  });
 
   $effect(() => {
     if ($isConnected && $walletAddress) {
@@ -125,7 +135,7 @@
       <button
         class="mystudios-tab"
         class:active={activeTab === tab.key}
-        onclick={() => activeTab = tab.key}
+        onclick={() => (activeTab = tab.key as TabKey)}
       >
         <tab.icon size={15} />
         {tab.label}
@@ -157,7 +167,7 @@
           <div class="overview-card-header">
             <ListVideo size={16} class="overview-card-icon" />
             <h2>My List</h2>
-            <a href="/my-list" class="overview-card-action">
+            <a href="/watchlist" class="overview-card-action">
               View all <ChevronRight size={13} />
             </a>
           </div>

@@ -26,6 +26,7 @@ export const load = async ({ params, locals }: Parameters<PageServerLoad>[0]) =>
 			processingStatus: mediaLibrary.processingStatus,
 			mediaType: mediaLibrary.mediaType,
 			genres: mediaLibrary.genres,
+			topics: mediaLibrary.topics,
 			duration: mediaLibrary.duration,
 			year: mediaLibrary.year,
 			rating: mediaLibrary.rating,

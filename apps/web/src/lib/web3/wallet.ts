@@ -1,7 +1,7 @@
 import { connect, disconnect, getAccount, switchChain } from '@wagmi/core'
-import { config, DEFAULT_CHAIN, type SupportedChainId } from './config'
+import { config, DEFAULT_CHAIN, SUPPORTED_CHAINS, type SupportedChainId } from './config'
 import { injected, walletConnect, coinbaseWallet } from '@wagmi/connectors'
-import { writable, derived } from 'svelte/store'
+import { writable, derived, get } from 'svelte/store'
 import type { GetAccountReturnType } from '@wagmi/core'
 
 /**
@@ -23,6 +23,41 @@ export const walletAddress = derived(account, ($account) => $account?.address)
  * Derived store for connection status
  */
 export const isConnected = derived(account, ($account) => $account?.isConnected ?? false)
+
+/**
+ * Disconnect/switch generation counter. Increments every time the user
+ * disconnects or switches wallets. Long-running async operations (contract
+ * reads, balance fetches) can capture the value at start and bail out if it
+ * changed by the time they resolve, avoiding stale-data UI bugs.
+ *
+ * Usage:
+ *   const gen = $walletGeneration;
+ *   const balance = await stcToken.balanceOf($walletAddress!);
+ *   if (gen !== $walletGeneration) return;  // wallet changed; discard result
+ */
+export const walletGeneration = writable<number>(0)
+function bumpGeneration() {
+  walletGeneration.update((n) => n + 1)
+  // Invalidate the cached account snapshot — next caller refetches.
+  cachedAccount = null
+  cachedAtGeneration = -1
+}
+
+/**
+ * Cached `getAccount(config)` snapshot, invalidated on every wallet generation
+ * bump (connect / disconnect / chain switch). Callers in tight loops (e.g.
+ * accessControl helpers invoked per-component) can hit this instead of
+ * paying for the wagmi store read each time.
+ */
+let cachedAccount: GetAccountReturnType | null = null
+let cachedAtGeneration = -1
+export function getCachedAccount(): GetAccountReturnType {
+  const gen = get(walletGeneration)
+  if (cachedAccount && cachedAtGeneration === gen) return cachedAccount
+  cachedAccount = getAccount(config)
+  cachedAtGeneration = gen
+  return cachedAccount
+}
 
 /**
  * Update account store with current account state
@@ -53,6 +88,7 @@ export async function connectWallet(connectorType: 'injected' | 'walletConnect' 
     }
 
     updateAccountState()
+    bumpGeneration()
     return result
   } catch (error) {
     console.error('Failed to connect wallet:', error)
@@ -68,6 +104,7 @@ export async function disconnectWallet() {
   try {
     await disconnect(config)
     updateAccountState()
+    bumpGeneration()
   } catch (error) {
     console.error('Failed to disconnect wallet:', error)
     throw error
@@ -81,6 +118,7 @@ export async function switchToChain(chainId: SupportedChainId) {
   try {
     await switchChain(config, { chainId })
     updateAccountState()
+    bumpGeneration()
   } catch (error) {
     console.error('Failed to switch chain:', error)
     throw error
@@ -118,11 +156,13 @@ export function formatAddress(address: string, length: number = 4): string {
 }
 
 /**
- * Check if user is on correct network
+ * Check if user is on correct network. Source of truth is SUPPORTED_CHAINS in
+ * lib/web3/config.ts — add a chain there and this check picks it up
+ * automatically, no duplication.
  */
 export function isOnCorrectNetwork(chainId?: number): boolean {
   if (!chainId) return false
-  return [137, 80001, 31337].includes(chainId) // Polygon, Mumbai, localhost
+  return SUPPORTED_CHAINS.some((c) => c.id === chainId)
 }
 
 /**

@@ -32,7 +32,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	// 1. Verify OTP
-	const otpValid = verifyOtp(phone, otp);
+	const otpValid = await verifyOtp(phone, otp);
 	if (!otpValid) {
 		return json({ error: 'Invalid or expired verification code' }, { status: 400 });
 	}

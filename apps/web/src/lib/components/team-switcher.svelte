@@ -5,6 +5,9 @@
 
   let { teams }: { teams: { name: string; logo: any; plan: string }[] } = $props();
   const sidebar = useSidebar();
+  // svelte-ignore state_referenced_locally — user picks once, then `activeTeam`
+  // is the source of truth; reactivity to the `teams` prop would overwrite their
+  // current selection if the parent re-renders.
   let activeTeam = $state(teams[0]);
 </script>
 

@@ -4,6 +4,7 @@
   import { ChevronDown, Baby, Users } from '@lucide/svelte';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import SafeExplorationMode from '$lib/components/kids/SafeExplorationMode.svelte';
+  import { navigateToMainSite } from '$lib/utils/portal-navigation';
 
   const { children } = $props();
 
@@ -18,8 +19,8 @@
 <div class="min-h-screen bg-background flex flex-col">
   <nav class="border-b bg-card px-4 py-2 flex items-center justify-between sticky top-0 z-50">
     <div class="flex items-center space-x-4">
-      <a href="/" class="font-bold text-primary">Sephar Studios</a>
-      
+      <button onclick={navigateToMainSite} class="font-bold text-primary hover:opacity-80 transition-opacity">Sephar Studios</button>
+
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           {#snippet child({ props })}
@@ -52,7 +53,7 @@
     </div>
     
     <div class="flex items-center space-x-2">
-      <a href="/" class="text-sm text-muted-foreground hover:text-foreground">Back to Main</a>
+      <button onclick={navigateToMainSite} class="text-sm text-muted-foreground hover:text-foreground">Back to Main</button>
     </div>
   </nav>
 

@@ -2,9 +2,9 @@
 	import { onMount } from 'svelte';
 	import { Download, X, Smartphone } from '@lucide/svelte';
 
-	// Persistent storage keys
-	const STORAGE_KEY = 'pwa-install-dismissed';
+	const DISMISSED_KEY = 'pwa-install-dismissed';
 	const INSTALLED_KEY = 'pwa-installed';
+	const SHOWN_KEY = 'pwa-install-shown';
 
 	let deferredPrompt = $state<Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
 	let visible = $state(false);
@@ -12,28 +12,24 @@
 	let autoDismissTimer: ReturnType<typeof setTimeout> | null = null;
 
 	onMount(() => {
-		// Already installed as PWA?
 		if (window.matchMedia('(display-mode: standalone)').matches) {
 			localStorage.setItem(INSTALLED_KEY, 'true');
 			return;
 		}
 
-		// Already permanently dismissed or installed?
-		if (localStorage.getItem(STORAGE_KEY) === 'permanent' || localStorage.getItem(INSTALLED_KEY) === 'true') {
+		if (localStorage.getItem(DISMISSED_KEY) === 'permanent' || localStorage.getItem(INSTALLED_KEY) === 'true' || localStorage.getItem(SHOWN_KEY) === 'true') {
 			return;
 		}
 
 		const handler = (e: Event) => {
 			e.preventDefault();
 			deferredPrompt = e as typeof deferredPrompt;
-			// Small delay before showing
+			localStorage.setItem(SHOWN_KEY, 'true');
 			setTimeout(() => {
 				visible = true;
-				// Trigger slide-in animation after next frame
 				requestAnimationFrame(() => {
 					requestAnimationFrame(() => { animateIn = true; });
 				});
-				// Auto-dismiss after 6 seconds
 				autoDismissTimer = setTimeout(() => {
 					slideOut();
 				}, 6000);
@@ -62,8 +58,9 @@
 	function slideOut(permanent = false) {
 		if (autoDismissTimer) clearTimeout(autoDismissTimer);
 		animateIn = false;
+		localStorage.setItem(SHOWN_KEY, 'true');
 		if (permanent) {
-			localStorage.setItem(STORAGE_KEY, 'permanent');
+			localStorage.setItem(DISMISSED_KEY, 'permanent');
 		}
 		setTimeout(() => {
 			visible = false;
@@ -72,7 +69,6 @@
 </script>
 
 {#if visible}
-	<!-- Top-slide install banner -->
 	<div
 		class="pwa-banner"
 		class:animate-in={animateIn}
@@ -98,7 +94,6 @@
 			</button>
 		</div>
 
-		<!-- Auto-dismiss progress bar -->
 		<div class="pwa-progress" class:running={animateIn}></div>
 	</div>
 {/if}
@@ -106,18 +101,15 @@
 <style>
 	.pwa-banner {
 		position: fixed;
-		top: 4.5rem; /* below the header */
+		top: 4.5rem;
 		left: 50%;
 		transform: translateX(-50%) translateY(-140%);
 		z-index: 9990;
 		width: min(480px, calc(100vw - 2rem));
-		background: linear-gradient(135deg, rgba(15, 15, 20, 0.97), rgba(20, 16, 32, 0.97));
-		border: 1px solid rgba(255, 191, 0, 0.25);
+		background: rgba(18, 18, 22, 0.96);
+		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 1rem;
-		box-shadow:
-			0 8px 32px rgba(0, 0, 0, 0.5),
-			0 0 0 1px rgba(255, 191, 0, 0.08),
-			inset 0 1px 0 rgba(255, 255, 255, 0.05);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
@@ -136,12 +128,12 @@
 		width: 2.25rem;
 		height: 2.25rem;
 		border-radius: 0.6rem;
-		background: linear-gradient(135deg, rgba(255, 191, 0, 0.2), rgba(255, 94, 14, 0.15));
-		border: 1px solid rgba(255, 191, 0, 0.25);
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.1);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: #FFBF00;
+		color: rgba(255, 255, 255, 0.6);
 		flex-shrink: 0;
 	}
 
@@ -153,14 +145,14 @@
 	.pwa-title {
 		font-size: 0.8125rem;
 		font-weight: 600;
-		color: white;
+		color: rgba(255, 255, 255, 0.9);
 		margin: 0;
 		line-height: 1.3;
 	}
 
 	.pwa-sub {
 		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.45);
+		color: rgba(255, 255, 255, 0.35);
 		margin: 0.1rem 0 0;
 		white-space: nowrap;
 		overflow: hidden;
@@ -178,27 +170,26 @@
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		background: linear-gradient(135deg, #FFBF00, #FF8C00);
-		color: #0a0a0a;
+		background: rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.85);
 		font-size: 0.75rem;
-		font-weight: 700;
+		font-weight: 600;
 		padding: 0.35rem 0.75rem;
 		border-radius: 0.5rem;
-		border: none;
+		border: 1px solid rgba(255, 255, 255, 0.1);
 		cursor: pointer;
-		transition: opacity 0.15s, transform 0.15s;
+		transition: background 0.15s;
 		white-space: nowrap;
 	}
 
 	.pwa-install-btn:hover {
-		opacity: 0.9;
-		transform: scale(1.03);
+		background: rgba(255, 255, 255, 0.16);
 	}
 
 	.pwa-dismiss-btn {
 		background: none;
 		border: none;
-		color: rgba(255, 255, 255, 0.3);
+		color: rgba(255, 255, 255, 0.25);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -209,24 +200,23 @@
 	}
 
 	.pwa-dismiss-btn:hover {
-		color: rgba(255, 255, 255, 0.7);
+		color: rgba(255, 255, 255, 0.6);
 	}
 
-	/* Auto-dismiss progress bar at bottom */
 	.pwa-progress {
 		position: absolute;
 		bottom: 0;
 		left: 0;
 		height: 2px;
 		width: 100%;
-		background: rgba(255, 191, 0, 0.15);
+		background: rgba(255, 255, 255, 0.06);
 	}
 
 	.pwa-progress::after {
 		content: '';
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(90deg, #FFBF00, #FF5E0E);
+		background: rgba(255, 255, 255, 0.15);
 		transform-origin: left;
 		transform: scaleX(1);
 		transition: none;
