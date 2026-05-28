@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Droplets, Wallet, ArrowRight, Coins, TrendingUp, Info } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
-  import { tokenAMM, stcToken } from '$lib/web3/contracts';
+  import { tokenAMM, stcToken, usdcToken } from '$lib/web3/contracts';
   import { isConnected, walletAddress, connectWallet } from '$lib/web3/wallet';
 
   let pool = $state({ stcBalance: '0', usdcBalance: '0', totalLiquidity: 0 });
@@ -32,11 +32,21 @@
   }
 
   async function loadShare() {
+    if (!$walletAddress) return;
     try {
-      // Placeholder until LP balance contract method is wired
-      myShare = { lp: '0', stc: '0', usdc: '0', sharePct: 0 };
+      const share = await tokenAMM.getMyLPShare($walletAddress);
+      // STC + USDC entitlements derived from sharePct of pool reserves.
+      const stcEntitled = (parseFloat(pool.stcBalance) * (share.sharePct / 100)).toFixed(4);
+      const usdcEntitled = (parseFloat(pool.usdcBalance) * (share.sharePct / 100)).toFixed(4);
+      myShare = {
+        lp: share.lpAmount,
+        stc: stcEntitled,
+        usdc: usdcEntitled,
+        sharePct: share.sharePct
+      };
     } catch (err) {
       console.error('Share load failed:', err);
+      myShare = { lp: '0', stc: '0', usdc: '0', sharePct: 0 };
     }
   }
 
@@ -55,24 +65,70 @@
       message = 'Enter STC amount';
       return;
     }
+    if (!usdcAmount || parseFloat(usdcAmount) <= 0) {
+      message = 'USDC amount missing — wait for auto-balance.';
+      return;
+    }
+    if (!$walletAddress) {
+      message = 'Connect your wallet first.';
+      return;
+    }
+
     loading = true;
     message = '';
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      message = `Added simulation: ${stcAmount} STC + ${usdcAmount} USDC`;
-      void loadShare();
+      // Wallet prompts three times: approve STC, approve USDC, addLiquidity.
+      const ammAddress = tokenAMM.contractAddress();
+      message = 'Approving STC…';
+      await stcToken.approve(ammAddress, stcAmount);
+      message = 'Approving USDC…';
+      await usdcToken.approve(ammAddress, usdcAmount);
+      message = 'Adding liquidity…';
+      const txHash = await tokenAMM.addLiquidity(stcAmount, usdcAmount);
+      message = `Liquidity added (tx ${(txHash as string).slice(0, 10)}…).`;
+      stcAmount = '';
+      usdcAmount = '';
+      // Refresh on-chain reads after a few seconds so the new LP tokens show.
+      setTimeout(() => { void loadPool(); void loadShare(); }, 2500);
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'Add liquidity failed';
+      message = /user rejected|user denied|rejected.*request/i.test(raw)
+        ? 'Transaction cancelled.'
+        : raw.length > 140 ? `${raw.slice(0, 140)}…` : raw;
     } finally {
       loading = false;
     }
   }
 
   async function handleRemove() {
+    if (parseFloat(myShare.lp) <= 0) {
+      message = 'You have no LP tokens to remove.';
+      return;
+    }
+    if (!$walletAddress) {
+      message = 'Connect your wallet first.';
+      return;
+    }
     loading = true;
     message = '';
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      message = `Removed simulation: ${removePct}% of LP position`;
-      void loadShare();
+      // Burn `removePct%` of the user's LP balance. Accept up to 1% slippage
+      // on the underlying STC/USDC withdrawal versus the pool ratio.
+      const lpToBurn = (parseFloat(myShare.lp) * (removePct / 100)).toFixed(18);
+      const expectedStc = parseFloat(myShare.stc) * (removePct / 100);
+      const expectedUsdc = parseFloat(myShare.usdc) * (removePct / 100);
+      const minStc = (expectedStc * 0.99).toFixed(18);
+      const minUsdc = (expectedUsdc * 0.99).toFixed(6);
+
+      message = 'Removing liquidity…';
+      const txHash = await tokenAMM.removeLiquidity(lpToBurn, minStc, minUsdc);
+      message = `Liquidity removed (tx ${(txHash as string).slice(0, 10)}…). STC + USDC sent to your wallet.`;
+      setTimeout(() => { void loadPool(); void loadShare(); }, 2500);
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'Remove liquidity failed';
+      message = /user rejected|user denied|rejected.*request/i.test(raw)
+        ? 'Transaction cancelled.'
+        : raw.length > 140 ? `${raw.slice(0, 140)}…` : raw;
     } finally {
       loading = false;
     }
@@ -124,25 +180,22 @@
       <div class="bg-card border border-border rounded-2xl p-5">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your position</h2>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Coming soon</span>
+          {#if myShare.sharePct > 0}
+            <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-300 border border-green-500/30">{myShare.sharePct.toFixed(2)}% of pool</span>
+          {/if}
         </div>
-        <p class="text-xs text-muted-foreground mb-3">
-          Live LP balance display is being wired to the pool contract. Add/remove
-          operations work today; this readout will populate once the LP balance
-          method ships.
-        </p>
-        <div class="grid grid-cols-3 gap-3 text-sm opacity-60">
+        <div class="grid grid-cols-3 gap-3 text-sm">
           <div>
             <div class="text-xs text-muted-foreground">LP tokens</div>
-            <div class="font-semibold">—</div>
+            <div class="font-semibold">{parseFloat(myShare.lp).toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
           </div>
           <div>
             <div class="text-xs text-muted-foreground">STC</div>
-            <div class="font-semibold">—</div>
+            <div class="font-semibold">{parseFloat(myShare.stc).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
           </div>
           <div>
             <div class="text-xs text-muted-foreground">USDC</div>
-            <div class="font-semibold">—</div>
+            <div class="font-semibold">${parseFloat(myShare.usdc).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
           </div>
         </div>
       </div>

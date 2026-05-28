@@ -22,39 +22,29 @@
     RefreshCw
   } from '@lucide/svelte';
 
-  // Creator earnings data
-  let earningsData = $state({
-    monthlyRevenue: 1247.50,
-    yearlyRevenue: 12450.00,
-    totalEarnings: 38500.00,
-    revenueShare: 35,
-    tier: 'exclusive' as 'standard' | 'exclusive' | 'top_performer'
-  });
+  interface PaymentRow {
+    id: string;
+    amountCents: number;
+    currency: string;
+    status: string;
+    createdAt: string;
+    metadata?: Record<string, unknown> | null;
+  }
 
-  // Payment history
-  let paymentHistory = $state([
-    {
-      date: '2024-09-01',
-      amount: 1247.50,
-      type: 'mixed' as 'fiat' | 'usdc' | 'stc' | 'mixed',
-      breakdown: { fiat: 623.75, usdc: 374.25, stc: 249.50 },
-      status: 'completed'
-    },
-    {
-      date: '2024-08-01',
-      amount: 1156.25,
-      type: 'mixed',
-      breakdown: { fiat: 578.13, usdc: 347.88, stc: 230.24 },
-      status: 'completed'
-    },
-    {
-      date: '2024-07-01',
-      amount: 987.35,
-      type: 'fiat',
-      breakdown: { fiat: 987.35, usdc: 0, stc: 0 },
-      status: 'completed'
-    }
-  ]);
+  // Real earnings from /api/creator/earnings — honest empty-state until the
+  // creator-payout worker actually credits the creator's account.
+  let earningsData = $state({
+    monthCents: 0,
+    yearCents: 0,
+    lifetimeCents: 0,
+    revenueShare: 30,
+    tier: 'standard' as 'standard' | 'exclusive' | 'top_performer',
+    contentCount: 0,
+    totalViews: 0,
+    completedWatches: 0
+  });
+  let paymentHistory = $state<PaymentRow[]>([]);
+  let loadingEarnings = $state(true);
 
   // Web3 tokenomics data
   let tokenomicsData = $state({
@@ -77,10 +67,41 @@
   });
 
   onMount(async () => {
+    await loadEarnings();
     if ($isConnected && $walletAddress) {
       await loadTokenomicsData();
     }
   });
+
+  async function loadEarnings() {
+    loadingEarnings = true;
+    try {
+      const res = await fetch('/api/creator/earnings');
+      if (!res.ok) return;
+      const data = await res.json();
+      earningsData = {
+        monthCents: data.totals?.monthCents ?? 0,
+        yearCents: data.totals?.yearCents ?? 0,
+        lifetimeCents: data.totals?.lifetimeCents ?? 0,
+        revenueShare: data.revenueShare ?? 30,
+        tier: (data.tier ?? 'standard') as typeof earningsData.tier,
+        contentCount: data.stats?.contentCount ?? 0,
+        totalViews: data.stats?.totalViews ?? 0,
+        completedWatches: data.stats?.completedWatches ?? 0
+      };
+      paymentHistory = data.recentPayments ?? [];
+      if (data.paymentPreference) {
+        paymentSettings.preference = data.paymentPreference.preference ?? 'mixed';
+        paymentSettings.fiatPercentage = data.paymentPreference.fiatPct ?? 50;
+        paymentSettings.usdcPercentage = data.paymentPreference.usdcPct ?? 30;
+        paymentSettings.stcPercentage = data.paymentPreference.stcPct ?? 20;
+      }
+    } catch (err) {
+      console.error('Error loading earnings:', err);
+    } finally {
+      loadingEarnings = false;
+    }
+  }
 
   async function loadTokenomicsData() {
     if (!$walletAddress) return;
@@ -92,7 +113,12 @@
         stcToken.getUserDiscount($walletAddress)
       ]);
 
-      const stcEarned = '15000'; // TODO: Get from backend
+      // STC earned by this creator — pulled from the byCurrency aggregate
+      // when the payout pipeline is live; falls back to 0 until then.
+      const earningsRes = await fetch('/api/creator/earnings');
+      const earningsJson = earningsRes.ok ? await earningsRes.json() : null;
+      const stcEarnedCents = Number(earningsJson?.byCurrency?.STC?.lifetime ?? 0);
+      const stcEarned = (stcEarnedCents / 100).toString();
       const stcCurrentValue = parseFloat(stcEarned) * parseFloat(price);
 
       tokenomicsData = {
@@ -113,21 +139,19 @@
     paymentSettings.updateResult = '';
 
     try {
-      // Validate percentages
-      const total = paymentSettings.fiatPercentage + paymentSettings.usdcPercentage + paymentSettings.stcPercentage;
-      if (Math.abs(total - 100) > 0.1) {
-        throw new Error('Percentages must total 100%');
-      }
+      const res = await fetch('/api/creator/payment-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preference: paymentSettings.preference,
+          fiatPct: paymentSettings.fiatPercentage,
+          usdcPct: paymentSettings.usdcPercentage,
+          stcPct: paymentSettings.stcPercentage
+        })
+      });
 
-      // TODO: Save to backend API
-      // await updateCreatorPaymentPreference({
-      //   preference: paymentSettings.preference,
-      //   breakdown: {
-      //     fiat: paymentSettings.fiatPercentage,
-      //     usdc: paymentSettings.usdcPercentage,
-      //     stc: paymentSettings.stcPercentage
-      //   }
-      // });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to update preferences');
 
       paymentSettings.updateResult = 'Payment preferences updated successfully';
     } catch (error: any) {
@@ -180,7 +204,7 @@
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${earningsData.monthlyRevenue.toFixed(2)}</div>
+        <div class="text-2xl font-bold text-white">${(earningsData.monthCents / 100).toFixed(2)}</div>
         <Badge class="text-xs mt-1" variant="secondary">{earningsData.revenueShare}% share</Badge>
       </CardContent>
     </Card>
@@ -193,7 +217,7 @@
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${earningsData.yearlyRevenue.toLocaleString()}</div>
+        <div class="text-2xl font-bold text-white">${(earningsData.yearCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         <Badge class="text-xs mt-1" variant="outline">12 months</Badge>
       </CardContent>
     </Card>
@@ -206,7 +230,7 @@
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${earningsData.totalEarnings.toLocaleString()}</div>
+        <div class="text-2xl font-bold text-white">${(earningsData.lifetimeCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         <Badge class="text-xs mt-1 {getTierColor(earningsData.tier)}">
           {earningsData.tier === 'top_performer' ? 'Top Performer' :
            earningsData.tier === 'exclusive' ? 'Exclusive Partner' : 'Standard Creator'}
@@ -375,32 +399,36 @@
     </CardHeader>
     <CardContent>
       <div class="space-y-4">
-        {#each paymentHistory as payment}
-          <div class="flex items-center justify-between p-4 border rounded-lg">
-            <div class="flex items-center space-x-4">
-              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                {#if getPaymentTypeIcon(payment.type)}
-                  {@const PaymentIcon = getPaymentTypeIcon(payment.type)}
-                  <PaymentIcon class="h-5 w-5 text-primary" />
-                {/if}
-              </div>
-              <div>
-                <div class="font-medium">${payment.amount.toFixed(2)}</div>
-                <div class="text-sm text-muted-foreground">{formatDate(payment.date)}</div>
-              </div>
-            </div>
-            <div class="text-right">
-              <Badge variant="outline" class="mb-2">
-                {payment.status === 'completed' ? 'Completed' : 'Pending'}
-              </Badge>
-              {#if payment.type === 'mixed'}
-                <div class="text-xs text-muted-foreground">
-                  ${payment.breakdown.fiat.toFixed(2)} + ${payment.breakdown.usdc.toFixed(2)} + {payment.breakdown.stc.toFixed(0)} STC
-                </div>
-              {/if}
-            </div>
+        {#if loadingEarnings}
+          <p class="text-sm text-muted-foreground py-6 text-center">Loading payment history…</p>
+        {:else if paymentHistory.length === 0}
+          <div class="py-8 text-center space-y-2">
+            <p class="text-sm text-muted-foreground">No payments yet.</p>
+            <p class="text-xs text-muted-foreground/70">Once viewers watch your content and the platform processes payouts, your earnings history will appear here.</p>
           </div>
-        {/each}
+        {:else}
+          {#each paymentHistory as payment}
+            <div class="flex items-center justify-between p-4 border rounded-lg">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  {#if getPaymentTypeIcon(payment.currency.toLowerCase() as any)}
+                    {@const PaymentIcon = getPaymentTypeIcon(payment.currency.toLowerCase() as any)}
+                    <PaymentIcon class="h-5 w-5 text-primary" />
+                  {/if}
+                </div>
+                <div>
+                  <div class="font-medium">${(payment.amountCents / 100).toFixed(2)} <span class="text-xs text-muted-foreground">{payment.currency}</span></div>
+                  <div class="text-sm text-muted-foreground">{formatDate(payment.createdAt)}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <Badge variant="outline" class="mb-2">
+                  {payment.status === 'completed' ? 'Completed' : payment.status === 'pending' ? 'Pending' : payment.status}
+                </Badge>
+              </div>
+            </div>
+          {/each}
+        {/if}
       </div>
     </CardContent>
   </Card>

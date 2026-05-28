@@ -17,13 +17,14 @@
 </script>
 
 <div
-  class="relative rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 border-4 border-yellow-300 bg-white text-center cursor-pointer"
+  class="relative rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 border-4 border-yellow-300 bg-white text-center cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2"
   on:mouseenter={() => isHovered = true}
   on:mouseleave={() => isHovered = false}
   on:click={handleClick}
   role="button"
   tabindex="0"
-  on:keydown={(e) => e.key === 'Enter' && handleClick()}
+  aria-label={`Watch ${movie.title}`}
+  on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleClick())}
 >
   {#if isHovered && movie.trailerUrl}
     <video

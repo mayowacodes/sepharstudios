@@ -45,6 +45,11 @@
   const user = $derived(page.data.user);
 </script>
 
+<svelte:head>
+  <title>Christian TV Shows · Sephar Studios</title>
+  <meta name="description" content="Faith-based and family-friendly TV shows streaming on Sephar Studios. Watch full seasons, new episodes, and exclusive originals." />
+</svelte:head>
+
 <div class="relative overflow-hidden min-h-screen bg-var(--surface-charcoal) text-white">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div>
   <main class="w-full max-w-7xl mx-auto px-6 md:px-8 py-10 relative z-10">

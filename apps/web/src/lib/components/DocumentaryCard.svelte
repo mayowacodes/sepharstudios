@@ -41,7 +41,8 @@
 <div
   role="button"
   tabindex="0"
-  class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none hover:scale-[1.02]"
+  class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"
+  aria-label={`Watch ${documentary.title}`}
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
   on:click={navigate}
@@ -61,7 +62,7 @@
     {:else}
       <img
         src={documentary.thumbnail || '/placeholder-vertical.jpg'}
-        alt={documentary.title}
+        alt=""
         width="280"
         height="420"
         loading="lazy"

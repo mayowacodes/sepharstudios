@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ArrowUpDown, Wallet, Coins, ExternalLink, ArrowRight, RefreshCw } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
-  import { tokenAMM, stcToken } from '$lib/web3/contracts';
+  import { tokenAMM, stcToken, usdcToken } from '$lib/web3/contracts';
   import { isConnected, walletAddress, connectWallet } from '$lib/web3/wallet';
 
   type Direction = 'buy' | 'sell';
@@ -31,10 +31,12 @@
 
   async function loadBalances() {
     try {
-      stcBalance = await stcToken.balanceOf($walletAddress!);
-      // USDC balance via tokenAMM helper
-      const pool = await tokenAMM.getPoolInfo();
-      usdcBalance = pool.usdcBalance ?? '0';
+      const [stc, usdc] = await Promise.all([
+        stcToken.balanceOf($walletAddress!),
+        usdcToken.balanceOf($walletAddress!)
+      ]);
+      stcBalance = stc;
+      usdcBalance = usdc;
     } catch (err) {
       console.error('Balance load failed:', err);
     }
@@ -64,14 +66,53 @@
       message = 'Enter a valid amount';
       return;
     }
+    if (!$walletAddress) {
+      message = 'Connect your wallet to swap.';
+      return;
+    }
+    const inAmt = parseFloat(inputAmount);
+    if (inAmt > parseFloat(direction === 'buy' ? usdcBalance : stcBalance)) {
+      message = `Insufficient ${direction === 'buy' ? 'USDC' : 'STC'} balance.`;
+      return;
+    }
+
     loading = true;
     message = '';
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      message = `Swap simulation: ${inputAmount} ${direction === 'buy' ? 'USDC → STC' : 'STC → USDC'}`;
-      void loadBalances();
+      // 1) Approve the AMM to spend the input token. Approval is required
+      //    because the AMM contract pulls funds via transferFrom. Wallet
+      //    will prompt twice — once for approve, once for swap.
+      const ammAddress = tokenAMM.contractAddress();
+      if (direction === 'buy') {
+        message = 'Approving USDC…';
+        await usdcToken.approve(ammAddress, inputAmount);
+      } else {
+        message = 'Approving STC…';
+        await stcToken.approve(ammAddress, inputAmount);
+      }
+
+      // 2) Compute slippage floor: accept up to 1% worse than the displayed
+      //    estimate. AMM reverts if actual out < min.
+      const minOut = (parseFloat(outputEstimate) * 0.99).toFixed(direction === 'buy' ? 18 : 6);
+
+      // 3) Execute the swap.
+      message = 'Swapping…';
+      const txHash = direction === 'buy'
+        ? await tokenAMM.swapUSDCForSTC(inputAmount, minOut)
+        : await tokenAMM.swapSTCForUSDC(inputAmount, minOut);
+
+      message = `Swap submitted (tx ${(txHash as string).slice(0, 10)}…). Balances will refresh shortly.`;
+      inputAmount = '';
+      outputEstimate = '0';
+      // Refresh from chain — explorer may lag a few seconds for the new state.
+      setTimeout(() => void loadBalances(), 2000);
     } catch (err) {
-      message = err instanceof Error ? err.message : 'Swap failed';
+      const raw = err instanceof Error ? err.message : 'Swap failed';
+      if (/user rejected|user denied|rejected.*request/i.test(raw)) {
+        message = 'Transaction cancelled.';
+      } else {
+        message = raw.length > 140 ? `${raw.slice(0, 140)}…` : raw;
+      }
     } finally {
       loading = false;
     }

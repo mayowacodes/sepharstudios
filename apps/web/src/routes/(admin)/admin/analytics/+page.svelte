@@ -159,9 +159,13 @@
     try {
       const balance = await stcToken.balanceOf($walletAddress);
 
+      // The (admin) route layout enforces `user.role === 'admin'` server-side
+      // before rendering this page (see (admin)/+layout.server.ts). Anyone
+      // reaching this code path is, by construction, an admin — so this flag
+      // reflects platform-level admin status, not on-chain governance role.
       adminWalletInfo = {
         stcBalance: balance,
-        adminPrivileges: true, // TODO: Check actual admin privileges from contract
+        adminPrivileges: true,
         lastLogin: new Date().toISOString(),
         isLoading: false
       };

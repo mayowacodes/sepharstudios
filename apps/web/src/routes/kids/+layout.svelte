@@ -16,6 +16,13 @@
   const currentLabel = $derived(isTeens ? 'Teens' : 'Kiddies');
 </script>
 
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:ring-2 focus:ring-primary"
+>
+  Skip to main content
+</a>
+
 <div class="min-h-screen bg-background flex flex-col">
   <nav class="border-b bg-card px-4 py-2 flex items-center justify-between sticky top-0 z-50">
     <div class="flex items-center space-x-4">
@@ -57,7 +64,7 @@
     </div>
   </nav>
 
-  <main class="flex-1">
+  <main id="main-content" tabindex="-1" class="flex-1">
     <SafeExplorationMode {profileType}>
       {@render children()}
     </SafeExplorationMode>

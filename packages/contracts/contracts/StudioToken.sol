@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import "./TokenAMM.sol"; // Import refactored AMM
 
@@ -77,7 +77,7 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
         address _userRewardsPool,
         address _governancePool,
         address _usdcToken
-    ) ERC20("Studio Token", "STC") {
+    ) ERC20("Studio Token", "STC") Ownable(msg.sender) {
         platformTreasury = _platformTreasury;
         creatorRewardsPool = _creatorRewardsPool;
         userRewardsPool = _userRewardsPool;
@@ -477,11 +477,14 @@ contract StudioToken is ERC20, ERC20Burnable, Ownable, ReentrancyGuard, Pausable
         emit Transfer(platformTreasury, address(0xdead), amount);
     }
 
-    function _beforeTokenTransfer(
+    // OZ v5: _beforeTokenTransfer was removed in favour of _update. The pause
+    // gate (whenNotPaused) moved here. Behaviour is identical — pausing the
+    // contract halts all transfers.
+    function _update(
         address from,
         address to,
-        uint256 amount
+        uint256 value
     ) internal override whenNotPaused {
-        super._beforeTokenTransfer(from, to, amount);
+        super._update(from, to, value);
     }
 }

@@ -11,22 +11,56 @@
   interface Plan {
     id: string;
     name: string;
+    /** Displayed price (after any discount) */
     price: number;
+    /** Pre-discount price; only set when a staking discount is applied */
     originalPrice?: number;
+    /** Billing cadence label, e.g. "/month" or "every 2 months" */
+    cadence: string;
+    /** Number of profile accounts allowed on this tier */
+    maxProfiles: number;
+    /** Whether this tier exposes kids-mode profiles */
+    kidsAllowed: boolean;
+    /** Whether ads are shown on this tier */
+    hasAds: boolean;
     features: string[];
     isPopular?: boolean;
     nftBenefits: string[];
   }
 
+  // Mirrors PLAN_FEATURES + PLAN_PRICES_CENTS in $lib/payment/paystack.ts.
+  // Kept in lockstep manually — when prices change, update both places.
   let plans = $state<Plan[]>([
+    {
+      id: 'freemium',
+      name: 'Freemium',
+      price: 1,
+      cadence: 'every 2 months',
+      maxProfiles: 1,
+      kidsAllowed: false,
+      hasAds: true,
+      features: [
+        'HD streaming with ads',
+        '1 profile',
+        'Access to standard library',
+        'Cancel anytime'
+      ],
+      nftBenefits: [
+        'Earn STC by watching',
+        'No staking discount on this tier'
+      ]
+    },
     {
       id: 'basic',
       name: 'Basic',
-      price: 3,
+      price: 4,
+      cadence: '/month',
+      maxProfiles: 2,
+      kidsAllowed: false,
+      hasAds: false,
       features: [
-        'HD streaming',
-        '1 screen at a time',
-        'Access to standard library',
+        'HD streaming — ad-free',
+        '2 profiles',
         'Download on 1 device',
         'Cancel anytime'
       ],
@@ -38,11 +72,15 @@
     },
     {
       id: 'premium',
-      name: 'Premium',
+      name: 'Premium (Family)',
       price: 10,
+      cadence: '/month',
+      maxProfiles: 8,
+      kidsAllowed: true,
+      hasAds: false,
       features: [
         '4K Ultra HD streaming',
-        '2 screens at a time',
+        '8 profiles (kids profile included)',
         'Full content library',
         'Downloads on 2 devices',
         'Offline viewing',
@@ -59,14 +97,17 @@
     {
       id: 'creator',
       name: 'Creator',
-      price: 15,
+      price: 10,
+      cadence: '/month',
+      maxProfiles: 2,
+      kidsAllowed: false,
+      hasAds: false,
       features: [
-        'Everything in Premium',
+        'Everything in Basic',
         'Upload & publish content',
         'Revenue share dashboard',
         'Creator analytics',
-        'Priority support',
-        'Cancel anytime'
+        'Priority support'
       ],
       nftBenefits: [
         'Creator NFT badge',
@@ -95,12 +136,16 @@
           userDiscount = discount;
           stakingAmount = access.stakingAmount;
 
-          // Apply discount to plan prices
-          plans = plans.map(plan => ({
-            ...plan,
-            originalPrice: plan.price,
-            price: discount > 0 ? plan.price * (1 - discount / 100) : plan.price
-          }));
+          // Apply staking discount to paid plans only. Freemium ($1 / 2 months)
+          // is already the floor; discounts here would just add complexity
+          // without meaningful savings.
+          plans = plans.map(plan => plan.id === 'freemium'
+            ? plan
+            : {
+                ...plan,
+                originalPrice: plan.price,
+                price: discount > 0 ? plan.price * (1 - discount / 100) : plan.price
+              });
         } catch (error) {
           console.error('Error loading user discount:', error);
         }
@@ -122,16 +167,22 @@
     switch (planId) {
       case 'creator': return Crown;
       case 'premium': return Star;
+      case 'freemium': return Zap;
       default: return Coins;
     }
   }
 </script>
 
+<svelte:head>
+  <title>Plans &amp; Pricing · Sephar Studios</title>
+  <meta name="description" content="Choose your Sephar Studios plan: freemium with ads, basic ad-free, premium family (8 profiles + kids mode), or creator. STC stakers get up to 50% off." />
+</svelte:head>
+
 <div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-7xl pt-32 pb-16">
   <div class="text-center space-y-4 mb-8">
     <h1 class="text-3xl font-bold gradient-text">Choose Your Plan</h1>
     <p class="text-muted-foreground max-w-2xl mx-auto">
-      Start with 3 months free — no charge today. Cancel anytime before your trial ends.
+      Start with 3 months free on Basic, Premium or Creator. Freemium starts billing immediately at $1 every 2 months.
       {#if userDiscount > 0}
         <Badge class="ml-2 bg-primary text-primary-foreground">
           {userDiscount}% Staking Discount Applied!
@@ -140,7 +191,7 @@
     </p>
     <div class="inline-flex items-center gap-2 bg-green-600/10 text-green-400 border border-green-600/20 rounded-full px-4 py-1.5 text-sm">
       <Gift class="h-4 w-4" />
-      3 months free on all plans
+      3 months free on Basic, Premium & Creator
     </div>
   </div>
 
@@ -149,10 +200,10 @@
     <div class="mb-8 p-6 bg-accent/5 border border-accent/20 rounded-lg">
       <div class="grid md:grid-cols-2 gap-6 items-center">
         <div>
-          <h3 class="text-lg font-semibold mb-2 flex items-center">
+          <h2 class="text-lg font-semibold mb-2 flex items-center">
             <Wallet class="h-5 w-5 mr-2 text-primary" />
             Connect Wallet for NFT Benefits
-          </h3>
+          </h2>
           <p class="text-sm text-muted-foreground mb-4">
             Connect your wallet to get your subscription as an NFT and unlock exclusive Web3 features.
             You can still subscribe without a wallet using traditional payments.
@@ -203,7 +254,7 @@
     </div>
   {/if}
 
-  <div class="grid gap-6 lg:grid-cols-3">
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
     {#each plans as plan (plan.id)}
       {@const PlanIcon = getPlanIcon(plan.id)}
       <Card class="relative {plan.isPopular ? 'border-primary/50 bg-primary/5' : ''}">
@@ -212,6 +263,11 @@
             <Badge class="bg-primary text-primary-foreground">
               Most Popular
             </Badge>
+          </div>
+        {/if}
+        {#if plan.hasAds}
+          <div class="absolute -top-2 right-3">
+            <Badge variant="secondary" class="text-[10px]">With ads</Badge>
           </div>
         {/if}
 
@@ -224,16 +280,16 @@
 
         <CardContent class="space-y-6">
           <div class="space-y-2">
-            <div class="flex items-baseline">
+            <div class="flex items-baseline flex-wrap">
               {#if plan.originalPrice && plan.originalPrice !== plan.price}
                 <span class="text-lg line-through text-muted-foreground mr-2">
                   ${plan.originalPrice.toFixed(2)}
                 </span>
               {/if}
               <span class="text-3xl font-bold">${plan.price.toFixed(2)}</span>
-              <span class="text-muted-foreground ml-1">/month</span>
+              <span class="text-muted-foreground ml-1">{plan.cadence}</span>
             </div>
-            {#if userDiscount > 0}
+            {#if userDiscount > 0 && plan.id !== 'freemium'}
               <Badge variant="secondary" class="text-xs">
                 {userDiscount}% discount from staking
               </Badge>

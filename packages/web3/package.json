@@ -21,8 +21,8 @@
 		"viem": "^2.51.3"
 	},
 	"devDependencies": {
-		"@types/node": "^24.9.1",
-		"typescript": "^5.7.0"
+		"@types/node": "^25.9.1",
+		"typescript": "^6.0.3"
 	},
 	"peerDependencies": {
 		"svelte": "^5.0.0"

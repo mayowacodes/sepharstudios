@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { Bell, Mail, CreditCard, LogOut } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
+  import { enablePush, disablePush, isPushEnabled, isPushSupported } from '$lib/client/push';
 
   interface NotificationPrefs {
     newReleases: boolean;
@@ -17,9 +18,13 @@
     trialEndsAt: string | null;
     currentPeriodEnd: string | null;
     trialDaysLeft: number | null;
+    nextChargeAt: string | null;
+    failedAttempts: number;
+    cardLast4: string | null;
+    cardBrand: string | null;
   }
 
-  type PlanName = 'basic' | 'premium' | 'creator';
+  type PlanName = 'freemium' | 'basic' | 'premium' | 'creator';
 
   let prefs = $state<NotificationPrefs | null>(null);
   let sub = $state<SubscriptionStatus | null>(null);
@@ -27,9 +32,33 @@
   let saving = $state(false);
   let changingPlan = $state(false);
   let cancelling = $state(false);
-  let cancelConfirm = $state(false);
   let selectedPlan = $state<PlanName>('basic');
   let successMsg = $state('');
+
+  let pushSupported = $state(false);
+  let pushEnabled = $state(false);
+  let pushBusy = $state(false);
+  let pushError = $state('');
+
+  async function togglePush() {
+    pushBusy = true;
+    pushError = '';
+    try {
+      if (pushEnabled) {
+        await disablePush();
+        pushEnabled = false;
+      } else {
+        const res = await enablePush();
+        if (!res.ok) {
+          pushError = res.reason ?? 'Could not enable push.';
+        } else {
+          pushEnabled = true;
+        }
+      }
+    } finally {
+      pushBusy = false;
+    }
+  }
 
   onMount(async () => {
     const [prefsRes, subRes] = await Promise.all([
@@ -39,11 +68,13 @@
     if (prefsRes.ok) prefs = await prefsRes.json();
     if (subRes.ok) {
       sub = await subRes.json();
-      if (sub?.plan === 'basic' || sub?.plan === 'premium' || sub?.plan === 'creator') {
+      if (sub?.plan === 'freemium' || sub?.plan === 'basic' || sub?.plan === 'premium' || sub?.plan === 'creator') {
         selectedPlan = sub.plan;
       }
     }
     loading = false;
+    pushSupported = isPushSupported();
+    if (pushSupported) pushEnabled = await isPushEnabled();
   });
 
   async function savePrefs() {
@@ -70,7 +101,6 @@
         const data = await res.json();
         sub = { ...sub!, status: 'cancelled' };
         successMsg = `Subscription cancelled. Access continues until ${new Date(data.accessUntil).toLocaleDateString()}.`;
-        cancelConfirm = false;
         setTimeout(() => successMsg = '', 8000);
       }
     } finally {
@@ -159,11 +189,34 @@
             </div>
             {#if sub.currentPeriodEnd}
               <div class="flex justify-between">
-                <span class="text-muted-foreground">Next billing</span>
+                <span class="text-muted-foreground">Current period ends</span>
                 <span>{new Date(sub.currentPeriodEnd).toLocaleDateString()}</span>
               </div>
             {/if}
+            {#if sub.nextChargeAt && sub.status !== 'cancelled'}
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">Next charge</span>
+                <span>{new Date(sub.nextChargeAt).toLocaleDateString()}</span>
+              </div>
+            {/if}
+            {#if sub.cardLast4}
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">Card on file</span>
+                <span class="font-mono">{sub.cardBrand ?? 'card'} •••• {sub.cardLast4}</span>
+              </div>
+            {/if}
           </div>
+
+          {#if sub.failedAttempts > 0 && sub.status !== 'cancelled'}
+            <div class="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-sm text-amber-200">
+              <strong>Last renewal attempt failed.</strong>
+              {#if sub.status === 'paused'}
+                Your subscription is paused after {sub.failedAttempts} failed attempts. Update your card to restore access.
+              {:else}
+                We'll automatically retry (attempt {sub.failedAttempts}/3). Update your card now to avoid interruption.
+              {/if}
+            </div>
+          {/if}
 
           {#if sub.status === 'active' || sub.status === 'trial'}
             <div class="mt-4 pt-4 border-t border-border space-y-3">
@@ -174,9 +227,10 @@
                   bind:value={selectedPlan}
                   class="h-8 rounded-md border border-border bg-background px-2 text-sm capitalize"
                 >
-                  <option value="basic">Basic</option>
-                  <option value="premium">Premium</option>
-                  <option value="creator">Creator</option>
+                  <option value="freemium">Freemium ($1 every 2 months)</option>
+                  <option value="basic">Basic ($4/mo)</option>
+                  <option value="premium">Premium / Family ($10/mo)</option>
+                  <option value="creator">Creator ($10/mo)</option>
                 </select>
                 <Button
                   size="sm"
@@ -189,22 +243,20 @@
               </div>
 
               <div class="flex items-center justify-between gap-4">
-              {#if cancelConfirm}
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-muted-foreground">Are you sure?</span>
-                  <Button size="sm" variant="destructive" onclick={cancelSubscription} disabled={cancelling}>
-                    {cancelling ? 'Cancelling...' : 'Yes, cancel'}
-                  </Button>
-                  <Button size="sm" variant="outline" onclick={() => cancelConfirm = false}>No</Button>
-                </div>
-              {:else}
+                <!--
+                  One-click cancellation per EU Art. 7 Directive 2011/83/EU
+                  ("cancellation must be at least as easy as subscription").
+                  No confirmation modal — cancel fires immediately. The user
+                  retains access until period end (reversible by resubscribing
+                  before the period elapses), so the action is recoverable.
+                -->
                 <button
-                  onclick={() => cancelConfirm = true}
-                  class="text-xs text-muted-foreground hover:text-red-400 transition-colors"
+                  onclick={cancelSubscription}
+                  disabled={cancelling}
+                  class="text-xs text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
                 >
-                  Cancel subscription
+                  {cancelling ? 'Cancelling…' : 'Cancel subscription'}
                 </button>
-              {/if}
               </div>
             </div>
           {/if}
@@ -239,6 +291,25 @@
           <Button size="sm" onclick={savePrefs} disabled={saving} class="mt-4">
             {saving ? 'Saving...' : 'Save preferences'}
           </Button>
+        </div>
+      {/if}
+
+      <!-- Browser push -->
+      {#if pushSupported}
+        <div class="bg-card border border-border rounded-xl p-5 mb-6">
+          <div class="flex items-center gap-3 mb-2">
+            <Bell class="w-5 h-5 text-muted-foreground" />
+            <h2 class="font-semibold">Browser Push</h2>
+          </div>
+          <p class="text-sm text-muted-foreground mb-4">
+            Receive achievement, event-reminder, and subscription notifications even when this tab is closed.
+          </p>
+          <Button size="sm" onclick={togglePush} disabled={pushBusy}>
+            {pushBusy ? 'Working…' : pushEnabled ? 'Disable push' : 'Enable push'}
+          </Button>
+          {#if pushError}
+            <p class="text-xs text-destructive mt-2">{pushError}</p>
+          {/if}
         </div>
       {/if}
 

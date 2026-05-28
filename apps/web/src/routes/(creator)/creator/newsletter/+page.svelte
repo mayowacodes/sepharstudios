@@ -1,24 +1,64 @@
 <!-- Creator Newsletter -->
 <script lang="ts">
-  let email = '';
-  let isSubscribed = false;
-  let preferences = {
+  let email = $state('');
+  let isSubscribed = $state(false);
+  let isSubmitting = $state(false);
+  let errorMsg = $state('');
+  let successMsg = $state('');
+  let preferences = $state({
     weekly: true,
     events: true,
     resources: true,
     spotlights: false,
     technical: true
-  };
+  });
 
-  function subscribe() {
-    if (email) {
+  async function subscribe() {
+    errorMsg = '';
+    successMsg = '';
+    if (!email) {
+      errorMsg = 'Please enter your email.';
+      return;
+    }
+    isSubmitting = true;
+    try {
+      const res = await fetch('/api/creator/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, preferences })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Subscribe failed');
       isSubscribed = true;
+      successMsg = 'Subscribed — check your inbox for our welcome email.';
+    } catch (err: any) {
+      errorMsg = err.message ?? 'Subscribe failed';
+    } finally {
+      isSubmitting = false;
     }
   }
 
-  function updatePreferences() {
-    // Handle preferences update
-    console.log('Preferences updated:', preferences);
+  async function updatePreferences() {
+    if (!email) return;
+    isSubmitting = true;
+    successMsg = '';
+    errorMsg = '';
+    try {
+      const res = await fetch('/api/creator/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, preferences })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Update failed');
+      }
+      successMsg = 'Preferences saved.';
+    } catch (err: any) {
+      errorMsg = err.message ?? 'Update failed';
+    } finally {
+      isSubmitting = false;
+    }
   }
 </script>
 

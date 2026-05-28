@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { UploadStep, type UploadWizardState, ContentType, AgeRating } from '$lib/types/creator';
   import StepIndicator from '$lib/components/creator/upload/StepIndicator.svelte';
   import BasicInfoStep from '$lib/components/creator/upload/BasicInfoStep.svelte';
@@ -7,9 +8,13 @@
   import AssetManagementStep from '$lib/components/creator/upload/AssetManagementStep.svelte';
   import MetadataStep from '$lib/components/creator/upload/MetadataStep.svelte';
   import ReviewSubmitStep from '$lib/components/creator/upload/ReviewSubmitStep.svelte';
-  
-  let isSubmitting = false;
-  let wizardState: UploadWizardState = {
+
+  let isSubmitting = $state(false);
+  /** When set, the wizard pre-fills from this content's metadata. The video
+   *  must still be uploaded fresh (existing rows keep their video URL until
+   *  the submit flow swaps in the new one). */
+  let editId: string | null = $state(null);
+  let wizardState = $state<UploadWizardState>({
     currentStep: UploadStep.BASIC_INFO,
     stepData: {
       [UploadStep.BASIC_INFO]: {},
@@ -31,7 +36,7 @@
       [UploadStep.METADATA]: false,
       [UploadStep.REVIEW_SUBMIT]: false
     }
-  };
+  });
   
   const steps = [
     { step: UploadStep.BASIC_INFO, title: 'Basic Info', description: 'Content details and type' },
@@ -169,7 +174,48 @@
     }
   }
   
+  async function prefillFromExistingContent(contentId: string) {
+    try {
+      const res = await fetch(`/api/creator/content?id=${contentId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const item = Array.isArray(data) ? data[0] : data;
+      if (!item) return;
+
+      // Pre-fill Basic Info + Metadata only. Video / assets must be uploaded
+      // fresh — we don't reuse the old URLs since edit may include replacing
+      // the actual media file.
+      wizardState.stepData[UploadStep.BASIC_INFO] = {
+        title: item.title,
+        description: item.description ?? '',
+        contentType: item.mediaType,
+        ageRating: item.ageRating
+      };
+      wizardState.stepData[UploadStep.METADATA] = {
+        // Schema uses plural `genres`; wizard type uses singular `genre`.
+        // Take the first as the primary genre; full list goes to `tags`.
+        genre: Array.isArray(item.genres) && item.genres.length > 0 ? item.genres[0] : undefined,
+        tags: item.genres ?? [],
+        keywords: item.keywords ?? [],
+        themes: item.topics ?? [],
+        language: item.language,
+        bibleReferences: item.bibleReference ? [item.bibleReference] : []
+      };
+      validateStep(UploadStep.BASIC_INFO);
+      validateStep(UploadStep.METADATA);
+    } catch (err) {
+      console.error('Failed to prefill from existing content:', err);
+    }
+  }
+
   onMount(() => {
+    const editParam = page.url.searchParams.get('edit');
+    if (editParam) {
+      editId = editParam;
+      void prefillFromExistingContent(editParam);
+      return; // skip localStorage draft when editing
+    }
+
     // Load any draft data from localStorage
     const draftData = localStorage.getItem('upload_draft');
     if (draftData) {
@@ -183,14 +229,14 @@
     }
   });
   
-  // Auto-save draft data (excluding File objects)
-  $: {
+  // Auto-save draft data (excluding File objects). In runes mode, $: is no
+  // longer reactive — use $effect to track wizardState changes.
+  $effect(() => {
     if (typeof localStorage !== 'undefined') {
       const stateToSave = JSON.parse(JSON.stringify(wizardState));
-      // Ensure we don't try to save actual File objects if they somehow got in
       localStorage.setItem('upload_draft', JSON.stringify(stateToSave));
     }
-  }
+  });
 </script>
 
 <div class="container py-10 space-y-8 min-h-screen">
@@ -243,7 +289,7 @@
   <!-- Navigation Buttons -->
   <div class="flex justify-between items-center max-w-4xl mx-auto pt-4">
     <button 
-      on:click={previousStep}
+      onclick={previousStep}
       disabled={wizardState.currentStep === UploadStep.BASIC_INFO || isSubmitting}
       class="bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground px-6 py-3 rounded-lg font-medium transition-colors"
     >
@@ -256,7 +302,7 @@
     
     {#if wizardState.currentStep < UploadStep.REVIEW_SUBMIT}
       <button 
-        on:click={nextStep}
+        onclick={nextStep}
         disabled={!wizardState.isValid[wizardState.currentStep] || isSubmitting}
         class="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-6 py-3 rounded-lg font-medium transition-colors"
       >
@@ -264,7 +310,7 @@
       </button>
     {:else}
       <button 
-        on:click={submitContent}
+        onclick={submitContent}
         disabled={!wizardState.isValid[wizardState.currentStep] || isSubmitting}
         class="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-8 py-3 rounded-lg font-bold transition-colors shadow-lg"
       >

@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -85,7 +85,7 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
         address _creatorRevenuePool,
         address _userRewardPool,
         address _tokenAMM
-    ) ERC721("Sephar Studios Subscription", "SSS") {
+    ) ERC721("Sephar Studios Subscription", "SSS") Ownable(msg.sender) {
         stcToken = StudioToken(_stcToken);
         usdcToken = IERC20(_usdcToken);
         platformTreasury = _platformTreasury;
@@ -193,7 +193,7 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
             uint256 renewalCount, uint256 totalRevenue
         )
     {
-        require(_exists(tokenId), "Not found");
+        require(_ownerOf(tokenId) != address(0), "Not found");
         Subscription memory sub = subscriptions[tokenId];
         return (
             sub.subscriber, sub.tier, sub.amountPaid, sub.startDate,
@@ -316,7 +316,7 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     }
 
     function cancelSubscription(uint256 tokenId) external onlyOwner {
-        require(_exists(tokenId), "Not found");
+        require(_ownerOf(tokenId) != address(0), "Not found");
         subscriptions[tokenId].isActive = false;
     }
 
@@ -337,20 +337,21 @@ contract SepharSubscription is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     function pause() external onlyOwner { _pause(); }
     function unpause() external onlyOwner { _unpause(); }
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
-        internal override whenNotPaused
+    // OZ v5 replaces _beforeTokenTransfer + _burn with a single _update hook.
+    // _update returns the previous owner; mint = from address(0), burn = to
+    // address(0), transfer = both non-zero. The pause gate moves here.
+    function _update(address to, uint256 tokenId, address auth)
+        internal override(ERC721) whenNotPaused returns (address)
     {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        address from = super._update(to, tokenId, auth);
 
         if (from != address(0) && to != address(0)) {
             if (userSubscriptionTokenId[from] == tokenId) userSubscriptionTokenId[from] = 0;
             userSubscriptionTokenId[to] = tokenId;
             subscriptions[tokenId].subscriber = to;
         }
-    }
 
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
+        return from;
     }
 
     function tokenURI(uint256 tokenId) public view

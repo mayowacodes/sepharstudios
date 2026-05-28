@@ -441,6 +441,38 @@ export class TokenAMMContract {
       args: [parseUnits(stcAmount, 18), parseUnits(usdcAmount, 6), BigInt(minLiquidity)]
     }))
   }
+
+  async removeLiquidity(liquidityTokens: string, minStcOut: string, minUsdcOut: string) {
+    return withCtx('TokenAMM', 'removeLiquidity', () => writeContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: TOKEN_AMM_ABI,
+      functionName: 'removeLiquidity',
+      args: [parseUnits(liquidityTokens, 18), parseUnits(minStcOut, 18), parseUnits(minUsdcOut, 6)]
+    }))
+  }
+
+  /**
+   * Returns the calling user's LP token balance + their share of the pool
+   * as a percentage (0–100). Calls `liquidityProviders(addr)` + `totalLiquidity()`.
+   */
+  async getMyLPShare(addr: string): Promise<{ lpAmount: string; sharePct: number }> {
+    const lp = (await readContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: TOKEN_AMM_ABI,
+      functionName: 'liquidityProviders',
+      args: [addr as `0x${string}`]
+    })) as bigint;
+
+    const total = (await readContract(config, {
+      address: this.getAddress() as `0x${string}`,
+      abi: TOKEN_AMM_ABI,
+      functionName: 'totalLiquidity'
+    })) as bigint;
+
+    const lpAmount = formatUnits(lp, 18);
+    const sharePct = total > 0n ? Number((lp * 10000n) / total) / 100 : 0;
+    return { lpAmount, sharePct };
+  }
 }
 
 /**

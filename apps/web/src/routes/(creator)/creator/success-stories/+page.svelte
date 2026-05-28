@@ -1,6 +1,36 @@
 <!-- Creator Success Stories -->
 <script lang="ts">
-  let activeFilter = 'all';
+  let activeFilter = $state('all');
+
+  // Submission form state — wires to POST /api/success-stories.
+  let submitName = $state('');
+  let submitChannel = $state('');
+  let submitStory = $state('');
+  let submitting = $state(false);
+  let submitError = $state('');
+  let submitSuccess = $state(false);
+
+  async function submitStoryForm() {
+    submitError = '';
+    submitting = true;
+    try {
+      const res = await fetch('/api/success-stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: submitName, channel: submitChannel, story: submitStory })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? 'Submission failed');
+      submitSuccess = true;
+      submitName = '';
+      submitChannel = '';
+      submitStory = '';
+    } catch (err) {
+      submitError = err instanceof Error ? err.message : 'Submission failed';
+    } finally {
+      submitting = false;
+    }
+  }
 
   const filters = [
     { id: 'all', title: 'All Stories', icon: '⭐' },
@@ -122,11 +152,11 @@
     }
   ];
 
-  $: filteredStories = successStories.filter(story =>
+  const filteredStories = $derived(successStories.filter(story =>
     activeFilter === 'all' || story.category === activeFilter
-  );
+  ));
 
-  $: featuredStories = successStories.filter(story => story.featured);
+  const featuredStories = $derived(successStories.filter(story => story.featured));
 
   function getCategoryColor(category: string): string {
     const colors: Record<string, string> = {
@@ -292,28 +322,45 @@
         inspire other creators in our community. Your testimony could be the encouragement someone needs!
       </p>
 
-      <div class="space-y-4 max-w-md mx-auto">
+      <form class="space-y-4 max-w-md mx-auto" onsubmit={(e) => { e.preventDefault(); submitStoryForm(); }}>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
+            bind:value={submitName}
             placeholder="Your name"
+            required
             class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
           />
           <input
             type="text"
+            bind:value={submitChannel}
             placeholder="Channel name"
             class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
           />
         </div>
         <textarea
+          bind:value={submitStory}
           placeholder="Tell us your success story (what God has done through your content)..."
+          required
+          minlength="40"
+          maxlength="4000"
           rows="4"
           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
         ></textarea>
-        <button class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">
-          Submit My Story
+        {#if submitError}
+          <p class="text-sm text-red-400">{submitError}</p>
+        {/if}
+        {#if submitSuccess}
+          <p class="text-sm text-green-400">Thanks — your story is in the moderation queue. We'll publish it after review.</p>
+        {/if}
+        <button
+          type="submit"
+          disabled={submitting}
+          class="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium"
+        >
+          {submitting ? 'Submitting…' : 'Submit My Story'}
         </button>
-      </div>
+      </form>
 
       <p class="text-xs text-gray-400 mt-4">
         By submitting, you agree to let us feature your story (with your permission) to inspire other creators.

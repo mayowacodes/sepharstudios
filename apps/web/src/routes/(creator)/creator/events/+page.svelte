@@ -1,88 +1,124 @@
 <!-- Creator Events -->
 <script lang="ts">
-  let activeTab = 'upcoming';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Creator Workshop: Advanced Video Editing",
-      date: "February 15, 2024",
-      time: "7:00 PM EST",
-      type: "workshop",
-      location: "Online",
-      attendees: 124,
-      maxAttendees: 200,
-      description: "Learn professional video editing techniques specifically for ministry content.",
-      speaker: "Sarah Johnson",
-      isRegistered: false
-    },
-    {
-      id: 2,
-      title: "Monthly Creator Fellowship & Prayer",
-      date: "February 22, 2024",
-      time: "8:00 PM EST",
-      type: "fellowship",
-      location: "Online",
-      attendees: 89,
-      maxAttendees: null,
-      description: "Join fellow creators for encouragement, prayer, and community building.",
-      speaker: "Community Team",
-      isRegistered: true
-    },
-    {
-      id: 3,
-      title: "Faith & Film Conference 2024",
-      date: "March 8-10, 2024",
-      time: "All Day",
-      type: "conference",
-      location: "Nashville, TN + Online",
-      attendees: 456,
-      maxAttendees: 1000,
-      description: "Three-day conference featuring industry leaders, workshops, and networking.",
-      speaker: "Multiple Speakers",
-      isRegistered: false
-    },
-    {
-      id: 4,
-      title: "Live Q&A: Monetizing Your Ministry Content",
-      date: "February 29, 2024",
-      time: "2:00 PM EST",
-      type: "qa",
-      location: "Online",
-      attendees: 67,
-      maxAttendees: 150,
-      description: "Get your questions answered about ethical monetization strategies.",
-      speaker: "Pastor Mike Davis",
-      isRegistered: false
-    }
-  ];
+  interface EventRow {
+    id: string;
+    title: string;
+    description: string | null;
+    speaker: string | null;
+    speakerRole: string | null;
+    kind: string;
+    startsAt: string;
+    durationMinutes: number | null;
+    location: string | null;
+    capacity: number | null;
+    registeredCount: number;
+    recordingUrl: string | null;
+    isRegistered: boolean;
+    status: string;
+  }
 
-  const pastEvents = [
-    {
-      id: 5,
-      title: "New Creator Orientation",
-      date: "January 18, 2024",
-      type: "orientation",
-      attendees: 156,
-      recording: "/recordings/orientation-jan-2024"
-    },
-    {
-      id: 6,
-      title: "Content Strategy Masterclass",
-      date: "January 11, 2024",
-      type: "masterclass",
-      attendees: 203,
-      recording: "/recordings/strategy-masterclass-jan"
-    },
-    {
-      id: 7,
-      title: "Technical Support Workshop",
-      date: "December 14, 2023",
-      type: "workshop",
-      attendees: 89,
-      recording: "/recordings/tech-workshop-dec"
+  let activeTab = $state<'upcoming' | 'past' | 'calendar'>('upcoming');
+  let kindFilter = $state<'all' | 'workshop' | 'fellowship' | 'qa' | 'conference'>('all');
+  let upcomingEvents = $state<EventRow[]>([]);
+  let pastEvents = $state<EventRow[]>([]);
+  let loading = $state(true);
+  let toggling = $state<string | null>(null);
+  let message = $state('');
+
+  onMount(loadEvents);
+
+  async function loadEvents() {
+    loading = true;
+    try {
+      const [up, pa] = await Promise.all([
+        fetch('/api/events?audience=creator&filter=upcoming').then((r) => r.json()),
+        fetch('/api/events?audience=creator&filter=past').then((r) => r.json())
+      ]);
+      upcomingEvents = up.events ?? [];
+      pastEvents = pa.events ?? [];
+    } catch (err) {
+      console.error('Failed to load events:', err);
+    } finally {
+      loading = false;
     }
-  ];
+  }
+
+  async function toggleRegistration(id: string, isRegistered: boolean) {
+    toggling = id;
+    message = '';
+    try {
+      const res = await fetch(`/api/events/${id}/register`, {
+        method: isRegistered ? 'DELETE' : 'POST'
+      });
+      if (res.status === 401) {
+        goto('/auth/login?redirectTo=/creator/events');
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Registration failed');
+      message = isRegistered ? 'Cancelled.' : "You're registered — we'll send a reminder.";
+      setTimeout(() => (message = ''), 4000);
+      await loadEvents();
+    } catch (err) {
+      message = err instanceof Error ? err.message : 'Something went wrong';
+    } finally {
+      toggling = null;
+    }
+  }
+
+  /**
+   * Build a downloadable .ics calendar invite for the event. No backend
+   * required — generated client-side as a Blob and offered as a file
+   * download. Works in Google Calendar / Outlook / iCloud / etc.
+   */
+  function downloadIcs(e: EventRow) {
+    const start = new Date(e.startsAt);
+    const end = new Date(start.getTime() + (e.durationMinutes ?? 60) * 60_000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Sephar Studios//Events//EN',
+      'BEGIN:VEVENT',
+      `UID:${e.id}@sepharstudios.com`,
+      `DTSTAMP:${fmt(new Date())}`,
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:${e.title.replace(/[,;\\]/g, '\\$&')}`,
+      `DESCRIPTION:${(e.description ?? '').replace(/[,;\\]/g, '\\$&').replace(/\n/g, '\\n')}`,
+      `LOCATION:${e.location ?? 'Online'}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${e.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.ics`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  let filteredUpcoming = $derived(
+    kindFilter === 'all'
+      ? upcomingEvents
+      : upcomingEvents.filter((e) => e.kind === kindFilter)
+  );
+
+  let featured = $derived(upcomingEvents[0] ?? null);
+
+  function formatStart(iso: string): string {
+    return new Date(iso).toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
 
   function getEventTypeColor(type: string): string {
     const colors: Record<string, string> = {
@@ -116,25 +152,38 @@
     <p class="text-gray-300">Learn, grow, and connect with fellow faith-based creators</p>
   </div>
 
-  <!-- Event Highlights -->
-  <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-2xl font-bold text-white mb-2">🎪 Faith & Film Conference 2024</h2>
-        <p class="text-purple-200 mb-4">
-          Join us for our biggest event of the year! Three days of workshops, networking, and inspiration.
-        </p>
-        <div class="flex items-center space-x-4 text-sm text-purple-300">
-          <span>📅 March 8-10, 2024</span>
-          <span>📍 Nashville, TN + Online</span>
-          <span>🎟️ Early Bird: $199</span>
+  <!-- Featured Event — the soonest upcoming creator event, if any. -->
+  {#if featured}
+    <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex-1 min-w-60">
+          <h2 class="text-2xl font-bold text-white mb-2">{getEventTypeIcon(featured.kind)} {featured.title}</h2>
+          {#if featured.description}
+            <p class="text-purple-200 mb-4">{featured.description}</p>
+          {/if}
+          <div class="flex items-center space-x-4 text-sm text-purple-300 flex-wrap gap-y-2">
+            <span>📅 {formatStart(featured.startsAt)}</span>
+            {#if featured.location}<span>📍 {featured.location}</span>{/if}
+            {#if featured.speaker}<span>🎤 {featured.speaker}</span>{/if}
+          </div>
         </div>
+        <button
+          onclick={() => toggleRegistration(featured!.id, featured!.isRegistered)}
+          disabled={toggling === featured.id}
+          class="px-6 py-3 rounded-lg font-medium disabled:opacity-50 {featured.isRegistered ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}"
+          aria-pressed={featured.isRegistered}
+        >
+          {#if toggling === featured.id}
+            Working…
+          {:else if featured.isRegistered}
+            Registered ✓
+          {:else}
+            Register Now
+          {/if}
+        </button>
       </div>
-      <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
-        Register Now
-      </button>
     </div>
-  </div>
+  {/if}
 
   <!-- Tab Navigation -->
   <div class="border-b border-white/20">
@@ -163,94 +212,123 @@
   <!-- Content Sections -->
   {#if activeTab === 'upcoming'}
     <div class="space-y-6">
-      <!-- Filter Options -->
+      <!-- Filter chips — `kindFilter` derives `filteredUpcoming` -->
       <div class="flex flex-wrap gap-2">
-        <button class="px-3 py-1 bg-purple-600 text-white rounded-full text-sm">All Events</button>
-        <button class="px-3 py-1 bg-white/10 text-gray-300 hover:bg-white/20 rounded-full text-sm">Workshops</button>
-        <button class="px-3 py-1 bg-white/10 text-gray-300 hover:bg-white/20 rounded-full text-sm">Fellowship</button>
-        <button class="px-3 py-1 bg-white/10 text-gray-300 hover:bg-white/20 rounded-full text-sm">Q&A Sessions</button>
-        <button class="px-3 py-1 bg-white/10 text-gray-300 hover:bg-white/20 rounded-full text-sm">Conferences</button>
+        {#each [
+          { id: 'all', label: 'All Events' },
+          { id: 'workshop', label: 'Workshops' },
+          { id: 'fellowship', label: 'Fellowship' },
+          { id: 'qa', label: 'Q&A Sessions' },
+          { id: 'conference', label: 'Conferences' }
+        ] as chip (chip.id)}
+          <button
+            onclick={() => (kindFilter = chip.id as typeof kindFilter)}
+            class="px-3 py-1 rounded-full text-sm transition-colors {kindFilter === chip.id ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}"
+            aria-pressed={kindFilter === chip.id}
+          >{chip.label}</button>
+        {/each}
       </div>
 
       <!-- Upcoming Events List -->
-      <div class="space-y-4">
-        {#each upcomingEvents as event}
-          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-3 mb-2">
-                  <span class="text-2xl">{getEventTypeIcon(event.type)}</span>
-                  <h3 class="text-xl font-bold text-white">{event.title}</h3>
-                  <span class="bg-{getEventTypeColor(event.type)}-600 text-{getEventTypeColor(event.type)}-100 text-xs px-2 py-1 rounded capitalize">
-                    {event.type}
-                  </span>
-                  {#if event.isRegistered}
-                    <span class="bg-green-600 text-green-100 text-xs px-2 py-1 rounded">
-                      ✅ Registered
+      {#if loading}
+        <p class="text-sm text-gray-400 py-6 text-center">Loading events…</p>
+      {:else if filteredUpcoming.length === 0}
+        <div class="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+          <p class="text-sm text-gray-400">No upcoming events match this filter.</p>
+        </div>
+      {:else}
+        <div class="space-y-4">
+          {#each filteredUpcoming as event (event.id)}
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3 mb-2 flex-wrap">
+                    <span class="text-2xl">{getEventTypeIcon(event.kind)}</span>
+                    <h3 class="text-xl font-bold text-white">{event.title}</h3>
+                    <span class="bg-{getEventTypeColor(event.kind)}-600 text-{getEventTypeColor(event.kind)}-100 text-xs px-2 py-1 rounded capitalize">
+                      {event.kind}
                     </span>
-                  {/if}
-                </div>
-
-                <p class="text-gray-300 mb-4">{event.description}</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div class="space-y-2">
-                    <div class="flex items-center text-sm text-gray-400">
-                      <span class="mr-2">📅</span>
-                      <span>{event.date} at {event.time}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-400">
-                      <span class="mr-2">📍</span>
-                      <span>{event.location}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-400">
-                      <span class="mr-2">🎤</span>
-                      <span>Speaker: {event.speaker}</span>
-                    </div>
-                  </div>
-                  <div class="space-y-2">
-                    <div class="flex items-center text-sm text-gray-400">
-                      <span class="mr-2">👥</span>
-                      <span>
-                        {event.attendees} attending
-                        {#if event.maxAttendees}
-                          / {event.maxAttendees} max
-                        {/if}
-                      </span>
-                    </div>
-                    {#if event.maxAttendees}
-                      <div class="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          class="bg-purple-600 h-2 rounded-full"
-                          style="width: {(event.attendees / event.maxAttendees) * 100}%"
-                        ></div>
-                      </div>
+                    {#if event.isRegistered}
+                      <span class="bg-green-600 text-green-100 text-xs px-2 py-1 rounded">✅ Registered</span>
                     {/if}
                   </div>
-                </div>
 
-                <div class="flex items-center space-x-3">
-                  {#if !event.isRegistered}
-                    <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
-                      Register
-                    </button>
-                  {:else}
-                    <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
-                      View Details
-                    </button>
+                  {#if event.description}
+                    <p class="text-gray-300 mb-4">{event.description}</p>
                   {/if}
-                  <button class="text-gray-400 hover:text-white">
-                    📅 Add to Calendar
-                  </button>
-                  <button class="text-gray-400 hover:text-white">
-                    🔔 Set Reminder
-                  </button>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="space-y-2">
+                      <div class="flex items-center text-sm text-gray-400">
+                        <span class="mr-2">📅</span>
+                        <span>{formatStart(event.startsAt)}{event.durationMinutes ? ` (${event.durationMinutes} min)` : ''}</span>
+                      </div>
+                      {#if event.location}
+                        <div class="flex items-center text-sm text-gray-400">
+                          <span class="mr-2">📍</span>
+                          <span>{event.location}</span>
+                        </div>
+                      {/if}
+                      {#if event.speaker}
+                        <div class="flex items-center text-sm text-gray-400">
+                          <span class="mr-2">🎤</span>
+                          <span>Speaker: {event.speaker}{event.speakerRole ? ` · ${event.speakerRole}` : ''}</span>
+                        </div>
+                      {/if}
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center text-sm text-gray-400">
+                        <span class="mr-2">👥</span>
+                        <span>
+                          {event.registeredCount} attending{event.capacity ? ` / ${event.capacity} max` : ''}
+                        </span>
+                      </div>
+                      {#if event.capacity}
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                          <div
+                            class="bg-purple-600 h-2 rounded-full"
+                            style="width: {Math.min((event.registeredCount / event.capacity) * 100, 100)}%"
+                          ></div>
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center space-x-3 flex-wrap gap-y-2">
+                    <button
+                      onclick={() => toggleRegistration(event.id, event.isRegistered)}
+                      disabled={toggling === event.id || (event.capacity !== null && event.registeredCount >= event.capacity && !event.isRegistered)}
+                      class="px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors {event.isRegistered ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}"
+                      aria-pressed={event.isRegistered}
+                    >
+                      {#if toggling === event.id}
+                        Working…
+                      {:else if event.isRegistered}
+                        Cancel registration
+                      {:else if event.capacity !== null && event.registeredCount >= event.capacity}
+                        Full
+                      {:else}
+                        Register
+                      {/if}
+                    </button>
+                    <button
+                      onclick={() => downloadIcs(event)}
+                      class="text-gray-400 hover:text-white"
+                      aria-label="Download calendar invite"
+                    >
+                      📅 Add to Calendar
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        {/each}
-      </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if message}
+        <p class="text-center text-sm text-gray-400">{message}</p>
+      {/if}
     </div>
 
   {:else if activeTab === 'past'}
@@ -258,89 +336,89 @@
       <div class="bg-blue-600/20 border border-blue-600 rounded-xl p-4">
         <h3 class="text-lg font-bold text-white mb-2">📺 Access Event Recordings</h3>
         <p class="text-blue-200">
-          Couldn't attend an event? No problem! Access recordings of past workshops, sessions, and conferences.
+          Couldn't attend an event? Access recordings of past workshops, sessions, and conferences.
         </p>
       </div>
 
-      <div class="space-y-4">
-        {#each pastEvents as event}
-          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-3 mb-2">
-                  <span class="text-2xl">{getEventTypeIcon(event.type)}</span>
-                  <h3 class="text-lg font-bold text-white">{event.title}</h3>
-                  <span class="bg-{getEventTypeColor(event.type)}-600 text-{getEventTypeColor(event.type)}-100 text-xs px-2 py-1 rounded capitalize">
-                    {event.type}
-                  </span>
+      {#if loading}
+        <p class="text-sm text-gray-400 py-6 text-center">Loading…</p>
+      {:else if pastEvents.length === 0}
+        <div class="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+          <p class="text-sm text-gray-400">No past events on file yet.</p>
+        </div>
+      {:else}
+        <div class="space-y-4">
+          {#each pastEvents as event (event.id)}
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex-1 min-w-60">
+                  <div class="flex items-center space-x-3 mb-2 flex-wrap">
+                    <span class="text-2xl">{getEventTypeIcon(event.kind)}</span>
+                    <h3 class="text-lg font-bold text-white">{event.title}</h3>
+                    <span class="bg-{getEventTypeColor(event.kind)}-600 text-{getEventTypeColor(event.kind)}-100 text-xs px-2 py-1 rounded capitalize">
+                      {event.kind}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center space-x-4 text-sm text-gray-400 mb-3 flex-wrap">
+                    <span>📅 {formatStart(event.startsAt)}</span>
+                    <span>👥 {event.registeredCount} attended</span>
+                  </div>
                 </div>
 
-                <div class="flex items-center space-x-4 text-sm text-gray-400 mb-3">
-                  <span>📅 {event.date}</span>
-                  <span>👥 {event.attendees} attended</span>
+                <div class="flex items-center space-x-3">
+                  {#if event.recordingUrl}
+                    <a
+                      href={event.recordingUrl}
+                      target="_blank"
+                      rel="noopener"
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium inline-block"
+                    >
+                      📺 Watch Recording
+                    </a>
+                  {:else}
+                    <span class="text-xs text-gray-500">Recording pending</span>
+                  {/if}
                 </div>
-              </div>
-
-              <div class="flex items-center space-x-3">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-                  📺 Watch Recording
-                </button>
-                <button class="text-gray-400 hover:text-white">
-                  📚 Get Resources
-                </button>
               </div>
             </div>
-          </div>
-        {/each}
-      </div>
-
-      <!-- Event Archive -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-lg font-bold text-white mb-4">📚 Event Archive</h3>
-        <p class="text-gray-300 mb-4">
-          Browse our complete library of past events, workshops, and educational content.
-        </p>
-        <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium">
-          Browse All Recordings
-        </button>
-      </div>
+          {/each}
+        </div>
+      {/if}
     </div>
 
   {:else if activeTab === 'calendar'}
     <div class="space-y-6">
-      <!-- Calendar Widget Placeholder -->
+      <!-- Calendar Subscription — real .ics feed -->
       <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-lg font-bold text-white mb-4">📅 Event Calendar</h3>
-        <div class="bg-white/5 rounded-lg p-8 text-center">
-          <div class="text-6xl mb-4">📅</div>
-          <p class="text-gray-300 mb-4">Interactive calendar view coming soon!</p>
-          <p class="text-gray-400 text-sm">
-            For now, you can view upcoming events in the "Upcoming Events" tab or subscribe to our calendar feed.
-          </p>
+        <h3 class="text-lg font-bold text-white mb-2">📅 Subscribe to creator events</h3>
+        <p class="text-gray-300 mb-4">
+          Add Sephar Studios creator events to Google Calendar, Apple Calendar or Outlook. Your calendar app polls the feed automatically — newly-scheduled events appear without you doing anything.
+        </p>
+        <div class="space-y-3">
+          <div class="bg-black/30 rounded-lg p-3 text-xs font-mono break-all flex items-center justify-between gap-3">
+            <code>{typeof window !== 'undefined' ? window.location.origin : 'https://sepharstudios.com'}/api/events/feed.ics?audience=creator</code>
+            <button
+              onclick={() => navigator.clipboard.writeText(`${window.location.origin}/api/events/feed.ics?audience=creator`).then(() => (message = 'Calendar URL copied.'))}
+              class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm shrink-0"
+            >Copy link</button>
+          </div>
+          <div class="text-xs text-gray-400 space-y-1">
+            <p><strong>Google Calendar:</strong> Settings → Add calendar → From URL → paste this link.</p>
+            <p><strong>Apple Calendar:</strong> File → New Calendar Subscription → paste this link.</p>
+            <p><strong>Outlook:</strong> Add calendar → Subscribe from web → paste this link.</p>
+          </div>
         </div>
       </div>
 
-      <!-- Calendar Subscription -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-blue-600/20 border border-blue-600 rounded-xl p-4">
-          <h4 class="font-medium text-white mb-2">📅 Subscribe to Calendar</h4>
-          <p class="text-blue-200 text-sm mb-3">
-            Add our events to your personal calendar application.
-          </p>
-          <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm">
-            Get Calendar Link
-          </button>
-        </div>
-
-        <div class="bg-green-600/20 border border-green-600 rounded-xl p-4">
-          <h4 class="font-medium text-white mb-2">🔔 Event Notifications</h4>
-          <p class="text-green-200 text-sm mb-3">
-            Get notified about new events and registration openings.
-          </p>
-          <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm">
-            Enable Notifications
-          </button>
-        </div>
+      <div class="bg-green-600/20 border border-green-600 rounded-xl p-4">
+        <h4 class="font-medium text-white mb-2">🔔 Event Notifications</h4>
+        <p class="text-green-200 text-sm mb-3">
+          Notifications for registration confirmations + reminders are sent automatically. Manage delivery (in-app vs email) from Settings.
+        </p>
+        <a href="/settings" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm">
+          Notification Settings
+        </a>
       </div>
 
       <!-- Regular Schedule -->

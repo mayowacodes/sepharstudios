@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   
   // Profile form data
-  let profileData = {
+  let profileData = $state({
     creatorType: 'individual',
     personalInfo: {
       firstName: '',
@@ -38,12 +38,12 @@
       marketingEmails: false,
       showContactInfo: false
     }
-  };
-  
-  let isLoading = true;
-  let isSaving = false;
-  let saveStatus = '';
-  let activeTab = 'personal';
+  });
+
+  let isLoading = $state(true);
+  let isSaving = $state(false);
+  let saveStatus = $state('');
+  let activeTab = $state('personal');
   
   onMount(async () => {
     isLoading = true;
@@ -83,31 +83,75 @@
     }
   }
   
-  function handleFileUpload(event: Event, type: string) {
+  async function handleFileUpload(event: Event, type: string) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      // Here you would upload the file to your storage service
-      console.log(`Uploading ${type}:`, file.name);
-      
-      if (type === 'profile') {
-        // Create temporary URL for preview
-        profileData.personalInfo.profileImage = URL.createObjectURL(file);
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    // Optimistic preview — swap to the real URL after the upload completes.
+    if (type === 'profile') {
+      profileData.personalInfo.profileImage = URL.createObjectURL(file);
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/files', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Upload failed');
       }
+      const data = await res.json();
+      const url = data.file?.url ?? data.url;
+      if (!url) throw new Error('No URL returned from upload');
+
+      if (type === 'profile') {
+        profileData.personalInfo.profileImage = url;
+      }
+      // Other types (banner, verification doc) get assigned here as that UI ships.
+    } catch (err: any) {
+      console.error('File upload failed:', err);
+      alert(`Upload failed: ${err.message}`);
     }
   }
   
-  function addVerificationDocument() {
-    // Placeholder until document upload is wired to storage
-    const fileName = `verification-doc-${Date.now()}.pdf`;
-    profileData.ministryInfo.verificationDocuments = [
-      ...profileData.ministryInfo.verificationDocuments,
-      { id: fileName, url: fileName, name: fileName }
-    ];
+  let verificationInputEl: HTMLInputElement | undefined = $state();
+  let uploadingDoc = $state(false);
+
+  async function onVerificationDocChosen(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    uploadingDoc = true;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/files', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Upload failed');
+      }
+      const data = await res.json();
+      const url: string | undefined = data.file?.url ?? data.url;
+      const id: string = data.file?.id ?? data.id ?? crypto.randomUUID();
+      if (!url) throw new Error('No URL returned from upload');
+
+      profileData.ministryInfo.verificationDocuments = [
+        ...profileData.ministryInfo.verificationDocuments,
+        { id, url, name: file.name, size: file.size }
+      ];
+    } catch (err: any) {
+      console.error('Verification doc upload failed:', err);
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      uploadingDoc = false;
+      if (verificationInputEl) verificationInputEl.value = '';
+    }
   }
-  
+
   function removeVerificationDocument(index: number) {
-    profileData.ministryInfo.verificationDocuments = 
+    profileData.ministryInfo.verificationDocuments =
       profileData.ministryInfo.verificationDocuments.filter((_, i) => i !== index);
   }
 </script>
@@ -410,11 +454,20 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <div class="text-sm font-medium text-white">Verification Documents</div>
-                <button 
-                  onclick={addVerificationDocument}
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                <input
+                  bind:this={verificationInputEl}
+                  type="file"
+                  accept="application/pdf,image/*"
+                  class="hidden"
+                  onchange={onVerificationDocChosen}
+                />
+                <button
+                  type="button"
+                  disabled={uploadingDoc}
+                  onclick={() => verificationInputEl?.click()}
+                  class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  + Add Document
+                  {uploadingDoc ? 'Uploading…' : '+ Add Document'}
                 </button>
               </div>
               

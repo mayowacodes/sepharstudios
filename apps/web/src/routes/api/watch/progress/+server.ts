@@ -1,11 +1,12 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaWatchProgress, reviews, playlistItems, playlists, transactions } from '$lib/db/schema/sepharstudios';
+import { mediaWatchProgress, reviews, playlistItems, playlists, transactions, watchSessionMeta } from '$lib/db/schema/sepharstudios';
 import { and, eq } from 'drizzle-orm';
 import { checkAndAwardAchievements, updateStreak } from '$lib/server/achievements';
 import { scoreWatchEngagement } from '$lib/server/ai-token-scoring';
 import { notify } from '$lib/server/notify';
 import { track } from '$lib/server/analytics';
+import { fingerprintFromHeaders } from '$lib/server/ua-country';
 
 // POST /api/watch/progress — save playback position (called every 30s)
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -84,6 +85,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			isCompleted
 		});
 		justCompleted = isCompleted;
+
+		// Capture device + country on first watch-progress write for this session.
+		// One row per (user, content) start is enough for the analytics aggregates —
+		// we don't need to know every 30s ping came from the same device.
+		const fp = fingerprintFromHeaders(request.headers);
+		await db.insert(watchSessionMeta).values({
+			userId,
+			contentId,
+			deviceType: fp.deviceType,
+			browser: fp.browser,
+			osName: fp.osName,
+			country: fp.country
+		}).catch((err) => console.warn('[watch/progress] watch_session_meta insert failed:', err));
 	}
 
 	// Only the request that actually transitioned the row to completed runs the

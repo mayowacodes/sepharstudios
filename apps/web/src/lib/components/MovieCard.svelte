@@ -48,7 +48,8 @@
 <div
   role="button"
   tabindex="0"
-  class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none hover:scale-[1.02]"
+  class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"
+  aria-label={`Watch ${movie.title}`}
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
   on:click={() => {
@@ -71,7 +72,7 @@
     {:else}
       <img
         src={movie.thumbnail || '/placeholder-vertical.jpg'}
-        alt={movie.title}
+        alt=""
         width="280"
         height="420"
         loading="lazy"

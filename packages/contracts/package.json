@@ -1,9 +1,36 @@
 {
   "name": "@studiochain/contracts",
   "version": "1.0.0",
+  "author": "StudioChain Team",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.6",
+    "@nomicfoundation/hardhat-verify": "^3.0.18",
+    "@openzeppelin/contracts": "^5.6.1",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@types/node": "^25.9.1",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.16.0",
+    "hardhat": "^3.6.0",
+    "solhint": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^6.0.3"
+  },
   "description": "StudioChain tokenomics smart contracts",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [
+    "studiochain",
+    "tokenomics",
+    "nft",
+    "defi",
+    "smart-contracts",
+    "ethereum",
+    "polygon"
+  ],
+  "license": "MIT",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "hardhat node",
     "build": "hardhat compile",
@@ -21,35 +48,5 @@
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "type-check": "tsc --noEmit"
   },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^3.0.0",
-    "@openzeppelin/contracts": "^4.9.0",
-    "@typechain/ethers-v6": "^0.5.1",
-    "@types/node": "^22.18.6",
-    "dotenv": "^17.2.2",
-    "ethers": "^6.15.0",
-    "hardhat": "^3.0.6",
-    "solhint": "^4.0.0",
-    "ts-node": "^10.9.2",
-    "typechain": "^8.3.2",
-    "typescript": "~5.2.0"
-  },
-  "dependencies": {
-    "@chainlink/contracts": "^0.6.1"
-  },
-  "keywords": [
-    "studiochain",
-    "tokenomics",
-    "nft",
-    "defi",
-    "smart-contracts",
-    "ethereum",
-    "polygon"
-  ],
-  "author": "StudioChain Team",
-  "license": "MIT",
-  "directories": {
-    "test": "test"
-  }
+  "type": "module"
 }

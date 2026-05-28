@@ -58,16 +58,19 @@ const config: HardhatUserConfig = {
   verify: {
     etherscan: {
       apiKey: process.env.POLYGONSCAN_API_KEY || "",
-      customChains: [
-        {
-          network: "polygonAmoy",
-          chainId: 80002,
-          urls: {
-            apiURL: "https://api-amoy.polygonscan.com/api",
-            browserURL: "https://amoy.polygonscan.com"
-          }
+    }
+  },
+  // hardhat-verify v3 moved custom-chain config to top-level `chainDescriptors`
+  // keyed by chainId; `verify.etherscan.customChains` no longer exists.
+  chainDescriptors: {
+    80002: {
+      name: "polygonAmoy",
+      blockExplorers: {
+        etherscan: {
+          url: "https://amoy.polygonscan.com",
+          apiUrl: "https://api-amoy.polygonscan.com/api"
         }
-      ]
+      }
     }
   },
 };

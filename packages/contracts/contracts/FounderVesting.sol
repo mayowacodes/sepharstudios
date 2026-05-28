@@ -34,7 +34,7 @@ contract FounderVesting is Ownable {
         address _beneficiary,
         uint256 _cliffMonths,
         uint256 _vestingMonths
-    ) {
+    ) Ownable(msg.sender) {
         require(_stcToken != address(0), "Invalid token");
         require(_beneficiary != address(0), "Invalid beneficiary");
         require(_vestingMonths > _cliffMonths, "Vesting must exceed cliff");

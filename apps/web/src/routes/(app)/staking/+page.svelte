@@ -56,14 +56,37 @@
       message = 'Enter a valid amount';
       return;
     }
+    if (!$walletAddress) {
+      message = 'Connect your wallet to stake.';
+      return;
+    }
+    if (parseFloat(stakeAmount) > parseFloat(balance)) {
+      message = `Insufficient balance. You have ${balance} STC available.`;
+      return;
+    }
+
+    const tier = TIERS[selectedTier];
     loading = true;
     message = '';
     try {
-      // Wired to staking contract when deployed
-      await new Promise((r) => setTimeout(r, 800));
-      message = `Staking simulation: ${stakeAmount} STC for ${TIERS[selectedTier].label}`;
+      // Calls the on-chain stakeForDiscount(amount, lockPeriod) — the STC token
+      // contract validates allowed periods (90/180/365/730 days). lockPeriod
+      // is in seconds. Wallet will prompt for transaction approval.
+      const lockSeconds = tier.days * 86_400;
+      const txHash = await stcToken.stakeForDiscount(stakeAmount, lockSeconds);
+      message = `Stake submitted (tx ${(txHash as string).slice(0, 10)}…). Discount activates after on-chain confirmation.`;
+      // Refresh balance + active stake from chain so UI reflects new state.
+      await loadStakingData();
+      stakeAmount = '';
     } catch (err) {
-      message = err instanceof Error ? err.message : 'Stake failed';
+      const raw = err instanceof Error ? err.message : 'Stake failed';
+      // viem wraps wallet rejections under different messages depending on
+      // provider — surface a friendlier prompt rather than the raw RPC error.
+      if (/user rejected|user denied|rejected.*request/i.test(raw)) {
+        message = 'Transaction cancelled.';
+      } else {
+        message = raw.length > 140 ? `${raw.slice(0, 140)}…` : raw;
+      }
     } finally {
       loading = false;
     }

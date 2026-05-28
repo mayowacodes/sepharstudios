@@ -29,20 +29,28 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/(web3)" | "/(protected)" | "/(creator)" | "/(auth)" | "/(app)" | "/(admin)" | "/" | "/(app)/about" | "/(protected)/achievements" | "/(admin)/admin" | "/(admin)/admin/analytics" | "/(admin)/admin/communications" | "/(admin)/admin/content" | "/(admin)/admin/creator-applications" | "/(admin)/admin/creators" | "/(admin)/admin/dashboard" | "/(admin)/admin/governance" | "/(admin)/admin/governance/create" | "/(admin)/admin/governance/emergency" | "/(admin)/admin/governance/execution" | "/(admin)/admin/governance/proposals" | "/(admin)/admin/governance/reports" | "/(admin)/admin/governance/roles" | "/(admin)/admin/governance/treasury" | "/(admin)/admin/policies" | "/(admin)/admin/review" | "/(admin)/admin/review/[id]" | "/(admin)/admin/settings" | "/(admin)/admin/test" | "/(admin)/admin/tokenomics" | "/(admin)/admin/workflow" | "/api" | "/api/achievements" | "/api/admin" | "/api/admin/ai" | "/api/admin/ai/config" | "/api/admin/ai/models" | "/api/admin/ai/test" | "/api/admin/analytics" | "/api/admin/communications" | "/api/admin/communications/templates" | "/api/admin/content" | "/api/admin/content/[id]" | "/api/admin/content/[id]/ppv" | "/api/admin/content/[id]/publish" | "/api/admin/content/[id]/review" | "/api/admin/creator-applications" | "/api/admin/creator-applications/[id]" | "/api/admin/creator-applications/[id]/review" | "/api/admin/creators" | "/api/admin/governance" | "/api/admin/governance/approve" | "/api/admin/governance/audit" | "/api/admin/governance/emergency" | "/api/admin/governance/emergency/pause" | "/api/admin/governance/execute" | "/api/admin/governance/proposals" | "/api/admin/governance/queue" | "/api/admin/governance/reports" | "/api/admin/governance/roles" | "/api/admin/governance/status" | "/api/admin/governance/timelock-queue" | "/api/admin/governance/treasury" | "/api/admin/policies" | "/api/admin/reviews" | "/api/admin/settings" | "/api/admin/settings/test-email" | "/api/admin/stats" | "/api/admin/tokenomics" | "/api/admin/tokenomics/distribution" | "/api/admin/users" | "/api/admin/users/stats" | "/api/admin/workflow" | "/api/admin/workflow/stats" | "/api/ai" | "/api/ai/companion" | "/api/ai/creator-insights" | "/api/ai/moderate" | "/api/ai/nft" | "/api/ai/search" | "/api/ai/tag" | "/api/ai/token-score" | "/api/auth" | "/api/auth/[...all]" | "/api/contact" | "/api/content" | "/api/content/kids" | "/api/creator" | "/api/creator/application" | "/api/creator/content" | "/api/creator/profile" | "/api/creator/stats" | "/api/downloads" | "/api/downloads/manifest" | "/api/downloads/manifest/[id]" | "/api/encoder" | "/api/encoder/jobs" | "/api/encoder/jobs/[jobId]" | "/api/encoder/jobs/[jobId]/commit" | "/api/encoder/jobs/[jobId]/playback" | "/api/encoder/pending" | "/api/encoder/presigned" | "/api/encoder/process" | "/api/encoder/ready" | "/api/files" | "/api/health" | "/api/kids" | "/api/kids/quiz" | "/api/kids/quiz/generate" | "/api/kids/quiz/submit" | "/api/milestones" | "/api/notifications" | "/api/notifications/preferences" | "/api/notifications/[id]" | "/api/notifications/[id]/read" | "/api/parental" | "/api/parental/report" | "/api/payment" | "/api/payment/initialize" | "/api/payment/verify" | "/api/payment/webhook" | "/api/playlists" | "/api/playlists/[id]" | "/api/playlists/[id]/items" | "/api/ppv" | "/api/ppv/check-access" | "/api/ppv/check-access/[contentId]" | "/api/ppv/purchase" | "/api/profiles" | "/api/profiles/current" | "/api/profiles/[id]" | "/api/profiles/[id]/pin" | "/api/recommendations" | "/api/reviews" | "/api/reviews/[id]" | "/api/reviews/[id]/helpful" | "/api/subscriptions" | "/api/subscriptions/add-family" | "/api/subscriptions/cancel" | "/api/subscriptions/change-plan" | "/api/subscriptions/send-otp" | "/api/subscriptions/start-trial" | "/api/subscriptions/status" | "/api/users" | "/api/users/me" | "/api/users/me/stc-balance" | "/api/users/me/stc-claim" | "/api/users/[id]" | "/api/watch" | "/api/watch/history" | "/api/watch/progress" | "/api/watch/[videoId]" | "/(app)/apply" | "/(app)/apply/creator" | "/(app)/archive" | "/(auth)/auth" | "/(auth)/auth/forget-password" | "/(auth)/auth/forget-password/success" | "/(auth)/auth/login" | "/(auth)/auth/register" | "/(auth)/auth/reset-password" | "/(app)/browse" | "/(app)/careers" | "/(app)/checkout" | "/(app)/contact" | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics-help" | "/(creator)/creator/analytics" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/copyright" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload" | "/(protected)/dashboard" | "/(app)/device-support" | "/(app)/documentaries" | "/(protected)/documentation" | "/(app)/exchange" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/kids" | "/kids/kiddies" | "/kids/kiddies/bible-quiz" | "/kids/kiddies/documentaries" | "/kids/kiddies/movies" | "/kids/kiddies/profile" | "/kids/kiddies/shows" | "/kids/teens" | "/(app)/liquidity" | "/(app)/mayowa" | "/(protected)/milestones" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(protected)/parental-controls" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(protected)/profiles" | "/(protected)/profile" | "/(app)/search" | "/(protected)/settings" | "/(app)/shows" | "/(app)/sponsorships" | "/(app)/staking" | "/(web3)/subscription" | "/(app)/terms" | "/(web3)/tokens" | "/(app)/token" | "/(protected)/users" | "/(protected)/users/components" | "/(web3)/wallet" | "/(protected)/watchlist" | "/watch" | "/watch/[id]" | "/(app)/webinars";
+		RouteId(): "/(web3)" | "/(protected)" | "/(creator)" | "/(auth)" | "/(app)" | "/(admin)" | "/" | "/(app)/about" | "/(protected)/achievements" | "/(admin)/admin" | "/(admin)/admin/analytics" | "/(admin)/admin/communications" | "/(admin)/admin/content" | "/(admin)/admin/creator-applications" | "/(admin)/admin/creators" | "/(admin)/admin/dashboard" | "/(admin)/admin/events" | "/(admin)/admin/governance" | "/(admin)/admin/governance/create" | "/(admin)/admin/governance/emergency" | "/(admin)/admin/governance/execution" | "/(admin)/admin/governance/proposals" | "/(admin)/admin/governance/reports" | "/(admin)/admin/governance/roles" | "/(admin)/admin/governance/treasury" | "/(admin)/admin/policies" | "/(admin)/admin/review" | "/(admin)/admin/review/[id]" | "/(admin)/admin/settings" | "/(admin)/admin/tokenomics" | "/(admin)/admin/workflow" | "/api" | "/api/achievements" | "/api/admin" | "/api/admin/admins" | "/api/admin/ai" | "/api/admin/ai/config" | "/api/admin/ai/models" | "/api/admin/ai/test" | "/api/admin/analytics" | "/api/admin/communications" | "/api/admin/communications/templates" | "/api/admin/content" | "/api/admin/content/bulk" | "/api/admin/content/[id]" | "/api/admin/content/[id]/assign" | "/api/admin/content/[id]/ppv" | "/api/admin/content/[id]/publish" | "/api/admin/content/[id]/review" | "/api/admin/creator-applications" | "/api/admin/creator-applications/[id]" | "/api/admin/creator-applications/[id]/review" | "/api/admin/creators" | "/api/admin/events" | "/api/admin/events/[id]" | "/api/admin/governance" | "/api/admin/governance/approve" | "/api/admin/governance/audit" | "/api/admin/governance/emergency" | "/api/admin/governance/emergency/pause" | "/api/admin/governance/execute" | "/api/admin/governance/proposals" | "/api/admin/governance/queue" | "/api/admin/governance/reports" | "/api/admin/governance/roles" | "/api/admin/governance/status" | "/api/admin/governance/timelock-queue" | "/api/admin/governance/treasury" | "/api/admin/policies" | "/api/admin/refunds" | "/api/admin/reviews" | "/api/admin/settings" | "/api/admin/settings/test-email" | "/api/admin/stats" | "/api/admin/tokenomics" | "/api/admin/tokenomics/distribution" | "/api/admin/users" | "/api/admin/users/stats" | "/api/admin/workflow" | "/api/admin/workflow/stats" | "/api/ai" | "/api/ai/companion" | "/api/ai/creator-insights" | "/api/ai/moderate" | "/api/ai/nft" | "/api/ai/search" | "/api/ai/tag" | "/api/ai/token-score" | "/api/auth" | "/api/auth/[...all]" | "/api/contact" | "/api/content" | "/api/content/kids" | "/api/creators" | "/api/creators/[id]" | "/api/creators/[id]/follow" | "/api/creator" | "/api/creator/analytics" | "/api/creator/application" | "/api/creator/content" | "/api/creator/content/[id]" | "/api/creator/content/[id]/duplicate" | "/api/creator/earnings" | "/api/creator/newsletter" | "/api/creator/newsletter/subscribe" | "/api/creator/payment-preferences" | "/api/creator/profile" | "/api/creator/stats" | "/api/cron" | "/api/cron/creator-payouts" | "/api/cron/event-status-sweep" | "/api/cron/renew-subscriptions" | "/api/cron/settlement-reconcile" | "/api/cron/staking-indexer" | "/api/downloads" | "/api/downloads/manifest" | "/api/downloads/manifest/[id]" | "/api/encoder" | "/api/encoder/jobs" | "/api/encoder/jobs/[jobId]" | "/api/encoder/jobs/[jobId]/commit" | "/api/encoder/jobs/[jobId]/playback" | "/api/encoder/pending" | "/api/encoder/presigned" | "/api/encoder/process" | "/api/encoder/ready" | "/api/events" | "/api/events/feed.ics" | "/api/events/[id]" | "/api/events/[id]/register" | "/api/files" | "/api/health" | "/api/kids" | "/api/kids/quiz" | "/api/kids/quiz/generate" | "/api/kids/quiz/submit" | "/api/milestones" | "/api/notifications" | "/api/notifications/preferences" | "/api/notifications/[id]" | "/api/notifications/[id]/read" | "/api/parental" | "/api/parental/report" | "/api/payment" | "/api/payment/initialize" | "/api/payment/verify" | "/api/payment/webhook" | "/api/playlists" | "/api/playlists/[id]" | "/api/playlists/[id]/items" | "/api/ppv" | "/api/ppv/check-access" | "/api/ppv/check-access/[contentId]" | "/api/ppv/purchase" | "/api/ppv/refund" | "/api/profiles" | "/api/profiles/current" | "/api/profiles/[id]" | "/api/profiles/[id]/pin" | "/api/push" | "/api/push/subscribe" | "/api/recommendations" | "/api/reviews" | "/api/reviews/[id]" | "/api/reviews/[id]/helpful" | "/api/shares" | "/api/subscriptions" | "/api/subscriptions/add-family" | "/api/subscriptions/cancel" | "/api/subscriptions/change-plan" | "/api/subscriptions/send-otp" | "/api/subscriptions/start-trial" | "/api/subscriptions/status" | "/api/success-stories" | "/api/users" | "/api/users/me" | "/api/users/me/stc-balance" | "/api/users/me/stc-claim" | "/api/users/[id]" | "/api/watch" | "/api/watch/active" | "/api/watch/history" | "/api/watch/progress" | "/api/watch/[videoId]" | "/(app)/apply" | "/(app)/apply/creator" | "/(app)/archive" | "/(auth)/auth" | "/(auth)/auth/forget-password" | "/(auth)/auth/forget-password/success" | "/(auth)/auth/login" | "/(auth)/auth/register" | "/(auth)/auth/reset-password" | "/(app)/browse" | "/(app)/careers" | "/(app)/checkout" | "/(app)/contact" | "/(app)/creators" | "/(app)/creators/[id]" | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics-help" | "/(creator)/creator/analytics" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/copyright" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload" | "/(protected)/dashboard" | "/(app)/device-support" | "/(app)/documentaries" | "/(protected)/documentation" | "/(app)/exchange" | "/(app)/faq" | "/(app)/features" | "/(app)/guidelines" | "/(app)/help" | "/kids" | "/kids/kiddies" | "/kids/kiddies/bible-quiz" | "/kids/kiddies/documentaries" | "/kids/kiddies/movies" | "/kids/kiddies/profile" | "/kids/kiddies/shows" | "/kids/teens" | "/(app)/liquidity" | "/(protected)/milestones" | "/(app)/movies" | "/(app)/my-studios" | "/(app)/offline" | "/(protected)/parental-controls" | "/(app)/plans" | "/(app)/press" | "/(app)/privacy" | "/(protected)/profiles" | "/(protected)/profile" | "/(app)/search" | "/(protected)/settings" | "/(app)/shows" | "/sitemap.xml" | "/(app)/sponsorships" | "/(app)/staking" | "/(web3)/subscription" | "/(app)/terms" | "/(web3)/tokens" | "/(app)/token" | "/(protected)/users" | "/(protected)/users/components" | "/(web3)/wallet" | "/(protected)/watchlist" | "/watch" | "/watch/[id]" | "/(app)/webinars";
 		RouteParams(): {
 			"/(admin)/admin/review/[id]": { id: string };
 			"/api/admin/content/[id]": { id: string };
+			"/api/admin/content/[id]/assign": { id: string };
 			"/api/admin/content/[id]/ppv": { id: string };
 			"/api/admin/content/[id]/publish": { id: string };
 			"/api/admin/content/[id]/review": { id: string };
 			"/api/admin/creator-applications/[id]": { id: string };
 			"/api/admin/creator-applications/[id]/review": { id: string };
+			"/api/admin/events/[id]": { id: string };
 			"/api/auth/[...all]": { all: string };
+			"/api/creators/[id]": { id: string };
+			"/api/creators/[id]/follow": { id: string };
+			"/api/creator/content/[id]": { id: string };
+			"/api/creator/content/[id]/duplicate": { id: string };
 			"/api/downloads/manifest/[id]": { id: string };
 			"/api/encoder/jobs/[jobId]": { jobId: string };
 			"/api/encoder/jobs/[jobId]/commit": { jobId: string };
 			"/api/encoder/jobs/[jobId]/playback": { jobId: string };
+			"/api/events/[id]": { id: string };
+			"/api/events/[id]/register": { id: string };
 			"/api/notifications/[id]": { id: string };
 			"/api/notifications/[id]/read": { id: string };
 			"/api/playlists/[id]": { id: string };
@@ -54,6 +62,7 @@ declare module "$app/types" {
 			"/api/reviews/[id]/helpful": { id: string };
 			"/api/users/[id]": { id: string };
 			"/api/watch/[videoId]": { videoId: string };
+			"/(app)/creators/[id]": { id: string };
 			"/watch/[id]": { id: string }
 		};
 		LayoutParams(): {
@@ -61,7 +70,7 @@ declare module "$app/types" {
 			"/(protected)": Record<string, never>;
 			"/(creator)": Record<string, never>;
 			"/(auth)": Record<string, never>;
-			"/(app)": Record<string, never>;
+			"/(app)": { id?: string | undefined };
 			"/(admin)": { id?: string | undefined };
 			"/": { id?: string | undefined; all?: string | undefined; jobId?: string | undefined; contentId?: string | undefined; videoId?: string | undefined };
 			"/(app)/about": Record<string, never>;
@@ -73,6 +82,7 @@ declare module "$app/types" {
 			"/(admin)/admin/creator-applications": Record<string, never>;
 			"/(admin)/admin/creators": Record<string, never>;
 			"/(admin)/admin/dashboard": Record<string, never>;
+			"/(admin)/admin/events": Record<string, never>;
 			"/(admin)/admin/governance": Record<string, never>;
 			"/(admin)/admin/governance/create": Record<string, never>;
 			"/(admin)/admin/governance/emergency": Record<string, never>;
@@ -85,12 +95,12 @@ declare module "$app/types" {
 			"/(admin)/admin/review": { id?: string | undefined };
 			"/(admin)/admin/review/[id]": { id: string };
 			"/(admin)/admin/settings": Record<string, never>;
-			"/(admin)/admin/test": Record<string, never>;
 			"/(admin)/admin/tokenomics": Record<string, never>;
 			"/(admin)/admin/workflow": Record<string, never>;
 			"/api": { id?: string | undefined; all?: string | undefined; jobId?: string | undefined; contentId?: string | undefined; videoId?: string | undefined };
 			"/api/achievements": Record<string, never>;
 			"/api/admin": { id?: string | undefined };
+			"/api/admin/admins": Record<string, never>;
 			"/api/admin/ai": Record<string, never>;
 			"/api/admin/ai/config": Record<string, never>;
 			"/api/admin/ai/models": Record<string, never>;
@@ -99,7 +109,9 @@ declare module "$app/types" {
 			"/api/admin/communications": Record<string, never>;
 			"/api/admin/communications/templates": Record<string, never>;
 			"/api/admin/content": { id?: string | undefined };
+			"/api/admin/content/bulk": Record<string, never>;
 			"/api/admin/content/[id]": { id: string };
+			"/api/admin/content/[id]/assign": { id: string };
 			"/api/admin/content/[id]/ppv": { id: string };
 			"/api/admin/content/[id]/publish": { id: string };
 			"/api/admin/content/[id]/review": { id: string };
@@ -107,6 +119,8 @@ declare module "$app/types" {
 			"/api/admin/creator-applications/[id]": { id: string };
 			"/api/admin/creator-applications/[id]/review": { id: string };
 			"/api/admin/creators": Record<string, never>;
+			"/api/admin/events": { id?: string | undefined };
+			"/api/admin/events/[id]": { id: string };
 			"/api/admin/governance": Record<string, never>;
 			"/api/admin/governance/approve": Record<string, never>;
 			"/api/admin/governance/audit": Record<string, never>;
@@ -121,6 +135,7 @@ declare module "$app/types" {
 			"/api/admin/governance/timelock-queue": Record<string, never>;
 			"/api/admin/governance/treasury": Record<string, never>;
 			"/api/admin/policies": Record<string, never>;
+			"/api/admin/refunds": Record<string, never>;
 			"/api/admin/reviews": Record<string, never>;
 			"/api/admin/settings": Record<string, never>;
 			"/api/admin/settings/test-email": Record<string, never>;
@@ -144,11 +159,27 @@ declare module "$app/types" {
 			"/api/contact": Record<string, never>;
 			"/api/content": Record<string, never>;
 			"/api/content/kids": Record<string, never>;
-			"/api/creator": Record<string, never>;
+			"/api/creators": { id?: string | undefined };
+			"/api/creators/[id]": { id: string };
+			"/api/creators/[id]/follow": { id: string };
+			"/api/creator": { id?: string | undefined };
+			"/api/creator/analytics": Record<string, never>;
 			"/api/creator/application": Record<string, never>;
-			"/api/creator/content": Record<string, never>;
+			"/api/creator/content": { id?: string | undefined };
+			"/api/creator/content/[id]": { id: string };
+			"/api/creator/content/[id]/duplicate": { id: string };
+			"/api/creator/earnings": Record<string, never>;
+			"/api/creator/newsletter": Record<string, never>;
+			"/api/creator/newsletter/subscribe": Record<string, never>;
+			"/api/creator/payment-preferences": Record<string, never>;
 			"/api/creator/profile": Record<string, never>;
 			"/api/creator/stats": Record<string, never>;
+			"/api/cron": Record<string, never>;
+			"/api/cron/creator-payouts": Record<string, never>;
+			"/api/cron/event-status-sweep": Record<string, never>;
+			"/api/cron/renew-subscriptions": Record<string, never>;
+			"/api/cron/settlement-reconcile": Record<string, never>;
+			"/api/cron/staking-indexer": Record<string, never>;
 			"/api/downloads": { id?: string | undefined };
 			"/api/downloads/manifest": { id?: string | undefined };
 			"/api/downloads/manifest/[id]": { id: string };
@@ -161,6 +192,10 @@ declare module "$app/types" {
 			"/api/encoder/presigned": Record<string, never>;
 			"/api/encoder/process": Record<string, never>;
 			"/api/encoder/ready": Record<string, never>;
+			"/api/events": { id?: string | undefined };
+			"/api/events/feed.ics": Record<string, never>;
+			"/api/events/[id]": { id: string };
+			"/api/events/[id]/register": { id: string };
 			"/api/files": Record<string, never>;
 			"/api/health": Record<string, never>;
 			"/api/kids": Record<string, never>;
@@ -185,14 +220,18 @@ declare module "$app/types" {
 			"/api/ppv/check-access": { contentId?: string | undefined };
 			"/api/ppv/check-access/[contentId]": { contentId: string };
 			"/api/ppv/purchase": Record<string, never>;
+			"/api/ppv/refund": Record<string, never>;
 			"/api/profiles": { id?: string | undefined };
 			"/api/profiles/current": Record<string, never>;
 			"/api/profiles/[id]": { id: string };
 			"/api/profiles/[id]/pin": { id: string };
+			"/api/push": Record<string, never>;
+			"/api/push/subscribe": Record<string, never>;
 			"/api/recommendations": Record<string, never>;
 			"/api/reviews": { id?: string | undefined };
 			"/api/reviews/[id]": { id: string };
 			"/api/reviews/[id]/helpful": { id: string };
+			"/api/shares": Record<string, never>;
 			"/api/subscriptions": Record<string, never>;
 			"/api/subscriptions/add-family": Record<string, never>;
 			"/api/subscriptions/cancel": Record<string, never>;
@@ -200,12 +239,14 @@ declare module "$app/types" {
 			"/api/subscriptions/send-otp": Record<string, never>;
 			"/api/subscriptions/start-trial": Record<string, never>;
 			"/api/subscriptions/status": Record<string, never>;
+			"/api/success-stories": Record<string, never>;
 			"/api/users": { id?: string | undefined };
 			"/api/users/me": Record<string, never>;
 			"/api/users/me/stc-balance": Record<string, never>;
 			"/api/users/me/stc-claim": Record<string, never>;
 			"/api/users/[id]": { id: string };
 			"/api/watch": { videoId?: string | undefined };
+			"/api/watch/active": Record<string, never>;
 			"/api/watch/history": Record<string, never>;
 			"/api/watch/progress": Record<string, never>;
 			"/api/watch/[videoId]": { videoId: string };
@@ -222,6 +263,8 @@ declare module "$app/types" {
 			"/(app)/careers": Record<string, never>;
 			"/(app)/checkout": Record<string, never>;
 			"/(app)/contact": Record<string, never>;
+			"/(app)/creators": { id?: string | undefined };
+			"/(app)/creators/[id]": { id: string };
 			"/(creator)/creator": Record<string, never>;
 			"/(creator)/creator/agreement": Record<string, never>;
 			"/(creator)/creator/analytics-help": Record<string, never>;
@@ -258,7 +301,6 @@ declare module "$app/types" {
 			"/kids/kiddies/shows": Record<string, never>;
 			"/kids/teens": Record<string, never>;
 			"/(app)/liquidity": Record<string, never>;
-			"/(app)/mayowa": Record<string, never>;
 			"/(protected)/milestones": Record<string, never>;
 			"/(app)/movies": Record<string, never>;
 			"/(app)/my-studios": Record<string, never>;
@@ -272,6 +314,7 @@ declare module "$app/types" {
 			"/(app)/search": Record<string, never>;
 			"/(protected)/settings": Record<string, never>;
 			"/(app)/shows": Record<string, never>;
+			"/sitemap.xml": Record<string, never>;
 			"/(app)/sponsorships": Record<string, never>;
 			"/(app)/staking": Record<string, never>;
 			"/(web3)/subscription": Record<string, never>;
@@ -286,7 +329,7 @@ declare module "$app/types" {
 			"/watch/[id]": { id: string };
 			"/(app)/webinars": Record<string, never>
 		};
-		Pathname(): "/" | "/about" | "/achievements" | "/admin" | "/admin/analytics" | "/admin/communications" | "/admin/content" | "/admin/creator-applications" | "/admin/creators" | "/admin/dashboard" | "/admin/governance" | "/admin/governance/create" | "/admin/governance/emergency" | "/admin/governance/execution" | "/admin/governance/proposals" | "/admin/governance/reports" | "/admin/governance/roles" | "/admin/governance/treasury" | "/admin/policies" | "/admin/review" | `/admin/review/${string}` & {} | "/admin/settings" | "/admin/test" | "/admin/tokenomics" | "/admin/workflow" | "/api/achievements" | "/api/admin/ai/config" | "/api/admin/ai/models" | "/api/admin/ai/test" | "/api/admin/analytics" | "/api/admin/communications" | "/api/admin/communications/templates" | "/api/admin/content" | `/api/admin/content/${string}` & {} | `/api/admin/content/${string}/ppv` & {} | `/api/admin/content/${string}/publish` & {} | `/api/admin/content/${string}/review` & {} | "/api/admin/creator-applications" | `/api/admin/creator-applications/${string}/review` & {} | "/api/admin/creators" | "/api/admin/governance/approve" | "/api/admin/governance/audit" | "/api/admin/governance/emergency/pause" | "/api/admin/governance/execute" | "/api/admin/governance/proposals" | "/api/admin/governance/queue" | "/api/admin/governance/reports" | "/api/admin/governance/roles" | "/api/admin/governance/status" | "/api/admin/governance/timelock-queue" | "/api/admin/governance/treasury" | "/api/admin/policies" | "/api/admin/reviews" | "/api/admin/settings" | "/api/admin/settings/test-email" | "/api/admin/stats" | "/api/admin/tokenomics" | "/api/admin/tokenomics/distribution" | "/api/admin/users/stats" | "/api/admin/workflow" | "/api/admin/workflow/stats" | "/api/ai/companion" | "/api/ai/creator-insights" | "/api/ai/moderate" | "/api/ai/nft" | "/api/ai/search" | "/api/ai/tag" | "/api/ai/token-score" | `/api/auth/${string}` & {} | "/api/contact" | "/api/content/kids" | "/api/creator/application" | "/api/creator/content" | "/api/creator/profile" | "/api/creator/stats" | `/api/downloads/manifest/${string}` & {} | "/api/encoder/jobs" | `/api/encoder/jobs/${string}` & {} | `/api/encoder/jobs/${string}/commit` & {} | `/api/encoder/jobs/${string}/playback` & {} | "/api/encoder/pending" | "/api/encoder/presigned" | "/api/encoder/process" | "/api/encoder/ready" | "/api/files" | "/api/health" | "/api/kids/quiz/generate" | "/api/kids/quiz/submit" | "/api/milestones" | "/api/notifications" | "/api/notifications/preferences" | `/api/notifications/${string}` & {} | `/api/notifications/${string}/read` & {} | "/api/parental/report" | "/api/payment/initialize" | "/api/payment/verify" | "/api/payment/webhook" | "/api/playlists" | `/api/playlists/${string}/items` & {} | `/api/ppv/check-access/${string}` & {} | "/api/ppv/purchase" | "/api/profiles" | "/api/profiles/current" | `/api/profiles/${string}` & {} | `/api/profiles/${string}/pin` & {} | "/api/recommendations" | "/api/reviews" | `/api/reviews/${string}/helpful` & {} | "/api/subscriptions/add-family" | "/api/subscriptions/cancel" | "/api/subscriptions/change-plan" | "/api/subscriptions/send-otp" | "/api/subscriptions/start-trial" | "/api/subscriptions/status" | "/api/users" | "/api/users/me/stc-balance" | "/api/users/me/stc-claim" | `/api/users/${string}` & {} | "/api/watch/history" | "/api/watch/progress" | `/api/watch/${string}` & {} | "/apply/creator" | "/archive" | "/auth/forget-password" | "/auth/forget-password/success" | "/auth/login" | "/auth/register" | "/auth/reset-password" | "/browse" | "/careers" | "/checkout" | "/contact" | "/creator" | "/creator/agreement" | "/creator/analytics-help" | "/creator/analytics" | "/creator/best-practices" | "/creator/content" | "/creator/copyright" | "/creator/earnings" | "/creator/events" | "/creator/forum" | "/creator/guidelines" | "/creator/newsletter" | "/creator/profile" | "/creator/success-stories" | "/creator/support" | "/creator/tech-support" | "/creator/test" | "/creator/upload" | "/dashboard" | "/device-support" | "/documentaries" | "/documentation" | "/exchange" | "/faq" | "/features" | "/guidelines" | "/help" | "/kids/kiddies" | "/kids/kiddies/bible-quiz" | "/kids/kiddies/documentaries" | "/kids/kiddies/movies" | "/kids/kiddies/profile" | "/kids/kiddies/shows" | "/kids/teens" | "/liquidity" | "/mayowa" | "/milestones" | "/movies" | "/my-studios" | "/offline" | "/parental-controls" | "/plans" | "/press" | "/privacy" | "/profiles" | "/profile" | "/search" | "/settings" | "/shows" | "/sponsorships" | "/staking" | "/subscription" | "/terms" | "/tokens" | "/token" | "/users" | "/wallet" | "/watchlist" | `/watch/${string}` & {} | "/webinars";
+		Pathname(): "/" | "/about" | "/achievements" | "/admin" | "/admin/analytics" | "/admin/communications" | "/admin/content" | "/admin/creator-applications" | "/admin/creators" | "/admin/dashboard" | "/admin/events" | "/admin/governance" | "/admin/governance/create" | "/admin/governance/emergency" | "/admin/governance/execution" | "/admin/governance/proposals" | "/admin/governance/reports" | "/admin/governance/roles" | "/admin/governance/treasury" | "/admin/policies" | "/admin/review" | `/admin/review/${string}` & {} | "/admin/settings" | "/admin/tokenomics" | "/admin/workflow" | "/api/achievements" | "/api/admin/admins" | "/api/admin/ai/config" | "/api/admin/ai/models" | "/api/admin/ai/test" | "/api/admin/analytics" | "/api/admin/communications" | "/api/admin/communications/templates" | "/api/admin/content" | "/api/admin/content/bulk" | `/api/admin/content/${string}` & {} | `/api/admin/content/${string}/assign` & {} | `/api/admin/content/${string}/ppv` & {} | `/api/admin/content/${string}/publish` & {} | `/api/admin/content/${string}/review` & {} | "/api/admin/creator-applications" | `/api/admin/creator-applications/${string}/review` & {} | "/api/admin/creators" | "/api/admin/events" | `/api/admin/events/${string}` & {} | "/api/admin/governance/approve" | "/api/admin/governance/audit" | "/api/admin/governance/emergency/pause" | "/api/admin/governance/execute" | "/api/admin/governance/proposals" | "/api/admin/governance/queue" | "/api/admin/governance/reports" | "/api/admin/governance/roles" | "/api/admin/governance/status" | "/api/admin/governance/timelock-queue" | "/api/admin/governance/treasury" | "/api/admin/policies" | "/api/admin/refunds" | "/api/admin/reviews" | "/api/admin/settings" | "/api/admin/settings/test-email" | "/api/admin/stats" | "/api/admin/tokenomics" | "/api/admin/tokenomics/distribution" | "/api/admin/users/stats" | "/api/admin/workflow" | "/api/admin/workflow/stats" | "/api/ai/companion" | "/api/ai/creator-insights" | "/api/ai/moderate" | "/api/ai/nft" | "/api/ai/search" | "/api/ai/tag" | "/api/ai/token-score" | `/api/auth/${string}` & {} | "/api/contact" | "/api/content/kids" | `/api/creators/${string}/follow` & {} | "/api/creator/analytics" | "/api/creator/application" | "/api/creator/content" | `/api/creator/content/${string}/duplicate` & {} | "/api/creator/earnings" | "/api/creator/newsletter/subscribe" | "/api/creator/payment-preferences" | "/api/creator/profile" | "/api/creator/stats" | "/api/cron/creator-payouts" | "/api/cron/event-status-sweep" | "/api/cron/renew-subscriptions" | "/api/cron/settlement-reconcile" | "/api/cron/settlement-reconcile/" | "/api/cron/staking-indexer" | `/api/downloads/manifest/${string}` & {} | "/api/encoder/jobs" | `/api/encoder/jobs/${string}` & {} | `/api/encoder/jobs/${string}/commit` & {} | `/api/encoder/jobs/${string}/playback` & {} | "/api/encoder/pending" | "/api/encoder/presigned" | "/api/encoder/process" | "/api/encoder/ready" | "/api/events" | "/api/events/feed.ics" | `/api/events/${string}` & {} | `/api/events/${string}/register` & {} | "/api/files" | "/api/health" | "/api/kids/quiz/generate" | "/api/kids/quiz/submit" | "/api/milestones" | "/api/notifications" | "/api/notifications/preferences" | `/api/notifications/${string}` & {} | `/api/notifications/${string}/read` & {} | "/api/parental/report" | "/api/payment/initialize" | "/api/payment/verify" | "/api/payment/webhook" | "/api/playlists" | `/api/playlists/${string}/items` & {} | `/api/ppv/check-access/${string}` & {} | "/api/ppv/purchase" | "/api/ppv/refund" | "/api/profiles" | "/api/profiles/current" | `/api/profiles/${string}` & {} | `/api/profiles/${string}/pin` & {} | "/api/push/subscribe" | "/api/recommendations" | "/api/reviews" | `/api/reviews/${string}/helpful` & {} | "/api/shares" | "/api/subscriptions/add-family" | "/api/subscriptions/cancel" | "/api/subscriptions/change-plan" | "/api/subscriptions/send-otp" | "/api/subscriptions/start-trial" | "/api/subscriptions/status" | "/api/success-stories" | "/api/users" | "/api/users/me/stc-balance" | "/api/users/me/stc-claim" | `/api/users/${string}` & {} | "/api/watch/active" | "/api/watch/history" | "/api/watch/progress" | `/api/watch/${string}` & {} | "/apply/creator" | "/archive" | "/auth/forget-password" | "/auth/forget-password/success" | "/auth/login" | "/auth/register" | "/auth/reset-password" | "/browse" | "/careers" | "/checkout" | "/contact" | `/creators/${string}` & {} | "/creator" | "/creator/agreement" | "/creator/analytics-help" | "/creator/analytics" | "/creator/best-practices" | "/creator/content" | "/creator/copyright" | "/creator/earnings" | "/creator/events" | "/creator/forum" | "/creator/guidelines" | "/creator/newsletter" | "/creator/profile" | "/creator/success-stories" | "/creator/support" | "/creator/tech-support" | "/creator/test" | "/creator/upload" | "/dashboard" | "/device-support" | "/documentaries" | "/documentation" | "/exchange" | "/faq" | "/features" | "/guidelines" | "/help" | "/kids/kiddies" | "/kids/kiddies/bible-quiz" | "/kids/kiddies/documentaries" | "/kids/kiddies/movies" | "/kids/kiddies/profile" | "/kids/kiddies/shows" | "/kids/teens" | "/liquidity" | "/milestones" | "/movies" | "/my-studios" | "/offline" | "/parental-controls" | "/plans" | "/press" | "/privacy" | "/profiles" | "/profile" | "/search" | "/settings" | "/shows" | "/sitemap.xml" | "/sponsorships" | "/staking" | "/subscription" | "/terms" | "/tokens" | "/token" | "/users" | "/wallet" | "/watchlist" | `/watch/${string}` & {} | "/webinars";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/asl-logo.png" | "/favicon-96x96.png" | "/favicon.ico" | "/favicon.svg" | "/logo&name-sepharstudios.png" | "/logo-alone-sepharstudios-bgless.png" | "/logo-alone-sepharstudios.png" | "/logo_name-sepharstudios.png" | "/manifest.json" | "/name-alone-sepharstudios.png" | "/pwa-192x192.png" | "/pwa-512x512.png" | "/pwa-maskable-192x192.png" | "/pwa-maskable-512x512.png" | "/robots.txt" | "/screenshot-mobile.webp" | "/screenshot-wide.webp" | "/sw.js" | string & {};
 	}

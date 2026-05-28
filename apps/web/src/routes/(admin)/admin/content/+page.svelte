@@ -71,7 +71,8 @@
     return filtered.slice(startIndex, startIndex + itemsPerPage);
   });
   
-  onMount(async () => {
+  async function loadContent() {
+    isLoading = true;
     try {
       const res = await fetch('/api/admin/content?limit=100');
       if (res.ok) {
@@ -99,7 +100,9 @@
     } finally {
       isLoading = false;
     }
-  });
+  }
+
+  onMount(loadContent);
 
   let publishing = $state<string | null>(null);
   let publishError = $state('');
@@ -220,9 +223,9 @@
     showBulkActions = selectedContent.length > 0;
   }
   
-  function executeBulkAction() {
+  async function executeBulkAction() {
     if (!bulkAction || selectedContent.length === 0) return;
-    
+
     const actionText: Record<string, string> = {
       'approve': 'approve',
       'reject': 'reject',
@@ -232,13 +235,27 @@
       'priority-medium': 'set as medium priority',
       'priority-low': 'set as low priority'
     };
-    
-    if (confirm(`Are you sure you want to ${actionText[bulkAction]} ${selectedContent.length} selected item(s)?`)) {
-      console.log(`Bulk ${bulkAction} for:`, selectedContent);
-      // Execute bulk action via API
+
+    if (!confirm(`Are you sure you want to ${actionText[bulkAction]} ${selectedContent.length} selected item(s)?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/content/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedContent, action: bulkAction })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Bulk action failed');
+
       selectedContent = [];
       showBulkActions = false;
       bulkAction = '';
+      await loadContent();
+      alert(`${data.affected} item(s) updated.`);
+    } catch (err: any) {
+      alert(`Bulk action failed: ${err.message}`);
     }
   }
   

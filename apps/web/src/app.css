@@ -381,3 +381,28 @@ input:checked + .slider:before {
 .btn-glow:hover {
   box-shadow: 0 0 20px hsla(var(--primary) / 0.5);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reduced motion (WCAG SC 2.3.3, Animation from Interactions)
+
+   When the OS / browser advertises `prefers-reduced-motion: reduce`, the
+   user has explicitly asked sites to dial back animation. We don't disable
+   animation entirely (that breaks UI affordances like loading spinners) —
+   instead we shorten every transition/animation to 0.01ms so the visual
+   effect resolves instantly while still firing the events Svelte's
+   transition system depends on.
+
+   Carousels, hover-scale, marquees, and the AICopilot ripple are visibly
+   calmed; the spinner on async buttons still indicates loading via its
+   final frame.
+   ─────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

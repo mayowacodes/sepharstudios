@@ -32,6 +32,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			ageRating: mediaLibrary.ageRating,
 			bibleReference: mediaLibrary.bibleReference,
 			language: mediaLibrary.language,
+			category: mediaLibrary.category,
+			trailerUrl: mediaLibrary.trailerUrl,
+			createdAt: mediaLibrary.createdAt,
 			isActive: mediaLibrary.isActive
 		})
 		.from(mediaLibrary)

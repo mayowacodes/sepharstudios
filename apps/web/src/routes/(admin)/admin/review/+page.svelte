@@ -120,12 +120,115 @@
   function startReview(itemId: string) {
     window.location.href = `/admin/review/${itemId}`;
   }
-  
+
+  // Assignment modal state
+  interface AdminUser { id: string; name: string | null; email: string; image?: string | null }
+  let assignmentTargetId = $state<string | null>(null);
+  let admins = $state<AdminUser[]>([]);
+  let adminsLoading = $state(false);
+  let assigning = $state(false);
+
+  async function openAssignmentModal(itemId: string) {
+    assignmentTargetId = itemId;
+    if (admins.length === 0) {
+      adminsLoading = true;
+      try {
+        const res = await fetch('/api/admin/admins');
+        if (res.ok) {
+          const data = await res.json();
+          admins = data.admins ?? [];
+        }
+      } finally {
+        adminsLoading = false;
+      }
+    }
+  }
+
+  function closeAssignmentModal() {
+    assignmentTargetId = null;
+  }
+
+  async function assignToAdmin(adminId: string) {
+    if (!assignmentTargetId) return;
+    assigning = true;
+    try {
+      const res = await fetch(`/api/admin/content/${assignmentTargetId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Assign failed');
+      closeAssignmentModal();
+      // Refresh queue so the assignment shows up
+      await loadReviewQueue();
+    } catch (err: any) {
+      alert(`Assignment failed: ${err.message}`);
+    } finally {
+      assigning = false;
+    }
+  }
+
+  // Kept for backwards compatibility with existing template binding
   function assignReview(itemId: string) {
-    // TODO: Implement assignment modal
-    alert('Assignment feature coming soon!');
+    void openAssignmentModal(itemId);
   }
 </script>
+
+{#if assignmentTargetId}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+    onclick={closeAssignmentModal}
+  >
+    <div
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-labelledby="assign-modal-title"
+      class="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <h2 id="assign-modal-title" class="text-lg font-semibold mb-1">Assign review</h2>
+      <p class="text-sm text-muted-foreground mb-4">Pick an admin to handle this item.</p>
+
+      {#if adminsLoading}
+        <p class="py-6 text-center text-sm text-muted-foreground">Loading admins…</p>
+      {:else if admins.length === 0}
+        <p class="py-6 text-center text-sm text-muted-foreground">No admins available.</p>
+      {:else}
+        <ul class="space-y-2 max-h-72 overflow-y-auto">
+          {#each admins as admin}
+            <li>
+              <button
+                onclick={() => assignToAdmin(admin.id)}
+                disabled={assigning}
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:bg-muted/50 transition disabled:opacity-50 text-left"
+              >
+                {#if admin.image}
+                  <img src={admin.image} alt="" class="w-8 h-8 rounded-full object-cover" />
+                {:else}
+                  <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold">
+                    {(admin.name ?? admin.email).slice(0, 1).toUpperCase()}
+                  </div>
+                {/if}
+                <div class="min-w-0">
+                  <div class="text-sm font-medium truncate">{admin.name ?? admin.email}</div>
+                  <div class="text-xs text-muted-foreground truncate">{admin.email}</div>
+                </div>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <div class="mt-4 flex justify-end">
+        <button onclick={closeAssignmentModal} class="text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <div class="space-y-6">
   <!-- Header -->

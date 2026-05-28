@@ -3,10 +3,38 @@
   import { onDestroy } from 'svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import ReviewSection from '$lib/components/widgets/ReviewSection.svelte';
+  import ShareButton from '$lib/components/widgets/ShareButton.svelte';
   import { copilotContext } from '$lib/stores/copilot';
+  import { SiteMeta } from '$lib/constants';
 
   const { data } = $props();
   const content = $derived(data.content);
+
+  // schema.org VideoObject — surfaces this title in Google Video search +
+  // rich-result carousels. Required fields per Google's docs: name,
+  // description, thumbnailUrl, uploadDate. contentUrl is omitted because
+  // playback is auth/subscription-gated; we expose the watch page URL only.
+  const videoSchema = $derived.by(() => {
+    if (!content) return null;
+    const watchUrl = `${SiteMeta.link}/watch/${content.id}`;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'VideoObject',
+      name: content.title,
+      description: content.description ?? '',
+      thumbnailUrl: content.thumbnail || content.posterUrl || `${SiteMeta.link}${SiteMeta.ogimage}`,
+      uploadDate: content.createdAt
+        ? new Date(content.createdAt).toISOString()
+        : undefined,
+      duration: content.duration ?? undefined,
+      contentRating: content.ageRating ?? undefined,
+      genre: (content.genres ?? []).filter(Boolean),
+      inLanguage: content.language ?? 'en',
+      url: watchUrl,
+      ...(content.trailerUrl ? { trailer: { '@type': 'VideoObject', contentUrl: content.trailerUrl } } : {}),
+      isFamilyFriendly: content.ageRating === 'All' || content.ageRating === '7+' || content.category === 'kids'
+    };
+  });
 
   // Feed the AI Copilot what we're watching so it can answer in-context
   // ("what's the main message?", "what verses apply?", etc.).
@@ -46,6 +74,21 @@
 <svelte:head>
   <title>{content.title} — Sephar Studios</title>
   <meta name="description" content={content.description ?? ''} />
+
+  <!-- Per-page OG override — share images get the actual poster, not the
+       generic site screenshot. The root layout's og:* tags are overridden
+       because <svelte:head> tags later in the tree win. -->
+  <meta property="og:type" content="video.other" />
+  <meta property="og:title" content={`${content.title} — Sephar Studios`} />
+  <meta property="og:description" content={content.description ?? ''} />
+  <meta property="og:image" content={content.posterUrl || content.thumbnail || `${SiteMeta.link}${SiteMeta.ogimage}`} />
+  <meta name="twitter:title" content={`${content.title} — Sephar Studios`} />
+  <meta name="twitter:description" content={content.description ?? ''} />
+  <meta name="twitter:image" content={content.posterUrl || content.thumbnail || `${SiteMeta.link}${SiteMeta.ogimage}`} />
+
+  {#if videoSchema}
+    {@html `<script type="application/ld+json">${JSON.stringify(videoSchema)}</script>`}
+  {/if}
 </svelte:head>
 
 <div class="min-h-screen bg-[#0b0c10] text-white">
@@ -74,7 +117,10 @@
     <!-- Title row -->
     <div class="flex flex-wrap items-start gap-4 mb-4">
       <div class="flex-1 min-w-0">
-        <h1 class="text-3xl font-bold leading-tight">{content.title}</h1>
+        <div class="flex items-start gap-3">
+          <h1 class="text-3xl font-bold leading-tight flex-1">{content.title}</h1>
+          <ShareButton contentId={content.id} title={content.title} description={content.description ?? ''} />
+        </div>
         <div class="flex flex-wrap gap-3 mt-2 text-sm text-zinc-400">
           {#if content.year}
             <span>{content.year}</span>

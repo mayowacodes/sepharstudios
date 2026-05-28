@@ -24,14 +24,38 @@ export enum Constants {
 
 export type FileType = 'audio' | 'video' | 'file' | 'image';
 
-// Site Meta for SEO/OG tags
+// Site Meta for SEO/OG tags. Defaults shown on routes without a more specific
+// override; per-page metadata can be set via <svelte:head> on individual pages
+// (search results, watch page, creator profiles, etc.).
 export const SiteMeta = {
-  title: 'sepharstudios',
-  description: 'Welcome to sepharstudios - Your trusted platform',
-  keywords: ['sepharstudios', 'platform', 'app'],
+  name: 'Sephar Studios',
+  title: 'Sephar Studios — Faith-based streaming for families',
+  titleTemplate: '%s · Sephar Studios', // used by pages that set a specific title
+  description: 'Stream faith-based movies, shows, documentaries, and kids content. Family-safe viewing, ad-free premium tiers, and creator-owned originals — all on one platform.',
+  keywords: [
+    'faith based streaming',
+    'christian movies',
+    'christian shows',
+    'family streaming',
+    'kids christian content',
+    'documentaries',
+    'sephar studios',
+    'faith films'
+  ],
   ogimage: '/screenshot-wide.webp',
+  twitterHandle: '@sepharstudios',
   link: 'https://sepharstudios.com',
-};
+  organization: {
+    name: 'Sephar Studios',
+    legalName: 'Sephar Studios',
+    logo: '/logo-alone-sepharstudios.png',
+    sameAs: [
+      // Add canonical social URLs when they exist
+      // 'https://twitter.com/sepharstudios',
+      // 'https://www.youtube.com/@sepharstudios',
+    ]
+  }
+} as const;
 
 // Homepage configurable content
 export const HomepageContent = {

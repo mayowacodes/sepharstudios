@@ -1,6 +1,7 @@
 <!-- Creator Content Library Management -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { ContentStatus, ContentType } from '$lib/types/creator';
   
   let contentLibrary = $state<any[]>([]);
@@ -100,13 +101,20 @@
   }
   
   function editContent(id: string) {
-    // Navigate to edit page - implement when needed
-    console.log('Edit content:', id);
+    goto(`/creator/upload?edit=${id}`);
   }
-  
-  function duplicateContent(id: string) {
-    // Create a copy of the content - implement when needed
-    console.log('Duplicate content:', id);
+
+  async function duplicateContent(id: string) {
+    try {
+      const res = await fetch(`/api/creator/content/${id}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to duplicate');
+      // Reload so the new draft appears in the library, then navigate to its
+      // edit page so the creator can fill the unique fields (video, etc.).
+      goto(`/creator/upload?edit=${data.content.id}`);
+    } catch (err: any) {
+      alert(`Duplicate failed: ${err.message}`);
+    }
   }
   
   function deleteContent(id: string) {

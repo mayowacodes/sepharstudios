@@ -48,27 +48,60 @@
 		});
 	};
 </script>
-<form {onsubmit} class="grid gap-3">
-	{#if errors.general}<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errors.general}</div>{/if}
+<form {onsubmit} class="grid gap-3" aria-label="Create account form" novalidate>
+	{#if errors.general}<div role="alert" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errors.general}</div>{/if}
 	<div class="grid gap-2">
 		<Label for="name-{id}">Name</Label>
-		<Input id="name-{id}" type="text" name="name" placeholder="John Doe" required disabled={isLoading} class={cn(errors.name && 'border-red-500')} autocomplete="name" />
-		{#if errors.name}<p class="text-sm text-red-500">{errors.name}</p>{/if}
+		<Input
+			id="name-{id}"
+			type="text"
+			name="name"
+			placeholder="John Doe"
+			required
+			disabled={isLoading}
+			class={cn(errors.name && 'border-red-500')}
+			autocomplete="name"
+			aria-invalid={!!errors.name}
+			aria-describedby={errors.name ? `name-error-${id}` : undefined}
+		/>
+		{#if errors.name}<p id="name-error-{id}" class="text-sm text-red-500" role="alert">{errors.name}</p>{/if}
 	</div>
 	<div class="grid gap-2">
 		<Label for="email-{id}">Email</Label>
-		<Input id="email-{id}" type="email" name="email" placeholder="m@example.com" required disabled={isLoading} class={cn(errors.email && 'border-red-500')} autocomplete="email" />
-		{#if errors.email}<p class="text-sm text-red-500">{errors.email}</p>{/if}
+		<Input
+			id="email-{id}"
+			type="email"
+			name="email"
+			placeholder="m@example.com"
+			required
+			disabled={isLoading}
+			class={cn(errors.email && 'border-red-500')}
+			autocomplete="email"
+			aria-invalid={!!errors.email}
+			aria-describedby={errors.email ? `email-error-${id}` : undefined}
+		/>
+		{#if errors.email}<p id="email-error-{id}" class="text-sm text-red-500" role="alert">{errors.email}</p>{/if}
 	</div>
 	<div class="grid gap-2">
 		<Label for="password-{id}">Password</Label>
 		<div class="relative w-full">
-			<Input id="password-{id}" name="password" type={showPassword ? 'text' : 'password'} placeholder="Your password..." required disabled={isLoading} class={cn(errors.password && 'border-red-500 pr-10')} autocomplete="new-password" />
-			<Button onclick={() => (showPassword = !showPassword)} class="absolute right-0 bottom-0" variant="ghost" size="icon">
+			<Input
+				id="password-{id}"
+				name="password"
+				type={showPassword ? 'text' : 'password'}
+				placeholder="Your password..."
+				required
+				disabled={isLoading}
+				class={cn(errors.password && 'border-red-500 pr-10')}
+				autocomplete="new-password"
+				aria-invalid={!!errors.password}
+				aria-describedby={errors.password ? `password-error-${id}` : undefined}
+			/>
+			<Button onclick={() => (showPassword = !showPassword)} class="absolute right-0 bottom-0" variant="ghost" size="icon" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>
 				{#if showPassword}<EyeIcon />{:else}<EyeOffIcon />{/if}
 			</Button>
 		</div>
-		{#if errors.password}<p class="text-sm text-red-500">{errors.password}</p>{/if}
+		{#if errors.password}<p id="password-error-{id}" class="text-sm text-red-500" role="alert">{errors.password}</p>{/if}
 	</div>
 	<Button type="submit" class="w-full" disabled={isLoading || isSocialLoading}>
 		{#if isLoading}<LoadingSpinner class="text-white dark:text-background" />Signing up...{:else}Signup{/if}

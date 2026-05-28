@@ -50,12 +50,23 @@
 		});
 	};
 </script>
-<form {onsubmit} class="grid gap-3">
-	{#if errors.general}<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errors.general}</div>{/if}
+<form {onsubmit} class="grid gap-3" aria-label="Sign in form" novalidate>
+	{#if errors.general}<div role="alert" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errors.general}</div>{/if}
 	<div class="grid gap-2">
 		<Label for="email-{id}">Email</Label>
-		<Input id="email-{id}" type="email" name="email" placeholder="m@example.com" required disabled={isLoading} class={cn(errors.email && 'border-red-500')} autocomplete="email" />
-		{#if errors.email}<p class="text-sm text-red-500">{errors.email}</p>{/if}
+		<Input
+			id="email-{id}"
+			type="email"
+			name="email"
+			placeholder="m@example.com"
+			required
+			disabled={isLoading}
+			class={cn(errors.email && 'border-red-500')}
+			autocomplete="email"
+			aria-invalid={!!errors.email}
+			aria-describedby={errors.email ? `email-error-${id}` : undefined}
+		/>
+		{#if errors.email}<p id="email-error-{id}" class="text-sm text-red-500" role="alert">{errors.email}</p>{/if}
 	</div>
 	<div class="grid gap-2">
 		<div class="flex w-full items-center justify-between">
@@ -63,12 +74,23 @@
 			<Button href="/auth/forget-password?redirectTo={encodeURIComponent(getRedirectUrl())}" class="h-fit px-0 text-muted-foreground" variant="link" size="sm">Forgot your password?</Button>
 		</div>
 		<div class="relative w-full">
-			<Input id="password-{id}" name="password" type={showPassword ? 'text' : 'password'} placeholder="Your password..." required disabled={isLoading} class={cn(errors.password && 'border-red-500 pr-10')} autocomplete="current-password" />
-			<Button onclick={() => (showPassword = !showPassword)} class="absolute right-0 bottom-0" variant="ghost" size="icon">
+			<Input
+				id="password-{id}"
+				name="password"
+				type={showPassword ? 'text' : 'password'}
+				placeholder="Your password..."
+				required
+				disabled={isLoading}
+				class={cn(errors.password && 'border-red-500 pr-10')}
+				autocomplete="current-password"
+				aria-invalid={!!errors.password}
+				aria-describedby={errors.password ? `password-error-${id}` : undefined}
+			/>
+			<Button onclick={() => (showPassword = !showPassword)} class="absolute right-0 bottom-0" variant="ghost" size="icon" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>
 				{#if showPassword}<EyeIcon />{:else}<EyeOffIcon />{/if}
 			</Button>
 		</div>
-		{#if errors.password}<p class="text-sm text-red-500">{errors.password}</p>{/if}
+		{#if errors.password}<p id="password-error-{id}" class="text-sm text-red-500" role="alert">{errors.password}</p>{/if}
 	</div>
 	<Button type="submit" class="w-full" disabled={isLoading || isSocialLoading}>
 		{#if isLoading}<LoadingSpinner class="text-white dark:text-background" />Signing in...{:else}Signin{/if}

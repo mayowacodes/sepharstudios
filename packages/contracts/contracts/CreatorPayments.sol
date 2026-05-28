@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./StudioToken.sol";
@@ -68,7 +68,7 @@ contract CreatorPayments is Ownable, ReentrancyGuard, Pausable {
         address _platformTreasury,
         address _usdcTreasury,
         address _tokenAMM
-    ) {
+    ) Ownable(msg.sender) {
         stcToken = StudioToken(_stcToken);
         usdcToken = IERC20(_usdcToken);
         platformTreasury = _platformTreasury;

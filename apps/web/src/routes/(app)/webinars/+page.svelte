@@ -1,19 +1,23 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { Video, Calendar, Clock, Users, ArrowRight, Bell } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
 
-  interface Webinar {
+  interface EventRow {
     id: string;
     title: string;
-    speaker: string;
-    speakerRole: string;
-    date: string;
-    duration: string;
-    track: 'creator' | 'tokenomics' | 'theology' | 'tech';
-    registered: number;
-    description: string;
-    upcoming: boolean;
-    recordingUrl?: string;
+    description: string | null;
+    speaker: string | null;
+    speakerRole: string | null;
+    track: 'creator' | 'tokenomics' | 'theology' | 'tech' | null;
+    startsAt: string;
+    durationMinutes: number | null;
+    registeredCount: number;
+    capacity: number | null;
+    recordingUrl: string | null;
+    isRegistered: boolean;
+    status: string;
   }
 
   const tracks = {
@@ -23,73 +27,53 @@
     tech: { label: 'Platform Tech', color: 'bg-green-500/15 text-green-300 border-green-500/30' }
   } as const;
 
-  const webinars: Webinar[] = [
-    {
-      id: 'w-001',
-      title: 'Launching your first faith-based series on Sephar Studios',
-      speaker: 'Pastor Daniel Okafor',
-      speakerRole: 'Lead Creator, Living Word Films',
-      date: '2026-06-04T18:00:00Z',
-      duration: '60 min',
-      track: 'creator',
-      registered: 247,
-      description: 'A step-by-step walkthrough of submitting your pilot, navigating review and unlocking the creator payments stream.',
-      upcoming: true
-    },
-    {
-      id: 'w-002',
-      title: 'STC tokenomics deep dive: staking, NFT tiers and revenue share',
-      speaker: 'Mayowa Animasaun',
-      speakerRole: 'Founder, Sephar Studios',
-      date: '2026-06-11T18:00:00Z',
-      duration: '75 min',
-      track: 'tokenomics',
-      registered: 412,
-      description: 'How discount tiers stack, what the buyback mechanism really does, and how creators get paid from the revenue pool.',
-      upcoming: true
-    },
-    {
-      id: 'w-003',
-      title: 'Writing scripts that honour scripture and respect the craft',
-      speaker: 'Esther Adebanjo',
-      speakerRole: 'Script consultant, BibleVerse Studios',
-      date: '2026-06-18T17:00:00Z',
-      duration: '45 min',
-      track: 'theology',
-      registered: 156,
-      description: 'Practical principles for translating Biblical narrative into watchable, emotionally honest screen drama.',
-      upcoming: true
-    },
-    {
-      id: 'w-004',
-      title: 'Production AMA: cameras, lighting and budget tiers under $5k',
-      speaker: 'Caleb Mensah',
-      speakerRole: 'DP, Crown Productions',
-      date: '2026-05-21T18:00:00Z',
-      duration: '60 min',
-      track: 'creator',
-      registered: 308,
-      description: 'Recording available — gear breakdown for indie creators starting out.',
-      upcoming: false,
-      recordingUrl: '/archive'
-    },
-    {
-      id: 'w-005',
-      title: 'Onchain royalties: NFT subscription mechanics explained',
-      speaker: 'Mayowa Animasaun',
-      speakerRole: 'Founder, Sephar Studios',
-      date: '2026-05-14T18:00:00Z',
-      duration: '50 min',
-      track: 'tokenomics',
-      registered: 521,
-      description: 'Recording available — how the subscription NFT contract issues, transfers and renews.',
-      upcoming: false,
-      recordingUrl: '/archive'
-    }
-  ];
+  let upcoming = $state<EventRow[]>([]);
+  let past = $state<EventRow[]>([]);
+  let loading = $state(true);
+  let toggling = $state<string | null>(null);
+  let message = $state('');
 
-  const upcoming = webinars.filter((w) => w.upcoming);
-  const past = webinars.filter((w) => !w.upcoming);
+  onMount(loadEvents);
+
+  async function loadEvents() {
+    loading = true;
+    try {
+      const [up, pa] = await Promise.all([
+        fetch('/api/events?audience=public&filter=upcoming').then((r) => r.json()),
+        fetch('/api/events?audience=public&filter=past').then((r) => r.json())
+      ]);
+      upcoming = up.events ?? [];
+      past = pa.events ?? [];
+    } catch (err) {
+      console.error('Failed to load events:', err);
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function toggleRegistration(eventId: string, isRegistered: boolean) {
+    toggling = eventId;
+    message = '';
+    try {
+      const res = await fetch(`/api/events/${eventId}/register`, {
+        method: isRegistered ? 'DELETE' : 'POST'
+      });
+      if (res.status === 401) {
+        goto(`/auth/login?redirectTo=/webinars`);
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Registration failed');
+      message = isRegistered ? 'Cancelled.' : "You're registered — we'll send a reminder.";
+      setTimeout(() => (message = ''), 4000);
+      // Refresh the lists so registeredCount + isRegistered re-fetch.
+      await loadEvents();
+    } catch (err) {
+      message = err instanceof Error ? err.message : 'Something went wrong';
+    } finally {
+      toggling = null;
+    }
+  }
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString('en-US', {
@@ -100,6 +84,14 @@
       minute: '2-digit',
       timeZoneName: 'short'
     });
+  }
+
+  function formatDuration(minutes: number | null): string {
+    if (!minutes) return '';
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m === 0 ? `${h} hr` : `${h}h ${m}m`;
   }
 </script>
 
@@ -132,55 +124,101 @@
         </Button>
       </div>
 
-      <div class="grid gap-4 md:grid-cols-2">
-        {#each upcoming as w}
-          <article class="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors">
-            <div class="flex items-start justify-between gap-3">
-              <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded border {tracks[w.track].color}">
-                {tracks[w.track].label}
-              </span>
-              <div class="flex items-center text-xs text-muted-foreground gap-1">
-                <Users class="w-3.5 h-3.5" /> {w.registered}
+      {#if loading}
+        <p class="text-sm text-muted-foreground py-6 text-center">Loading webinars…</p>
+      {:else if upcoming.length === 0}
+        <div class="bg-card border border-border rounded-xl p-8 text-center">
+          <p class="text-sm text-muted-foreground">No upcoming sessions scheduled. Subscribe to the calendar or follow us for announcements.</p>
+        </div>
+      {:else}
+        <div class="grid gap-4 md:grid-cols-2">
+          {#each upcoming as w (w.id)}
+            <article class="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors">
+              <div class="flex items-start justify-between gap-3">
+                {#if w.track && tracks[w.track]}
+                  <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded border {tracks[w.track].color}">
+                    {tracks[w.track].label}
+                  </span>
+                {:else}
+                  <span></span>
+                {/if}
+                <div class="flex items-center text-xs text-muted-foreground gap-1">
+                  <Users class="w-3.5 h-3.5" /> {w.registeredCount}{w.capacity ? ` / ${w.capacity}` : ''}
+                </div>
               </div>
-            </div>
-            <h3 class="text-base font-bold leading-snug">{w.title}</h3>
-            <p class="text-sm text-muted-foreground leading-relaxed">{w.description}</p>
-            <div class="text-xs text-muted-foreground space-y-1">
-              <div class="flex items-center gap-2"><Calendar class="w-3.5 h-3.5" />{formatDate(w.date)}</div>
-              <div class="flex items-center gap-2"><Clock class="w-3.5 h-3.5" />{w.duration}</div>
-            </div>
-            <div class="pt-2 border-t border-border flex items-center justify-between">
-              <div class="text-xs">
-                <div class="font-semibold">{w.speaker}</div>
-                <div class="text-muted-foreground">{w.speakerRole}</div>
+              <h3 class="text-base font-bold leading-snug">{w.title}</h3>
+              {#if w.description}
+                <p class="text-sm text-muted-foreground leading-relaxed">{w.description}</p>
+              {/if}
+              <div class="text-xs text-muted-foreground space-y-1">
+                <div class="flex items-center gap-2"><Calendar class="w-3.5 h-3.5" />{formatDate(w.startsAt)}</div>
+                {#if w.durationMinutes}
+                  <div class="flex items-center gap-2"><Clock class="w-3.5 h-3.5" />{formatDuration(w.durationMinutes)}</div>
+                {/if}
               </div>
-              <Button size="sm">Reserve seat <ArrowRight class="w-3.5 h-3.5 ml-2" /></Button>
-            </div>
-          </article>
-        {/each}
-      </div>
+              <div class="pt-2 border-t border-border flex items-center justify-between">
+                <div class="text-xs">
+                  {#if w.speaker}<div class="font-semibold">{w.speaker}</div>{/if}
+                  {#if w.speakerRole}<div class="text-muted-foreground">{w.speakerRole}</div>{/if}
+                </div>
+                <Button
+                  size="sm"
+                  variant={w.isRegistered ? 'outline' : 'default'}
+                  disabled={toggling === w.id || (w.capacity !== null && w.registeredCount >= w.capacity && !w.isRegistered)}
+                  onclick={() => toggleRegistration(w.id, w.isRegistered)}
+                  aria-pressed={w.isRegistered}
+                >
+                  {#if toggling === w.id}
+                    Working…
+                  {:else if w.isRegistered}
+                    Registered
+                  {:else if w.capacity !== null && w.registeredCount >= w.capacity}
+                    Full
+                  {:else}
+                    Reserve seat <ArrowRight class="w-3.5 h-3.5 ml-2" />
+                  {/if}
+                </Button>
+              </div>
+            </article>
+          {/each}
+        </div>
+      {/if}
+
+      {#if message}
+        <p class="text-xs text-center text-muted-foreground">{message}</p>
+      {/if}
     </section>
 
     <!-- Past recordings -->
-    <section class="space-y-4">
-      <h2 class="text-xl font-semibold flex items-center gap-2">
-        <Video class="w-5 h-5 text-primary" /> Past recordings
-      </h2>
-      <div class="grid gap-3">
-        {#each past as w}
-          <article class="bg-card border border-border rounded-xl p-4 flex flex-wrap items-center gap-4">
-            <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded border {tracks[w.track].color}">
-              {tracks[w.track].label}
-            </span>
-            <div class="flex-1 min-w-[240px]">
-              <h3 class="text-sm font-semibold">{w.title}</h3>
-              <p class="text-xs text-muted-foreground">{w.speaker} · {formatDate(w.date)} · {w.duration}</p>
-            </div>
-            <Button size="sm" variant="outline" href={w.recordingUrl ?? '/archive'}>Watch recording</Button>
-          </article>
-        {/each}
-      </div>
-    </section>
+    {#if !loading && past.length > 0}
+      <section class="space-y-4">
+        <h2 class="text-xl font-semibold flex items-center gap-2">
+          <Video class="w-5 h-5 text-primary" /> Past recordings
+        </h2>
+        <div class="grid gap-3">
+          {#each past as w (w.id)}
+            <article class="bg-card border border-border rounded-xl p-4 flex flex-wrap items-center gap-4">
+              {#if w.track && tracks[w.track]}
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded border {tracks[w.track].color}">
+                  {tracks[w.track].label}
+                </span>
+              {/if}
+              <div class="flex-1 min-w-60">
+                <h3 class="text-sm font-semibold">{w.title}</h3>
+                <p class="text-xs text-muted-foreground">
+                  {w.speaker ?? 'Sephar Studios'} · {formatDate(w.startsAt)}{w.durationMinutes ? ` · ${formatDuration(w.durationMinutes)}` : ''}
+                </p>
+              </div>
+              {#if w.recordingUrl}
+                <Button size="sm" variant="outline" href={w.recordingUrl}>Watch recording</Button>
+              {:else}
+                <span class="text-xs text-muted-foreground">Recording pending</span>
+              {/if}
+            </article>
+          {/each}
+        </div>
+      </section>
+    {/if}
 
     <!-- CTA -->
     <section class="bg-card border border-border rounded-2xl p-6 text-center space-y-3">

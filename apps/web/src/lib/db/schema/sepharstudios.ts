@@ -195,6 +195,11 @@ export const mediaLibrary = pgTable('media_library', {
 	voteCount: varchar('vote_count', { length: 20 }),
 	popularity: varchar('popularity', { length: 20 }),
 
+	// Review-queue assignment — admin currently working this item. Distinct
+	// from `reviewedBy` which is set only once the review completes.
+	assignedTo: text('assigned_to').references(() => user.id, { onDelete: 'set null' }),
+	assignedAt: timestamp('assigned_at'),
+
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -248,15 +253,22 @@ export const profiles = pgTable('profiles', {
 export const paystackSubscriptions = pgTable('paystack_subscriptions', {
 	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
 	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-	plan: varchar('plan', { length: 20 }).notNull(), // basic | premium | creator
+	plan: varchar('plan', { length: 20 }).notNull(), // freemium | basic | premium | creator
 	status: varchar('status', { length: 20 }).notNull().default('trial'), // trial | active | cancelled | expired | paused
 	trialStartDate: timestamp('trial_start_date'),
 	trialEndDate: timestamp('trial_end_date'),
 	currentPeriodStart: timestamp('current_period_start'),
 	currentPeriodEnd: timestamp('current_period_end'),
+	// Per-plan capability snapshot (set from PLAN_FEATURES at sub creation)
+	maxProfiles: integer('max_profiles').notNull().default(1),
+	kidsAllowed: boolean('kids_allowed').notNull().default(false),
+	// Recurring-billing worker state
+	nextChargeAt: timestamp('next_charge_at'),
+	failedAttempts: integer('failed_attempts').notNull().default(0),
+	lastChargeAttemptAt: timestamp('last_charge_attempt_at'),
 	// Paystack identifiers
 	paystackCustomerCode: varchar('paystack_customer_code', { length: 100 }),
-	paystackSubscriptionCode: varchar('paystack_subscription_code', { length: 100 }),
+	paystackSubscriptionCode: varchar('paystack_subscription_code', { length: 100 }).unique(),
 	paystackAuthorizationCode: varchar('paystack_authorization_code', { length: 100 }),
 	// Anti-abuse fingerprints
 	cardSignature: varchar('card_signature', { length: 200 }),
@@ -287,10 +299,145 @@ export const familyAddons = pgTable('family_addons', {
 // ─────────────────────────────────────────────────────────────────────────────
 export const trialBlacklist = pgTable('trial_blacklist', {
 	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-	cardSignature: varchar('card_signature', { length: 200 }),
+	cardSignature: varchar('card_signature', { length: 200 }).unique(),
 	phoneHash: text('phone_hash'),
 	deviceFingerprint: text('device_fingerprint'),
 	reason: text('reason'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYSTACK EVENTS — webhook idempotency. Insert event_id before processing;
+// unique violation = retry → ack without re-processing.
+// ─────────────────────────────────────────────────────────────────────────────
+export const paystackEvents = pgTable('paystack_events', {
+	eventId: text('event_id').primaryKey(),
+	eventType: varchar('event_type', { length: 80 }).notNull(),
+	receivedAt: timestamp('received_at').defaultNow().notNull(),
+	payload: jsonb('payload')
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENT INTENTS — server-side record of what user agreed to pay BEFORE
+// hitting Paystack. The verify endpoint validates the Paystack response
+// against the matching intent, instead of trusting client-controlled metadata.
+// ─────────────────────────────────────────────────────────────────────────────
+export const paymentIntents = pgTable('payment_intents', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	reference: varchar('reference', { length: 100 }).notNull().unique(),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	kind: varchar('kind', { length: 30 }).notNull(), // subscription | ppv | family_addon | renewal
+	plan: varchar('plan', { length: 20 }),
+	amountCents: integer('amount_cents').notNull(),
+	currency: varchar('currency', { length: 10 }).notNull().default('usd'),
+	addFamily: boolean('add_family').notNull().default(false),
+	isTrial: boolean('is_trial').notNull().default(false),
+	contentId: text('content_id'),
+	status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | consumed | expired
+	consumedAt: timestamp('consumed_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENTS — webinars, workshops, conferences, AMAs. Powers /webinars (public
+// audience) and /creator/events (creator audience).
+// ─────────────────────────────────────────────────────────────────────────────
+export const events = pgTable('events', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	speaker: varchar('speaker', { length: 255 }),
+	speakerRole: varchar('speaker_role', { length: 255 }),
+	kind: varchar('kind', { length: 30 }).notNull().default('webinar'),
+	track: varchar('track', { length: 30 }),
+	audience: varchar('audience', { length: 20 }).notNull().default('public'),
+	startsAt: timestamp('starts_at').notNull(),
+	endsAt: timestamp('ends_at'),
+	durationMinutes: integer('duration_minutes'),
+	location: text('location'),
+	capacity: integer('capacity'),
+	meetingUrl: text('meeting_url'),
+	recordingUrl: text('recording_url'),
+	status: varchar('status', { length: 20 }).notNull().default('scheduled'),
+	createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const eventRegistrations = pgTable('event_registrations', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	eventId: text('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	status: varchar('status', { length: 20 }).notNull().default('confirmed'),
+	reminderSentAt: timestamp('reminder_sent_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATOR FOLLOWERS — `user_id` follows `creator_id`. Surfaces follow buttons,
+// follower-count badges, and the followerGrowth30d metric in AI insights.
+// ─────────────────────────────────────────────────────────────────────────────
+export const creatorFollowers = pgTable('creator_followers', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => creators.id, { onDelete: 'cascade' }),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	status: varchar('status', { length: 20 }).notNull().default('active'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STC STAKES — snapshot of on-chain stakes maintained by the staking indexer
+// cron (api/cron/staking-indexer). One row per address that has ever staked.
+// `amount` is the current stake (0 if unstaked). `discountTier` is what
+// admin tokenomics aggregates by.
+// ─────────────────────────────────────────────────────────────────────────────
+export const stcStakes = pgTable('stc_stakes', {
+	userAddress: varchar('user_address', { length: 64 }).primaryKey(),
+	amount: text('amount').notNull().default('0'),
+	stakingTime: integer('staking_time').notNull().default(0),
+	lockPeriod: integer('lock_period').notNull().default(0),
+	discountTier: integer('discount_tier').notNull().default(0),
+	isUnlocked: boolean('is_unlocked').notNull().default(true),
+	lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull()
+});
+
+// Single-row state table used by long-running cron workers to remember where
+// they left off (last indexed block, last run timestamp, etc.) keyed by job.
+export const cronState = pgTable('cron_state', {
+	jobKey: varchar('job_key', { length: 80 }).primaryKey(),
+	lastBlock: text('last_block'),
+	lastRunAt: timestamp('last_run_at'),
+	notes: text('notes')
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEWSLETTER SUBSCRIPTIONS — creator newsletter signup + future general lists
+// ─────────────────────────────────────────────────────────────────────────────
+export const newsletterSubscriptions = pgTable('newsletter_subscriptions', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	email: varchar('email', { length: 320 }).notNull(),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	audience: varchar('audience', { length: 30 }).notNull().default('creator'),
+	preferences: jsonb('preferences').$type<Record<string, boolean>>(),
+	status: varchar('status', { length: 20 }).notNull().default('active'),
+	unsubscribeToken: text('unsubscribe_token').notNull().default(sql`gen_random_uuid()::text`),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REFUNDS — admin-issued refund audit log
+// ─────────────────────────────────────────────────────────────────────────────
+export const refunds = pgTable('refunds', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	reference: varchar('reference', { length: 100 }).notNull(),
+	amountCents: integer('amount_cents').notNull(),
+	currency: varchar('currency', { length: 10 }).notNull().default('usd'),
+	reason: text('reason'),
+	issuedBy: text('issued_by').notNull().references(() => user.id),
+	paystackResponse: jsonb('paystack_response'),
+	status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | success | failed
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -630,3 +777,92 @@ export const notifications = pgTable('notifications', {
 }, (t) => ({
 	userCreatedIdx: index('notifications_user_created_idx').on(t.userId, t.createdAt)
 }));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Content shares — append-only log of share events. Powers `totalShares` in
+// creator analytics and lets us spot virality patterns later. One row per
+// click on the share button (anonymous users get a null userId).
+// ─────────────────────────────────────────────────────────────────────────────
+export const contentShares = pgTable('content_shares', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').notNull(),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	channel: varchar('channel', { length: 30 }).notNull().default('link'), // 'link' | 'twitter' | 'facebook' | 'whatsapp' | 'email' | 'native'
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	contentIdx: index('content_shares_content_idx').on(t.contentId, t.createdAt)
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-row capture of device + country at watch-progress write time. Lets the
+// analytics endpoint aggregate `viewsByDevice` and `topCountries` without
+// triggering a per-row UA/IP parse on every read. Population is best-effort —
+// rows without a header still get inserted (just with NULLs).
+// ─────────────────────────────────────────────────────────────────────────────
+export const watchSessionMeta = pgTable('watch_session_meta', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+	contentId: text('content_id').notNull(),
+	deviceType: varchar('device_type', { length: 20 }),  // 'mobile' | 'tablet' | 'desktop' | 'tv' | 'bot'
+	browser: varchar('browser', { length: 40 }),
+	osName: varchar('os_name', { length: 40 }),
+	country: varchar('country', { length: 2 }),          // ISO-3166-1 alpha-2
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	contentIdx: index('watch_session_meta_content_idx').on(t.contentId, t.createdAt),
+	deviceIdx: index('watch_session_meta_device_idx').on(t.contentId, t.deviceType)
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Web Push subscriptions. Each row is one browser/device registration —
+// users can have many (laptop + phone). When a notify() targets a user we
+// look up active subscriptions here and dispatch via web-push.
+// ─────────────────────────────────────────────────────────────────────────────
+export const pushSubscriptions = pgTable('push_subscriptions', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	endpoint: text('endpoint').notNull(),
+	p256dh: text('p256dh').notNull(),
+	auth: text('auth').notNull(),
+	userAgent: text('user_agent'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	lastSeenAt: timestamp('last_seen_at').defaultNow().notNull()
+}, (t) => ({
+	userIdx: index('push_subscriptions_user_idx').on(t.userId),
+	endpointIdx: index('push_subscriptions_endpoint_idx').on(t.endpoint)
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Success stories — testimonies submitted by creators about content impact.
+// Admin moderates before publishing to /creator/success-stories.
+// ─────────────────────────────────────────────────────────────────────────────
+export const successStories = pgTable('success_stories', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	name: varchar('name', { length: 120 }).notNull(),
+	channel: varchar('channel', { length: 160 }),
+	story: text('story').notNull(),
+	status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending' | 'approved' | 'rejected'
+	moderationNote: text('moderation_note'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	reviewedAt: timestamp('reviewed_at')
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sponsorship intake — creators pitch content concepts for studio sponsorship.
+// Admin reviews via the admin panel.
+// ─────────────────────────────────────────────────────────────────────────────
+export const sponsorshipApplications = pgTable('sponsorship_applications', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	projectTitle: varchar('project_title', { length: 255 }).notNull(),
+	genre: varchar('genre', { length: 60 }),
+	synopsis: text('synopsis').notNull(),
+	requestedAmount: integer('requested_amount'),
+	timelineMonths: integer('timeline_months'),
+	contactEmail: varchar('contact_email', { length: 320 }),
+	status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending' | 'reviewing' | 'approved' | 'rejected'
+	adminNote: text('admin_note'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	reviewedAt: timestamp('reviewed_at')
+});

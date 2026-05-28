@@ -571,8 +571,14 @@
 		font-size: 0.8rem;
 		color: white;
 		outline: none;
-		transition: border-color 0.15s;
+		transition: border-color 0.15s, box-shadow 0.15s;
 		min-height: 0;
+	}
+	.copilot-input:focus-visible {
+		/* WCAG SC 2.4.7 — replace the suppressed outline with a visible ring.
+		   Uses the primary brand color, matched to the rest of the focus styles. */
+		border-color: hsl(var(--primary));
+		box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4);
 	}
 
 	.copilot-input::placeholder { color: rgba(255,255,255,0.25); }

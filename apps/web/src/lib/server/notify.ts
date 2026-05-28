@@ -2,6 +2,7 @@ import { db } from '$lib/db/drizzle';
 import { notifications, notificationPreferences } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { sendPushToUser, isPushConfigured } from './push';
 
 /**
  * Single-call notification dispatcher. Always inserts an in-app notification.
@@ -58,6 +59,16 @@ export async function notify(args: NotifyArgs): Promise<void> {
     // Logging only — never throw out of notify, callers shouldn't fail their
     // primary action because the notification couldn't be persisted.
     console.error('[notify] insert failed:', err);
+  }
+
+  // 1a. Web Push fan-out — fire-and-forget, no-op when VAPID isn't configured.
+  if (isPushConfigured()) {
+    void sendPushToUser(args.userId, {
+      title: args.title,
+      body: args.message,
+      url: args.actionUrl,
+      tag: args.kind
+    }).catch((err) => console.warn('[notify] push fan-out failed:', err));
   }
 
   // 2. Email side-effect, gated by user preference.

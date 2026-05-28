@@ -10,6 +10,7 @@
 
   // Use movies from server data, fallback to empty array
   let allMovies = $derived((data.movies || []) as MediaItem[]);
+
   const getNewestTimestamp = (item: any) => {
     if (item?.release_date) {
       const parsed = Date.parse(item.release_date);
@@ -45,6 +46,11 @@
 
   const user = $derived(page.data.user);
 </script>
+
+<svelte:head>
+  <title>Christian Movies · Sephar Studios</title>
+  <meta name="description" content="Faith-based and family-friendly movies streaming on Sephar Studios. New releases, classics, documentaries, and more." />
+</svelte:head>
 
 <div class="relative overflow-hidden min-h-screen bg-var(--surface-charcoal) text-white">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div>

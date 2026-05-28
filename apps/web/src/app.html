@@ -17,12 +17,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
+    <!--
+      Site-wide structured data. Organization + WebSite (with SearchAction)
+      are the minimum Google expects for a sitelinks search box. Per-page
+      schemas (VideoObject on /watch, Person on /creators/[id]) are emitted
+      from those pages via <svelte:head>.
+    -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "sepharstudios",
-        "url": "/"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://sepharstudios.com/#organization",
+            "name": "Sephar Studios",
+            "url": "https://sepharstudios.com",
+            "logo": "https://sepharstudios.com/logo-alone-sepharstudios.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://sepharstudios.com/#website",
+            "name": "Sephar Studios",
+            "url": "https://sepharstudios.com",
+            "description": "Stream faith-based movies, shows, documentaries, and kids content.",
+            "publisher": { "@id": "https://sepharstudios.com/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://sepharstudios.com/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
       }
     </script>
 

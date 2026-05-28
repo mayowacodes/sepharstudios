@@ -45,6 +45,13 @@
   });
 </script>
 
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:ring-2 focus:ring-primary"
+>
+  Skip to main content
+</a>
+
 <Sidebar.Provider>
   <AppSidebar />
   <Sidebar.Inset>
@@ -62,12 +69,12 @@
       </div>
     </header>
     <TrialBanner />
-    <div class="flex flex-1 flex-col gap-4 p-4 py-0 animate-in">
+    <main id="main-content" tabindex="-1" class="flex flex-1 flex-col gap-4 p-4 py-0 animate-in">
       <QueryClientProvider client={infiniteScroll.queryClient}>
         {@render children()}
         <SvelteQueryDevtools />
       </QueryClientProvider>
-    </div>
+    </main>
   </Sidebar.Inset>
 </Sidebar.Provider>
 

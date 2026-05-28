@@ -54,6 +54,9 @@
 		"src/routes/(admin)/admin/dashboard/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/events": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/governance": [
 		"src/routes/+layout.server.ts"
 	],
@@ -90,9 +93,6 @@
 	"/(admin)/admin/settings": [
 		"src/routes/+layout.server.ts"
 	],
-	"/(admin)/admin/test": [
-		"src/routes/+layout.server.ts"
-	],
 	"/(admin)/admin/tokenomics": [
 		"src/routes/+layout.server.ts"
 	],
@@ -101,6 +101,9 @@
 	],
 	"/api/achievements": [
 		"src/routes/api/achievements/+server.ts"
+	],
+	"/api/admin/admins": [
+		"src/routes/api/admin/admins/+server.ts"
 	],
 	"/api/admin/ai/config": [
 		"src/routes/api/admin/ai/config/+server.ts"
@@ -123,8 +126,14 @@
 	"/api/admin/content": [
 		"src/routes/api/admin/content/+server.ts"
 	],
+	"/api/admin/content/bulk": [
+		"src/routes/api/admin/content/bulk/+server.ts"
+	],
 	"/api/admin/content/[id]": [
 		"src/routes/api/admin/content/[id]/+server.ts"
+	],
+	"/api/admin/content/[id]/assign": [
+		"src/routes/api/admin/content/[id]/assign/+server.ts"
 	],
 	"/api/admin/content/[id]/ppv": [
 		"src/routes/api/admin/content/[id]/ppv/+server.ts"
@@ -143,6 +152,12 @@
 	],
 	"/api/admin/creators": [
 		"src/routes/api/admin/creators/+server.ts"
+	],
+	"/api/admin/events": [
+		"src/routes/api/admin/events/+server.ts"
+	],
+	"/api/admin/events/[id]": [
+		"src/routes/api/admin/events/[id]/+server.ts"
 	],
 	"/api/admin/governance/approve": [
 		"src/routes/api/admin/governance/approve/+server.ts"
@@ -179,6 +194,9 @@
 	],
 	"/api/admin/policies": [
 		"src/routes/api/admin/policies/+server.ts"
+	],
+	"/api/admin/refunds": [
+		"src/routes/api/admin/refunds/+server.ts"
 	],
 	"/api/admin/reviews": [
 		"src/routes/api/admin/reviews/+server.ts"
@@ -237,17 +255,50 @@
 	"/api/content/kids": [
 		"src/routes/api/content/kids/+server.ts"
 	],
+	"/api/creators/[id]/follow": [
+		"src/routes/api/creators/[id]/follow/+server.ts"
+	],
+	"/api/creator/analytics": [
+		"src/routes/api/creator/analytics/+server.ts"
+	],
 	"/api/creator/application": [
 		"src/routes/api/creator/application/+server.ts"
 	],
 	"/api/creator/content": [
 		"src/routes/api/creator/content/+server.ts"
 	],
+	"/api/creator/content/[id]/duplicate": [
+		"src/routes/api/creator/content/[id]/duplicate/+server.ts"
+	],
+	"/api/creator/earnings": [
+		"src/routes/api/creator/earnings/+server.ts"
+	],
+	"/api/creator/newsletter/subscribe": [
+		"src/routes/api/creator/newsletter/subscribe/+server.ts"
+	],
+	"/api/creator/payment-preferences": [
+		"src/routes/api/creator/payment-preferences/+server.ts"
+	],
 	"/api/creator/profile": [
 		"src/routes/api/creator/profile/+server.ts"
 	],
 	"/api/creator/stats": [
 		"src/routes/api/creator/stats/+server.ts"
+	],
+	"/api/cron/creator-payouts": [
+		"src/routes/api/cron/creator-payouts/+server.ts"
+	],
+	"/api/cron/event-status-sweep": [
+		"src/routes/api/cron/event-status-sweep/+server.ts"
+	],
+	"/api/cron/renew-subscriptions": [
+		"src/routes/api/cron/renew-subscriptions/+server.ts"
+	],
+	"/api/cron/settlement-reconcile": [
+		"src/routes/api/cron/settlement-reconcile/+server.ts"
+	],
+	"/api/cron/staking-indexer": [
+		"src/routes/api/cron/staking-indexer/+server.ts"
 	],
 	"/api/downloads/manifest/[id]": [
 		"src/routes/api/downloads/manifest/[id]/+server.ts"
@@ -275,6 +326,18 @@
 	],
 	"/api/encoder/ready": [
 		"src/routes/api/encoder/ready/+server.ts"
+	],
+	"/api/events": [
+		"src/routes/api/events/+server.ts"
+	],
+	"/api/events/feed.ics": [
+		"src/routes/api/events/feed.ics/+server.ts"
+	],
+	"/api/events/[id]": [
+		"src/routes/api/events/[id]/+server.ts"
+	],
+	"/api/events/[id]/register": [
+		"src/routes/api/events/[id]/register/+server.ts"
 	],
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
@@ -327,6 +390,9 @@
 	"/api/ppv/purchase": [
 		"src/routes/api/ppv/purchase/+server.ts"
 	],
+	"/api/ppv/refund": [
+		"src/routes/api/ppv/refund/+server.ts"
+	],
 	"/api/profiles": [
 		"src/routes/api/profiles/+server.ts"
 	],
@@ -339,6 +405,9 @@
 	"/api/profiles/[id]/pin": [
 		"src/routes/api/profiles/[id]/pin/+server.ts"
 	],
+	"/api/push/subscribe": [
+		"src/routes/api/push/subscribe/+server.ts"
+	],
 	"/api/recommendations": [
 		"src/routes/api/recommendations/+server.ts"
 	],
@@ -347,6 +416,9 @@
 	],
 	"/api/reviews/[id]/helpful": [
 		"src/routes/api/reviews/[id]/helpful/+server.ts"
+	],
+	"/api/shares": [
+		"src/routes/api/shares/+server.ts"
 	],
 	"/api/subscriptions/add-family": [
 		"src/routes/api/subscriptions/add-family/+server.ts"
@@ -366,6 +438,9 @@
 	"/api/subscriptions/status": [
 		"src/routes/api/subscriptions/status/+server.ts"
 	],
+	"/api/success-stories": [
+		"src/routes/api/success-stories/+server.ts"
+	],
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
 	],
@@ -377,6 +452,9 @@
 	],
 	"/api/users/[id]": [
 		"src/routes/api/users/[id]/+server.ts"
+	],
+	"/api/watch/active": [
+		"src/routes/api/watch/active/+server.ts"
 	],
 	"/api/watch/history": [
 		"src/routes/api/watch/history/+server.ts"
@@ -420,6 +498,10 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/contact": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/creators/[id]": [
+		"src/routes/(app)/creators/[id]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator": [
@@ -544,9 +626,6 @@
 	"/(app)/liquidity": [
 		"src/routes/+layout.server.ts"
 	],
-	"/(app)/mayowa": [
-		"src/routes/+layout.server.ts"
-	],
 	"/(protected)/milestones": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
@@ -595,7 +674,11 @@
 		"src/routes/(app)/shows/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/sitemap.xml": [
+		"src/routes/sitemap.xml/+server.ts"
+	],
 	"/(app)/sponsorships": [
+		"src/routes/(app)/sponsorships/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/staking": [

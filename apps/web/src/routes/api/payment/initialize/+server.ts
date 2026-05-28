@@ -1,6 +1,8 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { initializeTransaction, PLAN_PRICES_CENTS, type PlanName } from '$lib/payment/paystack';
 import { verifyOtp } from '$lib/server/otp';
+import { db } from '$lib/db/drizzle';
+import { paymentIntents } from '$lib/db/schema/sepharstudios';
 import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -30,9 +32,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		// For trial: charge $0 initially to tokenise the card, then charge after trial
-		// We initialize with $0.50 as a card verification charge (refundable)
-		const verificationAmountCents = 50; // $0.50 card verification
+		// $0.50 card verification charge (refundable). The verify endpoint resolves
+		// the matching payment_intent on callback and snapshots the user's choice;
+		// metadata in the Paystack transaction is treated as advisory only.
+		const verificationAmountCents = 50;
 
 		const tx = await initializeTransaction({
 			email: session.user.email,
@@ -44,6 +47,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				addFamily: addFamily ?? false,
 				isTrial: true
 			}
+		});
+
+		// Server-side source of truth for what this user agreed to buy. The verify
+		// endpoint cross-checks the Paystack response against this row instead of
+		// trusting client-controlled metadata blindly.
+		await db.insert(paymentIntents).values({
+			reference: tx.reference,
+			userId: session.user.id,
+			kind: 'subscription',
+			plan,
+			amountCents: verificationAmountCents,
+			addFamily: addFamily ?? false,
+			isTrial: true
 		});
 
 		return json({ authorizationUrl: tx.authorization_url, reference: tx.reference });

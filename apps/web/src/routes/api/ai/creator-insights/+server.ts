@@ -2,8 +2,8 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { generateCreatorInsights, optimizeContentTitle, narrateBlockchainActivity } from '$lib/server/ai-creator-insights';
 import { db } from '$lib/db/drizzle';
-import { creators, mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { eq } from 'drizzle-orm';
+import { creators, mediaLibrary, mediaWatchProgress, transactions, creatorFollowers } from '$lib/db/schema/sepharstudios';
+import { and, eq, gte, sql, inArray } from 'drizzle-orm';
 import { enforceRateLimit, AI_AGENT_LIMIT } from '$lib/server/rate-limit';
 
 /**
@@ -54,18 +54,65 @@ export const GET = async ({ locals }: RequestEvent) => {
 		.slice(0, 3)
 		.map((c) => c.title);
 
+	// Get the real content IDs to query for stats below.
+	const contentIdsRows = await db
+		.select({ id: mediaLibrary.id })
+		.from(mediaLibrary)
+		.where(eq(mediaLibrary.creatorId, locals.user.id));
+	const contentIds = contentIdsRows.map((r) => r.id);
+
+	// Real avgCompletionRate: average over all watch-progress rows for this
+	// creator's content. Zero when no one's watched anything yet (honest).
+	let avgCompletionRate = 0;
+	if (contentIds.length > 0) {
+		const [completionRow] = await db
+			.select({
+				avg: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
+			})
+			.from(mediaWatchProgress)
+			.where(inArray(mediaWatchProgress.contentId, contentIds));
+		avgCompletionRate = Math.round(Number(completionRow?.avg ?? 0));
+	}
+
+	// Real totalRevenueUSD: sum of all completed creator_payout transactions
+	// for this user in USD. STC payouts excluded (already counted separately).
+	const [revRow] = await db
+		.select({
+			total: sql<number>`coalesce(sum(${transactions.amount}), 0)`
+		})
+		.from(transactions)
+		.where(and(
+			eq(transactions.userId, locals.user.id),
+			eq(transactions.type, 'creator_payout'),
+			eq(transactions.status, 'completed'),
+			eq(transactions.currency, 'USD')
+		));
+	const totalRevenueUSD = Number(revRow?.total ?? 0) / 100; // cents → dollars
+
+	// followerGrowth30d: net new followers in the last 30 days.
+	const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+	const [followRow] = await db
+		.select({ count: sql<number>`count(*)::int` })
+		.from(creatorFollowers)
+		.where(and(
+			eq(creatorFollowers.creatorId, creator.id),
+			gte(creatorFollowers.createdAt, thirtyDaysAgo),
+			eq(creatorFollowers.status, 'active')
+		));
+	const followerGrowth30d = Number(followRow?.count ?? 0);
+
 	const insights = await generateCreatorInsights({
 		creatorName: creator.displayName,
 		totalContent: content.length,
 		totalViews,
-		avgCompletionRate: 72, // TODO: compute from mediaWatchProgress
+		avgCompletionRate,
 		avgRating: parseFloat(avgRating.toFixed(1)),
 		topContentTitles,
 		recentContentTitles,
 		contentTypes,
 		totalRevenueSTC: creator.totalEarnings ?? 0,
-		totalRevenueUSD: 0, // TODO: from paystackSubscriptions revenue attribution
-		followerGrowth30d: 0 // TODO: from subscriber tracking
+		totalRevenueUSD,
+		followerGrowth30d
 	});
 
 	if (!insights) throw error(503, 'AI insights unavailable');

@@ -113,6 +113,55 @@
       "when": 1772926800000,
       "tag": "0015_performance_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1773013200000,
+      "tag": "0016_payment_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1773099600000,
+      "tag": "0017_newsletter_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1773186000000,
+      "tag": "0018_creator_followers",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1773272400000,
+      "tag": "0019_content_assignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1773358800000,
+      "tag": "0020_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1773445200000,
+      "tag": "0021_staking_indexer_and_event_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773531600000,
+      "tag": "0022_engagement_push_stories_sponsorships",
+      "breakpoints": true
     }
   ]
 }

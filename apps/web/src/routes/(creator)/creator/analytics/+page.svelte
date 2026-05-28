@@ -2,11 +2,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  // Mock analytics data - replace with real API
-  let analyticsData: any = {};
-  let isLoading = true;
-  let selectedPeriod = '30d';
-  let selectedContent = 'all';
+  // Real analytics — pulled from /api/creator/analytics
+  let analyticsData = $state<any>({});
+  let isLoading = $state(true);
+  let selectedPeriod = $state('30d');
+  let selectedContent = $state('all');
 
   // AI Insights — real data from /api/ai/creator-insights
   type AIInsights = {
@@ -17,9 +17,9 @@
     nextContentIdea?: string;
     message?: string;
   };
-  let aiInsights: AIInsights | null = null;
-  let aiLoading = false;
-  let aiError = '';
+  let aiInsights = $state<AIInsights | null>(null);
+  let aiLoading = $state(false);
+  let aiError = $state('');
 
   async function loadAIInsights() {
     aiLoading = true;
@@ -44,93 +44,40 @@
     }
   }
 
+  function emptyAnalytics() {
+    return {
+      overview: { totalViews: 0, totalWatchTime: 0, averageWatchTime: 0, completionRate: 0, totalLikes: 0, totalShares: 0, activeViewers: 0, growthRate: 0 },
+      contentPerformance: [],
+      viewsByDevice: [],
+      demographics: { ageGroups: [], genderDistribution: [], topCountries: [] },
+      engagementTrends: []
+    };
+  }
+
+  async function loadAnalytics(period: string) {
+    isLoading = true;
+    try {
+      const res = await fetch(`/api/creator/analytics?period=${period}`);
+      if (!res.ok) {
+        analyticsData = emptyAnalytics();
+        return;
+      }
+      analyticsData = await res.json();
+    } catch (err) {
+      console.error('Error loading analytics:', err);
+      analyticsData = emptyAnalytics();
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  // Re-fetch when the period dropdown changes
+  $effect(() => {
+    void loadAnalytics(selectedPeriod);
+  });
+
   onMount(() => {
     void loadAIInsights();
-    // Simulate loading analytics from API
-    setTimeout(() => {
-      analyticsData = {
-        overview: {
-          totalViews: 12450,
-          totalWatchTime: 8920, // in minutes
-          averageWatchTime: 4.2, // in minutes
-          completionRate: 68.5, // percentage
-          totalLikes: 892,
-          totalShares: 156,
-          activeViewers: 234,
-          growthRate: 12.3 // percentage
-        },
-        contentPerformance: [
-          {
-            id: '3',
-            title: 'Worship Night Live',
-            views: 5420,
-            watchTime: 3890,
-            likes: 423,
-            shares: 89,
-            completionRate: 75.2,
-            engagement: 8.1
-          },
-          {
-            id: '1',
-            title: 'Faith in Action',
-            views: 3210,
-            watchTime: 2850,
-            likes: 287,
-            shares: 45,
-            completionRate: 62.8,
-            engagement: 6.4
-          },
-          {
-            id: '2',
-            title: 'Sunday Sermon Series',
-            views: 3820,
-            watchTime: 2180,
-            likes: 182,
-            shares: 22,
-            completionRate: 58.1,
-            engagement: 5.2
-          }
-        ],
-        viewsByDevice: [
-          { device: 'Desktop', views: 4523, percentage: 36.3 },
-          { device: 'Mobile', views: 5890, percentage: 47.3 },
-          { device: 'Tablet', views: 1245, percentage: 10.0 },
-          { device: 'Smart TV', views: 792, percentage: 6.4 }
-        ],
-        demographics: {
-          ageGroups: [
-            { range: '18-24', percentage: 15.2 },
-            { range: '25-34', percentage: 28.7 },
-            { range: '35-44', percentage: 23.1 },
-            { range: '45-54', percentage: 18.9 },
-            { range: '55-64', percentage: 10.8 },
-            { range: '65+', percentage: 3.3 }
-          ],
-          genderDistribution: [
-            { gender: 'Female', percentage: 58.2 },
-            { gender: 'Male', percentage: 40.1 },
-            { gender: 'Other', percentage: 1.7 }
-          ],
-          topCountries: [
-            { country: 'United States', percentage: 67.8 },
-            { country: 'Canada', percentage: 12.3 },
-            { country: 'United Kingdom', percentage: 8.9 },
-            { country: 'Australia', percentage: 5.2 },
-            { country: 'Other', percentage: 5.8 }
-          ]
-        },
-        engagementTrends: [
-          { date: '2024-01-01', views: 234, likes: 12, shares: 3 },
-          { date: '2024-01-02', views: 289, likes: 18, shares: 5 },
-          { date: '2024-01-03', views: 345, likes: 23, shares: 7 },
-          { date: '2024-01-04', views: 412, likes: 31, shares: 9 },
-          { date: '2024-01-05', views: 378, likes: 28, shares: 8 },
-          { date: '2024-01-06', views: 456, likes: 35, shares: 12 },
-          { date: '2024-01-07', views: 523, likes: 42, shares: 15 }
-        ]
-      };
-      isLoading = false;
-    }, 1200);
   });
   
   function formatNumber(num: number): string {

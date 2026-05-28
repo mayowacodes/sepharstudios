@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -14,7 +14,7 @@ import "./StudioToken.sol";
  * @dev ERC20 token representing liquidity provider shares
  */
 contract LPToken is ERC20, Ownable {
-    constructor() ERC20("StudioChain LP", "STC-LP") {}
+    constructor() ERC20("StudioChain LP", "STC-LP") Ownable(msg.sender) {}
 
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
@@ -61,7 +61,7 @@ contract TokenAMM is Ownable, ReentrancyGuard, Pausable {
     event BuybackExecuted(uint256 usdcUsed, uint256 stcBurned);
     event RevenueUpdated(uint256 newRevenue, uint256 timestamp);
 
-    constructor(address _stcToken, address _usdcToken, address _treasury) {
+    constructor(address _stcToken, address _usdcToken, address _treasury) Ownable(msg.sender) {
         stcToken = StudioToken(_stcToken);
         usdcToken = IERC20(_usdcToken);
         treasury = _treasury;

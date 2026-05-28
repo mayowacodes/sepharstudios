@@ -27,6 +27,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 		? Math.max(0, Math.ceil((new Date(sub.trialEndDate).getTime() - now.getTime()) / 86400000))
 		: null;
 
+	// Effective profile cap: prefer the subscription's snapshotted max (set at
+	// sub creation from PLAN_FEATURES) but honor any legacy active family
+	// add-on row that grants more.
+	const effectiveMaxProfiles = Math.max(
+		sub.maxProfiles ?? 1,
+		addon?.status === 'active' ? (addon.maxProfiles ?? 8) : 0
+	);
+
 	return json({
 		hasSubscription: true,
 		plan: sub.plan,
@@ -36,6 +44,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 		trialDaysLeft,
 		currentPeriodEnd: sub.currentPeriodEnd,
 		hasFamilyAddon: !!addon && addon.status === 'active',
-		maxProfiles: addon?.status === 'active' ? (addon.maxProfiles ?? 8) : 2
+		maxProfiles: effectiveMaxProfiles,
+		kidsAllowed: sub.kidsAllowed,
+		// Recurring-billing state — surfaces "your next charge is …" and any
+		// in-progress dunning so the user can fix their card before access cuts.
+		nextChargeAt: sub.nextChargeAt,
+		failedAttempts: sub.failedAttempts,
+		cardLast4: sub.cardLast4,
+		cardBrand: sub.cardBrand
 	});
 };

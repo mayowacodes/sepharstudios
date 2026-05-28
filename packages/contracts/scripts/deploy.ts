@@ -39,7 +39,7 @@ async function main() {
   console.log("Deploying contracts with account:", (walletClient as { account: { address: string } }).account.address);
 
   const balance = await publicClient.getBalance({
-    address: (walletClient as { account: { address: string } }).account.address
+    address: (walletClient as { account: { address: `0x${string}` } }).account.address
   });
   console.log("Account balance:", balance.toString());
 

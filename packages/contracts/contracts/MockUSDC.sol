@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * Mimics the real USDC token with 6 decimal places
  */
 contract MockUSDC is ERC20, Ownable {
-    constructor() ERC20("USD Coin", "USDC") {
+    constructor() ERC20("USD Coin", "USDC") Ownable(msg.sender) {
         // Mint initial supply for testing
         _mint(msg.sender, 1000000 * 10**decimals()); // 1M USDC
     }

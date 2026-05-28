@@ -105,15 +105,76 @@ export async function chargeAuthorization(options: {
 	return res.data;
 }
 
+// ─── Refunds ──────────────────────────────────────────────────────────────────
+
+export interface PaystackRefund {
+	id: number;
+	transaction: { id: number; reference: string };
+	amount: number;
+	currency: string;
+	status: string;
+	refunded_at: string | null;
+}
+
+export async function createRefund(options: {
+	transactionReference: string;
+	amountKobo?: number; // omit to refund the full amount
+	merchantNote?: string;
+	customerNote?: string;
+}): Promise<PaystackRefund> {
+	const body: Record<string, unknown> = { transaction: options.transactionReference };
+	if (options.amountKobo !== undefined) body.amount = options.amountKobo;
+	if (options.merchantNote) body.merchant_note = options.merchantNote;
+	if (options.customerNote) body.customer_note = options.customerNote;
+	const res = await paystackFetch<{ data: PaystackRefund }>('/refund', {
+		method: 'POST',
+		body: JSON.stringify(body)
+	});
+	return res.data;
+}
+
 // ─── Plan amount helpers (USD cents → Paystack amount) ────────────────────────
 // Paystack processes USD in cents (100 = $1.00)
+//
+// Pricing model (2026-05-28):
+//   freemium: $1 every 2 months, 1 profile, no kids profile, ads-supported
+//   basic:    $4/month,           2 profiles, no kids profile, ad-free
+//   premium:  $10/month,          8 profiles, kids profile,    ad-free (family tier)
+//   creator:  $10/month,          for content creators (unchanged tier)
+//
+// Family add-on ($5/month) is **deprecated** — its capabilities are now folded
+// into the `premium` tier. The familyAddons table remains for backwards
+// compatibility with existing subscribers.
 
 export const PLAN_PRICES_CENTS = {
-	basic: 300,     // $3.00/month
-	premium: 1000,  // $10.00/month
-	creator: 1500   // $15.00/month
+	freemium: 100,  // $1.00 / 2 months
+	basic: 400,     // $4.00/month
+	premium: 1000,  // $10.00/month — replaces basic+family-addon
+	creator: 1000   // $10.00/month — creator tier
 } as const;
 
-export const FAMILY_ADDON_CENTS = 500; // $5.00/month
-
 export type PlanName = keyof typeof PLAN_PRICES_CENTS;
+
+/**
+ * Per-plan capabilities. Single source of truth for profile caps, kids access,
+ * ad-supported flag, and renewal cadence. The verify endpoint snapshots these
+ * into `paystackSubscriptions` so a plan-config change doesn't retroactively
+ * change existing subscribers' entitlements.
+ */
+export const PLAN_FEATURES: Record<PlanName, {
+	maxProfiles: number;
+	kidsAllowed: boolean;
+	hasAds: boolean;
+	renewalIntervalMonths: number;
+}> = {
+	freemium: { maxProfiles: 1, kidsAllowed: false, hasAds: true,  renewalIntervalMonths: 2 },
+	basic:    { maxProfiles: 2, kidsAllowed: false, hasAds: false, renewalIntervalMonths: 1 },
+	premium:  { maxProfiles: 8, kidsAllowed: true,  hasAds: false, renewalIntervalMonths: 1 },
+	creator:  { maxProfiles: 2, kidsAllowed: false, hasAds: false, renewalIntervalMonths: 1 }
+};
+
+/**
+ * @deprecated kept only for the legacy family_addons table reconciliation.
+ * Premium tier now includes 8 profiles natively; no need to charge an add-on.
+ */
+export const FAMILY_ADDON_CENTS = 500;
