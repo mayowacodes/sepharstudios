@@ -79,6 +79,44 @@ export async function sendAchievementEmail(to: string, name: string, achievement
 	});
 }
 
+// ─── Weekly digest ────────────────────────────────────────────────────────────
+
+export interface DigestItem {
+	id: string;
+	title: string;
+	mediaType: string | null;
+	description: string | null;
+}
+
+/**
+ * Sends the weekly content digest. Includes an unsubscribe URL that lets the
+ * recipient opt out without signing in (via the per-row `unsubscribe_token`).
+ */
+export async function sendWeeklyDigest(
+	to: string,
+	name: string,
+	items: DigestItem[],
+	unsubscribeUrl: string
+) {
+	const headline = items.length === 1
+		? `${items[0].title} — this week on Sephar Studios`
+		: `${items.length} new arrivals this week`;
+	const bullets = items
+		.slice(0, 10)
+		.map((it) => `• ${it.title}${it.mediaType ? ` (${it.mediaType})` : ''}`)
+		.join('\n');
+	const description = `Hi ${name},\n\nHere's what landed on Sephar Studios over the past week:\n\n${bullets}\n\nUnsubscribe: ${unsubscribeUrl}`;
+
+	await sendEmailAction({
+		to,
+		subject: `Sephar Weekly — ${headline}`,
+		meta: {
+			description,
+			link: `${SITE_URL}/browse`
+		}
+	});
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function capitalize(str: string) {

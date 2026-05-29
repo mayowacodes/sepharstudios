@@ -9,41 +9,81 @@
     attachments: File[];
   }
 
-  let ticketForm: TicketForm = {
+  let ticketForm = $state<TicketForm>({
     subject: '',
     category: '',
-    priority: 'medium',
+    priority: 'normal',
     description: '',
     email: '',
     attachments: []
-  };
+  });
 
-  let isSubmitting = false;
-  let isSubmitted = false;
+  let isSubmitting = $state(false);
+  let isSubmitted = $state(false);
+  let submitError = $state('');
 
+  // Category values match `ALLOWED_CATEGORIES` in the backend.
   const categories = [
-    { value: 'upload', label: 'Upload Issues' },
-    { value: 'video-quality', label: 'Video Quality Problems' },
-    { value: 'audio', label: 'Audio Issues' },
-    { value: 'account', label: 'Account Access' },
-    { value: 'analytics', label: 'Analytics Problems' },
+    { value: 'video-playback', label: 'Upload / Playback Issues' },
+    { value: 'streaming-quality', label: 'Video Quality Problems' },
+    { value: 'audio-issues', label: 'Audio Issues' },
+    { value: 'login', label: 'Account Access' },
+    { value: 'profile', label: 'Profile / Analytics Problems' },
     { value: 'monetization', label: 'Monetization Issues' },
+    { value: 'payments', label: 'Payment Issues' },
     { value: 'mobile', label: 'Mobile App Problems' },
     { value: 'other', label: 'Other Technical Issue' }
   ];
 
+  async function uploadAttachments(): Promise<Array<{ id: string; url: string; name: string; size: number }>> {
+    const uploaded: Array<{ id: string; url: string; name: string; size: number }> = [];
+    for (const file of ticketForm.attachments.slice(0, 5)) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/files', { method: 'POST', body: formData });
+      if (!res.ok) {
+        throw new Error(`Failed to upload "${file.name}"`);
+      }
+      const data = await res.json();
+      const url: string | undefined = data.file?.url ?? data.url;
+      const id: string = data.file?.id ?? data.id ?? crypto.randomUUID();
+      if (!url) throw new Error(`No URL returned for "${file.name}"`);
+      uploaded.push({ id, url, name: file.name, size: file.size });
+    }
+    return uploaded;
+  }
+
   async function submitTicket(): Promise<void> {
+    submitError = '';
     if (!ticketForm.subject || !ticketForm.category || !ticketForm.description || !ticketForm.email) {
+      submitError = 'Please fill out all required fields.';
       return;
     }
 
     isSubmitting = true;
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    isSubmitting = false;
-    isSubmitted = true;
+    try {
+      const attachments = await uploadAttachments();
+      const res = await fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: ticketForm.subject,
+          category: ticketForm.category,
+          priority: ticketForm.priority,
+          description: ticketForm.description,
+          email: ticketForm.email,
+          attachments
+        })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? `Submission failed (${res.status})`);
+      isSubmitted = true;
+      ticketForm = { subject: '', category: '', priority: 'normal', description: '', email: '', attachments: [] };
+    } catch (err) {
+      submitError = err instanceof Error ? err.message : 'Submission failed';
+    } finally {
+      isSubmitting = false;
+    }
   }
 
   function addAttachment(event: Event): void {
@@ -123,7 +163,7 @@
               class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
             >
               <option value="low">🟢 Low - General question</option>
-              <option value="medium">🟡 Medium - Issue affecting workflow</option>
+              <option value="normal">🟡 Normal - Issue affecting workflow</option>
               <option value="high">🟠 High - Can't upload or access account</option>
               <option value="urgent">🔴 Urgent - Critical system failure</option>
             </select>
@@ -230,6 +270,11 @@
         </div>
 
         <!-- Submit Button -->
+        {#if submitError}
+          <div class="bg-red-600/20 border border-red-600 text-red-100 rounded-lg p-3 text-sm">
+            {submitError}
+          </div>
+        {/if}
         <div class="flex items-center justify-between">
           <div class="text-gray-400 text-sm">
             * Required fields

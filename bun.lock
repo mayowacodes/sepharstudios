@@ -20,6 +20,7 @@
         "drizzle-orm": "^0.45.2",
         "hls.js": "^1.6.16",
         "ioredis": "^5.11.0",
+        "meilisearch": "^0.58.0",
         "minio": "^8.0.7",
         "postgres": "^3.4.9",
         "runed": "^0.37.1",
@@ -879,6 +880,8 @@
     "lz-string": ["lz-string@1.5.0", "", { "bin": { "lz-string": "bin/bin.js" } }, "sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ=="],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
+
+    "meilisearch": ["meilisearch@0.58.0", "", {}, "sha512-MXFlU+JVG2I3tDI4brS3UHxEv2fjOROP24TPP16c8dGHTulb1kxMgXvKP0x4ImvUcsVVJFi4QXP0JNDS/TaWaw=="],
 
     "memoize": ["memoize@10.2.0", "", { "dependencies": { "mimic-function": "^5.0.1" } }, "sha512-DeC6b7QBrZsRs3Y02A6A7lQyzFbsQbqgjI6UW0GigGWV+u1s25TycMr0XHZE4cJce7rY/vyw2ctMQqfDkIhUEA=="],
 

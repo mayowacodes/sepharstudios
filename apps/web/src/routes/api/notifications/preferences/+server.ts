@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	if (!prefs) {
 		// Return defaults
-		return json({ newReleases: true, trialExpiry: true, paymentConfirmation: true, weeklyDigest: false, creatorUpdates: false });
+		return json({ newReleases: true, trialExpiry: true, paymentConfirmation: true, weeklyDigest: false, creatorUpdates: false, eventReminders: true });
 	}
 
 	return json(prefs);
@@ -27,7 +27,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 
 	const data = await request.json() as {
 		newReleases?: boolean; trialExpiry?: boolean; paymentConfirmation?: boolean;
-		weeklyDigest?: boolean; creatorUpdates?: boolean;
+		weeklyDigest?: boolean; creatorUpdates?: boolean; eventReminders?: boolean;
 	};
 
 	const [existing] = await db.select().from(notificationPreferences)

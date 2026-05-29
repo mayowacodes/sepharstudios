@@ -86,7 +86,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			kind: 'event_reminder',
 			title: `Starting soon: ${r.title}`,
 			message: `${r.title} starts in under an hour. Join the meeting from your event page.`,
-			actionUrl: r.audience === 'creator' ? '/creator/events' : '/webinars'
+			actionUrl: r.audience === 'creator' ? '/creator/events' : '/webinars',
+			emailPref: 'eventReminders'
 		}).catch(() => { /* best-effort */ });
 
 		await db.update(eventRegistrations)

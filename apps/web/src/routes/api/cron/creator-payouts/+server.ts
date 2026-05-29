@@ -22,7 +22,7 @@ import { transferStc, isTreasuryReady } from '$lib/server/stc-transfer';
  *
  * Same auth model as the subscription renewal cron — `CRON_SECRET` bearer.
  *
- *   curl -X POST https://app.sepharstudios.com/api/cron/creator-payouts \
+ *   curl -X POST https://sepharstudios.com/api/cron/creator-payouts \
  *        -H "Authorization: Bearer $CRON_SECRET"
  *
  * Recommended schedule: monthly on the 1st at 00:05 UTC.

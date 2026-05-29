@@ -28,6 +28,7 @@ export type NotificationKind =
   | 'creator_application'
   | 'content_publish'
   | 'achievement'
+  | 'event_reminder'
   | 'system';
 
 interface NotifyArgs {
@@ -39,7 +40,7 @@ interface NotifyArgs {
   /** Optional: which preference flag controls the email side-effect.
    *  If omitted, no email is sent regardless of `emailFn`. */
   emailPref?: keyof Pick<typeof notificationPreferences.$inferSelect,
-    'newReleases' | 'trialExpiry' | 'paymentConfirmation' | 'weeklyDigest' | 'creatorUpdates'>;
+    'newReleases' | 'trialExpiry' | 'paymentConfirmation' | 'weeklyDigest' | 'creatorUpdates' | 'eventReminders'>;
   /** Optional: function to send the email. Receives the user's email address
    *  and display name. Called only if `emailPref` exists and is `true`. */
   emailFn?: (toEmail: string, displayName: string) => Promise<void>;
@@ -81,7 +82,8 @@ export async function notify(args: NotifyArgs): Promise<void> {
     trialExpiry: true,
     paymentConfirmation: true,
     weeklyDigest: false,
-    creatorUpdates: false
+    creatorUpdates: false,
+    eventReminders: true
   };
 
   try {

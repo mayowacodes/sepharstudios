@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, date, varchar } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -13,6 +13,9 @@ export const user = pgTable("user", {
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
   walletAddress: text("wallet_address"), // for Web3 integration
+  // Self-reported demographics for creator analytics aggregation. Optional.
+  dateOfBirth: date("date_of_birth"),
+  gender: varchar("gender", { length: 30 }),
 });
 
 export const session = pgTable("session", {

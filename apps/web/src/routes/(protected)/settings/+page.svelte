@@ -10,6 +10,12 @@
     paymentConfirmation: boolean;
     weeklyDigest: boolean;
     creatorUpdates: boolean;
+    eventReminders: boolean;
+  }
+
+  interface ProfileFields {
+    dateOfBirth: string | null;
+    gender: string | null;
   }
 
   interface SubscriptionStatus {
@@ -40,6 +46,30 @@
   let pushBusy = $state(false);
   let pushError = $state('');
 
+  let profile = $state<ProfileFields>({ dateOfBirth: null, gender: null });
+  let profileSaving = $state(false);
+  let profileMsg = $state('');
+
+  async function saveProfile() {
+    profileSaving = true;
+    profileMsg = '';
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dateOfBirth: profile.dateOfBirth || null,
+          gender: profile.gender || null
+        })
+      });
+      const body = await res.json().catch(() => ({}));
+      profileMsg = res.ok ? 'Profile saved' : (body.error ?? 'Save failed');
+      setTimeout(() => profileMsg = '', 3000);
+    } finally {
+      profileSaving = false;
+    }
+  }
+
   async function togglePush() {
     pushBusy = true;
     pushError = '';
@@ -61,9 +91,10 @@
   }
 
   onMount(async () => {
-    const [prefsRes, subRes] = await Promise.all([
+    const [prefsRes, subRes, profileRes] = await Promise.all([
       fetch('/api/notifications/preferences'),
-      fetch('/api/subscriptions/status')
+      fetch('/api/subscriptions/status'),
+      fetch('/api/user/profile')
     ]);
     if (prefsRes.ok) prefs = await prefsRes.json();
     if (subRes.ok) {
@@ -71,6 +102,11 @@
       if (sub?.plan === 'freemium' || sub?.plan === 'basic' || sub?.plan === 'premium' || sub?.plan === 'creator') {
         selectedPlan = sub.plan;
       }
+    }
+    if (profileRes.ok) {
+      const data = await profileRes.json();
+      profile.dateOfBirth = data.dateOfBirth ?? null;
+      profile.gender = data.gender ?? null;
     }
     loading = false;
     pushSupported = isPushSupported();
@@ -143,7 +179,8 @@
     trialExpiry: 'Trial expiry reminders',
     paymentConfirmation: 'Payment confirmations',
     weeklyDigest: 'Weekly content digest',
-    creatorUpdates: 'Creator you follow updates'
+    creatorUpdates: 'Creator you follow updates',
+    eventReminders: 'Event reminders (1 hour before)'
   };
 </script>
 
@@ -262,6 +299,51 @@
           {/if}
         </div>
       {/if}
+
+      <!-- Profile (optional demographics) -->
+      <div class="bg-card border border-border rounded-xl p-5 mb-6">
+        <div class="flex items-center gap-3 mb-2">
+          <Mail class="w-5 h-5 text-muted-foreground" />
+          <h2 class="font-semibold">Profile</h2>
+        </div>
+        <p class="text-xs text-muted-foreground mb-4">
+          Used anonymously for creator analytics. We never share this with third parties or display it on your public profile.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="dob" class="text-sm font-medium block mb-1">Date of birth</label>
+            <input
+              id="dob"
+              type="date"
+              bind:value={profile.dateOfBirth}
+              max={new Date().toISOString().slice(0, 10)}
+              class="w-full px-3 py-2 bg-muted/40 border border-border rounded-md text-sm focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label for="gender" class="text-sm font-medium block mb-1">Gender</label>
+            <select
+              id="gender"
+              bind:value={profile.gender}
+              class="w-full px-3 py-2 bg-muted/40 border border-border rounded-md text-sm focus:outline-none focus:border-primary"
+            >
+              <option value="">Choose</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non_binary">Non-binary</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-4">
+          <Button size="sm" onclick={saveProfile} disabled={profileSaving}>
+            {profileSaving ? 'Saving…' : 'Save profile'}
+          </Button>
+          {#if profileMsg}
+            <span class="text-xs text-muted-foreground">{profileMsg}</span>
+          {/if}
+        </div>
+      </div>
 
       <!-- Notification preferences -->
       {#if prefs}

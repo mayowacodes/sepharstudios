@@ -65,7 +65,7 @@ Pick one of these approaches:
 2. Schedule: `0 * * * *` (hourly).
 3. Command:
    ```sh
-   curl -X POST https://app.sepharstudios.com/api/cron/renew-subscriptions \
+   curl -X POST https://sepharstudios.com/api/cron/renew-subscriptions \
         -H "Authorization: Bearer $CRON_SECRET" \
         --silent --fail-with-body
    ```
@@ -81,7 +81,7 @@ For self-hosted boxes only. Skip if Dokploy already provides scheduling.
 ```
 CRON_SECRET=<64+ random chars, generated once, kept secret>
 PAYSTACK_SECRET_KEY=<from Paystack dashboard>
-PUBLIC_SITE_URL=https://app.sepharstudios.com
+PUBLIC_SITE_URL=https://sepharstudios.com
 ```
 
 `CRON_SECRET` is checked via constant-time string comparison (TODO: switch to `crypto.timingSafeEqual` if you anticipate a high-volume timing-attack surface).

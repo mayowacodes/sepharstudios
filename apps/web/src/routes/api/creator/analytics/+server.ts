@@ -8,7 +8,8 @@ import {
 	contentShares,
 	watchSessionMeta
 } from '$lib/db/schema/sepharstudios';
-import { and, eq, gte, lt, sql, inArray } from 'drizzle-orm';
+import { user } from '$lib/db/schema';
+import { and, eq, gte, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import { getRedis } from '$lib/server/redis';
 
 /**
@@ -235,6 +236,57 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		trends = trendRows.map((r) => ({ date: r.day, views: Number(r.views) }));
 	}
 
+	// Age + gender breakdown. Join watch_session_meta → user to read
+	// self-reported demographics; users without DOB/gender simply don't
+	// contribute to those buckets.
+	const ageRows = await db
+		.select({
+			bucket: sql<string>`
+				CASE
+					WHEN ${user.dateOfBirth} IS NULL THEN NULL
+					WHEN date_part('year', age(${user.dateOfBirth})) < 18 THEN '<18'
+					WHEN date_part('year', age(${user.dateOfBirth})) < 25 THEN '18-24'
+					WHEN date_part('year', age(${user.dateOfBirth})) < 35 THEN '25-34'
+					WHEN date_part('year', age(${user.dateOfBirth})) < 45 THEN '35-44'
+					WHEN date_part('year', age(${user.dateOfBirth})) < 55 THEN '45-54'
+					ELSE '55+'
+				END
+			`,
+			count: sql<number>`count(*)::int`
+		})
+		.from(watchSessionMeta)
+		.innerJoin(user, eq(user.id, watchSessionMeta.userId))
+		.where(and(
+			inArray(watchSessionMeta.contentId, contentIds),
+			isNotNull(user.dateOfBirth),
+			cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
+		))
+		.groupBy(sql`1`);
+	const ageGroups = ageRows
+		.filter((r) => r.bucket)
+		.map((r) => ({ bucket: r.bucket ?? 'unknown', count: Number(r.count) }))
+		.sort((a, b) => {
+			const order = ['<18', '18-24', '25-34', '35-44', '45-54', '55+'];
+			return order.indexOf(a.bucket) - order.indexOf(b.bucket);
+		});
+
+	const genderRows = await db
+		.select({
+			gender: user.gender,
+			count: sql<number>`count(*)::int`
+		})
+		.from(watchSessionMeta)
+		.innerJoin(user, eq(user.id, watchSessionMeta.userId))
+		.where(and(
+			inArray(watchSessionMeta.contentId, contentIds),
+			isNotNull(user.gender),
+			cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
+		))
+		.groupBy(user.gender);
+	const genderDistribution = genderRows
+		.filter((r) => r.gender)
+		.map((r) => ({ gender: r.gender ?? 'unknown', count: Number(r.count) }));
+
 	return json({
 		period,
 		overview: {
@@ -250,8 +302,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		contentPerformance,
 		viewsByDevice,
 		demographics: {
-			ageGroups: [],
-			genderDistribution: [],
+			ageGroups,
+			genderDistribution,
 			topCountries
 		},
 		engagementTrends: trends

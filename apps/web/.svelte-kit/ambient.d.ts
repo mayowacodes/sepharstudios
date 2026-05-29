@@ -131,6 +131,9 @@ declare module '$env/static/private' {
 	export const EXEPATH: string;
 	export const FPS_BROWSER_APP_PROFILE_STRING: string;
 	export const FPS_BROWSER_USER_PROFILE_STRING: string;
+	export const GIT_CONFIG_COUNT: string;
+	export const GIT_CONFIG_KEY_0: string;
+	export const GIT_CONFIG_VALUE_0: string;
 	export const GIT_EDITOR: string;
 	export const HOME: string;
 	export const HOMEDRIVE: string;
@@ -200,11 +203,11 @@ declare module '$env/static/private' {
 	export const VSCODE_ESM_ENTRYPOINT: string;
 	export const VSCODE_HANDLES_UNCAUGHT_ERRORS: string;
 	export const VSCODE_IPC_HOOK: string;
-	export const VSCODE_L10N_BUNDLE_LOCATION: string;
 	export const VSCODE_NLS_CONFIG: string;
 	export const VSCODE_PID: string;
 	export const WINDIR: string;
 	export const _: string;
+	export const __COMPAT_LAYER: string;
 }
 
 /**
@@ -385,6 +388,9 @@ declare module '$env/dynamic/private' {
 		EXEPATH: string;
 		FPS_BROWSER_APP_PROFILE_STRING: string;
 		FPS_BROWSER_USER_PROFILE_STRING: string;
+		GIT_CONFIG_COUNT: string;
+		GIT_CONFIG_KEY_0: string;
+		GIT_CONFIG_VALUE_0: string;
 		GIT_EDITOR: string;
 		HOME: string;
 		HOMEDRIVE: string;
@@ -454,11 +460,11 @@ declare module '$env/dynamic/private' {
 		VSCODE_ESM_ENTRYPOINT: string;
 		VSCODE_HANDLES_UNCAUGHT_ERRORS: string;
 		VSCODE_IPC_HOOK: string;
-		VSCODE_L10N_BUNDLE_LOCATION: string;
 		VSCODE_NLS_CONFIG: string;
 		VSCODE_PID: string;
 		WINDIR: string;
 		_: string;
+		__COMPAT_LAYER: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}

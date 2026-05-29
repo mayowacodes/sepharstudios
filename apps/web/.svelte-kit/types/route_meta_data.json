@@ -93,6 +93,9 @@
 	"/(admin)/admin/settings": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/submissions": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/tokenomics": [
 		"src/routes/+layout.server.ts"
 	],
@@ -159,6 +162,9 @@
 	"/api/admin/events/[id]": [
 		"src/routes/api/admin/events/[id]/+server.ts"
 	],
+	"/api/admin/forum/threads/[id]": [
+		"src/routes/api/admin/forum/threads/[id]/+server.ts"
+	],
 	"/api/admin/governance/approve": [
 		"src/routes/api/admin/governance/approve/+server.ts"
 	],
@@ -207,8 +213,26 @@
 	"/api/admin/settings/test-email": [
 		"src/routes/api/admin/settings/test-email/+server.ts"
 	],
+	"/api/admin/sponsorships": [
+		"src/routes/api/admin/sponsorships/+server.ts"
+	],
+	"/api/admin/sponsorships/[id]/review": [
+		"src/routes/api/admin/sponsorships/[id]/review/+server.ts"
+	],
 	"/api/admin/stats": [
 		"src/routes/api/admin/stats/+server.ts"
+	],
+	"/api/admin/success-stories": [
+		"src/routes/api/admin/success-stories/+server.ts"
+	],
+	"/api/admin/success-stories/[id]/review": [
+		"src/routes/api/admin/success-stories/[id]/review/+server.ts"
+	],
+	"/api/admin/support-tickets": [
+		"src/routes/api/admin/support-tickets/+server.ts"
+	],
+	"/api/admin/support-tickets/[id]/review": [
+		"src/routes/api/admin/support-tickets/[id]/review/+server.ts"
 	],
 	"/api/admin/tokenomics": [
 		"src/routes/api/admin/tokenomics/+server.ts"
@@ -291,6 +315,12 @@
 	"/api/cron/event-status-sweep": [
 		"src/routes/api/cron/event-status-sweep/+server.ts"
 	],
+	"/api/cron/meilisearch-reindex": [
+		"src/routes/api/cron/meilisearch-reindex/+server.ts"
+	],
+	"/api/cron/newsletter-weekly-digest": [
+		"src/routes/api/cron/newsletter-weekly-digest/+server.ts"
+	],
 	"/api/cron/renew-subscriptions": [
 		"src/routes/api/cron/renew-subscriptions/+server.ts"
 	],
@@ -341,6 +371,24 @@
 	],
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
+	],
+	"/api/forum/replies/[id]": [
+		"src/routes/api/forum/replies/[id]/+server.ts"
+	],
+	"/api/forum/replies/[id]/like": [
+		"src/routes/api/forum/replies/[id]/like/+server.ts"
+	],
+	"/api/forum/threads": [
+		"src/routes/api/forum/threads/+server.ts"
+	],
+	"/api/forum/threads/[id]": [
+		"src/routes/api/forum/threads/[id]/+server.ts"
+	],
+	"/api/forum/threads/[id]/like": [
+		"src/routes/api/forum/threads/[id]/like/+server.ts"
+	],
+	"/api/forum/threads/[id]/replies": [
+		"src/routes/api/forum/threads/[id]/replies/+server.ts"
 	],
 	"/api/health": [
 		"src/routes/api/health/+server.ts"
@@ -417,6 +465,9 @@
 	"/api/reviews/[id]/helpful": [
 		"src/routes/api/reviews/[id]/helpful/+server.ts"
 	],
+	"/api/search": [
+		"src/routes/api/search/+server.ts"
+	],
 	"/api/shares": [
 		"src/routes/api/shares/+server.ts"
 	],
@@ -441,6 +492,9 @@
 	"/api/success-stories": [
 		"src/routes/api/success-stories/+server.ts"
 	],
+	"/api/support/tickets": [
+		"src/routes/api/support/tickets/+server.ts"
+	],
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
 	],
@@ -452,6 +506,9 @@
 	],
 	"/api/users/[id]": [
 		"src/routes/api/users/[id]/+server.ts"
+	],
+	"/api/user/profile": [
+		"src/routes/api/user/profile/+server.ts"
 	],
 	"/api/watch/active": [
 		"src/routes/api/watch/active/+server.ts"
@@ -533,6 +590,12 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/forum": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/forum/new": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/forum/[id]": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/guidelines": [

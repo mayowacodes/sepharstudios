@@ -547,6 +547,7 @@ export const notificationPreferences = pgTable('notification_preferences', {
 	paymentConfirmation: boolean('payment_confirmation').default(true),
 	weeklyDigest: boolean('weekly_digest').default(false),
 	creatorUpdates: boolean('creator_updates').default(false),
+	eventReminders: boolean('event_reminders').default(true),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
@@ -861,8 +862,76 @@ export const sponsorshipApplications = pgTable('sponsorship_applications', {
 	requestedAmount: integer('requested_amount'),
 	timelineMonths: integer('timeline_months'),
 	contactEmail: varchar('contact_email', { length: 320 }),
+	documents: jsonb('documents').$type<Array<{ kind: string; url: string; name: string; size?: number }>>(),
 	status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending' | 'reviewing' | 'approved' | 'rejected'
 	adminNote: text('admin_note'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	reviewedAt: timestamp('reviewed_at')
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPPORT TICKETS — backs /creator/tech-support submissions. Admin reviews
+// via /admin/submissions.
+// ─────────────────────────────────────────────────────────────────────────────
+export const supportTickets = pgTable('support_tickets', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	email: varchar('email', { length: 320 }).notNull(),
+	subject: varchar('subject', { length: 255 }).notNull(),
+	category: varchar('category', { length: 40 }),
+	priority: varchar('priority', { length: 20 }).notNull().default('normal'),  // 'low' | 'normal' | 'high' | 'urgent'
+	description: text('description').notNull(),
+	attachments: jsonb('attachments').$type<Array<{ id: string; url: string; name: string; size?: number }>>(),
+	status: varchar('status', { length: 20 }).notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+	adminResponse: text('admin_response'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	resolvedAt: timestamp('resolved_at')
+}, (t) => ({
+	statusCreatedIdx: index('support_tickets_status_created_idx').on(t.status, t.createdAt)
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATOR FORUM — threads + nested replies + likes. AI-moderated on submit.
+// Soft-delete via `status='removed'`. Admin can sticky/lock/hide.
+// ─────────────────────────────────────────────────────────────────────────────
+export const forumThreads = pgTable('forum_threads', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	title: varchar('title', { length: 255 }).notNull(),
+	category: varchar('category', { length: 40 }).notNull(),
+	body: text('body').notNull(),
+	isSticky: boolean('is_sticky').notNull().default(false),
+	isLocked: boolean('is_locked').notNull().default(false),
+	likeCount: integer('like_count').notNull().default(0),
+	replyCount: integer('reply_count').notNull().default(0),
+	lastReplyAt: timestamp('last_reply_at'),
+	status: varchar('status', { length: 20 }).notNull().default('published'), // 'published' | 'hidden' | 'removed'
+	moderationNote: text('moderation_note'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	categoryActivityIdx: index('forum_threads_category_activity_idx').on(t.category, t.lastReplyAt)
+}));
+
+export const forumReplies = pgTable('forum_replies', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	threadId: text('thread_id').notNull().references(() => forumThreads.id, { onDelete: 'cascade' }),
+	authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	parentReplyId: text('parent_reply_id'),  // self-ref enforced at SQL level (FK added in migration)
+	body: text('body').notNull(),
+	likeCount: integer('like_count').notNull().default(0),
+	status: varchar('status', { length: 20 }).notNull().default('published'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	threadCreatedIdx: index('forum_replies_thread_created_idx').on(t.threadId, t.createdAt)
+}));
+
+export const forumLikes = pgTable('forum_likes', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	threadId: text('thread_id'),
+	replyId: text('reply_id'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
 });

@@ -11,8 +11,8 @@ type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = Omit<EnsureDefined<import('../../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics" | "/(creator)/creator/analytics-help" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/copyright" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload"
-type LayoutParams = RouteParams & {  }
+type LayoutRouteId = RouteId | "/(creator)/creator" | "/(creator)/creator/agreement" | "/(creator)/creator/analytics" | "/(creator)/creator/analytics-help" | "/(creator)/creator/best-practices" | "/(creator)/creator/content" | "/(creator)/creator/copyright" | "/(creator)/creator/earnings" | "/(creator)/creator/events" | "/(creator)/creator/forum" | "/(creator)/creator/forum/new" | "/(creator)/creator/forum/[id]" | "/(creator)/creator/guidelines" | "/(creator)/creator/newsletter" | "/(creator)/creator/profile" | "/(creator)/creator/success-stories" | "/(creator)/creator/support" | "/(creator)/creator/tech-support" | "/(creator)/creator/test" | "/(creator)/creator/upload"
+type LayoutParams = RouteParams & { id?: string | undefined }
 type LayoutParentData = EnsureDefined<import('../../$types.js').LayoutData>;
 
 export type PageServerData = null;

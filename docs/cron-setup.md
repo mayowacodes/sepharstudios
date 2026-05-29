@@ -13,6 +13,8 @@ Never invoke from a browser — anyone with the secret can move money.
 | `POST /api/cron/staking-indexer` | every 5 min (`*/5 * * * *`) | Polls `STCStaking.totalStaked()` / `totalStakers()` from the chain and snapshots them so the admin tokenomics page reads real numbers, not zeros. |
 | `POST /api/cron/event-status-sweep` | every 5 min (`*/5 * * * *`) | Promotes scheduled events to `live` when `starts_at <= now()` and to `completed` once `endsAt <= now()`. Sends 1-hour-before reminders to registrants. |
 | `POST /api/cron/settlement-reconcile` | every 10 min (`*/10 * * * *`) | Reconciles `transactions` rows that hold a `tx_hash` but never had their status flipped — checks the on-chain receipt and marks `completed` / `failed`. Pending rows without a `tx_hash` are left alone (those are owed-but-not-yet-sent). |
+| `POST /api/cron/meilisearch-reindex` | every 30 min (`*/30 * * * *`) | Re-pushes all published `media_library`, `episodes`, and verified `creators` rows to Meilisearch in batches of 500. Skips cleanly when Meilisearch isn't configured. |
+| `POST /api/cron/newsletter-weekly-digest` | weekly, Mon 09:00 UTC (`0 9 * * 1`) | Sends a digest of the last 7 days' new content to active newsletter subscribers. Signed-in users must have `weeklyDigest=true` in their notification preferences; anonymous subscribers always receive it. |
 
 Add or remove jobs in `apps/web/src/routes/api/cron/*` — every directory there is a job.
 
@@ -39,7 +41,7 @@ Dokploy ships with a Crons feature per project. For each job:
 4. **Command**:
 
    ```bash
-   curl -fsS -X POST https://app.sepharstudios.com/api/cron/renew-subscriptions \
+   curl -fsS -X POST https://sepharstudios.com/api/cron/renew-subscriptions \
         -H "Authorization: Bearer $CRON_SECRET" \
         --max-time 540
    ```
@@ -68,19 +70,19 @@ jobs:
       - name: Renew subscriptions
         if: github.event.schedule == '5 * * * *'
         run: |
-          curl -fsS -X POST https://app.sepharstudios.com/api/cron/renew-subscriptions \
+          curl -fsS -X POST https://sepharstudios.com/api/cron/renew-subscriptions \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
       - name: Creator payouts
         if: github.event.schedule == '5 0 1 * *'
         run: |
-          curl -fsS -X POST https://app.sepharstudios.com/api/cron/creator-payouts \
+          curl -fsS -X POST https://sepharstudios.com/api/cron/creator-payouts \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
       - name: 5-min sweep
         if: github.event.schedule == '*/5 * * * *'
         run: |
-          curl -fsS -X POST https://app.sepharstudios.com/api/cron/staking-indexer \
+          curl -fsS -X POST https://sepharstudios.com/api/cron/staking-indexer \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" &
-          curl -fsS -X POST https://app.sepharstudios.com/api/cron/event-status-sweep \
+          curl -fsS -X POST https://sepharstudios.com/api/cron/event-status-sweep \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" &
           wait
 ```
@@ -92,7 +94,7 @@ GitHub's free tier guarantees only "within 10 minutes" delivery — fine for eve
 ```bash
 # From your laptop, against staging or prod
 export CRON_SECRET='<paste from your env>'
-curl -sS -X POST https://app.sepharstudios.com/api/cron/renew-subscriptions \
+curl -sS -X POST https://sepharstudios.com/api/cron/renew-subscriptions \
      -H "Authorization: Bearer $CRON_SECRET" | jq .
 
 # Expected for a quiet hour (nothing due):

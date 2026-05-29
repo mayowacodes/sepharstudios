@@ -35,6 +35,9 @@
     'Stories that show prayer changing things'
   ];
 
+  // Hybrid routing: try Meilisearch first (fast lexical). If results are sparse
+  // AND the query looks semantic (long + natural language), fall back to AI
+  // search and merge — Meili results first to preserve relevance ordering.
   async function runSearch(q: string) {
     const trimmed = q.trim();
     if (trimmed.length < 3) {
@@ -44,16 +47,43 @@
     loading = true;
     error = '';
     hasSearched = true;
+    results = [];
     try {
-      const res = await fetch(`/api/ai/search?q=${encodeURIComponent(trimmed)}&limit=24`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        error = body.message ?? 'Search failed.';
-        results = [];
-        return;
+      const meiliRes = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}&limit=24`);
+      let meiliHits: SearchResult[] = [];
+      let meiliAvailable = true;
+      if (meiliRes.ok) {
+        const data = (await meiliRes.json()) as { results: SearchResult[]; skipped?: boolean };
+        if (data.skipped) {
+          meiliAvailable = false;
+        } else {
+          meiliHits = data.results ?? [];
+        }
+      } else if (meiliRes.status === 503) {
+        meiliAvailable = false;
       }
-      const data = (await res.json()) as { results: SearchResult[] };
-      results = data.results ?? [];
+
+      const isSemanticQuery = trimmed.length > 30 || trimmed.split(/\s+/).length > 5;
+      const needsAi = !meiliAvailable || (meiliHits.length < 3 && isSemanticQuery);
+
+      let aiHits: SearchResult[] = [];
+      if (needsAi) {
+        const aiRes = await fetch(`/api/ai/search?q=${encodeURIComponent(trimmed)}&limit=24`);
+        if (aiRes.ok) {
+          const data = (await aiRes.json()) as { results: SearchResult[] };
+          aiHits = (data.results ?? []).map((r) => ({ ...r, isAiMatch: true } as SearchResult & { isAiMatch?: boolean }));
+        }
+      }
+
+      // Merge — Meili first, then any AI matches not already in the list.
+      const seen = new Set(meiliHits.map((r) => r.id));
+      results = [
+        ...meiliHits,
+        ...aiHits.filter((r) => !seen.has(r.id))
+      ];
+      if (results.length === 0 && !meiliAvailable && aiHits.length === 0) {
+        error = 'Search is not currently available. Please try again later.';
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Search failed.';
       results = [];

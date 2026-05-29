@@ -15,7 +15,7 @@ import { notify } from '$lib/server/notify';
  * so we run our own. Invoke from an external cron (Dokploy schedule, EasyCron,
  * GitHub Actions) once an hour:
  *
- *     curl -X POST https://app.sepharstudios.com/api/cron/renew-subscriptions \
+ *     curl -X POST https://sepharstudios.com/api/cron/renew-subscriptions \
  *          -H "Authorization: Bearer $CRON_SECRET"
  *
  * For each subscription where `next_charge_at <= now()` and status='active':
