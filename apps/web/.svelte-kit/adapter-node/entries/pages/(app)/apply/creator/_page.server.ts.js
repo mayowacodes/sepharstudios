@@ -1,9 +1,8 @@
 import { redirect } from "@sveltejs/kit";
-const load = (async ({ locals, url }) => {
-  const user = locals.user;
-  if (!user) throw redirect(303, `/auth/login?redirectTo=${url.pathname}`);
-  return {};
+//#region src/routes/(app)/apply/creator/+page.server.ts
+var load = (async ({ locals, url }) => {
+	if (!locals.user) throw redirect(303, `/auth/login?redirectTo=${url.pathname}`);
+	return {};
 });
-export {
-  load
-};
+//#endregion
+export { load };

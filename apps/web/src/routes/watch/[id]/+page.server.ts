@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, contentSubtitleTracks } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getEncoderPlayback } from '$lib/server/encoder-orchestrator';
@@ -35,7 +35,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			category: mediaLibrary.category,
 			trailerUrl: mediaLibrary.trailerUrl,
 			createdAt: mediaLibrary.createdAt,
-			isActive: mediaLibrary.isActive
+			isActive: mediaLibrary.isActive,
+			visibility: mediaLibrary.visibility,
+			creatorId: mediaLibrary.creatorId
 		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.id, params.id))
@@ -44,6 +46,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!content || !content.isActive) {
 		error(404, 'Content not found');
 	}
+
+	// Visibility gate. `private` content is owner-only; `unlisted` works for
+	// anyone holding the direct link; `public` is universal.
+	const isOwner = content.creatorId === session.user.id;
+	if (content.visibility === 'private' && !isOwner) {
+		error(404, 'Content not found');
+	}
+
+	// Subtitle / caption / audio-description tracks attached to this row.
+	// Split by kind so VideoPlayer can render them in the right tracks.
+	const tracks = await db
+		.select()
+		.from(contentSubtitleTracks)
+		.where(eq(contentSubtitleTracks.contentId, content.id));
+	const subtitles = tracks
+		.filter((t) => t.kind !== 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
+	const descriptions = tracks
+		.filter((t) => t.kind === 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
 
 	let playbackUrl = content.videoUrl;
 	if (!playbackUrl && content.encoderJobId && content.processingStatus === 'ready') {
@@ -57,6 +79,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		content: { ...content, playbackUrl },
+		subtitles,
+		descriptions,
 		activeProfileId: locals.activeProfileId
 	};
 };

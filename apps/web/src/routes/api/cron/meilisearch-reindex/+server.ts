@@ -61,7 +61,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			createdAt: mediaLibrary.createdAt
 		})
 			.from(mediaLibrary)
-			.where(and(eq(mediaLibrary.isActive, true), eq(mediaLibrary.status, 'approved')));
+			.where(and(
+				eq(mediaLibrary.isActive, true),
+				eq(mediaLibrary.status, 'approved'),
+				eq(mediaLibrary.visibility, 'public')
+			));
 
 		const docs: MediaDoc[] = rows.map((r) => ({
 			id: r.id,

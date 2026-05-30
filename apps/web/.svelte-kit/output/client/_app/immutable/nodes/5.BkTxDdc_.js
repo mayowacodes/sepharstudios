@@ -1,0 +1,1 @@
+import{Kt as e,Lt as t,Un as n,Wt as r,vn as i}from"../chunks/BgHc62fs.js";var a=e(`<div class="animate-in"><!></div>`);function o(e,o){var s=a();t(i(s),()=>o.children),n(s),r(e,s)}export{o as component};

@@ -2,7 +2,8 @@ import { APIError, betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '$lib/db/drizzle';
 import { schema } from '$lib/db/schema';
-import { createAuthMiddleware, openAPI, admin as adminPlugin, customSession, magicLink } from 'better-auth/plugins';
+import { openAPI, admin as adminPlugin, customSession, magicLink } from 'better-auth/plugins';
+import { createAuthMiddleware } from 'better-auth/api';
 import { env } from '$env/dynamic/private';
 import { Role } from '$lib/constants';
 import { roles, ac } from '$lib/db/permissions';
@@ -35,13 +36,15 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 30, // 30 days
   },
   advanced: {
-    cookies: {
-      sessionToken: {
-        attributes: {
-          domain: env.NODE_ENV === 'production' ? '.sepharstudios.com' : undefined
+    ...(env.NODE_ENV === 'production'
+      ? {
+          useSecureCookies: true,
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: 'sepharstudios.com'
+          }
         }
-      }
-    }
+      : {})
   },
   plugins: [
 // openAPI(),

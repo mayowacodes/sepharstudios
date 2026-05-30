@@ -1,10 +1,8 @@
-import * as server from '../entries/pages/(app)/movies/_page.server.ts.js';
+
 
 export const index = 46;
 let component_cache;
-export const component = async () => component_cache ??= (await import('../entries/pages/(app)/movies/_page.svelte.js')).default;
-export { server };
-export const server_id = "src/routes/(app)/movies/+page.server.ts";
-export const imports = ["_app/immutable/nodes/46.DT6fzAGZ.js","_app/immutable/chunks/Dm3kmBgO.js","_app/immutable/chunks/DFj_1Ztd.js","_app/immutable/chunks/_r6ywi_I.js","_app/immutable/chunks/CK77ZMFc.js","_app/immutable/chunks/aVfC764u.js","_app/immutable/chunks/ZIwaknx8.js","_app/immutable/chunks/BqqE9v9i.js","_app/immutable/chunks/D8cC8Ip7.js","_app/immutable/chunks/xgKUVLrI.js","_app/immutable/chunks/CeyGdX2a.js","_app/immutable/chunks/CTZ0jGgp.js"];
-export const stylesheets = ["_app/immutable/assets/ui-libs.BmaF0Alh.css"];
+export const component = async () => component_cache ??= (await import('../entries/pages/(app)/exchange/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/46.ByOzp8NP.js","_app/immutable/chunks/DVIS8rT_.js","_app/immutable/chunks/-c01j_DQ.js","_app/immutable/chunks/Xc3Z7R0n.js","_app/immutable/chunks/kNaey6uv.js","_app/immutable/chunks/BgHc62fs.js","_app/immutable/chunks/Cj9sdKvC.js","_app/immutable/chunks/BmsKtGsm.js","_app/immutable/chunks/CFVmnJei2.js","_app/immutable/chunks/ClqGSka_2.js","_app/immutable/chunks/D8e-wLbb2.js","_app/immutable/chunks/KbnNUJMp.js","_app/immutable/chunks/FqtpMiZa.js","_app/immutable/chunks/DwG_hDQP.js","_app/immutable/chunks/BmCcR3tb.js","_app/immutable/chunks/0zn_j1pt.js","_app/immutable/chunks/Dlt856tJ.js","_app/immutable/chunks/CUS1N8YA2.js"];
+export const stylesheets = ["_app/immutable/assets/ui-libs.C1tyNZCz.css"];
 export const fonts = [];

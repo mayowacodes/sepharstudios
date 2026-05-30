@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { trialBlacklist, paystackSubscriptions } from '$lib/db/schema/sepharstudios';
-import { eq, or, and, inArray } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { verifyOtp, getPhoneHash } from '$lib/server/otp';
 import { createCustomer, type PlanName, PLAN_PRICES_CENTS } from '$lib/payment/paystack';
 
@@ -45,7 +45,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		.limit(1)
 		.then((r) => r[0] ?? null);
 
-	if (existingSub && inArray(existingSub.status as string, ['trial', 'active'])) {
+	if (existingSub && ['trial', 'active'].includes(existingSub.status)) {
 		return json({ error: 'You already have an active subscription' }, { status: 409 });
 	}
 

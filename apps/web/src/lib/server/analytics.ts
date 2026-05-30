@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { OpenpanelSdk } from '@openpanel/sdk';
+import { OpenPanel } from '@openpanel/sdk';
 
 /**
  * Server-side Openpanel client. Wrapped in a singleton with a no-op fallback
@@ -11,10 +11,10 @@ import { OpenpanelSdk } from '@openpanel/sdk';
  * subscribe, watch-complete) where we have authoritative state.
  */
 
-let client: OpenpanelSdk | null = null;
+let client: OpenPanel | null = null;
 let warned = false;
 
-function getClient(): OpenpanelSdk | null {
+function getClient(): OpenPanel | null {
   if (client) return client;
   const clientId = env.PUBLIC_OPENPANEL_CLIENT_ID;
   const apiKey = env.OPENPANEL_API_KEY;
@@ -25,7 +25,7 @@ function getClient(): OpenpanelSdk | null {
     }
     return null;
   }
-  client = new OpenpanelSdk({ clientId, clientSecret: apiKey });
+  client = new OpenPanel({ clientId, clientSecret: apiKey });
   return client;
 }
 

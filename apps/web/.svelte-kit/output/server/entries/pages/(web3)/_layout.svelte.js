@@ -1,26 +1,12 @@
-import { a as push_element, b as pop_element, F as FILENAME } from "../../../chunks/ui-libs.js";
-import "clsx";
-_layout[FILENAME] = "src/routes/(web3)/+layout.svelte";
+import "../../../chunks/ui-libs.js";
+//#region src/routes/(web3)/+layout.svelte
 function _layout($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let { children } = $$props;
-      $$renderer2.push(`<div class="web3-layout min-h-screen svelte-1whnx50">`);
-      push_element($$renderer2, "div", 20, 0);
-      $$renderer2.push(`<div class="container mx-auto px-4 py-8">`);
-      push_element($$renderer2, "div", 21, 1);
-      children($$renderer2);
-      $$renderer2.push(`<!----></div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-    },
-    _layout
-  );
+	$$renderer.component(($$renderer) => {
+		let { children } = $$props;
+		$$renderer.push(`<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:ring-2 focus:ring-primary">Skip to main content</a> <div class="web3-layout min-h-screen svelte-1whnx50"><main id="main-content" tabindex="-1" class="container mx-auto px-4 py-8">`);
+		children($$renderer);
+		$$renderer.push(`<!----></main></div>`);
+	});
 }
-_layout.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  _layout as default
-};
+//#endregion
+export { _layout as default };

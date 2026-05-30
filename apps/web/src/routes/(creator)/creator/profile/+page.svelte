@@ -102,7 +102,7 @@
         throw new Error(err.error ?? 'Upload failed');
       }
       const data = await res.json();
-      const url = data.file?.url ?? data.url;
+      const url = data.directUrl ?? data.url;
       if (!url) throw new Error('No URL returned from upload');
 
       if (type === 'profile') {
@@ -133,8 +133,8 @@
         throw new Error(err.error ?? 'Upload failed');
       }
       const data = await res.json();
-      const url: string | undefined = data.file?.url ?? data.url;
-      const id: string = data.file?.id ?? data.id ?? crypto.randomUUID();
+      const url: string | undefined = data.directUrl ?? data.url;
+      const id: string = data.dbId ?? data.id ?? crypto.randomUUID();
       if (!url) throw new Error('No URL returned from upload');
 
       profileData.ministryInfo.verificationDocuments = [

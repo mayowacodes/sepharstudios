@@ -64,7 +64,7 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 	};
 
 	await db.update(creators)
-		.set({ preferences: updated as Record<string, boolean>, updatedAt: new Date() })
+		.set({ preferences: updated as unknown as Record<string, boolean>, updatedAt: new Date() })
 		.where(eq(creators.id, creator.id));
 
 	return json({ success: true, paymentPreference: updated.payment });

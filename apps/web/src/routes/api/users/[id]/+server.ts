@@ -16,6 +16,7 @@ const requireAdmin = async (locals: App.Locals) => {
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error!;
+	if (!params.id) return json({ status: 'error', message: 'Missing user id' }, { status: 400 });
 
 	const { data } = await request.json() as { data?: Record<string, string> };
 	if (!data) return json({ status: 'error', message: 'Missing payload' }, { status: 400 });
@@ -54,6 +55,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error!;
+	if (!params.id) return json({ status: 'error', message: 'Missing user id' }, { status: 400 });
 
 	// Same principle: admins cannot delete their own account through this endpoint.
 	if (params.id === session.user.id) {

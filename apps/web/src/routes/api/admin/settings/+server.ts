@@ -16,7 +16,10 @@ const defaults = {
 		supportedFormats: ['mp4', 'mov', 'avi', 'mkv'],
 		moderationMode: 'hybrid',
 		minContentDuration: 60,
-		maxContentDuration: 7200
+		maxContentDuration: 7200,
+		// Minimum vertical resolution accepted by the creator upload step. 720p
+		// is bare-minimum HD; 1080 is a sensible streaming-grade floor.
+		minVideoHeight: 1080
 	},
 	payment: {
 		stripePublishableKey: '',

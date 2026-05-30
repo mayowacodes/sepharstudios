@@ -4,6 +4,7 @@
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import ReviewSection from '$lib/components/widgets/ReviewSection.svelte';
   import ShareButton from '$lib/components/widgets/ShareButton.svelte';
+  import ReportButton from '$lib/components/ReportButton.svelte';
   import { copilotContext } from '$lib/stores/copilot';
   import { SiteMeta } from '$lib/constants';
 
@@ -101,6 +102,8 @@
         contentId={content.id}
         startAt={startAt()}
         title={content.title}
+        subtitles={data.subtitles}
+        descriptions={data.descriptions}
         onEnded={handleEnded}
       />
     {:else}
@@ -120,6 +123,7 @@
         <div class="flex items-start gap-3">
           <h1 class="text-3xl font-bold leading-tight flex-1">{content.title}</h1>
           <ShareButton contentId={content.id} title={content.title} description={content.description ?? ''} />
+          <ReportButton targetType="content" targetId={content.id} />
         </div>
         <div class="flex flex-wrap gap-3 mt-2 text-sm text-zinc-400">
           {#if content.year}

@@ -34,6 +34,7 @@
     moderationMode: 'auto' | 'manual' | 'hybrid';
     minContentDuration: number;
     maxContentDuration: number;
+    minVideoHeight: number;
   }
   
   interface PaymentSettings {
@@ -76,7 +77,8 @@
     supportedFormats: ['mp4', 'mov', 'avi', 'mkv'],
     moderationMode: 'hybrid',
     minContentDuration: 60,
-    maxContentDuration: 7200
+    maxContentDuration: 7200,
+    minVideoHeight: 1080
   };
   
   let paymentSettings: PaymentSettings = {
@@ -466,19 +468,36 @@
         <h3 class="text-lg font-bold text-white">Content Settings</h3>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label for="moderationMode" class="block text-gray-300 text-sm font-medium mb-2">Moderation Mode</label>
-            <select
-              id="moderationMode"
-              bind:value={platformSettings.moderationMode}
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
-            >
-              <option value="auto">Automatic</option>
-              <option value="manual">Manual Review</option>
-              <option value="hybrid">Hybrid (Auto + Manual)</option>
-            </select>
+          <div class="space-y-4">
+            <div>
+              <label for="moderationMode" class="block text-gray-300 text-sm font-medium mb-2">Moderation Mode</label>
+              <select
+                id="moderationMode"
+                bind:value={platformSettings.moderationMode}
+                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              >
+                <option value="auto">Automatic</option>
+                <option value="manual">Manual Review</option>
+                <option value="hybrid">Hybrid (Auto + Manual)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="minResolution" class="block text-gray-300 text-sm font-medium mb-2">Minimum upload resolution</label>
+              <select
+                id="minResolution"
+                bind:value={platformSettings.minVideoHeight}
+                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              >
+                <option value={720}>720p — HD (legacy, not recommended)</option>
+                <option value={1080}>1080p — Full HD (recommended)</option>
+                <option value={1440}>1440p — 2K</option>
+                <option value={2160}>2160p — 4K (premium)</option>
+              </select>
+              <p class="text-xs text-gray-500 mt-1">Creators are blocked from uploading below this threshold.</p>
+            </div>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label for="minDuration" class="block text-gray-300 text-sm font-medium mb-2">Min Duration (seconds)</label>

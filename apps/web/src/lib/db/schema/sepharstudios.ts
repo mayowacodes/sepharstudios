@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index, bigint } from 'drizzle-orm/pg-core';
 
 import { sql } from 'drizzle-orm';
 
@@ -66,6 +66,17 @@ export const creators = pgTable('creators', {
 	totalEarnings: integer('total_earnings').default(0), // in tokens
 	walletAddress: varchar('wallet_address', { length: 42 }),
 	isVerified: boolean('is_verified').default(false),
+	// Stripe Connect (Item 4A). `payoutProcessor` chooses between Paystack
+	// (default — African region) and Stripe (USD / global). Stripe-specific
+	// columns mirror the connected account state so we don't round-trip to
+	// Stripe on every render.
+	stripeAccountId: text('stripe_account_id').unique(),
+	stripeAccountStatus: varchar('stripe_account_status', { length: 20 }),
+	stripePayoutsEnabled: boolean('stripe_payouts_enabled').default(false),
+	stripeChargesEnabled: boolean('stripe_charges_enabled').default(false),
+	stripeCountry: varchar('stripe_country', { length: 2 }),
+	payoutProcessor: varchar('payout_processor', { length: 20 }).default('paystack').notNull(),
+	preferredPayoutCurrency: varchar('preferred_payout_currency', { length: 3 }),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -141,7 +152,10 @@ export const mediaLibrary = pgTable('media_library', {
 	description: text('description'),
 	thumbnail: text('thumbnail'),
 	backdropUrl: text('backdrop_url'),
-	posterUrl: text('poster_url'),
+	posterUrl: text('poster_url'),                    // portrait poster (2:3) — main movie cards
+	posterLandscapeUrl: text('poster_landscape_url'), // landscape poster (16:9) — horizontal cards
+	posterSquareUrl: text('poster_square_url'),       // square poster (1:1) — mobile / compact
+	logoTitleUrl: text('logo_title_url'),             // transparent PNG title logo
 	trailerUrl: text('trailer_url'),
 	videoUrl: text('video_url'), // actual streaming link
 	encoderJobId: text('encoder_job_id'),
@@ -184,6 +198,13 @@ export const mediaLibrary = pgTable('media_library', {
 	isNew: boolean('is_new').default(false),
 	isActive: boolean('is_active').default(true),
 	status: varchar('status', { length: 30 }).default('submitted').notNull(),
+	// Creator-controlled visibility. 'public' shows up in browse + search;
+	// 'unlisted' is accessible via direct watch link only; 'private' is owner-
+	// only. Independent of `status` (which is the admin review workflow).
+	visibility: varchar('visibility', { length: 20 }).default('public').notNull(),
+	// When set, the scheduled-publish cron flips status to 'published' +
+	// isActive=true at this time (provided status='approved' already).
+	scheduledPublishAt: timestamp('scheduled_publish_at'),
 	reviewNotes: text('review_notes'),
 	rejectionReason: text('rejection_reason'),
 	reviewedAt: timestamp('reviewed_at'),
@@ -223,6 +244,25 @@ export const episodes = pgTable('episodes', {
 	airDate: varchar('air_date', { length: 20 }),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subtitle / caption / audio-description tracks attached to a media row.
+// Multiple per content (one per language + kind). Created by creators via the
+// content detail page; read by the watch page and fed to VideoPlayer's
+// `subtitles` / `descriptions` props.
+// ─────────────────────────────────────────────────────────────────────────────
+export const contentSubtitleTracks = pgTable('content_subtitle_tracks', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	kind: varchar('kind', { length: 20 }).notNull().default('subtitles'), // subtitles | captions | descriptions
+	language: varchar('language', { length: 10 }).notNull(),               // BCP-47-ish: en, es, pt-BR
+	label: varchar('label', { length: 60 }).notNull(),                     // human-readable
+	fileUrl: text('file_url').notNull(),                                   // VTT URL from /api/files
+	isDefault: boolean('is_default').default(false),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	contentIdx: index('content_subtitle_tracks_content_idx').on(t.contentId)
+}));
 
 // User table extension (add to existing user table)
 import { user } from '../schema';
@@ -935,3 +975,48 @@ export const forumLikes = pgTable('forum_likes', {
 	replyId: text('reply_id'),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+// Abuse reports — universal moderation queue. One table targets any
+// moderatable entity (review, forum thread/reply, content, user) so the
+// reporter UX and the admin queue are uniform. (Item 1A)
+export const abuseReports = pgTable('abuse_reports', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	reporterId: text('reporter_id').references(() => user.id, { onDelete: 'set null' }),
+	targetType: varchar('target_type', { length: 20 }).notNull(),
+	targetId: text('target_id').notNull(),
+	category: varchar('category', { length: 40 }).notNull(),
+	description: text('description'),
+	status: varchar('status', { length: 20 }).default('open').notNull(),
+	resolution: varchar('resolution', { length: 40 }),
+	resolvedBy: text('resolved_by').references(() => user.id),
+	resolvedAt: timestamp('resolved_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	statusIdx: index('abuse_reports_status_idx').on(t.status),
+	targetIdx: index('abuse_reports_target_idx').on(t.targetType, t.targetId)
+}));
+
+// Creator payouts. Supersedes the loose `transactions` rows with
+// `type='creator_payout'` once the read path is migrated. Branches by
+// processor (paystack | stripe). (Item 4A)
+export const payouts = pgTable('payouts', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => creators.id),
+	processor: varchar('processor', { length: 20 }).notNull(),
+	processorPayoutId: text('processor_payout_id'),
+	periodStart: timestamp('period_start').notNull(),
+	periodEnd: timestamp('period_end').notNull(),
+	grossCents: bigint('gross_cents', { mode: 'number' }).notNull(),
+	platformFeeCents: bigint('platform_fee_cents', { mode: 'number' }).notNull(),
+	netCents: bigint('net_cents', { mode: 'number' }).notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	status: varchar('status', { length: 20 }).default('pending').notNull(),
+	failureReason: text('failure_reason'),
+	approvedBy: text('approved_by').references(() => user.id),
+	approvedAt: timestamp('approved_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	paidAt: timestamp('paid_at')
+}, (t) => ({
+	creatorIdx: index('payouts_creator_idx').on(t.creatorId),
+	statusIdx: index('payouts_status_idx').on(t.status)
+}));

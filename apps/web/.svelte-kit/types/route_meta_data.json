@@ -27,6 +27,9 @@
 	"/(app)/about": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/access-denied": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(protected)/achievements": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
@@ -279,6 +282,9 @@
 	"/api/content/kids": [
 		"src/routes/api/content/kids/+server.ts"
 	],
+	"/api/content/[id]/subtitles": [
+		"src/routes/api/content/[id]/subtitles/+server.ts"
+	],
 	"/api/creators/[id]/follow": [
 		"src/routes/api/creators/[id]/follow/+server.ts"
 	],
@@ -291,11 +297,44 @@
 	"/api/creator/content": [
 		"src/routes/api/creator/content/+server.ts"
 	],
+	"/api/creator/content/[id]": [
+		"src/routes/api/creator/content/[id]/+server.ts"
+	],
 	"/api/creator/content/[id]/duplicate": [
 		"src/routes/api/creator/content/[id]/duplicate/+server.ts"
 	],
+	"/api/creator/content/[id]/episodes": [
+		"src/routes/api/creator/content/[id]/episodes/+server.ts"
+	],
+	"/api/creator/content/[id]/episodes/[episodeId]": [
+		"src/routes/api/creator/content/[id]/episodes/[episodeId]/+server.ts"
+	],
+	"/api/creator/content/[id]/subtitles": [
+		"src/routes/api/creator/content/[id]/subtitles/+server.ts"
+	],
+	"/api/creator/content/[id]/subtitles/[trackId]": [
+		"src/routes/api/creator/content/[id]/subtitles/[trackId]/+server.ts"
+	],
 	"/api/creator/earnings": [
 		"src/routes/api/creator/earnings/+server.ts"
+	],
+	"/api/creator/messages": [
+		"src/routes/api/creator/messages/+server.ts"
+	],
+	"/api/creator/messages/[id]/archive": [
+		"src/routes/api/creator/messages/[id]/archive/+server.ts"
+	],
+	"/api/creator/messages/[id]/read": [
+		"src/routes/api/creator/messages/[id]/read/+server.ts"
+	],
+	"/api/creator/moderation/forum": [
+		"src/routes/api/creator/moderation/forum/+server.ts"
+	],
+	"/api/creator/moderation/reviews": [
+		"src/routes/api/creator/moderation/reviews/+server.ts"
+	],
+	"/api/creator/moderation/reviews/[id]": [
+		"src/routes/api/creator/moderation/reviews/[id]/+server.ts"
 	],
 	"/api/creator/newsletter/subscribe": [
 		"src/routes/api/creator/newsletter/subscribe/+server.ts"
@@ -323,6 +362,9 @@
 	],
 	"/api/cron/renew-subscriptions": [
 		"src/routes/api/cron/renew-subscriptions/+server.ts"
+	],
+	"/api/cron/scheduled-publish": [
+		"src/routes/api/cron/scheduled-publish/+server.ts"
 	],
 	"/api/cron/settlement-reconcile": [
 		"src/routes/api/cron/settlement-reconcile/+server.ts"
@@ -426,6 +468,9 @@
 	"/api/payment/webhook": [
 		"src/routes/api/payment/webhook/+server.ts"
 	],
+	"/api/platform-settings": [
+		"src/routes/api/platform-settings/+server.ts"
+	],
 	"/api/playlists": [
 		"src/routes/api/playlists/+server.ts"
 	],
@@ -458,6 +503,9 @@
 	],
 	"/api/recommendations": [
 		"src/routes/api/recommendations/+server.ts"
+	],
+	"/api/reports": [
+		"src/routes/api/reports/+server.ts"
 	],
 	"/api/reviews": [
 		"src/routes/api/reviews/+server.ts"
@@ -580,6 +628,12 @@
 	"/(creator)/creator/content": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(creator)/creator/content/[id]": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/content/[id]/episodes": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(creator)/creator/copyright": [
 		"src/routes/+layout.server.ts"
 	],
@@ -599,6 +653,9 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/guidelines": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/inbox": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/newsletter": [

@@ -21,5 +21,7 @@ export const uploadFile = async (file: File): Promise<string> => {
   }
 
   const result = await response.json();
-  return result.url;
+  // `directUrl` is the public HTTPS URL (preferred for <img src>). `url` is
+  // the admin-console endpoint that requires auth — last-resort fallback.
+  return result.directUrl ?? result.url;
 };

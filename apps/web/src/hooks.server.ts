@@ -72,6 +72,13 @@ export async function handle({ event, resolve }) {
     event.locals.user = undefined;
   }
 
+  // 4.2 Expose a session-getter to API endpoints. Many endpoints call
+  // `locals.auth.getSession()` (the wrapper pattern documented in app.d.ts).
+  // Without this assignment the call crashes with "undefined is not an object".
+  event.locals.auth = {
+    getSession: async () => session as { user: User; session: Session } | null
+  };
+
   // 5. Active Profile — read from cookie set on profile selection
   event.locals.activeProfileId = event.cookies.get('activeProfileId') || undefined;
 
@@ -94,8 +101,9 @@ export async function handle({ event, resolve }) {
       return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent('https://admin.sepharstudios.com/admin')}`, 307);
     }
     if (user.role !== 'admin') {
-      // Signed in but wrong role → bounce to apex with a denial flag so we don't loop.
-      return Response.redirect(`${apexOrigin}/?denied=admin`, 307);
+      // Signed in but wrong role → bounce to apex denial page with a clear
+      // message instead of silently dumping them on the home page.
+      return Response.redirect(`${apexOrigin}/access-denied?reason=admin`, 307);
     }
     // Platform Check: No Admin on TV or Mobile
     if (deviceType === 'tv' || deviceType === 'mobile') {
@@ -109,10 +117,10 @@ export async function handle({ event, resolve }) {
       return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent('https://creators.sepharstudios.com/creator')}`, 307);
     }
     if (user.role !== 'creator' && user.role !== 'admin') {
-      // Signed in but not a creator → bounce to the apex creator application page.
-      // This is the only legitimate way for a regular user to become a creator,
-      // so we send them straight there instead of stranding them on the home page.
-      return Response.redirect(`${apexOrigin}/apply/creator`, 307);
+      // Signed in but not a creator → bounce to the access-denied page which
+      // explains the situation and links to /apply/creator. Better UX than
+      // silently dropping them on the application form with no context.
+      return Response.redirect(`${apexOrigin}/access-denied?reason=creator`, 307);
     }
     // Platform Check: No Creator Tools on TV or Mobile
     if (deviceType === 'tv' || deviceType === 'mobile') {

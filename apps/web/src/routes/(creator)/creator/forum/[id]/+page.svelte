@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import ForumReply from './ForumReply.svelte';
+  import ReportButton from '$lib/components/ReportButton.svelte';
 
   interface ReplyNode {
     id: string;
@@ -150,9 +151,14 @@
             <span class="capitalize">{thread.category.replace('-', ' ')}</span>
           </div>
         </div>
-        {#if isAuthor || isAdmin}
-          <button type="button" onclick={deleteThread} class="text-red-300 hover:text-red-100 text-sm">Delete</button>
-        {/if}
+        <div class="flex items-center gap-3">
+          {#if !isAuthor}
+            <ReportButton targetType="forum_thread" targetId={thread.id} variant="button" />
+          {/if}
+          {#if isAuthor || isAdmin}
+            <button type="button" onclick={deleteThread} class="text-red-300 hover:text-red-100 text-sm">Delete</button>
+          {/if}
+        </div>
       </div>
 
       <p class="text-gray-200 whitespace-pre-line">{thread.body}</p>

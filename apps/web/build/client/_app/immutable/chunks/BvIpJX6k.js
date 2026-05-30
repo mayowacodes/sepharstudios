@@ -1,0 +1,1 @@
+import{ct as e,lt as t}from"./BgHc62fs.js";import{t as n}from"./FqtpMiZa.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M8 2v4`}],[`path`,{d:`M16 2v4`}],[`rect`,{width:`18`,height:`18`,x:`3`,y:`4`,rx:`2`}],[`path`,{d:`M3 10h18`}]];n(r,t({name:`calendar`},()=>a,{get iconNode(){return o}}))}export{r as t};

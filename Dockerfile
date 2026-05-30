@@ -17,18 +17,21 @@ RUN bun install --frozen-lockfile
 # Copy all source code
 COPY . .
 
-# Write build-time env vars into the web app directory
-RUN echo "DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy" > apps/web/.env && \
-    echo "MINIO_ENDPOINT=localhost" >> apps/web/.env && \
-    echo "MINIO_PORT=9000" >> apps/web/.env && \
-    echo "MINIO_ACCESS_KEY=dummyaccesskey123" >> apps/web/.env && \
-    echo "MINIO_SECRET_KEY=dummysecretkey123" >> apps/web/.env && \
-    echo "MINIO_USE_SSL=false" >> apps/web/.env && \
-    echo "MINIO_BUCKET=dummy-bucket" >> apps/web/.env && \
-    echo "BETTER_AUTH_SECRET=dummy-secret-key-for-build-minimum-32-characters-long" >> apps/web/.env && \
-    echo "BETTER_AUTH_URL=http://localhost:3000" >> apps/web/.env && \
-    echo "EMAIL_WEBHOOK=https://email" >> apps/web/.env && \
-    echo "BODY_SIZE_LIMIT=10485760" >> apps/web/.env
+# Build-time env vars. SvelteKit's `$env/dynamic/private` reads from process.env
+# during prerender analysis, NOT from .env files, so we set ENV explicitly.
+# These are dummy placeholders — runtime values come from Dokploy's Environment
+# tab and are injected via the container's env when the service starts.
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+ENV MINIO_ENDPOINT=localhost
+ENV MINIO_PORT=9000
+ENV MINIO_ACCESS_KEY=dummyaccesskey123
+ENV MINIO_SECRET_KEY=dummysecretkey123
+ENV MINIO_USE_SSL=false
+ENV MINIO_BUCKET=dummy-bucket
+ENV BETTER_AUTH_SECRET=dummy-secret-key-for-build-minimum-32-characters-long
+ENV BETTER_AUTH_URL=http://localhost:3000
+ENV EMAIL_WEBHOOK=https://email
+ENV BODY_SIZE_LIMIT=10485760
 
 # Build the web app from its own directory
 RUN cd apps/web && bun run build

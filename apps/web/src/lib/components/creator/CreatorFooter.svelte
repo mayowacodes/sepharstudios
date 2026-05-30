@@ -1,6 +1,5 @@
 <!-- Creator Platform Footer -->
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { navigateToMainSite } from '$lib/utils/portal-navigation';
   
   const creatorLinks = {
@@ -30,11 +29,6 @@
     ]
   };
   
-  function handleSponsorshipClick(e: Event) {
-    e.preventDefault();
-    goto('/sponsorships');
-  }
-  
   function goToMainSite() {
     navigateToMainSite();
   }
@@ -57,18 +51,18 @@
           Empowering faith-based creators to share their ministry with the world.
         </p>
         <!-- Get Movie Sponsorship - Prominent placement -->
-        <div class="p-4 bg-linear-to-r from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
-          <button
-            onclick={handleSponsorshipClick}
-            class="text-lg font-bold text-purple-300 hover:text-purple-100 transition-colors flex items-center gap-2"
-          >
+        <a
+          href="/sponsorships"
+          class="block p-4 bg-linear-to-r from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30 hover:from-purple-600/30 hover:to-blue-600/30 transition-colors"
+        >
+          <span class="text-lg font-bold text-purple-300 hover:text-purple-100 transition-colors flex items-center gap-2">
             <span>🎬</span>
             <span>Get Movie Sponsorship</span>
-          </button>
+          </span>
           <p class="text-xs text-gray-400 mt-1">
             Fund your faith-based film projects
           </p>
-        </div>
+        </a>
       </div>
       
       <!-- Links Sections -->
@@ -93,26 +87,6 @@
     
     <!-- Divider -->
     <div class="mt-8 border-t border-white/10 pt-8">
-      <!-- Creator Success Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-purple-400">342</div>
-          <div class="text-xs text-gray-400">Active Creators</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-400">2.8K</div>
-          <div class="text-xs text-gray-400">Content Published</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-400">3.8M</div>
-          <div class="text-xs text-gray-400">Total Views</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-yellow-400">$287K</div>
-          <div class="text-xs text-gray-400">Creator Earnings</div>
-        </div>
-      </div>
-      
       <!-- Bottom Section -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <p class="text-sm text-gray-400">

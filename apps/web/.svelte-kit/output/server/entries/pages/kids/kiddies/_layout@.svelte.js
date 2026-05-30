@@ -1,45 +1,28 @@
-import { F as FILENAME } from "../../../../chunks/ui-libs.js";
-import "clsx";
-import "../../../../chunks/client2.js";
-import { p as page } from "../../../../chunks/index2.js";
-KidsTopNav[FILENAME] = "src/lib/components/kids/KidsTopNav.svelte";
+import { mt as derived } from "../../../../chunks/ui-libs.js";
+import { t as page } from "../../../../chunks/state.js";
+import "../../../../chunks/navigation.js";
+import "../../../../chunks/portal-navigation.js";
+//#region src/lib/components/kids/KidsTopNav.svelte
 function KidsTopNav($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      page.url.pathname.includes("/teens") ? "teens" : "kiddies";
-      {
-        $$renderer2.push("<!--[!-->");
-      }
-      $$renderer2.push(`<!--]-->`);
-    },
-    KidsTopNav
-  );
+	$$renderer.component(($$renderer) => {
+		$: page.url.pathname.includes("/teens");
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->`);
+	});
 }
-KidsTopNav.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-_layout_[FILENAME] = "src/routes/kids/kiddies/+layout@.svelte";
+//#endregion
+//#region src/routes/kids/kiddies/+layout@.svelte
 function _layout_($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let { children } = $$props;
-      const showNav = !page.url.pathname.endsWith("/kids") && !page.url.pathname.endsWith("/kids/profile");
-      if (showNav) {
-        $$renderer2.push("<!--[-->");
-        KidsTopNav($$renderer2);
-      } else {
-        $$renderer2.push("<!--[!-->");
-      }
-      $$renderer2.push(`<!--]--> `);
-      children($$renderer2);
-      $$renderer2.push(`<!---->`);
-    },
-    _layout_
-  );
+	$$renderer.component(($$renderer) => {
+		let { children } = $$props;
+		if (derived(() => !page.url.pathname.endsWith("/kids") && !page.url.pathname.endsWith("/kids/profile"))()) {
+			$$renderer.push("<!--[0-->");
+			KidsTopNav($$renderer, {});
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
+		children($$renderer);
+		$$renderer.push(`<!---->`);
+	});
 }
-_layout_.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  _layout_ as default
-};
+//#endregion
+export { _layout_ as default };

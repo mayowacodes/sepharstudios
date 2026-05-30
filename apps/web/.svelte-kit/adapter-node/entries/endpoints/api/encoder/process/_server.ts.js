@@ -1,36 +1,38 @@
+import { t as private_env } from "../../../../../chunks/shared-server.js";
 import { json } from "@sveltejs/kit";
-import { p as private_env } from "../../../../../chunks/shared-server.js";
-const POST = async ({ request, locals }) => {
-  const session = await locals.auth.validate();
-  if (!session) return json({ error: "Unauthorized" }, { status: 401 });
-  const data = await request.json();
-  const { inputKey, title } = data;
-  if (!inputKey) return json({ error: "Input key required" }, { status: 400 });
-  try {
-    const response = await fetch(`${private_env.ENCODER_API_URL}/api/process-video`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-        // Add internal API key if needed
-      },
-      body: JSON.stringify({
-        inputKey,
-        title: title || "Untitled Content",
-        // The encoder settings are usually preset in the backend or passed here
-        options: {
-          qualities: ["360p", "480p", "720p", "1080p"],
-          generateDash: true,
-          generateHls: true
-        }
-      })
-    });
-    const result = await response.json();
-    return json({ success: response.ok, ...result });
-  } catch (error) {
-    console.error("Encoder trigger error:", error);
-    return json({ error: "Failed to trigger encoder" }, { status: 500 });
-  }
+//#region src/routes/api/encoder/process/+server.ts
+var POST = async ({ request, locals }) => {
+	if (!await locals.auth.getSession()) return json({ error: "Unauthorized" }, { status: 401 });
+	const { inputKey, title } = await request.json();
+	if (!inputKey) return json({ error: "Input key required" }, { status: 400 });
+	try {
+		const response = await fetch(`${private_env.ENCODER_API_URL}/api/process-video`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				inputKey,
+				title: title || "Untitled Content",
+				options: {
+					qualities: [
+						"360p",
+						"480p",
+						"720p",
+						"1080p"
+					],
+					generateDash: true,
+					generateHls: true
+				}
+			})
+		});
+		const result = await response.json();
+		return json({
+			success: response.ok,
+			...result
+		});
+	} catch (error) {
+		console.error("Encoder trigger error:", error);
+		return json({ error: "Failed to trigger encoder" }, { status: 500 });
+	}
 };
-export {
-  POST
-};
+//#endregion
+export { POST };

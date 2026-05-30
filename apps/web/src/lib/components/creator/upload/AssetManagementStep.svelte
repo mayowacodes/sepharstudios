@@ -1,7 +1,8 @@
 <!-- Asset Management Step -->
 <script lang="ts">
+  import { toast } from 'svelte-sonner';
   import type { ContentAssets, AssetUploadProgress } from '$lib/types/creator';
-  
+
   export let data: any;
   export let onUpdate: (data: any) => void;
   
@@ -117,22 +118,43 @@
       };
       
       xhr.onload = () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          let response: { directUrl?: string; url?: string; error?: string } = {};
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch {
+            handleError('Server returned an invalid response. The upload may not have completed.');
+            return;
+          }
+          // `/api/files` returns both `directUrl` (public HTTPS, displayable
+          // in <img>) and `url` (admin-console URL that requires auth). Use
+          // directUrl so the inline preview thumbnail actually renders.
+          const url = response.directUrl ?? response.url;
+          if (!url) {
+            handleError('Upload succeeded but no URL was returned.');
+            return;
+          }
           const current = assetProgress.find(p => p.assetType === assetType);
+          const label = assetTypes.find(a => a.key === assetType)?.title ?? String(assetType);
           if (current) {
             current.isCompleted = true;
-            current.url = response.directUrl;
-            uploadedAssets[assetType] = response.directUrl;
+            current.url = url;
+            uploadedAssets[assetType] = url;
             uploadedAssets = { ...uploadedAssets };
             assetProgress = [...assetProgress];
           }
+          toast.success(`${label} uploaded`, { description: file.name });
         } else {
-          handleError('Upload failed');
+          let parsedError = `Upload failed (HTTP ${xhr.status})`;
+          try {
+            const body = JSON.parse(xhr.responseText);
+            if (body?.error) parsedError = body.error;
+          } catch { /* keep status-based fallback */ }
+          handleError(parsedError);
         }
       };
-      
-      xhr.onerror = () => handleError('Network error');
+
+      xhr.onerror = () => handleError('Network error while uploading.');
       xhr.send(formData);
     } catch (error: any) {
       handleError(error.message || 'Error starting upload');
@@ -142,8 +164,11 @@
       const current = assetProgress.find(p => p.assetType === assetType);
       if (current) {
         current.hasError = true;
+        current.errorMessage = msg;
         assetProgress = [...assetProgress];
       }
+      const label = assetTypes.find(a => a.key === assetType)?.title ?? String(assetType);
+      toast.error(`Upload failed: ${label}`, { description: msg });
     }
   }
   
@@ -196,8 +221,9 @@
           </div>
           
           {#if isUploaded && !isUploading}
-            <button 
-              on:click={() => removeAsset(assetType.key)}
+            <button
+              type="button"
+              onclick={() => removeAsset(assetType.key)}
               class="text-red-400 hover:text-red-300 text-xl"
             >
               ✗
@@ -226,30 +252,41 @@
               <span>{Math.round(progress.progressPercentage)}%</span>
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
-              <div 
+              <div
                 class="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style="width: {progress.progressPercentage}%"
               ></div>
             </div>
           </div>
+        {:else if progress && progress.hasError}
+          <!-- Upload Error -->
+          <div class="bg-red-600/20 border border-red-600/50 rounded-lg p-3 space-y-2">
+            <div class="text-sm font-medium text-red-200">Upload failed</div>
+            <div class="text-xs text-red-300">{progress.errorMessage ?? 'Unknown error'}</div>
+            <button
+              type="button"
+              onclick={() => removeAsset(assetType.key)}
+              class="text-xs text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
+            >Try another file</button>
+          </div>
         {:else}
           <!-- Upload Area -->
-          <div 
+          <div
             class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-all"
-            on:dragover|preventDefault
-            on:drop|preventDefault={(e) => handleFileDrop(assetType.key, e)}
+            ondragover={(e) => e.preventDefault()}
+            ondrop={(e) => { e.preventDefault(); handleFileDrop(assetType.key, e); }}
             role="button"
             tabindex="0"
             aria-label={`Drop ${assetType.title} image here or click to browse`}
-            on:keydown={(e) => e.key === 'Enter' && document.getElementById(`upload-${assetType.key}`)?.click()}
+            onkeydown={(e) => e.key === 'Enter' && document.getElementById(`upload-${assetType.key}`)?.click()}
           >
             <div class="text-gray-400 text-sm mb-3">
               Drop image here or click to browse
             </div>
-            <input 
-              type="file" 
+            <input
+              type="file"
               accept="image/*"
-              on:change={(e) => handleFileUpload(assetType.key, e)}
+              onchange={(e) => handleFileUpload(assetType.key, e)}
               class="hidden"
               id="upload-{assetType.key}"
             />

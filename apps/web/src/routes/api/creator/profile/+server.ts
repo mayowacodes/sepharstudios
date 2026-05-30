@@ -21,6 +21,23 @@ const defaultSocial = {
 	podcast: ''
 };
 
+type CreatorDocument = { id: string; url: string; name: string; size?: number };
+
+const normalizeDocuments = (documents?: CreatorDocument[] | string[] | null): CreatorDocument[] | null | undefined => {
+	if (documents === undefined) return undefined;
+	if (documents === null) return null;
+	return documents
+		.map((document) => {
+			if (typeof document !== 'string') return document;
+			return {
+				id: crypto.randomUUID(),
+				url: document,
+				name: document.split('/').pop() || 'Document'
+			};
+		})
+		.filter((document): document is CreatorDocument => !!document.url && !!document.name);
+};
+
 export const GET: RequestHandler = async ({ locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
@@ -93,7 +110,7 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 			yearsInMinistry?: string;
 			ministryDescription?: string;
 			ministryAddress?: string;
-			verificationDocuments?: string[];
+			verificationDocuments?: CreatorDocument[] | string[];
 		};
 		socialLinks?: Record<string, string>;
 		preferences?: Record<string, boolean>;
@@ -114,6 +131,7 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 		: legalName;
 
 	const now = new Date();
+	const verificationDocuments = normalizeDocuments(payload.ministryInfo?.verificationDocuments);
 	const updatePayload = {
 		creatorType,
 		legalName,
@@ -124,7 +142,7 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 		yearsInMinistry: payload.ministryInfo?.yearsInMinistry ? Number(payload.ministryInfo.yearsInMinistry) : existing?.yearsInMinistry ?? null,
 		ministryDescription: payload.ministryInfo?.ministryDescription ?? existing?.ministryDescription ?? null,
 		ministryAddress: payload.ministryInfo?.ministryAddress ?? existing?.ministryAddress ?? null,
-		verificationDocuments: payload.ministryInfo?.verificationDocuments ?? existing?.verificationDocuments ?? null,
+		verificationDocuments: verificationDocuments ?? existing?.verificationDocuments ?? null,
 		contactEmail: payload.personalInfo?.email ?? existing?.contactEmail ?? session.user.email ?? null,
 		contactPhone: payload.personalInfo?.phone ?? existing?.contactPhone ?? null,
 		bio: payload.personalInfo?.bio ?? existing?.bio ?? null,

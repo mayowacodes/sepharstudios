@@ -1,1 +1,0 @@
-var E=(a=>(a.THEOLOGICAL="theological",a.CONTENT_MODERATION="content_moderation",a.FAMILY_SAFETY="family_safety",a.TECHNICAL_QA="technical_qa",a))(E||{}),r=(a=>(a.APPROVED="approved",a.REJECTED="rejected",a.NEEDS_REVISION="needs_revision",a))(r||{});export{E as R,r as a};

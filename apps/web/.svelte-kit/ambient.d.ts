@@ -53,6 +53,7 @@ declare module '$env/static/private' {
 	export const CACHE_REDIS_URI: string;
 	export const CONFIG_SESSION_PHONE_CLIENT: string;
 	export const CONFIG_SESSION_PHONE_NAME: string;
+	export const CRON_SECRET: string;
 	export const DATABASE_CONNECTION_URI: string;
 	export const DATABASE_ENABLED: string;
 	export const DATABASE_PROVIDER: string;
@@ -99,6 +100,8 @@ declare module '$env/static/private' {
 	export const SERVER_URL: string;
 	export const TELEMETRY: string;
 	export const TELEMETRY_URL: string;
+	export const VAPID_CONTACT: string;
+	export const VAPID_PRIVATE_KEY: string;
 	export const AI_AGENT: string;
 	export const ALLUSERSPROFILE: string;
 	export const APPDATA: string;
@@ -245,7 +248,9 @@ declare module '$env/static/private' {
  */
 declare module '$env/static/public' {
 	export const PUBLIC_BETTER_AUTH_URL: string;
+	export const PUBLIC_CREATOR_PAYMENTS_AMOY: string;
 	export const PUBLIC_ENCODER_MINIO_URL: string;
+	export const PUBLIC_VAPID_PUBLIC_KEY: string;
 }
 
 /**
@@ -310,6 +315,7 @@ declare module '$env/dynamic/private' {
 		CACHE_REDIS_URI: string;
 		CONFIG_SESSION_PHONE_CLIENT: string;
 		CONFIG_SESSION_PHONE_NAME: string;
+		CRON_SECRET: string;
 		DATABASE_CONNECTION_URI: string;
 		DATABASE_ENABLED: string;
 		DATABASE_PROVIDER: string;
@@ -356,6 +362,8 @@ declare module '$env/dynamic/private' {
 		SERVER_URL: string;
 		TELEMETRY: string;
 		TELEMETRY_URL: string;
+		VAPID_CONTACT: string;
+		VAPID_PRIVATE_KEY: string;
 		AI_AGENT: string;
 		ALLUSERSPROFILE: string;
 		APPDATA: string;
@@ -521,7 +529,9 @@ declare module '$env/dynamic/private' {
 declare module '$env/dynamic/public' {
 	export const env: {
 		PUBLIC_BETTER_AUTH_URL: string;
+		PUBLIC_CREATOR_PAYMENTS_AMOY: string;
 		PUBLIC_ENCODER_MINIO_URL: string;
+		PUBLIC_VAPID_PUBLIC_KEY: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }

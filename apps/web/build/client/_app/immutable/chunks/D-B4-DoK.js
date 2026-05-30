@@ -1,0 +1,1 @@
+var e=async e=>{let t=new FormData;t.append(`file`,e);let n=await fetch(`/api/files`,{method:`POST`,body:t});if(!n.ok){let e=await n.json();throw Error(e.error||`Failed to upload file`)}return(await n.json()).url};export{e as uploadFile};

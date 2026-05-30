@@ -1,11 +1,12 @@
-import { c as callAgent, a as extractJsonObject, S as SEPHAR_SYSTEM_PROMPT } from "./ai-provider.js";
+import { a as extractJsonObject, n as callAgent, t as SEPHAR_SYSTEM_PROMPT } from "./ai-provider.js";
+//#region src/lib/server/ai-tagging.ts
 async function generateContentMetadata(title, description, contentType) {
-  const result = await callAgent(
-    [
-      { role: "system", content: SEPHAR_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Analyze this faith-based ${contentType} and return a JSON object with metadata.
+	const result = await callAgent([{
+		role: "system",
+		content: SEPHAR_SYSTEM_PROMPT
+	}, {
+		role: "user",
+		content: `Analyze this faith-based ${contentType} and return a JSON object with metadata.
 
 Title: "${title}"
 Description: "${description}"
@@ -31,22 +32,29 @@ Rules:
 - ageRating: one of "All", "7+", "12+", "16+"
 - shortDescription: max 150 characters
 - sensitiveFlags: content warnings if any, empty array if none`
-      }
-    ],
-    { temperature: 0.2, maxTokens: 512 }
-  );
-  if (!result) return null;
-  const parsed = extractJsonObject(result.content);
-  if (!parsed) return null;
-  return { ...parsed, aiProvider: `${result.provider}/${result.model}` };
+	}], {
+		temperature: .2,
+		maxTokens: 512
+	});
+	if (!result) return null;
+	const parsed = extractJsonObject(result.content);
+	if (!parsed) return null;
+	return {
+		...parsed,
+		aiProvider: `${result.provider}/${result.model}`
+	};
 }
+/**
+* Quick genre + mood classification from a short prompt.
+* Used for semantic search preprocessing.
+*/
 async function classifyUserSearchIntent(searchQuery) {
-  const result = await callAgent(
-    [
-      { role: "system", content: SEPHAR_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `A user on a Christian streaming platform typed this search: "${searchQuery}"
+	const result = await callAgent([{
+		role: "system",
+		content: SEPHAR_SYSTEM_PROMPT
+	}, {
+		role: "user",
+		content: `A user on a Christian streaming platform typed this search: "${searchQuery}"
 
 Extract what they're looking for and return ONLY this JSON:
 {
@@ -56,14 +64,12 @@ Extract what they're looking for and return ONLY this JSON:
 }
 
 Keep arrays concise (1–3 items max each). If the query is vague, infer meaningfully.`
-      }
-    ],
-    { temperature: 0.1, maxTokens: 128 }
-  );
-  if (!result) return null;
-  return extractJsonObject(result.content);
+	}], {
+		temperature: .1,
+		maxTokens: 128
+	});
+	if (!result) return null;
+	return extractJsonObject(result.content);
 }
-export {
-  classifyUserSearchIntent as c,
-  generateContentMetadata as g
-};
+//#endregion
+export { generateContentMetadata as n, classifyUserSearchIntent as t };

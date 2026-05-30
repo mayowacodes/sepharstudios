@@ -17,12 +17,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Keep large UI libraries separate
-          'ui-libs': ['bits-ui', 'vaul-svelte'],
-          // layerchart is ~80 KB and only consumed by /admin/analytics; split
-          // it so non-admin routes never download it.
-          'chart-lib': ['layerchart']
+        // Rolldown (used by Vite 8) requires the function form; the legacy
+        // object form errors out. Same chunking strategy as before — UI libs
+        // and layerchart get their own bundles so non-admin routes never
+        // download them.
+        manualChunks(id) {
+          if (id.includes('node_modules/bits-ui') || id.includes('node_modules/vaul-svelte')) {
+            return 'ui-libs';
+          }
+          if (id.includes('node_modules/layerchart')) {
+            return 'chart-lib';
+          }
         }
       }
     }

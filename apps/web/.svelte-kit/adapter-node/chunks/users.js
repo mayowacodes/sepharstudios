@@ -1,46 +1,22 @@
-import { s as spread_props, p as prevent_snippet_stringification, F as FILENAME } from "./ui-libs.js";
-import { I as Icon } from "./Icon.js";
-Users[FILENAME] = "C:/Users/Mayowa Animasaun/Documents/Projects/sepharstudios/node_modules/@lucide/svelte/dist/icons/users.svelte";
+import { yt as spread_props } from "./ui-libs.js";
+import { t as Icon } from "./Icon.js";
+//#region ../../node_modules/@lucide/svelte/dist/icons/users.svelte
 function Users($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let { $$slots, $$events, ...props } = $$props;
-      const iconNode = [
-        ["path", { "d": "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }],
-        ["path", { "d": "M16 3.128a4 4 0 0 1 0 7.744" }],
-        ["path", { "d": "M22 21v-2a4 4 0 0 0-3-3.87" }],
-        ["circle", { "cx": "9", "cy": "7", "r": "4" }]
-      ];
-      Icon($$renderer2, spread_props([
-        { name: "users" },
-        /**
-         * @component @name Users
-         * @description Lucide SVG icon component, renders SVG Element with children.
-         *
-         * @preview ![img](data:image/svg+xml;base64,PHN2ZyAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogIHdpZHRoPSIyNCIKICBoZWlnaHQ9IjI0IgogIHZpZXdCb3g9IjAgMCAyNCAyNCIKICBmaWxsPSJub25lIgogIHN0cm9rZT0iIzAwMCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICNmZmY7IGJvcmRlci1yYWRpdXM6IDJweCIKICBzdHJva2Utd2lkdGg9IjIiCiAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIgogIHN0cm9rZS1saW5lam9pbj0icm91bmQiCj4KICA8cGF0aCBkPSJNMTYgMjF2LTJhNCA0IDAgMCAwLTQtNEg2YTQgNCAwIDAgMC00IDR2MiIgLz4KICA8cGF0aCBkPSJNMTYgMy4xMjhhNCA0IDAgMCAxIDAgNy43NDQiIC8+CiAgPHBhdGggZD0iTTIyIDIxdi0yYTQgNCAwIDAgMC0zLTMuODciIC8+CiAgPGNpcmNsZSBjeD0iOSIgY3k9IjciIHI9IjQiIC8+Cjwvc3ZnPgo=) - https://lucide.dev/icons/users
-         * @see https://lucide.dev/guide/packages/lucide-svelte - Documentation
-         *
-         * @param {Object} props - Lucide icons props and any valid SVG attribute
-         * @returns {FunctionalComponent} Svelte component
-         *
-         */
-        props,
-        {
-          iconNode,
-          children: prevent_snippet_stringification(($$renderer3) => {
-            props.children?.($$renderer3);
-            $$renderer3.push(`<!---->`);
-          }),
-          $$slots: { default: true }
-        }
-      ]));
-    },
-    Users
-  );
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "users" },
+		props,
+		{ iconNode: [
+			["path", { "d": "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }],
+			["path", { "d": "M16 3.128a4 4 0 0 1 0 7.744" }],
+			["path", { "d": "M22 21v-2a4 4 0 0 0-3-3.87" }],
+			["circle", {
+				"cx": "9",
+				"cy": "7",
+				"r": "4"
+			}]
+		] }
+	]));
 }
-Users.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  Users as U
-};
+//#endregion
+export { Users as t };

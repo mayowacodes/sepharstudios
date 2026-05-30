@@ -1,8 +1,8 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+//#region src/lib/utils.ts
 function cn(...inputs) {
-  return twMerge(clsx(inputs));
+	return twMerge(clsx(inputs));
 }
-export {
-  cn as c
-};
+//#endregion
+export { cn as t };

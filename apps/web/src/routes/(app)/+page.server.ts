@@ -10,7 +10,8 @@ export const load: PageServerLoad = async () => {
             .where(
                 and(
                     eq(mediaLibrary.mediaType, 'show'),
-                    eq(mediaLibrary.isActive, true)
+                    eq(mediaLibrary.isActive, true),
+                    eq(mediaLibrary.visibility, 'public')
                 )
             )
             .orderBy(desc(mediaLibrary.createdAt))
@@ -21,7 +22,8 @@ export const load: PageServerLoad = async () => {
             .where(
                 and(
                     eq(mediaLibrary.mediaType, 'movie'),
-                    eq(mediaLibrary.isActive, true)
+                    eq(mediaLibrary.isActive, true),
+                    eq(mediaLibrary.visibility, 'public')
                 )
             )
             .orderBy(desc(mediaLibrary.createdAt))

@@ -11,6 +11,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		const conditions = [
 			eq(mediaLibrary.isActive, true),
+			eq(mediaLibrary.visibility, 'public'),
 			sql`(${mediaLibrary.ageRating} IN ('G', 'PG', 'ALL_AGES') OR ${mediaLibrary.ageRating} ILIKE '%kids%' OR ${mediaLibrary.ageRating} ILIKE '%children%')`
 		];
 

@@ -34,7 +34,7 @@ import { polygon, polygonAmoy } from 'viem/chains';
  * We leave those alone.
  *
  * Auth: same `CRON_SECRET` bearer as the other cron endpoints.
- * Recommended schedule: every 10 min (`*/10 * * * *`).
+ * Recommended schedule: every 10 minutes.
  */
 
 const RECONCILE_AGE_MS = 5 * 60_000; // wait 5 min before checking — receipts take time

@@ -100,8 +100,14 @@
     }).format(new Date(date));
   }
   
+  // Drafts + rejected go through the full upload wizard (they need video re-
+  // upload or first-time submit). Everything else opens the new detail page
+  // where metadata + assets can be edited in place without re-encoding.
   function editContent(id: string) {
     goto(`/creator/upload?edit=${id}`);
+  }
+  function manageContent(id: string) {
+    goto(`/creator/content/${id}`);
   }
 
   async function duplicateContent(id: string) {
@@ -296,18 +302,31 @@
               <!-- Actions -->
               <div class="flex flex-wrap gap-3 pt-3">
                 {#if content.status === ContentStatus.DRAFT}
-                  <button 
+                  <button
                     onclick={() => editContent(content.id)}
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Continue Editing
                   </button>
                 {:else if content.status === ContentStatus.REJECTED}
-                  <button 
+                  <button
                     onclick={() => editContent(content.id)}
                     class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Resubmit
+                  </button>
+                  <button
+                    onclick={() => manageContent(content.id)}
+                    class="bg-white/10 hover:bg-white/15 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Edit details
+                  </button>
+                {:else}
+                  <button
+                    onclick={() => manageContent(content.id)}
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Manage
                   </button>
                 {/if}
                 

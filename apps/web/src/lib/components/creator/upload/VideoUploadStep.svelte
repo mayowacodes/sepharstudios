@@ -1,53 +1,131 @@
 <!-- Video Upload Step -->
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { toast } from 'svelte-sonner';
   import type { VideoUploadProgress, UploadWizardState, UploadStep } from '$lib/types/creator';
-  
+
   export let data: UploadWizardState['stepData'][UploadStep.VIDEO_UPLOAD];
   export let onUpdate: (data: any) => void;
-  
+
   let videoFile: File | null = data.videoFile || null;
   let trailerFile: File | null = data.trailerFile || null;
   let videoProgress: VideoUploadProgress | null = data.videoProgress || null;
   let trailerProgress: VideoUploadProgress | null = data.trailerProgress || null;
-  
+
   let videoDragOver = false;
   let trailerDragOver = false;
-  
+
+  // Minimum vertical resolution accepted. Sourced from /api/platform-settings
+  // so admins can raise the floor without a code change. Falls back to 1080
+  // (the recommended default) if the fetch fails — never lower than that.
+  let minVideoHeight = 1080;
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/platform-settings');
+      if (res.ok) {
+        const body = await res.json();
+        if (Number.isFinite(body.minVideoHeight)) {
+          minVideoHeight = Math.max(720, Math.min(2160, Number(body.minVideoHeight)));
+        }
+      }
+    } catch {
+      // keep fallback default
+    }
+  });
+
+  $: minResolutionLabel = `${minVideoHeight}p (${minResolutionWidth(minVideoHeight)}x${minVideoHeight})`;
+
+  function minResolutionWidth(h: number) {
+    // Round to nearest 16:9 width.
+    return Math.round((h * 16) / 9);
+  }
+
+  // Inspect a video file's actual encoded height via a hidden <video> element.
+  // Resolves to height in pixels, or null when the browser can't decode it.
+  function readVideoHeight(file: File): Promise<number | null> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.onloadedmetadata = () => {
+        const h = video.videoHeight;
+        URL.revokeObjectURL(url);
+        resolve(Number.isFinite(h) && h > 0 ? h : null);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      video.src = url;
+    });
+  }
+
+  // Returns true when the file passes the minimum-resolution gate (or the
+  // gate cannot be evaluated, in which case server-side encoder validation
+  // catches it later).
+  async function passesResolutionGate(file: File): Promise<boolean> {
+    const height = await readVideoHeight(file);
+    if (height === null) return true; // can't measure → defer to server
+    if (height < minVideoHeight) {
+      toast.error('Video resolution too low', {
+        description: `Detected ${height}p. Minimum allowed is ${minResolutionLabel}.`
+      });
+      return false;
+    }
+    return true;
+  }
+
   // Update parent when data changes
   $: onUpdate({ videoFile, trailerFile, videoProgress, trailerProgress });
-  
-  function handleVideoFileSelect(event: Event) {
+
+  async function handleVideoFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      videoFile = input.files[0];
+      const candidate = input.files[0];
+      if (!(await passesResolutionGate(candidate))) {
+        input.value = '';
+        return;
+      }
+      videoFile = candidate;
       startVideoUpload(videoFile);
     }
   }
-  
-  function handleTrailerFileSelect(event: Event) {
+
+  async function handleTrailerFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      trailerFile = input.files[0];
+      const candidate = input.files[0];
+      if (!(await passesResolutionGate(candidate))) {
+        input.value = '';
+        return;
+      }
+      trailerFile = candidate;
       startTrailerUpload(trailerFile);
     }
   }
-  
-  function handleVideoDrop(event: DragEvent) {
+
+  async function handleVideoDrop(event: DragEvent) {
     event.preventDefault();
     videoDragOver = false;
-    
+
     if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      videoFile = event.dataTransfer.files[0];
+      const candidate = event.dataTransfer.files[0];
+      if (!(await passesResolutionGate(candidate))) return;
+      videoFile = candidate;
       startVideoUpload(videoFile);
     }
   }
-  
-  function handleTrailerDrop(event: DragEvent) {
+
+  async function handleTrailerDrop(event: DragEvent) {
     event.preventDefault();
     trailerDragOver = false;
-    
+
     if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      trailerFile = event.dataTransfer.files[0];
+      const candidate = event.dataTransfer.files[0];
+      if (!(await passesResolutionGate(candidate))) return;
+      trailerFile = candidate;
       startTrailerUpload(trailerFile);
     }
   }
@@ -291,7 +369,7 @@
         <div class="font-medium text-white mb-1">Video Upload Guidelines</div>
         <div class="text-sm text-yellow-200 space-y-1">
           <div>• Videos should be in MP4 format for best compatibility</div>
-          <div>• Minimum resolution: 720p (1280x720)</div>
+          <div>• Minimum resolution: {minResolutionLabel}</div>
           <div>• Audio should be clear and free from background noise</div>
           <div>• Content will be processed and optimized after upload</div>
           <div>• Upload may take several minutes depending on file size</div>

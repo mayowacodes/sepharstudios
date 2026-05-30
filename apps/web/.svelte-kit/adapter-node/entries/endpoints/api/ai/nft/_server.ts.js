@@ -1,12 +1,14 @@
+import { a as extractJsonObject, n as callAgent, r as callChat, t as SEPHAR_SYSTEM_PROMPT } from "../../../../../chunks/ai-provider.js";
+import { i as enforceRateLimit, t as AI_AGENT_LIMIT } from "../../../../../chunks/rate-limit.js";
 import { error, json } from "@sveltejs/kit";
-import { b as callChat, S as SEPHAR_SYSTEM_PROMPT, a as extractJsonObject, c as callAgent } from "../../../../../chunks/ai-provider.js";
+//#region src/lib/server/ai-nft.ts
 async function generateNFTMetadata(opts) {
-  const result = await callAgent(
-    [
-      { role: "system", content: SEPHAR_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Generate rich NFT metadata for a faith-based content NFT on the Sephar Studios platform.
+	const result = await callAgent([{
+		role: "system",
+		content: SEPHAR_SYSTEM_PROMPT
+	}, {
+		role: "user",
+		content: `Generate rich NFT metadata for a faith-based content NFT on the Sephar Studios platform.
 
 Content: "${opts.contentTitle}"
 Type: ${opts.contentType}
@@ -41,24 +43,29 @@ Guidelines:
 - rarityContext: explain edition rarity and collectible value
 - collectionTheme: one of [Faith Journey, Redemption Stories, Kids & Family, Worship Experience, Biblical Epic, Testimony Collection]
 - attributes: keep the given ones, add 1–2 more based on content themes`
-      }
-    ],
-    { provider: "openrouter", temperature: 0.4, maxTokens: 768, timeoutMs: 2e4 }
-  );
-  if (!result) return null;
-  const parsed = extractJsonObject(result.content);
-  if (!parsed) return null;
-  return { ...parsed, aiProvider: `${result.provider}/${result.model}` };
+	}], {
+		provider: "openrouter",
+		temperature: .4,
+		maxTokens: 768,
+		timeoutMs: 2e4
+	});
+	if (!result) return null;
+	const parsed = extractJsonObject(result.content);
+	if (!parsed) return null;
+	return {
+		...parsed,
+		aiProvider: `${result.provider}/${result.model}`
+	};
 }
 async function narrateNFTPortfolio(opts) {
-  if (opts.nfts.length === 0) return null;
-  const nftSummary = opts.nfts.slice(0, 10).map((n) => `- "${n.title}" (${n.contentType}${n.bibleReference ? `, ${n.bibleReference}` : ""})`).join("\n");
-  const result = await callChat(
-    [
-      { role: "system", content: SEPHAR_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Write a warm, personalized narrative for a faith-based NFT portfolio.
+	if (opts.nfts.length === 0) return null;
+	const nftSummary = opts.nfts.slice(0, 10).map((n) => `- "${n.title}" (${n.contentType}${n.bibleReference ? `, ${n.bibleReference}` : ""})`).join("\n");
+	const result = await callChat([{
+		role: "system",
+		content: SEPHAR_SYSTEM_PROMPT
+	}, {
+		role: "user",
+		content: `Write a warm, personalized narrative for a faith-based NFT portfolio.
 
 User: ${opts.userDisplayName}
 STC Balance: ${opts.totalStcBalance} STC
@@ -74,65 +81,68 @@ Return ONLY this JSON:
 }
 
 Keep each field to 1–2 sentences. Warm, encouraging, faith-affirming tone.`
-      }
-    ],
-    { temperature: 0.5, maxTokens: 512 }
-  );
-  if (!result) return null;
-  const parsed = extractJsonObject(result.content);
-  if (!parsed) return null;
-  return { ...parsed, aiProvider: `${result.provider}/${result.model}` };
+	}], {
+		temperature: .5,
+		maxTokens: 512
+	});
+	if (!result) return null;
+	const parsed = extractJsonObject(result.content);
+	if (!parsed) return null;
+	return {
+		...parsed,
+		aiProvider: `${result.provider}/${result.model}`
+	};
 }
-const POST = async ({ request, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-  const body = await request.json();
-  const { type } = body;
-  if (!type) throw error(400, "type is required");
-  switch (type) {
-    case "metadata": {
-      const {
-        contentTitle,
-        contentDescription,
-        bibleReference = "",
-        genres = [],
-        topics = [],
-        contentType = "movie",
-        creatorName = "Sephar Creator",
-        editionNumber = 1,
-        totalEditions = 1e3
-      } = body;
-      if (!contentTitle || !contentDescription) {
-        throw error(400, "contentTitle and contentDescription required");
-      }
-      const metadata = await generateNFTMetadata({
-        contentTitle,
-        contentDescription,
-        bibleReference,
-        genres,
-        topics,
-        contentType,
-        creatorName,
-        editionNumber,
-        totalEditions
-      });
-      if (!metadata) throw error(503, "NFT metadata generation unavailable");
-      return json(metadata);
-    }
-    case "portfolio": {
-      const { userDisplayName, nfts = [], totalStcBalance = 0 } = body;
-      if (!nfts.length) return json({ message: "No NFTs in portfolio", narration: null });
-      const narration = await narrateNFTPortfolio({
-        userDisplayName: userDisplayName ?? locals.user.name ?? "Believer",
-        nfts,
-        totalStcBalance
-      });
-      if (!narration) throw error(503, "Portfolio narration unavailable");
-      return json(narration);
-    }
-    default:
-      throw error(400, `Unknown type: ${type}`);
-  }
+//#endregion
+//#region src/routes/api/ai/nft/+server.ts
+/**
+* POST /api/ai/nft
+* AI-generated NFT metadata and portfolio narration.
+*
+* Body types:
+*   { type: 'metadata', contentTitle, contentDescription, bibleReference, genres, topics, contentType, creatorName, editionNumber, totalEditions }
+*   { type: 'portfolio', userDisplayName, nfts[], totalStcBalance }
+*/
+var POST = async ({ request, locals }) => {
+	if (!locals.user) throw error(401, "Unauthorized");
+	await enforceRateLimit(`ai:nft:${locals.user.id}`, AI_AGENT_LIMIT);
+	const body = await request.json();
+	const { type } = body;
+	if (!type) throw error(400, "type is required");
+	switch (type) {
+		case "metadata": {
+			const { contentTitle, contentDescription, bibleReference = "", genres = [], topics = [], contentType = "movie", creatorName = "Sephar Creator", editionNumber = 1, totalEditions = 1e3 } = body;
+			if (!contentTitle || !contentDescription) throw error(400, "contentTitle and contentDescription required");
+			const metadata = await generateNFTMetadata({
+				contentTitle,
+				contentDescription,
+				bibleReference,
+				genres,
+				topics,
+				contentType,
+				creatorName,
+				editionNumber,
+				totalEditions
+			});
+			if (!metadata) throw error(503, "NFT metadata generation unavailable");
+			return json(metadata);
+		}
+		case "portfolio": {
+			const { userDisplayName, nfts = [], totalStcBalance = 0 } = body;
+			if (!nfts.length) return json({
+				message: "No NFTs in portfolio",
+				narration: null
+			});
+			const narration = await narrateNFTPortfolio({
+				userDisplayName: userDisplayName ?? locals.user.name ?? "Believer",
+				nfts,
+				totalStcBalance
+			});
+			if (!narration) throw error(503, "Portfolio narration unavailable");
+			return json(narration);
+		}
+		default: throw error(400, `Unknown type: ${type}`);
+	}
 };
-export {
-  POST
-};
+//#endregion
+export { POST };

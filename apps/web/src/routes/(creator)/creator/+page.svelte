@@ -37,32 +37,32 @@
     <p class="text-xl text-gray-300">Manage your faith-based content and reach believers worldwide</p>
   </div>
 
-  <!-- Quick Stats Grid -->
+  <!-- Quick Stats Grid — each card links into its detail page -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/creator/content" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-blue-400">{creatorStats.totalContent}</div>
       <div class="text-gray-300 text-sm">Total Content</div>
-    </div>
-    
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+
+    <a href="/creator/content?status=pending" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-yellow-400">{creatorStats.pendingReview}</div>
       <div class="text-gray-300 text-sm">Pending Review</div>
-    </div>
-    
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+
+    <a href="/creator/content?status=published" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-green-400">{creatorStats.published}</div>
       <div class="text-gray-300 text-sm">Published</div>
-    </div>
-    
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+
+    <a href="/creator/analytics" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-purple-400">{creatorStats.totalViews.toLocaleString()}</div>
       <div class="text-gray-300 text-sm">Total Views</div>
-    </div>
-    
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+
+    <a href="/creator/earnings" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-pink-400">${creatorStats.monthlyEarnings.toFixed(2)}</div>
       <div class="text-gray-300 text-sm">This Month</div>
-    </div>
+    </a>
   </div>
 
   <!-- Quick Actions -->

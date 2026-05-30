@@ -12,13 +12,13 @@
   "categories": ["entertainment", "lifestyle"],
   "icons": [
     {
-      "src": "/logo-alone-sepharstudios.png",
+      "src": "/logo-alone-sepharstudios-bgless.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo-alone-sepharstudios.png",
+      "src": "/logo-alone-sepharstudios-bgless.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "maskable"
@@ -43,13 +43,13 @@
       "name": "Dashboard",
       "short_name": "Home",
       "url": "/dashboard",
-      "icons": [{ "src": "/logo-alone-sepharstudios.png", "sizes": "any" }]
+      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
     },
     {
       "name": "My List",
       "short_name": "List",
       "url": "/watchlist",
-      "icons": [{ "src": "/logo-alone-sepharstudios.png", "sizes": "any" }]
+      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
     }
   ]
 }

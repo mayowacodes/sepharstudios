@@ -1,7 +1,6 @@
-import "@sveltejs/kit";
-const load = () => {
-  return {};
+//#region src/routes/kids/kiddies/+layout.ts
+var load = () => {
+	return {};
 };
-export {
-  load
-};
+//#endregion
+export { load };

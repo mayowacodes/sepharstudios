@@ -1,5 +1,6 @@
 <script lang="ts">
   import Self from './ForumReply.svelte';
+  import ReportButton from '$lib/components/ReportButton.svelte';
 
   interface ReplyNode {
     id: string;
@@ -112,6 +113,7 @@
             class="text-red-300 hover:text-red-100"
           >Delete</button>
         {/if}
+        <ReportButton targetType="forum_reply" targetId={reply.id} variant="button" />
       </div>
 
       {#if replyOpen}

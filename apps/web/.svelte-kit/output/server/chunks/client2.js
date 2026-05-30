@@ -1,52 +1,22 @@
-import "clsx";
-import { w as writable, A as noop } from "./ui-libs.js";
-import "@sveltejs/kit/internal";
-import "./exports.js";
-import "./utils.js";
-import "@sveltejs/kit/internal/server";
-function create_updated_store() {
-  const { set, subscribe } = writable(false);
-  {
-    return {
-      subscribe,
-      // eslint-disable-next-line @typescript-eslint/require-await
-      check: async () => false
-    };
-  }
-}
-const is_legacy = noop.toString().includes("$$") || /function \w+\(\) \{\}/.test(noop.toString());
-if (is_legacy) {
-  ({
-    data: {},
-    form: null,
-    error: null,
-    params: {},
-    route: { id: null },
-    state: {},
-    status: -1,
-    url: new URL("https://example.com")
-  });
-}
-const stores = {
-  updated: /* @__PURE__ */ create_updated_store()
+import { n as signIn } from "./auth-client.js";
+import { t as Constants } from "./constants.js";
+import { n as toast } from "./toast-state.svelte.js";
+//#region src/lib/authentication/client.ts
+var getRedirectUrl = () => {
+	return Constants.AFTERAUTH;
 };
-function goto(url, opts = {}) {
-  {
-    throw new Error("Cannot call goto(...) on the server");
-  }
-}
-{
-  const console_warn = console.warn;
-  console.warn = function warn(...args) {
-    if (args.length === 1 && /<(Layout|Page|Error)(_[\w$]+)?> was created (with unknown|without expected) prop '(data|form)'/.test(
-      args[0]
-    )) {
-      return;
-    }
-    console_warn(...args);
-  };
-}
-export {
-  goto as g,
-  stores as s
+var handleSocialSignin = async (provider, callbackURL) => {
+	await signIn.social({
+		provider,
+		callbackURL
+	}, {
+		onSuccess: () => {
+			toast.success("Success Alert", { description: "Successful Sign in" });
+		},
+		onError: (ctx) => {
+			toast.error("Error Alert", { description: ctx.error.message });
+		}
+	});
 };
+//#endregion
+export { handleSocialSignin as n, getRedirectUrl as t };

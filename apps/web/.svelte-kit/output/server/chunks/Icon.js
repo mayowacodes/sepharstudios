@@ -1,69 +1,86 @@
-import { c as attributes, d as clsx, a as push_element, i as ensure_array_like, g as validate_dynamic_element_tag, h as element, b as pop_element, F as FILENAME } from "./ui-libs.js";
-const defaultAttributes = {
-  xmlns: "http://www.w3.org/2000/svg",
-  width: 24,
-  height: 24,
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  "stroke-width": 2,
-  "stroke-linecap": "round",
-  "stroke-linejoin": "round"
+import { At as clsx, It as getContext, ft as attributes, gt as ensure_array_like, ht as element, mt as derived } from "./ui-libs.js";
+//#region ../../node_modules/@lucide/svelte/dist/defaultAttributes.js
+/**
+* @file
+* @license @lucide/svelte v1.16.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var defaultAttributes = {
+	xmlns: "http://www.w3.org/2000/svg",
+	width: 24,
+	height: 24,
+	viewBox: "0 0 24 24",
+	fill: "none",
+	stroke: "currentColor",
+	"stroke-width": 2,
+	"stroke-linecap": "round",
+	"stroke-linejoin": "round"
 };
-Icon[FILENAME] = "C:/Users/Mayowa Animasaun/Documents/Projects/sepharstudios/node_modules/@lucide/svelte/dist/Icon.svelte";
+//#endregion
+//#region ../../node_modules/@lucide/svelte/dist/utils/hasA11yProp.js
+/**
+* @file
+* @license @lucide/svelte v1.16.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+/**
+* Check if a component has an accessibility prop
+*
+* @param {object} props
+* @returns {boolean} Whether the component has an accessibility prop
+*/
+var hasA11yProp = (props) => {
+	for (const prop in props) if (prop.startsWith("aria-") || prop === "role" || prop === "title") return true;
+	return false;
+};
+//#endregion
+//#region ../../node_modules/@lucide/svelte/dist/context.js
+/**
+* @file
+* @license @lucide/svelte v1.16.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var LucideContext = Symbol("lucide-context");
+var getLucideContext = () => getContext(LucideContext);
+//#endregion
+//#region ../../node_modules/@lucide/svelte/dist/Icon.svelte
 function Icon($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      const {
-        name,
-        color = "currentColor",
-        size = 24,
-        strokeWidth = 2,
-        absoluteStrokeWidth = false,
-        iconNode = [],
-        children,
-        $$slots,
-        $$events,
-        ...props
-      } = $$props;
-      $$renderer2.push(`<svg${attributes(
-        {
-          ...defaultAttributes,
-          ...props,
-          width: size,
-          height: size,
-          stroke: color,
-          "stroke-width": absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
-          class: clsx(["lucide-icon lucide", name && `lucide-${name}`, props.class])
-        },
-        void 0,
-        void 0,
-        void 0,
-        3
-      )}>`);
-      push_element($$renderer2, "svg", 5, 0);
-      $$renderer2.push(`<!--[-->`);
-      const each_array = ensure_array_like(iconNode);
-      for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-        let [tag, attrs] = each_array[$$index];
-        validate_dynamic_element_tag(() => tag);
-        push_element($$renderer2, tag, 15, 4);
-        element($$renderer2, tag, () => {
-          $$renderer2.push(`${attributes({ ...attrs }, void 0, void 0, void 0, 3)}`);
-        });
-        pop_element();
-      }
-      $$renderer2.push(`<!--]-->`);
-      children?.($$renderer2);
-      $$renderer2.push(`<!----></svg>`);
-      pop_element();
-    },
-    Icon
-  );
+	$$renderer.component(($$renderer) => {
+		const globalProps = getLucideContext() ?? {};
+		const { name, color = globalProps.color ?? "currentColor", size = globalProps.size ?? 24, strokeWidth = globalProps.strokeWidth ?? 2, absoluteStrokeWidth = globalProps.absoluteStrokeWidth ?? false, iconNode = [], children, $$slots, $$events, ...props } = $$props;
+		const calculatedStrokeWidth = derived(() => absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth);
+		$$renderer.push(`<svg${attributes({
+			...defaultAttributes,
+			...!children && !hasA11yProp(props) && { "aria-hidden": "true" },
+			...props,
+			width: size,
+			height: size,
+			stroke: color,
+			"stroke-width": calculatedStrokeWidth(),
+			class: clsx([
+				"lucide-icon lucide",
+				globalProps.class,
+				name && `lucide-${name}`,
+				props.class
+			])
+		}, void 0, void 0, void 0, 3)}><!--[-->`);
+		const each_array = ensure_array_like(iconNode);
+		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+			let [tag, attrs] = each_array[$$index];
+			element($$renderer, tag, () => {
+				$$renderer.push(`${attributes({ ...attrs }, void 0, void 0, void 0, 3)}`);
+			});
+		}
+		$$renderer.push(`<!--]-->`);
+		children?.($$renderer);
+		$$renderer.push(`<!----></svg>`);
+	});
 }
-Icon.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  Icon as I
-};
+//#endregion
+export { Icon as t };

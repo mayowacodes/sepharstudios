@@ -33,7 +33,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const whereClause = filters.length ? and(...filters) : undefined;
 
-	let query = db
+	const baseQuery = db
 		.select({
 			id: mediaLibrary.id,
 			title: mediaLibrary.title,
@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from(mediaLibrary)
 		.leftJoin(user, eq(mediaLibrary.creatorId, user.id));
 
-	if (whereClause) query = query.where(whereClause);
+	const query = whereClause ? baseQuery.where(whereClause) : baseQuery;
 
 	const items = await query
 		.orderBy(desc(mediaLibrary.createdAt))

@@ -1,447 +1,328 @@
-import { s as spread_props, p as prevent_snippet_stringification, F as FILENAME, a as push_element, b as pop_element, e as escape_html } from "../../../../chunks/ui-libs.js";
-import "clsx";
-import { B as Button } from "../../../../chunks/button.js";
-import { C as Card, a as Card_header, b as Card_title, d as Card_description, c as Card_content } from "../../../../chunks/card-title.js";
-import { I as Input } from "../../../../chunks/input.js";
-import { L as Label } from "../../../../chunks/label.js";
-import "../../../../chunks/loading-spinner.js";
+import { jt as escape_html, mt as derived, yt as spread_props } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/auth-client.js";
-import { C as Constants } from "../../../../chunks/index.js";
-import { A as Avatar, a as Avatar_image, b as Avatar_fallback } from "../../../../chunks/avatar-fallback.js";
-import { I as Icon } from "../../../../chunks/Icon.js";
-import { p as page } from "../../../../chunks/index2.js";
-import { U as User } from "../../../../chunks/user.js";
-import { M as Mail } from "../../../../chunks/mail.js";
-import { L as Lock } from "../../../../chunks/lock.js";
-import { E as Eye } from "../../../../chunks/eye.js";
-import { E as Eye_off } from "../../../../chunks/eye-off.js";
-import { S as Separator } from "../../../../chunks/separator.js";
-Camera[FILENAME] = "C:/Users/Mayowa Animasaun/Documents/Projects/sepharstudios/node_modules/@lucide/svelte/dist/icons/camera.svelte";
+import { t as Constants } from "../../../../chunks/constants.js";
+import { t as Icon } from "../../../../chunks/Icon.js";
+import { t as Eye_off } from "../../../../chunks/eye-off.js";
+import { t as Eye } from "../../../../chunks/eye.js";
+import { t as Lock } from "../../../../chunks/lock.js";
+import { t as Mail } from "../../../../chunks/mail.js";
+import { t as User } from "../../../../chunks/user.js";
+import { t as page } from "../../../../chunks/state.js";
+import "../../../../chunks/utils2.js";
+import { t as Button } from "../../../../chunks/button.js";
+import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../../chunks/avatar.js";
+import { t as Input } from "../../../../chunks/input.js";
+import { t as Separator } from "../../../../chunks/separator.js";
+import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../chunks/card.js";
+import { t as Label } from "../../../../chunks/label.js";
+import "../../../../chunks/loading-spinner.js";
+import "../../../../chunks/client2.js";
+//#region ../../node_modules/@lucide/svelte/dist/icons/camera.svelte
 function Camera($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let { $$slots, $$events, ...props } = $$props;
-      const iconNode = [
-        [
-          "path",
-          {
-            "d": "M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"
-          }
-        ],
-        ["circle", { "cx": "12", "cy": "13", "r": "3" }]
-      ];
-      Icon($$renderer2, spread_props([
-        { name: "camera" },
-        /**
-         * @component @name Camera
-         * @description Lucide SVG icon component, renders SVG Element with children.
-         *
-         * @preview ![img](data:image/svg+xml;base64,PHN2ZyAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogIHdpZHRoPSIyNCIKICBoZWlnaHQ9IjI0IgogIHZpZXdCb3g9IjAgMCAyNCAyNCIKICBmaWxsPSJub25lIgogIHN0cm9rZT0iIzAwMCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICNmZmY7IGJvcmRlci1yYWRpdXM6IDJweCIKICBzdHJva2Utd2lkdGg9IjIiCiAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIgogIHN0cm9rZS1saW5lam9pbj0icm91bmQiCj4KICA8cGF0aCBkPSJNMTMuOTk3IDRhMiAyIDAgMCAxIDEuNzYgMS4wNWwuNDg2LjlBMiAyIDAgMCAwIDE4LjAwMyA3SDIwYTIgMiAwIDAgMSAyIDJ2OWEyIDIgMCAwIDEtMiAySDRhMiAyIDAgMCAxLTItMlY5YTIgMiAwIDAgMSAyLTJoMS45OTdhMiAyIDAgMCAwIDEuNzU5LTEuMDQ4bC40ODktLjkwNEEyIDIgMCAwIDEgMTAuMDA0IDR6IiAvPgogIDxjaXJjbGUgY3g9IjEyIiBjeT0iMTMiIHI9IjMiIC8+Cjwvc3ZnPgo=) - https://lucide.dev/icons/camera
-         * @see https://lucide.dev/guide/packages/lucide-svelte - Documentation
-         *
-         * @param {Object} props - Lucide icons props and any valid SVG attribute
-         * @returns {FunctionalComponent} Svelte component
-         *
-         */
-        props,
-        {
-          iconNode,
-          children: prevent_snippet_stringification(($$renderer3) => {
-            props.children?.($$renderer3);
-            $$renderer3.push(`<!---->`);
-          }),
-          $$slots: { default: true }
-        }
-      ]));
-    },
-    Camera
-  );
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "camera" },
+		props,
+		{ iconNode: [["path", { "d": "M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" }], ["circle", {
+			"cx": "12",
+			"cy": "13",
+			"r": "3"
+		}]] }
+	]));
 }
-Camera.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
+//#endregion
+//#region src/lib/authentication/image-cropper.ts
+var getFileFromUrl = async (url, name = "image.png") => {
+	const blob = await (await fetch(url)).blob();
+	return new File([blob], name, { type: blob.type });
 };
-const getFileFromUrl = async (url, name = "image.png") => {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return new File([blob], name, { type: blob.type });
-};
-User_profile_image_cropper[FILENAME] = "src/lib/authentication/ui/user-profile-image-cropper.svelte";
+//#endregion
+//#region src/lib/authentication/ui/user-profile-image-cropper.svelte
 function User_profile_image_cropper($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let { src, onCropped } = $$props;
-      $$renderer2.push(`<div class="relative group cursor-pointer inline-block">`);
-      push_element($$renderer2, "div", 19, 0);
-      Avatar($$renderer2, {
-        class: "h-24 w-24 border-2 border-border transition-opacity group-hover:opacity-80",
-        children: prevent_snippet_stringification(($$renderer3) => {
-          Avatar_image($$renderer3, { src });
-          $$renderer3.push(`<!----> `);
-          Avatar_fallback($$renderer3, {
-            children: prevent_snippet_stringification(($$renderer4) => {
-              $$renderer4.push(`<!---->User`);
-            }),
-            $$slots: { default: true }
-          });
-          $$renderer3.push(`<!---->`);
-        }),
-        $$slots: { default: true }
-      });
-      $$renderer2.push(`<!----> <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">`);
-      push_element($$renderer2, "div", 24, 2);
-      Camera($$renderer2, { class: "h-6 w-6 text-white" });
-      $$renderer2.push(`<!----></div>`);
-      pop_element();
-      $$renderer2.push(` <input type="file" accept="image/*" class="hidden"/>`);
-      push_element($$renderer2, "input", 27, 2);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-    },
-    User_profile_image_cropper
-  );
+	$$renderer.component(($$renderer) => {
+		let { src, onCropped } = $$props;
+		$$renderer.push(`<div role="button" tabindex="0" aria-label="Change profile picture" class="relative group cursor-pointer inline-block">`);
+		Avatar($$renderer, {
+			class: "h-24 w-24 border-2 border-border transition-opacity group-hover:opacity-80",
+			children: ($$renderer) => {
+				Avatar_image($$renderer, { src });
+				$$renderer.push(`<!----> `);
+				Avatar_fallback($$renderer, {
+					children: ($$renderer) => {
+						$$renderer.push(`<!---->User`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!---->`);
+			},
+			$$slots: { default: true }
+		});
+		$$renderer.push(`<!----> <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">`);
+		Camera($$renderer, { class: "h-6 w-6 text-white" });
+		$$renderer.push(`<!----></div> <input type="file" accept="image/*" class="hidden"/></div>`);
+	});
 }
-User_profile_image_cropper.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
+//#endregion
+//#region src/lib/authentication/imageresize.ts
 function resizeImage(file, options = {}) {
-  const { maxWidth = 800, maxHeight = 800, quality = 0.8, format = "jpeg" } = options;
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    img.onload = () => {
-      let width = img.width, height = img.height;
-      if (width > maxWidth) {
-        height = height * maxWidth / width;
-        width = maxWidth;
-      }
-      if (height > maxHeight) {
-        width = width * maxHeight / height;
-        height = maxHeight;
-      }
-      canvas.width = Math.floor(width);
-      canvas.height = Math.floor(height);
-      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        if (blob) resolve(new File([blob], file.name, { type: `image/${format}`, lastModified: Date.now() }));
-        else reject(new Error("Failed to compress image"));
-      }, `image/${format}`, quality);
-    };
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = URL.createObjectURL(file);
-  });
+	const { maxWidth = 800, maxHeight = 800, quality = .8, format = "jpeg" } = options;
+	return new Promise((resolve, reject) => {
+		const canvas = document.createElement("canvas");
+		const ctx = canvas.getContext("2d");
+		const img = new Image();
+		img.onload = () => {
+			let width = img.width, height = img.height;
+			if (width > maxWidth) {
+				height = height * maxWidth / width;
+				width = maxWidth;
+			}
+			if (height > maxHeight) {
+				width = width * maxHeight / height;
+				height = maxHeight;
+			}
+			canvas.width = Math.floor(width);
+			canvas.height = Math.floor(height);
+			ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+			canvas.toBlob((blob) => {
+				if (blob) resolve(new File([blob], file.name, {
+					type: `image/${format}`,
+					lastModified: Date.now()
+				}));
+				else reject(/* @__PURE__ */ new Error("Failed to compress image"));
+			}, `image/${format}`, quality);
+		};
+		img.onerror = () => reject(/* @__PURE__ */ new Error("Failed to load image"));
+		img.src = URL.createObjectURL(file);
+	});
 }
-Update_user_form[FILENAME] = "src/lib/authentication/ui/update-user-form.svelte";
+//#endregion
+//#region src/lib/authentication/ui/update-user-form.svelte
 function Update_user_form($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let saving = false;
-      let image = null;
-      let user = page.data.session?.user;
-      const onCropped = async (url) => {
-        const file = await getFileFromUrl(url);
-        image = await resizeImage(file);
-      };
-      $$renderer2.push(`<form class="w-full">`);
-      push_element($$renderer2, "form", 40, 0);
-      Card($$renderer2, {
-        class: "shadow-sm",
-        children: prevent_snippet_stringification(($$renderer3) => {
-          Card_header($$renderer3, {
-            class: "pb-6 text-center",
-            children: prevent_snippet_stringification(($$renderer4) => {
-              $$renderer4.push(`<div class="mb-4 flex justify-center">`);
-              push_element($$renderer4, "div", 43, 6);
-              User_profile_image_cropper($$renderer4, {
-                src: image ? URL.createObjectURL(image) : user.image,
-                onCropped
-              });
-              $$renderer4.push(`<!----></div>`);
-              pop_element();
-              $$renderer4.push(` `);
-              Card_title($$renderer4, {
-                class: "text-xl",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  $$renderer5.push(`<!---->${escape_html(user.name || user.email)}`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> `);
-              Card_description($$renderer4, {
-                class: "capitalize",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  $$renderer5.push(`<!---->${escape_html(user?.role)}`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!---->`);
-            }),
-            $$slots: { default: true }
-          });
-          $$renderer3.push(`<!----> `);
-          Card_content($$renderer3, {
-            class: "space-y-6",
-            children: prevent_snippet_stringification(($$renderer4) => {
-              $$renderer4.push(`<div class="space-y-2">`);
-              push_element($$renderer4, "div", 51, 6);
-              Label($$renderer4, {
-                for: "name",
-                class: "flex items-center gap-2",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  User($$renderer5, { class: "h-4 w-4" });
-                  $$renderer5.push(`<!----> Name`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> `);
-              Input($$renderer4, {
-                id: "name",
-                name: "name",
-                value: user.name,
-                placeholder: "Enter your name"
-              });
-              $$renderer4.push(`<!----></div>`);
-              pop_element();
-              $$renderer4.push(` <div class="space-y-2">`);
-              push_element($$renderer4, "div", 56, 6);
-              Label($$renderer4, {
-                for: "email",
-                class: "flex items-center gap-2",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  Mail($$renderer5, { class: "h-4 w-4" });
-                  $$renderer5.push(`<!----> Email`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> `);
-              Input($$renderer4, {
-                id: "email",
-                type: "email",
-                value: user.email,
-                disabled: true,
-                class: "bg-muted text-muted-foreground"
-              });
-              $$renderer4.push(`<!----> <p class="text-xs text-muted-foreground">`);
-              push_element($$renderer4, "p", 59, 8);
-              $$renderer4.push(`Email cannot be changed directly.</p>`);
-              pop_element();
-              $$renderer4.push(`</div>`);
-              pop_element();
-              $$renderer4.push(` <div class="pt-4">`);
-              push_element($$renderer4, "div", 62, 6);
-              Button($$renderer4, {
-                type: "submit",
-                disabled: saving,
-                class: "w-full sm:w-fit",
-                size: "lg",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  {
-                    $$renderer5.push("<!--[!-->");
-                    $$renderer5.push(`Save Changes`);
-                  }
-                  $$renderer5.push(`<!--]-->`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----></div>`);
-              pop_element();
-            }),
-            $$slots: { default: true }
-          });
-          $$renderer3.push(`<!---->`);
-        }),
-        $$slots: { default: true }
-      });
-      $$renderer2.push(`<!----></form>`);
-      pop_element();
-    },
-    Update_user_form
-  );
+	$$renderer.component(($$renderer) => {
+		let saving = false;
+		let image = null;
+		let user = derived(() => page.data.session?.user);
+		const onCropped = async (url) => {
+			image = await resizeImage(await getFileFromUrl(url));
+		};
+		$$renderer.push(`<form class="w-full">`);
+		Card($$renderer, {
+			class: "shadow-sm",
+			children: ($$renderer) => {
+				Card_header($$renderer, {
+					class: "pb-6 text-center",
+					children: ($$renderer) => {
+						$$renderer.push(`<div class="mb-4 flex justify-center">`);
+						User_profile_image_cropper($$renderer, {
+							src: image ? URL.createObjectURL(image) : user().image,
+							onCropped
+						});
+						$$renderer.push(`<!----></div> `);
+						Card_title($$renderer, {
+							class: "text-xl",
+							children: ($$renderer) => {
+								$$renderer.push(`<!---->${escape_html(user().name || user().email)}`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> `);
+						Card_description($$renderer, {
+							class: "capitalize",
+							children: ($$renderer) => {
+								$$renderer.push(`<!---->${escape_html(user()?.role)}`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!---->`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----> `);
+				Card_content($$renderer, {
+					class: "space-y-6",
+					children: ($$renderer) => {
+						$$renderer.push(`<div class="space-y-2">`);
+						Label($$renderer, {
+							for: "name",
+							class: "flex items-center gap-2",
+							children: ($$renderer) => {
+								User($$renderer, { class: "h-4 w-4" });
+								$$renderer.push(`<!----> Name`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> `);
+						Input($$renderer, {
+							id: "name",
+							name: "name",
+							value: user().name,
+							placeholder: "Enter your name"
+						});
+						$$renderer.push(`<!----></div> <div class="space-y-2">`);
+						Label($$renderer, {
+							for: "email",
+							class: "flex items-center gap-2",
+							children: ($$renderer) => {
+								Mail($$renderer, { class: "h-4 w-4" });
+								$$renderer.push(`<!----> Email`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> `);
+						Input($$renderer, {
+							id: "email",
+							type: "email",
+							value: user().email,
+							disabled: true,
+							class: "bg-muted text-muted-foreground"
+						});
+						$$renderer.push(`<!----> <p class="text-xs text-muted-foreground">Email cannot be changed directly.</p></div> <div class="pt-4">`);
+						Button($$renderer, {
+							type: "submit",
+							disabled: saving,
+							class: "w-full sm:w-fit",
+							size: "lg",
+							children: ($$renderer) => {
+								$$renderer.push("<!--[-1-->");
+								$$renderer.push(`Save Changes`);
+								$$renderer.push(`<!--]-->`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----></div>`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!---->`);
+			},
+			$$slots: { default: true }
+		});
+		$$renderer.push(`<!----></form>`);
+	});
 }
-Update_user_form.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-Change_password_form[FILENAME] = "src/lib/authentication/ui/change-password-form.svelte";
+//#endregion
+//#region src/lib/authentication/ui/change-password-form.svelte
 function Change_password_form($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let isPending = false;
-      let showPassword = false;
-      $$renderer2.push(`<form class="w-full">`);
-      push_element($$renderer2, "form", 31, 0);
-      Card($$renderer2, {
-        class: "shadow-sm",
-        children: prevent_snippet_stringification(($$renderer3) => {
-          Card_header($$renderer3, {
-            children: prevent_snippet_stringification(($$renderer4) => {
-              Card_title($$renderer4, {
-                class: "flex items-center gap-2",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  Lock($$renderer5, { class: "size-4" });
-                  $$renderer5.push(`<!----> Security`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> `);
-              Card_description($$renderer4, {
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  $$renderer5.push(`<!---->Update your password to keep your account secure.`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!---->`);
-            }),
-            $$slots: { default: true }
-          });
-          $$renderer3.push(`<!----> `);
-          Card_content($$renderer3, {
-            class: "space-y-4",
-            children: prevent_snippet_stringification(($$renderer4) => {
-              $$renderer4.push(`<div class="space-y-2">`);
-              push_element($$renderer4, "div", 38, 12);
-              Label($$renderer4, {
-                for: "password",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  $$renderer5.push(`<!---->Current Password`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> `);
-              Input($$renderer4, {
-                id: "password",
-                name: "password",
-                type: showPassword ? "text" : "password",
-                required: true
-              });
-              $$renderer4.push(`<!----></div>`);
-              pop_element();
-              $$renderer4.push(` <div class="space-y-2">`);
-              push_element($$renderer4, "div", 42, 12);
-              Label($$renderer4, {
-                for: "newPassword",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  $$renderer5.push(`<!---->New Password`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----> <div class="relative">`);
-              push_element($$renderer4, "div", 44, 16);
-              Input($$renderer4, {
-                id: "newPassword",
-                name: "newPassword",
-                type: showPassword ? "text" : "password",
-                required: true,
-                class: "pr-10"
-              });
-              $$renderer4.push(`<!----> `);
-              Button($$renderer4, {
-                onclick: () => showPassword = !showPassword,
-                class: "absolute right-0 top-0 h-full px-3",
-                variant: "ghost",
-                size: "icon",
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  if (showPassword) {
-                    $$renderer5.push("<!--[-->");
-                    Eye($$renderer5, { class: "size-4" });
-                  } else {
-                    $$renderer5.push("<!--[!-->");
-                    Eye_off($$renderer5, { class: "size-4" });
-                  }
-                  $$renderer5.push(`<!--]-->`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!----></div>`);
-              pop_element();
-              $$renderer4.push(`</div>`);
-              pop_element();
-              $$renderer4.push(` `);
-              Button($$renderer4, {
-                type: "submit",
-                disabled: isPending,
-                children: prevent_snippet_stringification(($$renderer5) => {
-                  {
-                    $$renderer5.push("<!--[!-->");
-                  }
-                  $$renderer5.push(`<!--]--> Change Password`);
-                }),
-                $$slots: { default: true }
-              });
-              $$renderer4.push(`<!---->`);
-            }),
-            $$slots: { default: true }
-          });
-          $$renderer3.push(`<!---->`);
-        }),
-        $$slots: { default: true }
-      });
-      $$renderer2.push(`<!----></form>`);
-      pop_element();
-    },
-    Change_password_form
-  );
+	$$renderer.component(($$renderer) => {
+		let isPending = false;
+		let showPassword = false;
+		$$renderer.push(`<form class="w-full">`);
+		Card($$renderer, {
+			class: "shadow-sm",
+			children: ($$renderer) => {
+				Card_header($$renderer, {
+					children: ($$renderer) => {
+						Card_title($$renderer, {
+							class: "flex items-center gap-2",
+							children: ($$renderer) => {
+								Lock($$renderer, { class: "size-4" });
+								$$renderer.push(`<!----> Security`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> `);
+						Card_description($$renderer, {
+							children: ($$renderer) => {
+								$$renderer.push(`<!---->Update your password to keep your account secure.`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!---->`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----> `);
+				Card_content($$renderer, {
+					class: "space-y-4",
+					children: ($$renderer) => {
+						$$renderer.push(`<div class="space-y-2">`);
+						Label($$renderer, {
+							for: "password",
+							children: ($$renderer) => {
+								$$renderer.push(`<!---->Current Password`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> `);
+						Input($$renderer, {
+							id: "password",
+							name: "password",
+							type: showPassword ? "text" : "password",
+							required: true
+						});
+						$$renderer.push(`<!----></div> <div class="space-y-2">`);
+						Label($$renderer, {
+							for: "newPassword",
+							children: ($$renderer) => {
+								$$renderer.push(`<!---->New Password`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----> <div class="relative">`);
+						Input($$renderer, {
+							id: "newPassword",
+							name: "newPassword",
+							type: showPassword ? "text" : "password",
+							required: true,
+							class: "pr-10"
+						});
+						$$renderer.push(`<!----> `);
+						Button($$renderer, {
+							onclick: () => showPassword = !showPassword,
+							class: "absolute right-0 top-0 h-full px-3",
+							variant: "ghost",
+							size: "icon",
+							children: ($$renderer) => {
+								if (showPassword) {
+									$$renderer.push("<!--[0-->");
+									Eye($$renderer, { class: "size-4" });
+								} else {
+									$$renderer.push("<!--[-1-->");
+									Eye_off($$renderer, { class: "size-4" });
+								}
+								$$renderer.push(`<!--]-->`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!----></div></div> `);
+						Button($$renderer, {
+							type: "submit",
+							disabled: isPending,
+							children: ($$renderer) => {
+								$$renderer.push("<!--[-1-->");
+								$$renderer.push(`<!--]--> Change Password`);
+							},
+							$$slots: { default: true }
+						});
+						$$renderer.push(`<!---->`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!---->`);
+			},
+			$$slots: { default: true }
+		});
+		$$renderer.push(`<!----></form>`);
+	});
 }
-Change_password_form.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-User_profile[FILENAME] = "src/lib/authentication/ui/pages/user-profile.svelte";
+//#endregion
+//#region src/lib/authentication/ui/pages/user-profile.svelte
 function User_profile($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      page.data.session?.user?.id.includes(Constants.CREDENTIAL);
-      $$renderer2.push(`<div class="container max-w-4xl py-6 mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">`);
-      push_element($$renderer2, "div", 13, 0);
-      $$renderer2.push(`<div class="flex flex-col gap-2">`);
-      push_element($$renderer2, "div", 14, 2);
-      $$renderer2.push(`<h1 class="text-3xl font-bold tracking-tight">`);
-      push_element($$renderer2, "h1", 15, 4);
-      $$renderer2.push(`Profile Settings</h1>`);
-      pop_element();
-      $$renderer2.push(` <p class="text-muted-foreground">`);
-      push_element($$renderer2, "p", 16, 4);
-      $$renderer2.push(`Manage your account information and preferences.</p>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` `);
-      Separator($$renderer2, {});
-      $$renderer2.push(`<!----> <div class="grid gap-8 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_350px]">`);
-      push_element($$renderer2, "div", 20, 2);
-      $$renderer2.push(`<div class="space-y-6">`);
-      push_element($$renderer2, "div", 21, 4);
-      Update_user_form($$renderer2);
-      $$renderer2.push(`<!----> `);
-      Change_password_form($$renderer2);
-      $$renderer2.push(`<!----></div>`);
-      pop_element();
-      $$renderer2.push(` <div class="space-y-6">`);
-      push_element($$renderer2, "div", 26, 4);
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-    },
-    User_profile
-  );
+	$$renderer.component(($$renderer) => {
+		derived(() => page.data.session?.user?.id.includes(Constants.CREDENTIAL));
+		$$renderer.push(`<div class="container max-w-4xl py-6 mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"><div class="flex flex-col gap-2"><h1 class="text-3xl font-bold tracking-tight">Profile Settings</h1> <p class="text-muted-foreground">Manage your account information and preferences.</p></div> `);
+		Separator($$renderer, {});
+		$$renderer.push(`<!----> <div class="grid gap-8 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_350px]"><div class="space-y-6">`);
+		Update_user_form($$renderer, {});
+		$$renderer.push(`<!----> `);
+		Change_password_form($$renderer, {});
+		$$renderer.push(`<!----></div> <div class="space-y-6"></div></div></div>`);
+	});
 }
-User_profile.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-_page[FILENAME] = "src/routes/(protected)/profile/+page.svelte";
-function _page($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      User_profile($$renderer2);
-    },
-    _page
-  );
+//#endregion
+//#region src/routes/(protected)/profile/+page.svelte
+function _page($$renderer) {
+	User_profile($$renderer, {});
 }
-_page.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  _page as default
-};
+//#endregion
+export { _page as default };

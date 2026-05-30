@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 import { MAX_ITEMS_PER_PAGE } from '$lib/constants';
 import type { iFetchMeta } from '$lib/interface';
-import { createInfiniteQuery, QueryClient } from '@tanstack/svelte-query';
+import { createInfiniteQuery, QueryClient, type InfiniteData } from '@tanstack/svelte-query';
 
 export class InfiniteScroll {
   private static instance: InfiniteScroll;
@@ -31,12 +31,12 @@ export class InfiniteScroll {
     const self = this;
     type Page = { results: T[]; hasMore: boolean; pageParam: number; total: number };
     type Selected = { results: T[]; total: number };
-    return createInfiniteQuery<Page, Error, Selected, [string, string], number>({
+    return createInfiniteQuery<Page, Error, Selected, [string, string], number>(() => ({
       queryKey: [field, searchTerm],
       staleTime: 30000,
       initialPageParam: 1,
       retry: false,
-      queryFn: async ({ pageParam }) => {
+      queryFn: async ({ pageParam }: { pageParam: number }) => {
         let offset = (pageParam - 1) * MAX_ITEMS_PER_PAGE;
         const metalist = await self.queryEndpoint(offset, host, field, searchTerm);
         const { data, meta, total } = metalist;
@@ -44,13 +44,13 @@ export class InfiniteScroll {
           ? { results: data as T[], hasMore: meta.more, pageParam, total }
           : { results: [], hasMore: false, pageParam, total };
       },
-      getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.pageParam + 1 : undefined,
-      select: (data) => {
+      getNextPageParam: (lastPage: Page) => lastPage.hasMore ? lastPage.pageParam + 1 : undefined,
+      select: (data: InfiniteData<Page, number>) => {
         let total = 0;
-        const results = data.pages.map((page) => { total = page.total; return page.results; }).flat();
+        const results = data.pages.map((page: Page) => { total = page.total; return page.results; }).flat();
         return { results, total };
       }
-    });
+    }));
   }
 
   get queryClient() { return this.#queryClient; }

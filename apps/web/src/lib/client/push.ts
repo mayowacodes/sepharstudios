@@ -26,6 +26,11 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 	return out;
 }
 
+function urlBase64ToArrayBuffer(base64: string): ArrayBuffer {
+	const bytes = urlBase64ToUint8Array(base64);
+	return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
 async function getRegistration(): Promise<ServiceWorkerRegistration> {
 	const existing = await navigator.serviceWorker.getRegistration('/');
 	if (existing) return existing;
@@ -45,7 +50,7 @@ export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
 	if (!subscription) {
 		subscription = await reg.pushManager.subscribe({
 			userVisibleOnly: true,
-			applicationServerKey: urlBase64ToUint8Array(pubKey)
+			applicationServerKey: urlBase64ToArrayBuffer(pubKey)
 		});
 	}
 

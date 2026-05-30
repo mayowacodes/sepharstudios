@@ -1,49 +1,59 @@
+import { R as paystackSubscriptions, U as profiles, t as db, x as familyAddons } from "../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
-import { d as db, y as profiles, A as familyAddons } from "../../../../chunks/drizzle.js";
-import { eq, desc } from "drizzle-orm";
-const GET = async ({ locals }) => {
-  const session = await locals.auth.getSession();
-  if (!session) return json({ error: "Unauthorized" }, { status: 401 });
-  const userProfiles = await db.select({
-    id: profiles.id,
-    name: profiles.name,
-    type: profiles.type,
-    avatarColor: profiles.avatarColor,
-    avatarEmoji: profiles.avatarEmoji,
-    contentRating: profiles.contentRating,
-    safeModeEnabled: profiles.safeModeEnabled,
-    isKidsMode: profiles.isKidsMode,
-    isDefault: profiles.isDefault,
-    hasPin: profiles.pin
-  }).from(profiles).where(eq(profiles.userId, session.user.id)).orderBy(desc(profiles.isDefault));
-  return json(userProfiles.map((p) => ({ ...p, hasPin: !!p.hasPin })));
+import { and, desc, eq, inArray } from "drizzle-orm";
+//#region src/routes/api/profiles/+server.ts
+var GET = async ({ locals }) => {
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	return json((await db.select({
+		id: profiles.id,
+		name: profiles.name,
+		type: profiles.type,
+		avatarColor: profiles.avatarColor,
+		avatarEmoji: profiles.avatarEmoji,
+		contentRating: profiles.contentRating,
+		safeModeEnabled: profiles.safeModeEnabled,
+		isKidsMode: profiles.isKidsMode,
+		isDefault: profiles.isDefault,
+		hasPin: profiles.pin
+	}).from(profiles).where(eq(profiles.userId, session.user.id)).orderBy(desc(profiles.isDefault))).map((p) => ({
+		...p,
+		hasPin: !!p.hasPin
+	})));
 };
-const POST = async ({ request, locals }) => {
-  const session = await locals.auth.getSession();
-  if (!session) return json({ error: "Unauthorized" }, { status: 401 });
-  const userId = session.user.id;
-  const existing = await db.select().from(profiles).where(eq(profiles.userId, userId));
-  const [addon] = await db.select().from(familyAddons).where(eq(familyAddons.userId, userId)).limit(1);
-  const maxProfiles = addon?.status === "active" ? addon.maxProfiles ?? 8 : 2;
-  if (existing.length >= maxProfiles) {
-    return json({
-      error: `Profile limit reached. Add the Family Add-on to create up to 8 profiles.`,
-      limit: maxProfiles
-    }, { status: 403 });
-  }
-  const { name, type, avatarColor, avatarEmoji, isKidsMode } = await request.json();
-  const [profile] = await db.insert(profiles).values({
-    userId,
-    name,
-    type: type ?? "adult",
-    avatarColor: avatarColor ?? "#6366f1",
-    avatarEmoji: avatarEmoji ?? "😊",
-    isKidsMode: isKidsMode ?? type === "kids",
-    isDefault: existing.length === 0
-  }).returning();
-  return json(profile, { status: 201 });
+var POST = async ({ request, locals }) => {
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	const userId = session.user.id;
+	const { name, type, avatarColor, avatarEmoji, isKidsMode } = await request.json();
+	const wantsKids = isKidsMode ?? type === "kids";
+	const [sub] = await db.select({
+		maxProfiles: paystackSubscriptions.maxProfiles,
+		kidsAllowed: paystackSubscriptions.kidsAllowed,
+		status: paystackSubscriptions.status
+	}).from(paystackSubscriptions).where(and(eq(paystackSubscriptions.userId, userId), inArray(paystackSubscriptions.status, ["trial", "active"]))).orderBy(desc(paystackSubscriptions.createdAt)).limit(1);
+	const [legacyAddon] = await db.select().from(familyAddons).where(and(eq(familyAddons.userId, userId), eq(familyAddons.status, "active"))).limit(1);
+	const maxProfiles = sub ? Math.max(sub.maxProfiles ?? 1, legacyAddon ? legacyAddon.maxProfiles ?? 8 : 0) : legacyAddon ? legacyAddon.maxProfiles ?? 8 : 1;
+	const kidsAllowed = sub?.kidsAllowed === true;
+	if (wantsKids && !kidsAllowed) return json({
+		error: "Your current plan does not include a kids profile. Upgrade to Premium to enable kids mode.",
+		requiredPlan: "premium"
+	}, { status: 403 });
+	const existing = await db.select().from(profiles).where(eq(profiles.userId, userId));
+	if (existing.length >= maxProfiles) return json({
+		error: `Profile limit reached for your plan (${maxProfiles}). Upgrade to add more profiles.`,
+		limit: maxProfiles
+	}, { status: 403 });
+	const [profile] = await db.insert(profiles).values({
+		userId,
+		name,
+		type: type ?? "adult",
+		avatarColor: avatarColor ?? "#6366f1",
+		avatarEmoji: avatarEmoji ?? "😊",
+		isKidsMode: wantsKids,
+		isDefault: existing.length === 0
+	}).returning();
+	return json(profile, { status: 201 });
 };
-export {
-  GET,
-  POST
-};
+//#endregion
+export { GET, POST };

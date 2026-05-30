@@ -8,9 +8,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0b0c10" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo-alone-sepharstudios-bgless.png?v=2" />
-    <link rel="icon" type="image/png" href="/logo-alone-sepharstudios-bgless.png?v=2" />
-    <link rel="shortcut icon" href="/logo-alone-sepharstudios-bgless.png?v=2" />
+    <!-- Favicons. All three rel="icon" sizes point to the same flame PNG to
+         keep the brand consistent across address-bar, bookmark, tab thumbnail
+         and Android home-screen contexts. The order matters: browsers pick the
+         best size match, falling back to the last entry if nothing fits.
+         Cache-bust query (?v=3) when changing the source image. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo-alone-sepharstudios-bgless.png?v=3" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/logo-alone-sepharstudios-bgless.png?v=3" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo-alone-sepharstudios-bgless.png?v=3" />
+    <link rel="icon" type="image/png" sizes="any" href="/logo-alone-sepharstudios-bgless.png?v=3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo-alone-sepharstudios-bgless.png?v=3" />
+    <link rel="shortcut icon" href="/logo-alone-sepharstudios-bgless.png?v=3" />
     %sveltekit.head%
     <meta name="apple-mobile-web-app-title" content="Sephar Studios" />
     <link rel="manifest" href="/manifest.json" />

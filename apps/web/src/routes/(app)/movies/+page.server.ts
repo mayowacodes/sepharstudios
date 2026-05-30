@@ -19,9 +19,10 @@ export const load: PageServerLoad = async () => {
 
         return { movies };
     } catch (e) {
-        console.error('Failed to load movies:', e?.message || e);
-        if (e?.cause) console.error('Cause:', e.cause);
-        if (e?.stack) console.error('Stack:', e.stack?.split('\n').slice(0, 5).join('\n'));
+        const err = e instanceof Error ? e : null;
+        console.error('Failed to load movies:', err?.message || e);
+        if (err?.cause) console.error('Cause:', err.cause);
+        if (err?.stack) console.error('Stack:', err.stack.split('\n').slice(0, 5).join('\n'));
         return { movies: [] };
     }
 };

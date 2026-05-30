@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { toast } from 'svelte-sonner';
   import { UploadStep, type UploadWizardState, ContentType, AgeRating } from '$lib/types/creator';
   import StepIndicator from '$lib/components/creator/upload/StepIndicator.svelte';
   import BasicInfoStep from '$lib/components/creator/upload/BasicInfoStep.svelte';
@@ -97,26 +98,78 @@
       const videoData = wizardState.stepData[UploadStep.VIDEO_UPLOAD];
       const videoFile = videoData.videoFile;
 
-      if (!videoFile) {
+      // When editing an existing row, a fresh video is OPTIONAL — the creator
+      // may just want to tweak metadata. Otherwise (new submission) it's
+      // required to kick off the encoder pipeline.
+      if (!editId && !videoFile) {
         throw new Error('Video file is required');
       }
 
-      // 1. Save content metadata to DB
-      const submissionData = {
-          ...wizardState.stepData[UploadStep.BASIC_INFO],
-          ...wizardState.stepData[UploadStep.METADATA],
-          assets: wizardState.stepData[UploadStep.ASSET_MANAGEMENT].uploadedAssets,
-          trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl,
-      };
-      
-      const res = await fetch('/api/creator/content', {
-          method: 'POST',
+      const basic = wizardState.stepData[UploadStep.BASIC_INFO];
+      const meta = wizardState.stepData[UploadStep.METADATA];
+      const assets = wizardState.stepData[UploadStep.ASSET_MANAGEMENT].uploadedAssets;
+
+      let contentId: string;
+
+      if (editId) {
+        // PATCH the existing row in place. The server's allow-list ignores
+        // any admin-only fields we accidentally send. Skips the encoder step
+        // when no new video file was uploaded — preserving the existing one.
+        const patchBody: Record<string, unknown> = {
+          title: basic.title,
+          description: basic.description,
+          contentType: basic.contentType,
+          ageRating: basic.ageRating,
+          genres: meta.genre ? (Array.isArray(meta.genre) ? meta.genre : [meta.genre]) : [],
+          topics: meta.themes ?? [],
+          keywords: meta.keywords ?? [],
+          bibleReference: Array.isArray(meta.bibleReferences) ? meta.bibleReferences[0] : null,
+          language: meta.language,
+          duration: meta.duration?.toString(),
+          thumbnail: assets.thumbnail,
+          posterUrl: assets.posterPortrait,
+          posterLandscapeUrl: assets.posterLandscape,
+          posterSquareUrl: assets.posterSquare,
+          logoTitleUrl: assets.logoTitle,
+          backdropUrl: assets.backdropHero,
+          trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl
+        };
+        const patchRes = await fetch(`/api/creator/content/${editId}`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(submissionData)
-      });
-      
-      if (!res.ok) throw new Error('Failed to save metadata');
-      const { contentId } = await res.json();
+          body: JSON.stringify(patchBody)
+        });
+        if (!patchRes.ok) {
+          const errBody = await patchRes.json().catch(() => ({}));
+          throw new Error(errBody.error ?? 'Failed to update content');
+        }
+        contentId = editId;
+
+        // No new video → done. No need to re-encode.
+        if (!videoFile) {
+          toast.success('Content updated', { description: 'Your changes have been saved.' });
+          localStorage.removeItem('upload_draft');
+          window.location.href = '/creator/content';
+          return;
+        }
+        // New video was provided — fall through to encoder job below.
+      } else {
+        // POST a brand-new row.
+        const submissionData = {
+            ...basic,
+            ...meta,
+            assets,
+            trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl,
+        };
+        const res = await fetch('/api/creator/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submissionData)
+        });
+        if (!res.ok) throw new Error('Failed to save metadata');
+        const body = await res.json();
+        contentId = body.contentId;
+      }
 
       // 1.5 Fire AI auto-tagging in the background. The endpoint reads from DB
       // by contentId, generates genres/topics/Bible refs/ageRating, and writes
@@ -129,6 +182,9 @@
       }).catch((err) => console.warn('AI tagging skipped:', err));
 
       // 2. Create an orchestrator job attached to this content row.
+      // Narrow the optional videoFile — by this point we've returned early
+      // for the edit-without-new-video case, so it's guaranteed defined.
+      if (!videoFile) throw new Error('Video file is required');
       const jobRes = await fetch('/api/encoder/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -136,7 +192,7 @@
               contentId,
               filename: videoFile.name,
               profile: 'vod-multi',
-              durationHint: submissionData.duration ? Number(submissionData.duration) * 60 : undefined
+              durationHint: meta.duration ? Number(meta.duration) * 60 : undefined
           })
       });
 
@@ -162,13 +218,16 @@
 
       if (!commitRes.ok) throw new Error('Failed to queue encoder job');
 
-      alert('Content submitted successfully!');
+      toast.success('Content submitted successfully', {
+        description: 'Your video is now in the encoding queue. We\'ll notify you when it\'s ready.'
+      });
       localStorage.removeItem('upload_draft');
       window.location.href = '/creator';
 
     } catch (error) {
         console.error('Submission error:', error);
-        alert('Failed to submit content. Please try again.');
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast.error('Submission failed', { description: message });
     } finally {
         isSubmitting = false;
     }

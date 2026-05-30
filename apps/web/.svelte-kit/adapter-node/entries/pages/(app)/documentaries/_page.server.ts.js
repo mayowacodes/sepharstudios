@@ -1,24 +1,15 @@
-import { d as db, m as mediaLibrary } from "../../../../chunks/drizzle.js";
-import { f as faithDocumentaries } from "../../../../chunks/documentaries.js";
+import { j as mediaLibrary, t as db } from "../../../../chunks/drizzle.js";
+import { t as mediaCardColumns } from "../../../../chunks/projections.js";
+import { t as faithDocumentaries } from "../../../../chunks/documentaries.js";
 import { and, eq } from "drizzle-orm";
-const load = async () => {
-  try {
-    const documentaries = await db.select().from(mediaLibrary).where(
-      and(
-        eq(mediaLibrary.mediaType, "documentary"),
-        eq(mediaLibrary.isActive, true)
-      )
-    );
-    return {
-      documentaries
-    };
-  } catch (error) {
-    console.error("Documentaries load failed, using fallback data:", error);
-    return {
-      documentaries: faithDocumentaries
-    };
-  }
+//#region src/routes/(app)/documentaries/+page.server.ts
+var load = async () => {
+	try {
+		return { documentaries: await db.select(mediaCardColumns).from(mediaLibrary).where(and(eq(mediaLibrary.mediaType, "documentary"), eq(mediaLibrary.isActive, true))) };
+	} catch (error) {
+		console.error("Documentaries load failed, using fallback data:", error);
+		return { documentaries: faithDocumentaries };
+	}
 };
-export {
-  load
-};
+//#endregion
+export { load };

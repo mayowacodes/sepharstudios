@@ -1,20 +1,13 @@
-import { F as FILENAME } from "./ui-libs.js";
-import "clsx";
-PWAInstallPrompt[FILENAME] = "src/lib/components/widgets/PWAInstallPrompt.svelte";
+import "./ui-libs.js";
+import "./download.js";
+import "./smartphone.js";
+import "./x.js";
+//#region src/lib/components/widgets/PWAInstallPrompt.svelte
 function PWAInstallPrompt($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      {
-        $$renderer2.push("<!--[!-->");
-      }
-      $$renderer2.push(`<!--]-->`);
-    },
-    PWAInstallPrompt
-  );
+	$$renderer.component(($$renderer) => {
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->`);
+	});
 }
-PWAInstallPrompt.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  PWAInstallPrompt as P
-};
+//#endregion
+export { PWAInstallPrompt as t };

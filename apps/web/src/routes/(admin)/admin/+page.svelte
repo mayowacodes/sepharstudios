@@ -116,76 +116,76 @@
   });
 </script>
 
-<div class="space-y-8">
-  <!-- Welcome Header -->
-  <div class="text-center">
-    <div class="flex justify-center items-center space-x-4 mb-4">
-      <h1 class="text-4xl font-bold text-white">Admin Dashboard</h1>
+<div class="space-y-8 container mx-auto px-4 py-4">
+  <!-- Page title row — kept slim so it reads as a section heading, not a second top nav -->
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+      <p class="text-sm text-gray-400">Manage platform content and creator community</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
       <Badge variant="outline" class="bg-green-500/20 text-green-400 border-green-400">
         {adminWeb3Status.isConnected ? 'Web3 Connected' : 'Web3 Disconnected'}
       </Badge>
       {#if parseFloat(adminWeb3Status.stcBalance) > 1000}
-        <Badge variant="outline" class="bg-yellow-500/20 text-yellow-400 border-yellow-400">
-          Super Admin
-        </Badge>
+        <Badge variant="outline" class="bg-yellow-500/20 text-yellow-400 border-yellow-400">Super Admin</Badge>
       {/if}
       {#if adminWeb3Status.hasSubscription}
         <Badge variant="outline" class="bg-purple-500/20 text-purple-400 border-purple-400">
           NFT Tier {adminWeb3Status.subscriptionTier} #{adminWeb3Status.subscriptionTokenId}
         </Badge>
       {/if}
+      {#if adminWeb3Status.isConnected}
+        <span class="text-xs text-gray-400 ml-2">
+          {parseFloat(adminWeb3Status.stcBalance).toLocaleString()} STC
+        </span>
+      {/if}
     </div>
-    <p class="text-xl text-gray-300">Manage platform content and creator community</p>
-    {#if adminWeb3Status.isConnected}
-      <p class="text-sm text-gray-400 mt-2">
-        Admin STC Balance: {parseFloat(adminWeb3Status.stcBalance).toLocaleString()} STC
-      </p>
-    {/if}
   </div>
 
-  <!-- Platform Stats Grid -->
+  <!-- Platform Stats Grid — each card links into its detail page -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/review" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-yellow-400">{adminStats.pendingReviews}</div>
       <div class="text-gray-300 text-sm">Pending Reviews</div>
-    </div>
+    </a>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/creators" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-blue-400">{adminStats.totalCreators}</div>
       <div class="text-gray-300 text-sm">Active Creators</div>
-    </div>
+    </a>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/content?status=approved" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-green-400">{adminStats.publishedContent}</div>
       <div class="text-gray-300 text-sm">Published Content</div>
-    </div>
+    </a>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/content?status=rejected" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-red-400">{adminStats.rejectedContent}</div>
       <div class="text-gray-300 text-sm">Rejected Content</div>
-    </div>
+    </a>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/analytics" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-purple-400">{adminStats.totalViews.toLocaleString()}</div>
       <div class="text-gray-300 text-sm">Platform Views</div>
-    </div>
+    </a>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    <a href="/admin/creator-applications" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-yellow-300">{adminStats.pendingApplications}</div>
       <div class="text-gray-300 text-sm">Pending Creator Apps</div>
-    </div>
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+    <a href="/admin/creator-applications?status=approved&period=7d" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-green-300">{adminStats.approvedApplications7d}</div>
       <div class="text-gray-300 text-sm">Approved (7 days)</div>
-    </div>
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+    </a>
+    <a href="/admin/creator-applications" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
       <div class="text-3xl font-bold text-blue-300">
         {Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}
       </div>
       <div class="text-gray-300 text-sm">Avg Approval (hrs)</div>
-    </div>
+    </a>
   </div>
 
   <!-- Tokenomics Overview -->

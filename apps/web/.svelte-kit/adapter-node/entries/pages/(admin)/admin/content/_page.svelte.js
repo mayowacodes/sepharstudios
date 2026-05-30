@@ -1,273 +1,140 @@
-import { a as push_element, b as pop_element, e as escape_html, n as attr, j as attr_class, F as FILENAME, l as stringify } from "../../../../../chunks/ui-libs.js";
-import { C as ContentStatus, a as ContentType } from "../../../../../chunks/creator.js";
-_page[FILENAME] = "src/routes/(admin)/admin/content/+page.svelte";
+import { jt as escape_html, kt as attr, mt as derived, ut as attr_class } from "../../../../../chunks/ui-libs.js";
+import { n as ContentStatus, r as ContentType } from "../../../../../chunks/creator.js";
+//#region src/routes/(admin)/admin/content/+page.svelte
 function _page($$renderer, $$props) {
-  $$renderer.component(
-    ($$renderer2) => {
-      let allContent = [];
-      let searchTerm = "";
-      let selectedStatus = "all";
-      let selectedType = "all";
-      let sortBy = "newest";
-      let currentPage = 1;
-      let itemsPerPage = 12;
-      (() => {
-        let filtered = allContent.filter((content) => {
-          const searchMatch = searchTerm === "";
-          return searchMatch;
-        });
-        switch (sortBy) {
-          case "newest":
-            filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-            break;
-          case "oldest":
-            filtered.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
-            break;
-          case "title":
-            filtered.sort((a, b) => a.title.localeCompare(b.title));
-            break;
-          case "creator":
-            filtered.sort((a, b) => a.creatorName.localeCompare(b.creatorName));
-            break;
-          case "priority":
-            const priorityOrder = {
-              [ContentStatus.DRAFT]: 5,
-              [ContentStatus.SUBMITTED]: 4,
-              [ContentStatus.THEOLOGICAL_REVIEW]: 3,
-              [ContentStatus.CONTENT_REVIEW]: 2,
-              [ContentStatus.TECHNICAL_QA]: 1,
-              [ContentStatus.APPROVED]: 0,
-              [ContentStatus.PUBLISHED]: -1,
-              [ContentStatus.REJECTED]: 0,
-              [ContentStatus.ARCHIVED]: -2
-            };
-            filtered.sort((a, b) => (priorityOrder[b.status] || 0) - (priorityOrder[a.status] || 0));
-            break;
-        }
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filtered.slice(startIndex, startIndex + itemsPerPage);
-      })();
-      $$renderer2.push(`<div class="space-y-6">`);
-      push_element($$renderer2, "div", 269, 0);
-      $$renderer2.push(`<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">`);
-      push_element($$renderer2, "div", 271, 2);
-      $$renderer2.push(`<div>`);
-      push_element($$renderer2, "div", 272, 4);
-      $$renderer2.push(`<h1 class="text-3xl font-bold text-white mb-2">`);
-      push_element($$renderer2, "h1", 273, 6);
-      $$renderer2.push(`Content Management</h1>`);
-      pop_element();
-      $$renderer2.push(` <p class="text-gray-300">`);
-      push_element($$renderer2, "p", 274, 6);
-      $$renderer2.push(`Manage all submitted content across the platform</p>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="mt-4 lg:mt-0 grid grid-cols-2 lg:grid-cols-4 gap-4">`);
-      push_element($$renderer2, "div", 278, 4);
-      $$renderer2.push(`<div class="bg-blue-600/20 rounded-lg p-3 text-center">`);
-      push_element($$renderer2, "div", 279, 6);
-      $$renderer2.push(`<div class="text-2xl font-bold text-blue-400">`);
-      push_element($$renderer2, "div", 280, 8);
-      $$renderer2.push(`${escape_html(allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length)}</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="text-blue-200 text-xs">`);
-      push_element($$renderer2, "div", 281, 8);
-      $$renderer2.push(`Pending Review</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="bg-green-600/20 rounded-lg p-3 text-center">`);
-      push_element($$renderer2, "div", 283, 6);
-      $$renderer2.push(`<div class="text-2xl font-bold text-green-400">`);
-      push_element($$renderer2, "div", 284, 8);
-      $$renderer2.push(`${escape_html(allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length)}</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="text-green-200 text-xs">`);
-      push_element($$renderer2, "div", 285, 8);
-      $$renderer2.push(`Published</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="bg-red-600/20 rounded-lg p-3 text-center">`);
-      push_element($$renderer2, "div", 287, 6);
-      $$renderer2.push(`<div class="text-2xl font-bold text-red-400">`);
-      push_element($$renderer2, "div", 288, 8);
-      $$renderer2.push(`${escape_html(allContent.filter((c) => c.status === ContentStatus.REJECTED).length)}</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="text-red-200 text-xs">`);
-      push_element($$renderer2, "div", 289, 8);
-      $$renderer2.push(`Rejected</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="bg-purple-600/20 rounded-lg p-3 text-center">`);
-      push_element($$renderer2, "div", 291, 6);
-      $$renderer2.push(`<div class="text-2xl font-bold text-purple-400">`);
-      push_element($$renderer2, "div", 292, 8);
-      $$renderer2.push(`${escape_html(allContent.length)}</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="text-purple-200 text-xs">`);
-      push_element($$renderer2, "div", 293, 8);
-      $$renderer2.push(`Total Content</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">`);
-      push_element($$renderer2, "div", 299, 2);
-      $$renderer2.push(`<div class="flex flex-col lg:flex-row gap-4 mb-4">`);
-      push_element($$renderer2, "div", 300, 4);
-      $$renderer2.push(`<div class="flex-1">`);
-      push_element($$renderer2, "div", 302, 6);
-      $$renderer2.push(`<input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/>`);
-      push_element($$renderer2, "input", 303, 8);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="flex flex-wrap gap-3">`);
-      push_element($$renderer2, "div", 312, 6);
-      $$renderer2.select(
-        {
-          value: selectedStatus,
-          class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
-        },
-        ($$renderer3) => {
-          $$renderer3.option({ value: "all" }, ($$renderer4) => {
-            $$renderer4.push(`All Statuses`);
-          });
-          $$renderer3.option({ value: ContentStatus.SUBMITTED }, ($$renderer4) => {
-            $$renderer4.push(`Submitted`);
-          });
-          $$renderer3.option({ value: ContentStatus.THEOLOGICAL_REVIEW }, ($$renderer4) => {
-            $$renderer4.push(`Theological Review`);
-          });
-          $$renderer3.option({ value: ContentStatus.CONTENT_REVIEW }, ($$renderer4) => {
-            $$renderer4.push(`Content Review`);
-          });
-          $$renderer3.option({ value: ContentStatus.TECHNICAL_QA }, ($$renderer4) => {
-            $$renderer4.push(`Technical QA`);
-          });
-          $$renderer3.option({ value: ContentStatus.APPROVED }, ($$renderer4) => {
-            $$renderer4.push(`Approved`);
-          });
-          $$renderer3.option({ value: ContentStatus.PUBLISHED }, ($$renderer4) => {
-            $$renderer4.push(`Published`);
-          });
-          $$renderer3.option({ value: ContentStatus.REJECTED }, ($$renderer4) => {
-            $$renderer4.push(`Rejected`);
-          });
-        }
-      );
-      $$renderer2.push(` `);
-      $$renderer2.select(
-        {
-          value: selectedType,
-          class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
-        },
-        ($$renderer3) => {
-          $$renderer3.option({ value: "all" }, ($$renderer4) => {
-            $$renderer4.push(`All Types`);
-          });
-          $$renderer3.option({ value: ContentType.MOVIE }, ($$renderer4) => {
-            $$renderer4.push(`Movies`);
-          });
-          $$renderer3.option({ value: ContentType.SERIES }, ($$renderer4) => {
-            $$renderer4.push(`Series`);
-          });
-          $$renderer3.option({ value: ContentType.DOCUMENTARY }, ($$renderer4) => {
-            $$renderer4.push(`Documentaries`);
-          });
-          $$renderer3.option({ value: ContentType.SERMON }, ($$renderer4) => {
-            $$renderer4.push(`Sermons`);
-          });
-          $$renderer3.option({ value: ContentType.WORSHIP }, ($$renderer4) => {
-            $$renderer4.push(`Worship`);
-          });
-          $$renderer3.option({ value: ContentType.KIDS_CONTENT }, ($$renderer4) => {
-            $$renderer4.push(`Kids Content`);
-          });
-        }
-      );
-      $$renderer2.push(` `);
-      $$renderer2.select(
-        {
-          value: sortBy,
-          class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
-        },
-        ($$renderer3) => {
-          $$renderer3.option({ value: "newest" }, ($$renderer4) => {
-            $$renderer4.push(`Newest First`);
-          });
-          $$renderer3.option({ value: "oldest" }, ($$renderer4) => {
-            $$renderer4.push(`Oldest First`);
-          });
-          $$renderer3.option({ value: "title" }, ($$renderer4) => {
-            $$renderer4.push(`Title A-Z`);
-          });
-          $$renderer3.option({ value: "creator" }, ($$renderer4) => {
-            $$renderer4.push(`Creator A-Z`);
-          });
-          $$renderer3.option({ value: "priority" }, ($$renderer4) => {
-            $$renderer4.push(`Priority`);
-          });
-        }
-      );
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` <div class="flex rounded-lg overflow-hidden">`);
-      push_element($$renderer2, "div", 353, 6);
-      $$renderer2.push(`<button${attr_class(`px-4 py-2 ${stringify("bg-red-600 text-white")}`)}>`);
-      push_element($$renderer2, "button", 354, 8);
-      $$renderer2.push(`📊</button>`);
-      pop_element();
-      $$renderer2.push(` <button${attr_class(`px-4 py-2 ${stringify("bg-white/10 text-gray-300")}`)}>`);
-      push_element($$renderer2, "button", 360, 8);
-      $$renderer2.push(`📄</button>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(`</div>`);
-      pop_element();
-      $$renderer2.push(` `);
-      {
-        $$renderer2.push("<!--[!-->");
-      }
-      $$renderer2.push(`<!--]--></div>`);
-      pop_element();
-      $$renderer2.push(` `);
-      {
-        $$renderer2.push("<!--[-->");
-        $$renderer2.push(`<div class="flex items-center justify-center py-12">`);
-        push_element($$renderer2, "div", 407, 4);
-        $$renderer2.push(`<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white">`);
-        push_element($$renderer2, "div", 408, 6);
-        $$renderer2.push(`</div>`);
-        pop_element();
-        $$renderer2.push(` <p class="text-white ml-4">`);
-        push_element($$renderer2, "p", 409, 6);
-        $$renderer2.push(`Loading content...</p>`);
-        pop_element();
-        $$renderer2.push(`</div>`);
-        pop_element();
-      }
-      $$renderer2.push(`<!--]--></div>`);
-      pop_element();
-      $$renderer2.push(` `);
-      {
-        $$renderer2.push("<!--[!-->");
-      }
-      $$renderer2.push(`<!--]-->`);
-    },
-    _page
-  );
+	$$renderer.component(($$renderer) => {
+		let allContent = [];
+		let searchTerm = "";
+		let selectedStatus = "all";
+		let selectedType = "all";
+		let sortBy = "newest";
+		let currentPage = 1;
+		let itemsPerPage = 12;
+		let totalItems = 0;
+		derived(() => {
+			let filtered = allContent.filter((content) => {
+				return true;
+			});
+			switch (sortBy) {
+				case "newest":
+					filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+					break;
+				case "oldest":
+					filtered.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+					break;
+				case "title":
+					filtered.sort((a, b) => a.title.localeCompare(b.title));
+					break;
+				case "creator":
+					filtered.sort((a, b) => a.creatorName.localeCompare(b.creatorName));
+					break;
+				case "priority":
+					const priorityOrder = {
+						[ContentStatus.DRAFT]: 5,
+						[ContentStatus.SUBMITTED]: 4,
+						[ContentStatus.THEOLOGICAL_REVIEW]: 3,
+						[ContentStatus.CONTENT_REVIEW]: 2,
+						[ContentStatus.TECHNICAL_QA]: 1,
+						[ContentStatus.APPROVED]: 0,
+						[ContentStatus.PUBLISHED]: -1,
+						[ContentStatus.REJECTED]: 0,
+						[ContentStatus.ARCHIVED]: -2
+					};
+					filtered.sort((a, b) => (priorityOrder[b.status] || 0) - (priorityOrder[a.status] || 0));
+					break;
+			}
+			totalItems = filtered.length;
+			const startIndex = (currentPage - 1) * itemsPerPage;
+			return filtered.slice(startIndex, 12);
+		});
+		derived(() => Math.ceil(totalItems / itemsPerPage));
+		$$renderer.push(`<div class="space-y-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between"><div><h1 class="text-3xl font-bold text-white mb-2">Content Management</h1> <p class="text-gray-300">Manage all submitted content across the platform</p></div> <div class="mt-4 lg:mt-0 grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-blue-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-blue-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length)}</div> <div class="text-blue-200 text-xs">Pending Review</div></div> <div class="bg-green-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-green-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length)}</div> <div class="text-green-200 text-xs">Published</div></div> <div class="bg-red-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-red-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.REJECTED).length)}</div> <div class="text-red-200 text-xs">Rejected</div></div> <div class="bg-purple-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-purple-400">${escape_html(allContent.length)}</div> <div class="text-purple-200 text-xs">Total Content</div></div></div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4 mb-4"><div class="flex-1"><input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/></div> <div class="flex flex-wrap gap-3">`);
+		$$renderer.select({
+			value: selectedStatus,
+			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+		}, ($$renderer) => {
+			$$renderer.option({ value: "all" }, ($$renderer) => {
+				$$renderer.push(`All Statuses`);
+			});
+			$$renderer.option({ value: ContentStatus.SUBMITTED }, ($$renderer) => {
+				$$renderer.push(`Submitted`);
+			});
+			$$renderer.option({ value: ContentStatus.THEOLOGICAL_REVIEW }, ($$renderer) => {
+				$$renderer.push(`Theological Review`);
+			});
+			$$renderer.option({ value: ContentStatus.CONTENT_REVIEW }, ($$renderer) => {
+				$$renderer.push(`Content Review`);
+			});
+			$$renderer.option({ value: ContentStatus.TECHNICAL_QA }, ($$renderer) => {
+				$$renderer.push(`Technical QA`);
+			});
+			$$renderer.option({ value: ContentStatus.APPROVED }, ($$renderer) => {
+				$$renderer.push(`Approved`);
+			});
+			$$renderer.option({ value: ContentStatus.PUBLISHED }, ($$renderer) => {
+				$$renderer.push(`Published`);
+			});
+			$$renderer.option({ value: ContentStatus.REJECTED }, ($$renderer) => {
+				$$renderer.push(`Rejected`);
+			});
+		});
+		$$renderer.push(` `);
+		$$renderer.select({
+			value: selectedType,
+			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+		}, ($$renderer) => {
+			$$renderer.option({ value: "all" }, ($$renderer) => {
+				$$renderer.push(`All Types`);
+			});
+			$$renderer.option({ value: ContentType.MOVIE }, ($$renderer) => {
+				$$renderer.push(`Movies`);
+			});
+			$$renderer.option({ value: ContentType.SERIES }, ($$renderer) => {
+				$$renderer.push(`Series`);
+			});
+			$$renderer.option({ value: ContentType.DOCUMENTARY }, ($$renderer) => {
+				$$renderer.push(`Documentaries`);
+			});
+			$$renderer.option({ value: ContentType.SERMON }, ($$renderer) => {
+				$$renderer.push(`Sermons`);
+			});
+			$$renderer.option({ value: ContentType.WORSHIP }, ($$renderer) => {
+				$$renderer.push(`Worship`);
+			});
+			$$renderer.option({ value: ContentType.KIDS_CONTENT }, ($$renderer) => {
+				$$renderer.push(`Kids Content`);
+			});
+		});
+		$$renderer.push(` `);
+		$$renderer.select({
+			value: sortBy,
+			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+		}, ($$renderer) => {
+			$$renderer.option({ value: "newest" }, ($$renderer) => {
+				$$renderer.push(`Newest First`);
+			});
+			$$renderer.option({ value: "oldest" }, ($$renderer) => {
+				$$renderer.push(`Oldest First`);
+			});
+			$$renderer.option({ value: "title" }, ($$renderer) => {
+				$$renderer.push(`Title A-Z`);
+			});
+			$$renderer.option({ value: "creator" }, ($$renderer) => {
+				$$renderer.push(`Creator A-Z`);
+			});
+			$$renderer.option({ value: "priority" }, ($$renderer) => {
+				$$renderer.push(`Priority`);
+			});
+		});
+		$$renderer.push(`</div> <div class="flex rounded-lg overflow-hidden"><button${attr_class(`px-4 py-2 bg-red-600 text-white`)}>📊</button> <button${attr_class(`px-4 py-2 bg-white/10 text-gray-300`)}>📄</button></div></div> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--></div> `);
+		$$renderer.push("<!--[0-->");
+		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-white ml-4">Loading content...</p></div>`);
+		$$renderer.push(`<!--]--></div> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->`);
+	});
 }
-_page.render = function() {
-  throw new Error("Component.render(...) is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information");
-};
-export {
-  _page as default
-};
+//#endregion
+export { _page as default };

@@ -1,0 +1,1 @@
+import{ct as e,lt as t}from"./BgHc62fs.js";import{t as n}from"./FqtpMiZa.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M12 20h.01`}],[`path`,{d:`M2 8.82a15 15 0 0 1 20 0`}],[`path`,{d:`M5 12.859a10 10 0 0 1 14 0`}],[`path`,{d:`M8.5 16.429a5 5 0 0 1 7 0`}]];n(r,t({name:`wifi`},()=>a,{get iconNode(){return o}}))}export{r as t};

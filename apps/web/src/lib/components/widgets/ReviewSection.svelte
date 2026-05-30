@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import ReportButton from '$lib/components/ReportButton.svelte';
 
 	interface Review {
 		id: string;
@@ -129,6 +130,9 @@
 							{/each}
 						</div>
 						<span class="text-gray-500 text-xs">{new Date(review.createdAt).toLocaleDateString()}</span>
+						<div class="ml-auto">
+							<ReportButton targetType="review" targetId={review.id} />
+						</div>
 					</div>
 					{#if review.reviewText}
 						<p class="text-gray-300 text-sm">{review.reviewText}</p>

@@ -58,8 +58,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			description: data.description,
 			mediaType: data.contentType,
 			ageRating: data.ageRating,
+			// 6 asset slots: every asset uploaded in AssetManagementStep maps
+			// 1-to-1 to its own column so creators can later replace any of them
+			// individually from the content detail page.
 			thumbnail: data.assets?.thumbnail,
 			posterUrl: data.assets?.posterPortrait,
+			posterLandscapeUrl: data.assets?.posterLandscape,
+			posterSquareUrl: data.assets?.posterSquare,
+			logoTitleUrl: data.assets?.logoTitle,
 			backdropUrl: data.assets?.backdropHero,
 			trailerUrl: data.trailerUrl || null,
 			language: data.language || 'English',

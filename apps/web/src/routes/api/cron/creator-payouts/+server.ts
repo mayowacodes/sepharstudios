@@ -236,11 +236,11 @@ export const POST: RequestHandler = async ({ request }) => {
 						// Convert cents → STC tokens. Assumes 1 STC == $0.01 floor (the
 						// launch-phase STC subscription pricing model). When STC price
 						// moves, this conversion needs to factor live price.
-						const stcAmount = (stcCents / 100).toString();
+						const stcAmount = stcCents / 100;
 						const txHash = await transferStc(creatorRow.wallet as `0x${string}`, stcAmount);
 						// Mark the STC payout as completed with the txHash recorded.
 						await db.update(transactions)
-							.set({ status: 'completed', txHash })
+							.set({ status: 'completed', txHash: txHash.txHash })
 							.where(and(
 								eq(transactions.userId, creator.userId),
 								eq(transactions.type, 'creator_payout'),

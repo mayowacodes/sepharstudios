@@ -16,6 +16,23 @@ const getCreatorApplicationsOpen = async () => {
 	return settings?.platform?.creatorApplicationsOpen ?? defaultSettings.platform.creatorApplicationsOpen;
 };
 
+type CreatorDocument = { id: string; url: string; name: string; size?: number };
+
+const normalizeDocuments = (documents?: CreatorDocument[] | string[] | null): CreatorDocument[] | null | undefined => {
+	if (documents === undefined) return undefined;
+	if (documents === null) return null;
+	return documents
+		.map((document) => {
+			if (typeof document !== 'string') return document;
+			return {
+				id: crypto.randomUUID(),
+				url: document,
+				name: document.split('/').pop() || 'Document'
+			};
+		})
+		.filter((document): document is CreatorDocument => !!document.url && !!document.name);
+};
+
 export const GET: RequestHandler = async ({ locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
@@ -65,7 +82,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		bio?: string;
 		portfolioUrl?: string;
 		socialLinks?: Record<string, string>;
-		documents?: Array<{ id: string; url: string; name: string; size?: number }> | string[];
+		documents?: CreatorDocument[] | string[];
 	};
 
 	if (payload.creatorType !== undefined && !ALLOWED_CREATOR_TYPES.includes(payload.creatorType as CreatorType)) {
@@ -78,6 +95,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		.where(eq(creatorApplications.userId, session.user.id));
 
 	const now = new Date();
+	const documents = normalizeDocuments(payload.documents);
 	if (existing) {
 		if (existing.status === 'approved') {
 			return json({ error: 'Your creator application is already approved.' }, { status: 400 });
@@ -99,7 +117,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				bio: payload.bio ?? existing.bio,
 				portfolioUrl: payload.portfolioUrl ?? existing.portfolioUrl,
 				socialLinks: payload.socialLinks ?? existing.socialLinks,
-				documents: payload.documents ?? existing.documents,
+				documents: documents ?? existing.documents,
 				status: 'pending',
 				reviewNotes: null,
 				rejectionReason: null,
@@ -130,7 +148,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		bio: payload.bio ?? null,
 		portfolioUrl: payload.portfolioUrl ?? null,
 		socialLinks: payload.socialLinks ?? null,
-		documents: payload.documents ?? null
+		documents: documents ?? null
 	}).returning();
 
 	await track(session.user.id, 'creator_apply', { creatorType: payload.creatorType, resubmission: false });

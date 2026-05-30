@@ -142,6 +142,7 @@ export interface AssetUploadProgress {
   progressPercentage: number;
   isCompleted: boolean;
   hasError: boolean;
+  errorMessage?: string;
   url?: string;
 }
 

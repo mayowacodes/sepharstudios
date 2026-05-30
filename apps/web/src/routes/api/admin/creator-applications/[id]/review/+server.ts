@@ -17,6 +17,7 @@ const defaultPreferences = {
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error!;
+	if (!params.id) return json({ error: 'Missing application id' }, { status: 400 });
 
 	const payload = await request.json() as {
 		status: 'approved' | 'rejected';

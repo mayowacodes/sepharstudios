@@ -1,20 +1,50 @@
 <!-- Basic Info Step -->
 <script lang="ts">
   import { ContentType, AgeRating } from '$lib/types/creator';
-  
-  export let data: any;
-  export let onUpdate: (data: any) => void;
-  
-  let title = data.title || '';
-  let description = data.description || '';
-  let contentType = data.contentType || '';
-  let ageRating = data.ageRating || '';
-  let isPpv = data.isPpv || false;
-  let ppvPriceDollars = data.ppvPriceDollars || '';
 
-  // Update parent when data changes
-  $: onUpdate({ title, description, contentType, ageRating, isPpv, ppvPriceDollars: isPpv ? ppvPriceDollars : '' });
-  
+  interface Props {
+    data: {
+      title?: string;
+      description?: string;
+      contentType?: string;
+      ageRating?: string;
+      isPpv?: boolean;
+      ppvPriceDollars?: string;
+    };
+    onUpdate: (data: Record<string, unknown>) => void;
+  }
+
+  let { data, onUpdate }: Props = $props();
+
+  // Initial-only capture is intentional: once the form is mounted, the user's
+  // typing is the source of truth — we don't want a wizard-state update from
+  // an unrelated step to reset their inputs. Suppress the runes warning.
+  /* svelte-ignore state_referenced_locally */
+  let title = $state(data.title ?? '');
+  /* svelte-ignore state_referenced_locally */
+  let description = $state(data.description ?? '');
+  /* svelte-ignore state_referenced_locally */
+  let contentType = $state(data.contentType ?? '');
+  /* svelte-ignore state_referenced_locally */
+  let ageRating = $state(data.ageRating ?? '');
+  /* svelte-ignore state_referenced_locally */
+  let isPpv = $state(data.isPpv ?? false);
+  /* svelte-ignore state_referenced_locally */
+  let ppvPriceDollars = $state(data.ppvPriceDollars ?? '');
+
+  // Propagate every field change to the wizard so step validation runs and the
+  // step indicator turns green as soon as the form is complete.
+  $effect(() => {
+    onUpdate({
+      title,
+      description,
+      contentType,
+      ageRating,
+      isPpv,
+      ppvPriceDollars: isPpv ? ppvPriceDollars : ''
+    });
+  });
+
   const contentTypes = [
     { value: ContentType.MOVIE, label: '🎬 Movie', description: 'Full-length feature film' },
     { value: ContentType.SERIES, label: '📺 Series', description: 'TV series or web series' },
@@ -24,7 +54,7 @@
     { value: ContentType.WORSHIP, label: '🎵 Worship', description: 'Worship music or service' },
     { value: ContentType.KIDS_CONTENT, label: '🧸 Kids Content', description: 'Child-appropriate content' }
   ];
-  
+
   const ageRatings = [
     { value: AgeRating.ALL_AGES, label: 'All Ages', description: 'Suitable for everyone' },
     { value: AgeRating.SEVEN_PLUS, label: '7+', description: 'Ages 7 and above' },
@@ -40,13 +70,13 @@
     <h2 class="text-2xl font-bold text-white mb-2">Basic Information</h2>
     <p class="text-gray-300">Tell us about your content</p>
   </div>
-  
+
   <!-- Title -->
   <div>
     <label for="title" class="block text-sm font-medium text-white mb-2">Content Title *</label>
-    <input 
-      type="text" 
-      id="title" 
+    <input
+      type="text"
+      id="title"
       bind:value={title}
       placeholder="Enter your content title"
       class="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"
@@ -55,12 +85,12 @@
       <p class="text-red-400 text-sm mt-1">Title must be at least 5 characters long</p>
     {/if}
   </div>
-  
+
   <!-- Description -->
   <div>
     <label for="description" class="block text-sm font-medium text-white mb-2">Description *</label>
-    <textarea 
-      id="description" 
+    <textarea
+      id="description"
       bind:value={description}
       placeholder="Provide a compelling description of your content..."
       rows="4"
@@ -77,16 +107,16 @@
       <span class="text-gray-400">{description.length}/1000</span>
     </div>
   </div>
-  
+
   <!-- Content Type -->
   <div>
-    <label for = "contentType" class="block text-sm font-medium text-white mb-3">Content Type *</label>
+    <label for="contentType" class="block text-sm font-medium text-white mb-3">Content Type *</label>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {#each contentTypes as type}
+      {#each contentTypes as type (type.value)}
         <label class="cursor-pointer">
-          <input 
-            type="radio" 
-            bind:group={contentType} 
+          <input
+            type="radio"
+            bind:group={contentType}
             value={type.value}
             class="sr-only"
           />
@@ -98,16 +128,16 @@
       {/each}
     </div>
   </div>
-  
+
   <!-- Age Rating -->
   <div>
-    <label for = "ageRating" class="block text-sm font-medium text-white mb-3">Age Rating *</label>
+    <label for="ageRating" class="block text-sm font-medium text-white mb-3">Age Rating *</label>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {#each ageRatings as rating}
+      {#each ageRatings as rating (rating.value)}
         <label class="cursor-pointer">
-          <input 
-            type="radio" 
-            bind:group={ageRating} 
+          <input
+            type="radio"
+            bind:group={ageRating}
             value={rating.value}
             class="sr-only"
           />
@@ -119,7 +149,7 @@
       {/each}
     </div>
   </div>
-  
+
   <!-- Pay-Per-View -->
   <div>
     <label class="flex items-center gap-3 cursor-pointer">
@@ -155,7 +185,7 @@
       <div>
         <div class="font-medium text-white mb-1">Faith-Based Content Guidelines</div>
         <div class="text-sm text-blue-200">
-          All content will be reviewed to ensure it aligns with our Christian values and community guidelines. 
+          All content will be reviewed to ensure it aligns with our Christian values and community guidelines.
           Content should be appropriate for a faith-based audience and promote positive Christian messages.
         </div>
       </div>

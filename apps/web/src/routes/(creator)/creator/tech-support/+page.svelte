@@ -45,8 +45,8 @@
         throw new Error(`Failed to upload "${file.name}"`);
       }
       const data = await res.json();
-      const url: string | undefined = data.file?.url ?? data.url;
-      const id: string = data.file?.id ?? data.id ?? crypto.randomUUID();
+      const url: string | undefined = data.directUrl ?? data.url;
+      const id: string = data.dbId ?? data.id ?? crypto.randomUUID();
       if (!url) throw new Error(`No URL returned for "${file.name}"`);
       uploaded.push({ id, url, name: file.name, size: file.size });
     }

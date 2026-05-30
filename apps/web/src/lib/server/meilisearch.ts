@@ -1,4 +1,4 @@
-import { MeiliSearch, type Index } from 'meilisearch';
+import { Meilisearch, type Index } from 'meilisearch';
 import { env } from '$env/dynamic/private';
 
 /**
@@ -19,16 +19,16 @@ import { env } from '$env/dynamic/private';
  * `isMeiliConfigured()` lets callers fall back gracefully when env is missing.
  */
 
-let cached: MeiliSearch | null = null;
+let cached: Meilisearch | null = null;
 
 export function isMeiliConfigured(): boolean {
 	return !!(env.MEILISEARCH_URL && env.MEILISEARCH_MASTER_KEY);
 }
 
-export function getMeiliClient(): MeiliSearch | null {
+export function getMeiliClient(): Meilisearch | null {
 	if (cached) return cached;
 	if (!isMeiliConfigured()) return null;
-	cached = new MeiliSearch({
+	cached = new Meilisearch({
 		host: env.MEILISEARCH_URL!,
 		apiKey: env.MEILISEARCH_MASTER_KEY!
 	});
@@ -69,7 +69,7 @@ export interface CreatorDoc {
 	denomination: string | null;
 }
 
-async function ensureIndex(client: MeiliSearch, uid: string, opts: {
+async function ensureIndex(client: Meilisearch, uid: string, opts: {
 	searchable: string[];
 	filterable: string[];
 	sortable: string[];

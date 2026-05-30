@@ -1,0 +1,1 @@
+import{Gt as e,Lt as t,Wt as n,yn as r}from"./BgHc62fs.js";function i(i,a){var o=e();t(r(o),()=>a.children),n(i,o)}export{i as t};

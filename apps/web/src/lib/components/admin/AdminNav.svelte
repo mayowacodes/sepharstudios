@@ -2,6 +2,10 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { navigateToMainSite } from '$lib/utils/portal-navigation';
+  import { Bell } from '@lucide/svelte';
+
+  const user = $derived(page.data.user as { name?: string; image?: string | null } | undefined);
+  const initial = $derived((user?.name ?? 'A').trim().charAt(0).toUpperCase() || 'A');
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: 'Home' },
@@ -33,7 +37,7 @@
   <div class="container mx-auto px-4">
     <div class="flex items-center justify-between h-16">
       <div class="flex items-center space-x-4">
-        <button on:click={goToMainSite} class="flex items-center gap-3 text-white hover:text-gray-300 transition-colors">
+        <button type="button" onclick={goToMainSite} class="flex items-center gap-3 text-white hover:text-gray-300 transition-colors">
           <img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain" />
           <span class="text-2xl font-bold">Sephar Studios</span>
         </button>
@@ -67,8 +71,26 @@
       </div>
 
       <div class="flex items-center space-x-4">
-        <button class="text-gray-300 hover:text-white" aria-label="Notifications">N</button>
-        <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold">A</div>
+        <a
+          href="/admin/communications"
+          class="text-gray-300 hover:text-white transition-colors inline-flex items-center"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <Bell class="w-5 h-5" />
+        </a>
+        <a
+          href="/admin/settings"
+          class="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white font-bold overflow-hidden transition-colors"
+          aria-label={`Account settings for ${user?.name ?? 'admin'}`}
+          title={user?.name ?? 'Account'}
+        >
+          {#if user?.image}
+            <img src={user.image} alt="" class="w-full h-full object-cover" />
+          {:else}
+            {initial}
+          {/if}
+        </a>
       </div>
     </div>
   </div>

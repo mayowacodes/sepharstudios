@@ -61,6 +61,42 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Web Push — server dispatches via /api/push/* with the registered VAPID
+// keys. The payload is JSON: { title, body, url?, tag? }.
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let payload = { title: 'Sephar Studios', body: '' };
+  try {
+    payload = event.data.json();
+  } catch {
+    payload.body = event.data.text();
+  }
+  const options = {
+    body: payload.body,
+    icon: '/pwa-192x192.png',
+    badge: '/favicon-96x96.png',
+    tag: payload.tag,
+    data: { url: payload.url || '/' }
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, options));
+});
+
+// Focus an existing tab when the user clicks the notification, or open a new
+// one if no tab is open at that URL.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil((async () => {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      if (client.url.includes(targetUrl) && 'focus' in client) {
+        return client.focus();
+      }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+  })());
+});
+
 // Message handler for download manager
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'CACHE_SEGMENT') {
