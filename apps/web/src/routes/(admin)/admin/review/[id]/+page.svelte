@@ -5,20 +5,46 @@
   import type { ContentSubmission } from '$lib/types/creator';
   import type { ContentReview } from '$lib/types/admin';
   import { ReviewType, ReviewResult } from '$lib/types/admin';
-  
-  let contentData: ContentSubmission | null = null;
-  let reviewHistory: ContentReview[] = [];
-  let currentReview: Partial<ContentReview> = {
+  import ContentThreadPanel from '$lib/components/widgets/ContentThreadPanel.svelte';
+  import ContentScanReport from '$lib/components/admin/ContentScanReport.svelte';
+  import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
+
+  // Scan state pulled from the admin content GET.
+  let scanStatus = $state<string>('idle');
+  let scanReport = $state<any | null>(null);
+
+  // Encoder state (R+1). Distinct from `scanStatus` — encode reaches 100%
+  // when playback is ready; the content scan runs AFTER and arrives via
+  // its own webhook.
+  let encoderStatus = $state<string | null>(null);
+  let encoderProgress = $state<number | null>(null);
+  let encoderStage = $state<string | null>(null);
+  let encoderError = $state<string | null>(null);
+  let encoderJobId = $state<string | null>(null);
+  let cancelling = $state(false);
+
+  let contentData = $state<ContentSubmission | null>(null);
+  let reviewHistory = $state<ContentReview[]>([]);
+  let currentReview = $state<Partial<ContentReview>>({
     reviewType: ReviewType.THEOLOGICAL,
     result: ReviewResult.APPROVED,
     feedback: '',
     detailedNotes: []
-  };
-  
-  let videoCurrentTime = 0;
-  let isPlaying = false;
-  let isLoading = true;
-  let submitError = '';
+  });
+
+  let videoCurrentTime = $state(0);
+  let isLoading = $state(true);
+  let submitError = $state('');
+
+  // Playback artifacts pulled from the admin content GET. Threaded into the
+  // VideoPlayer so reviewers get the same HLS / chapters / subtitles /
+  // scrubbing-preview experience viewers do.
+  let videoSubtitles = $state<Array<{ label: string; src: string; srclang: string }>>([]);
+  let videoDescriptions = $state<Array<{ label: string; src: string; srclang: string }>>([]);
+  let videoChapters = $state<Array<{ start: number; title: string }>>([]);
+  let videoPreviewVtt = $state<string | undefined>(undefined);
+  let videoPreviewSprites = $state<string[]>([]);
+  let videoPosterUrl = $state<string | undefined>(undefined);
   
   onMount(async () => {
     const contentId = page.params.id;
@@ -57,6 +83,19 @@
         reviewNotes: item.reviewNotes || undefined,
         rejectionReason: item.rejectionReason || undefined
       };
+      scanStatus = item.contentScanStatus ?? 'idle';
+      scanReport = item.contentScanReport ?? null;
+      encoderStatus = item.processingStatus ?? null;
+      encoderProgress = item.processingProgress ?? null;
+      encoderStage = item.processingStage ?? null;
+      encoderError = item.processingError ?? null;
+      encoderJobId = item.encoderJobId ?? null;
+      videoSubtitles = Array.isArray(item.subtitles) ? item.subtitles : [];
+      videoDescriptions = Array.isArray(item.descriptions) ? item.descriptions : [];
+      videoChapters = Array.isArray(item.chapters) ? item.chapters : [];
+      videoPreviewVtt = item.previewThumbnailsVtt ?? undefined;
+      videoPreviewSprites = Array.isArray(item.previewSpriteUrls) ? item.previewSpriteUrls : [];
+      videoPosterUrl = item.backdropUrl || item.thumbnail || item.posterAutoUrl || undefined;
       reviewHistory = [];
     } catch (err) {
       console.error(err);
@@ -65,6 +104,39 @@
     }
   });
   
+  // True when the job is still running (not terminal). Used to decide
+  // whether the cancel button is shown / armed.
+  const encoderInFlight = $derived(
+    !!encoderJobId
+    && encoderStatus !== null
+    && !['ready', 'failed', 'cancelled'].includes(encoderStatus)
+  );
+
+  async function cancelEncode() {
+    if (!contentData) return;
+    if (!confirm('Cancel the in-flight encode for this content? The orchestrator will stop the worker mid-stream; uploaded artifacts so far will be discarded.')) return;
+    cancelling = true;
+    try {
+      const res = await fetch(`/api/admin/content/${contentData.id}/cancel-encode`, { method: 'POST' });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Cancel failed');
+      // Optimistic — the real terminal state arrives via the `cancelled`
+      // progress webhook. Set a UI hint until then.
+      encoderStatus = 'cancelling';
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Cancel failed');
+    } finally {
+      cancelling = false;
+    }
+  }
+
+  function encoderStatusClass(s: string | null): string {
+    if (s === 'ready') return 'text-green-300';
+    if (s === 'failed') return 'text-red-300';
+    if (s === 'cancelled' || s === 'cancelling') return 'text-gray-400';
+    return 'text-yellow-300';
+  }
+
   function addTimestampNote() {
     if (!currentReview.detailedNotes) {
       currentReview.detailedNotes = [];
@@ -124,17 +196,26 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Content Preview (Left Column) -->
   <div class="lg:col-span-2 space-y-6">
-    <!-- Video Player -->
+    <!-- Video Player — full VideoPlayer so reviewers see the same HLS
+         playback, chapters, subtitles, and scrubbing previews that
+         viewers do. NOTE: we deliberately omit `contentId` so the player
+         doesn't post fake watch-progress for the admin. -->
     <div class="bg-black rounded-xl overflow-hidden">
-      <video 
-        src={contentData.videoUrl}
-        controls
-        class="w-full aspect-video"
-        bind:currentTime={videoCurrentTime}
-        bind:paused={isPlaying}
-      >
-        <track kind="captions" src="" label="English" srclang="en" />
-      </video>
+      {#if contentData.videoUrl}
+        <VideoPlayer
+          src={contentData.videoUrl}
+          poster={videoPosterUrl}
+          title={contentData.title}
+          subtitles={videoSubtitles}
+          descriptions={videoDescriptions}
+          chapters={videoChapters}
+          previewVtt={videoPreviewVtt}
+          previewSprites={videoPreviewSprites}
+          onTimeUpdate={(t) => { videoCurrentTime = t; }}
+        />
+      {:else}
+        <div class="aspect-video flex items-center justify-center text-zinc-400 text-sm">No playable source yet.</div>
+      {/if}
     </div>
     
     <!-- Content Information -->
@@ -217,6 +298,57 @@
   
   <!-- Review Panel (Right Column) -->
   <div class="space-y-6">
+    <!-- Encoder status (R+1). Separate from the content scan below —
+         encode hits 100% at playback-ready; the AI scan runs after and
+         lands via its own webhook. -->
+    {#if encoderStatus}
+      <div class="surface-1 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-semibold text-white">Encoder pipeline</div>
+          <span class="text-xs uppercase tracking-wide {encoderStatusClass(encoderStatus)}">{encoderStatus}</span>
+        </div>
+        {#if encoderInFlight}
+          <div class="h-2 bg-white/10 rounded overflow-hidden">
+            <div class="h-full bg-purple-500 transition-all duration-500" style="width: {Math.max(0, Math.min(100, encoderProgress ?? 0))}%"></div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>{encoderStage ?? 'waiting'}</span>
+            <span>{Math.max(0, Math.min(100, encoderProgress ?? 0))}%</span>
+          </div>
+        {/if}
+        {#if encoderError}
+          <div class="text-xs text-red-300">{encoderError}</div>
+        {/if}
+        {#if encoderJobId}
+          <div class="text-[10px] text-gray-500 font-mono break-all">job: {encoderJobId}</div>
+        {/if}
+        {#if encoderInFlight}
+          <button
+            type="button"
+            onclick={cancelEncode}
+            disabled={cancelling}
+            class="w-full text-xs text-red-300 hover:text-red-100 surface-2 rounded px-3 py-2 disabled:opacity-50"
+          >
+            {cancelling ? 'Cancelling…' : 'Cancel encode'}
+          </button>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- AI content scan report — surfaces above the review form so it
+         informs the admin's Approve/Reject decision. -->
+    <ContentScanReport
+      status={scanStatus}
+      report={scanReport}
+      contentId={contentData.id}
+      onRescanned={() => { scanStatus = 'in_progress'; }}
+    />
+
+    <!-- Discussion with creator -->
+    {#if contentData.id}
+      <ContentThreadPanel contentId={contentData.id} variant="admin" />
+    {/if}
+
     <!-- Review Form -->
     <div class="bg-white/10 rounded-xl p-6">
       <h3 class="text-xl font-bold text-white mb-4">Review Assessment</h3>

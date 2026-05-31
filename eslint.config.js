@@ -1,5 +1,11 @@
 import prettier from 'eslint-config-prettier';
-import js from '@eslint/js';
+let js;
+try {
+	js = await import('@eslint/js');
+} catch (e) {
+	js = { configs: { recommended: {} } };
+}
+const jsRecommended = js.configs.recommended;
 import { includeIgnoreFile } from '@eslint/compat';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';

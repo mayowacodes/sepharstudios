@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { creators, transactions, mediaLibrary, mediaWatchProgress } from '$lib/db/schema/sepharstudios';
-import { and, eq, desc, sql, inArray } from 'drizzle-orm';
+import { creators, transactions, mediaLibrary, mediaWatchProgress, ppvPurchases } from '$lib/db/schema/sepharstudios';
+import { and, eq, desc, sql, inArray, gte } from 'drizzle-orm';
 import { resolveCreatorTier } from '$lib/server/creator-tier';
 
 /**
@@ -82,12 +82,30 @@ export const GET: RequestHandler = async ({ locals }) => {
 	// Aggregate content stats from the live tables — also honest zero when the
 	// creator hasn't published anything yet.
 	const contentRows = await db
-		.select({ id: mediaLibrary.id, viewCount: mediaLibrary.viewCount })
+		.select({
+			id: mediaLibrary.id,
+			title: mediaLibrary.title,
+			thumbnail: mediaLibrary.thumbnail,
+			viewCount: mediaLibrary.viewCount
+		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.creatorId, session.user.id));
 
 	const totalViews = contentRows.reduce((a, c) => a + Number(c.viewCount ?? 0), 0);
 	let completedWatches = 0;
+
+	// Per-content PPV revenue (Item 5A). Keyed by contentId so the UI can join
+	// against the content list. Two windows: last-30d + lifetime.
+	const byContent: Array<{
+		contentId: string;
+		title: string;
+		thumbnail: string | null;
+		viewCount: number;
+		lifetimeCents: number;
+		last30dCents: number;
+		purchaseCount: number;
+	}> = [];
+
 	if (contentRows.length > 0) {
 		const contentIds = contentRows.map((c) => c.id);
 		const [completedRow] = await db
@@ -98,11 +116,86 @@ export const GET: RequestHandler = async ({ locals }) => {
 				eq(mediaWatchProgress.isCompleted, true)
 			));
 		completedWatches = Number(completedRow?.count ?? 0);
+
+		const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+		const ppvRows = await db
+			.select({
+				contentId: ppvPurchases.contentId,
+				lifetimeCents: sql<number>`coalesce(sum(${ppvPurchases.amountPaidCents}), 0)::int`,
+				last30dCents: sql<number>`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
+				purchaseCount: sql<number>`count(*)::int`
+			})
+			.from(ppvPurchases)
+			.where(inArray(ppvPurchases.contentId, contentIds))
+			.groupBy(ppvPurchases.contentId);
+
+		const ppvMap = new Map(ppvRows.map((r) => [r.contentId, r]));
+		for (const c of contentRows) {
+			const ppv = ppvMap.get(c.id);
+			byContent.push({
+				contentId: c.id,
+				title: c.title,
+				thumbnail: c.thumbnail,
+				viewCount: Number(c.viewCount ?? 0),
+				lifetimeCents: ppv ? Number(ppv.lifetimeCents) : 0,
+				last30dCents: ppv ? Number(ppv.last30dCents) : 0,
+				purchaseCount: ppv ? Number(ppv.purchaseCount) : 0
+			});
+		}
+		// Sort by lifetime revenue desc so the highest-earning content shows first.
+		byContent.sort((a, b) => b.lifetimeCents - a.lifetimeCents);
 	}
 
 	// preferences.payment shape: { preference, fiatPct, usdcPct, stcPct }
 	const prefs = (creator.preferences ?? {}) as Record<string, unknown>;
 	const payment = (prefs.payment as Record<string, number> | undefined) ?? null;
+
+	// Sparkline + month-over-month delta for the Earnings KpiCards.
+	// Daily totals over the last 30 days (in cents). Uses the same per-user
+	// completed creator_payout rows as `totals`.
+	const SERIES_DAYS = 30;
+	const seriesEarnings: number[] = new Array(SERIES_DAYS).fill(0);
+	const sinceDate = new Date(Date.now() - SERIES_DAYS * 86_400_000);
+	const dailyRows = await db
+		.select({
+			day: sql<string>`to_char(date_trunc('day', ${transactions.createdAt}), 'YYYY-MM-DD')`,
+			cents: sql<number>`coalesce(sum(${transactions.amount}), 0)::int`
+		})
+		.from(transactions)
+		.where(and(
+			eq(transactions.userId, session.user.id),
+			eq(transactions.type, 'creator_payout'),
+			gte(transactions.createdAt, sinceDate)
+		))
+		.groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	for (const r of dailyRows) {
+		const d = new Date(r.day);
+		const ago = Math.floor((today.getTime() - d.getTime()) / 86_400_000);
+		const idx = SERIES_DAYS - 1 - ago;
+		if (idx >= 0 && idx < SERIES_DAYS) {
+			seriesEarnings[idx] = Number(r.cents);
+		}
+	}
+
+	// Month-over-month delta — this month vs same window last month.
+	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+	const [lastMonthAgg] = await db
+		.select({ total: sql<number>`coalesce(sum(${transactions.amount}), 0)::int` })
+		.from(transactions)
+		.where(and(
+			eq(transactions.userId, session.user.id),
+			eq(transactions.type, 'creator_payout'),
+			eq(transactions.status, 'completed'),
+			gte(transactions.createdAt, lastMonthStart),
+			sql`${transactions.createdAt} < ${lastMonthEnd}`
+		));
+	const lastMonthCents = Number(lastMonthAgg?.total ?? 0);
+	const earningsDelta = lastMonthCents > 0
+		? Math.round(((totals.monthCents - lastMonthCents) / lastMonthCents) * 1000) / 10
+		: (totals.monthCents > 0 ? 100 : 0);
 
 	// Tier comes from the CreatorPayments smart contract when the creator has
 	// a linked wallet — that's the on-chain source of truth. Falls back to the
@@ -129,6 +222,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 			totalViews,
 			completedWatches
 		},
+		byContent,
+		series: { earnings: seriesEarnings },
+		deltas: { earnings: earningsDelta },
 		paymentPreference: payment ?? null
 	});
 };

@@ -17,7 +17,14 @@
     stcToken = mod.stcToken;
     tokenAMM = mod.tokenAMM;
   }
-  import { Coins, TrendingUp, Users, Crown, DollarSign, Activity, RefreshCw, Wallet } from '@lucide/svelte';
+  import { Coins, TrendingUp, Users, Crown, DollarSign, Activity, RefreshCw, Wallet, BarChart3, FileText } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import TrendChart from '$lib/components/dashboard/TrendChart.svelte';
+  import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
+
+  let series = $state<{ users: number[]; revenue: number[]; content: number[] }>({ users: [], revenue: [], content: [] });
+  let deltas = $state<{ users: number; revenue: number; content: number }>({ users: 0, revenue: 0, content: 0 });
   
   interface PlatformMetrics {
     totalUsers: number;
@@ -233,6 +240,8 @@
         geographicData = data.geographicData;
         topCreators = data.topCreators;
         topContent = data.topContent;
+        series = data.series ?? { users: [], revenue: [], content: [] };
+        deltas = data.deltas ?? { users: 0, revenue: 0, content: 0 };
       }
     } finally {
       loading = false;
@@ -268,29 +277,66 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white">Platform Analytics</h1>
-      <p class="text-gray-300">Monitor platform performance and user engagement</p>
-    </div>
-    
-    <div class="flex items-center space-x-4">
+<div class="container mx-auto px-4 py-4 space-y-6">
+  <PageHeader
+    icon={BarChart3}
+    title="Platform Analytics"
+    subtitle="Monitor platform performance and user engagement."
+  >
+    {#snippet actions()}
       <select
         bind:value={selectedTimeRange}
         onchange={loadAnalytics}
-        class="bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         <option value="7d">Last 7 Days</option>
         <option value="30d">Last 30 Days</option>
         <option value="90d">Last 90 Days</option>
         <option value="1y">Last Year</option>
       </select>
+    {/snippet}
+  </PageHeader>
 
+  <!-- Platform KPI tiles -->
+  {#if loading}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {#each Array(4) as _ (_)}<Skeleton class="h-28 rounded-xl" />{/each}
+    </div>
+  {:else}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <KpiCard label="Total Users" value={formatNumber(platformMetrics.totalUsers)} icon={Users} accent="blue" delta={deltas.users} deltaLabel="vs prior 30d" sparkline={series.users} index={0} />
+      <KpiCard label="Active Creators" value={formatNumber(platformMetrics.activeCreators)} icon={Crown} accent="purple" index={1} />
+      <KpiCard label="Content" value={formatNumber(platformMetrics.totalContent)} icon={FileText} accent="orange" delta={deltas.content} deltaLabel="vs prior 30d" sparkline={series.content} index={2} />
+      <KpiCard label="Revenue" value={formatCurrency(platformMetrics.totalRevenue)} icon={DollarSign} accent="green" delta={deltas.revenue} deltaLabel="vs prior 30d" sparkline={series.revenue} index={3} />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {#if series.users.length > 0}
+        {@const today = new Date()}
+        <TrendChart
+          label="New users (30d)"
+          accent="blue"
+          data={series.users.map((v, i) => ({ date: new Date(today.getTime() - (series.users.length - 1 - i) * 86_400_000), value: v }))}
+          formatValue={(v) => formatNumber(v)}
+        />
+      {/if}
+      {#if series.revenue.length > 0}
+        {@const today = new Date()}
+        <TrendChart
+          label="Revenue (30d)"
+          accent="green"
+          data={series.revenue.map((v, i) => ({ date: new Date(today.getTime() - (series.revenue.length - 1 - i) * 86_400_000), value: v }))}
+          formatValue={(v) => formatCurrency(v)}
+        />
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Legacy metric/time selectors retained below for compatibility -->
+  <div class="flex items-center justify-end gap-2">
       <select
         bind:value={selectedMetric}
-        class="bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         <option value="views">Views</option>
         <option value="revenue">Revenue</option>
@@ -320,7 +366,6 @@
         </Button>
       {/if}
     </div>
-  </div>
 
   <!-- Web3 Tokenomics Dashboard -->
   {#if $isConnected}

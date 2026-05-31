@@ -28,7 +28,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		const encoderJob = await createEncoderJob({ filename, profile, durationHint });
+		// Pass mediaId so the orchestrator echoes it on every webhook —
+		// progress + scan-ready handlers can then resolve the row in O(1)
+		// without a jobId → mediaId lookup.
+		const encoderJob = await createEncoderJob({ filename, profile, durationHint, mediaId: contentId });
 
 		await db
 			.update(mediaLibrary)

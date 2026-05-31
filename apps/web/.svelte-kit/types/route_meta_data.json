@@ -38,6 +38,12 @@
 		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/abuse": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/ai-runs": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/analytics": [
 		"src/routes/+layout.server.ts"
 	],
@@ -55,6 +61,9 @@
 	],
 	"/(admin)/admin/dashboard": [
 		"src/routes/(admin)/admin/dashboard/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/disputes": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(admin)/admin/events": [
@@ -84,7 +93,13 @@
 	"/(admin)/admin/governance/treasury": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/payouts": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/policies": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/refunds": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(admin)/admin/review": [
@@ -99,7 +114,19 @@
 	"/(admin)/admin/submissions": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(admin)/admin/system-health": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/tax-forms": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(admin)/admin/tokenomics": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/users": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(admin)/admin/users/[id]": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(admin)/admin/workflow": [
@@ -108,8 +135,20 @@
 	"/api/achievements": [
 		"src/routes/api/achievements/+server.ts"
 	],
+	"/api/admin/abuse": [
+		"src/routes/api/admin/abuse/+server.ts"
+	],
+	"/api/admin/abuse/[id]": [
+		"src/routes/api/admin/abuse/[id]/+server.ts"
+	],
 	"/api/admin/admins": [
 		"src/routes/api/admin/admins/+server.ts"
+	],
+	"/api/admin/agent-runs": [
+		"src/routes/api/admin/agent-runs/+server.ts"
+	],
+	"/api/admin/agents/[name]/fire": [
+		"src/routes/api/admin/agents/[name]/fire/+server.ts"
 	],
 	"/api/admin/ai/config": [
 		"src/routes/api/admin/ai/config/+server.ts"
@@ -141,14 +180,26 @@
 	"/api/admin/content/[id]/assign": [
 		"src/routes/api/admin/content/[id]/assign/+server.ts"
 	],
+	"/api/admin/content/[id]/cancel-encode": [
+		"src/routes/api/admin/content/[id]/cancel-encode/+server.ts"
+	],
 	"/api/admin/content/[id]/ppv": [
 		"src/routes/api/admin/content/[id]/ppv/+server.ts"
 	],
 	"/api/admin/content/[id]/publish": [
 		"src/routes/api/admin/content/[id]/publish/+server.ts"
 	],
+	"/api/admin/content/[id]/rescan": [
+		"src/routes/api/admin/content/[id]/rescan/+server.ts"
+	],
 	"/api/admin/content/[id]/review": [
 		"src/routes/api/admin/content/[id]/review/+server.ts"
+	],
+	"/api/admin/content/[id]/thread": [
+		"src/routes/api/admin/content/[id]/thread/+server.ts"
+	],
+	"/api/admin/content/[id]/thread/stream": [
+		"src/routes/api/admin/content/[id]/thread/stream/+server.ts"
 	],
 	"/api/admin/creator-applications": [
 		"src/routes/api/admin/creator-applications/+server.ts"
@@ -158,6 +209,21 @@
 	],
 	"/api/admin/creators": [
 		"src/routes/api/admin/creators/+server.ts"
+	],
+	"/api/admin/disputes": [
+		"src/routes/api/admin/disputes/+server.ts"
+	],
+	"/api/admin/encoder-stream": [
+		"src/routes/api/admin/encoder-stream/+server.ts"
+	],
+	"/api/admin/encoder/jobs": [
+		"src/routes/api/admin/encoder/jobs/+server.ts"
+	],
+	"/api/admin/encoder/jobs/[mediaId]/cancel": [
+		"src/routes/api/admin/encoder/jobs/[mediaId]/cancel/+server.ts"
+	],
+	"/api/admin/encoder/jobs/[mediaId]/retry": [
+		"src/routes/api/admin/encoder/jobs/[mediaId]/retry/+server.ts"
 	],
 	"/api/admin/events": [
 		"src/routes/api/admin/events/+server.ts"
@@ -201,6 +267,15 @@
 	"/api/admin/governance/treasury": [
 		"src/routes/api/admin/governance/treasury/+server.ts"
 	],
+	"/api/admin/payouts": [
+		"src/routes/api/admin/payouts/+server.ts"
+	],
+	"/api/admin/payouts/[id]/approve": [
+		"src/routes/api/admin/payouts/[id]/approve/+server.ts"
+	],
+	"/api/admin/payouts/[id]/hold": [
+		"src/routes/api/admin/payouts/[id]/hold/+server.ts"
+	],
 	"/api/admin/policies": [
 		"src/routes/api/admin/policies/+server.ts"
 	],
@@ -237,14 +312,32 @@
 	"/api/admin/support-tickets/[id]/review": [
 		"src/routes/api/admin/support-tickets/[id]/review/+server.ts"
 	],
+	"/api/admin/tax-forms": [
+		"src/routes/api/admin/tax-forms/+server.ts"
+	],
+	"/api/admin/tax-forms/[id]/verify": [
+		"src/routes/api/admin/tax-forms/[id]/verify/+server.ts"
+	],
 	"/api/admin/tokenomics": [
 		"src/routes/api/admin/tokenomics/+server.ts"
 	],
 	"/api/admin/tokenomics/distribution": [
 		"src/routes/api/admin/tokenomics/distribution/+server.ts"
 	],
+	"/api/admin/users": [
+		"src/routes/api/admin/users/+server.ts"
+	],
 	"/api/admin/users/stats": [
 		"src/routes/api/admin/users/stats/+server.ts"
+	],
+	"/api/admin/users/[id]": [
+		"src/routes/api/admin/users/[id]/+server.ts"
+	],
+	"/api/admin/users/[id]/ban": [
+		"src/routes/api/admin/users/[id]/ban/+server.ts"
+	],
+	"/api/admin/users/[id]/warn": [
+		"src/routes/api/admin/users/[id]/warn/+server.ts"
 	],
 	"/api/admin/workflow": [
 		"src/routes/api/admin/workflow/+server.ts"
@@ -252,8 +345,23 @@
 	"/api/admin/workflow/stats": [
 		"src/routes/api/admin/workflow/stats/+server.ts"
 	],
+	"/api/ads/vast-tag": [
+		"src/routes/api/ads/vast-tag/+server.ts"
+	],
+	"/api/ai/admin/classify-abuse": [
+		"src/routes/api/ai/admin/classify-abuse/+server.ts"
+	],
+	"/api/ai/admin/draft-message": [
+		"src/routes/api/ai/admin/draft-message/+server.ts"
+	],
+	"/api/ai/admin/summarize-application": [
+		"src/routes/api/ai/admin/summarize-application/+server.ts"
+	],
 	"/api/ai/companion": [
 		"src/routes/api/ai/companion/+server.ts"
+	],
+	"/api/ai/copilot": [
+		"src/routes/api/ai/copilot/+server.ts"
 	],
 	"/api/ai/creator-insights": [
 		"src/routes/api/ai/creator-insights/+server.ts"
@@ -266,6 +374,18 @@
 	],
 	"/api/ai/search": [
 		"src/routes/api/ai/search/+server.ts"
+	],
+	"/api/ai/suggest/chapters": [
+		"src/routes/api/ai/suggest/chapters/+server.ts"
+	],
+	"/api/ai/suggest/description": [
+		"src/routes/api/ai/suggest/description/+server.ts"
+	],
+	"/api/ai/suggest/review-reply": [
+		"src/routes/api/ai/suggest/review-reply/+server.ts"
+	],
+	"/api/ai/suggest/title": [
+		"src/routes/api/ai/suggest/title/+server.ts"
 	],
 	"/api/ai/tag": [
 		"src/routes/api/ai/tag/+server.ts"
@@ -282,8 +402,17 @@
 	"/api/content/kids": [
 		"src/routes/api/content/kids/+server.ts"
 	],
+	"/api/content/[id]/price": [
+		"src/routes/api/content/[id]/price/+server.ts"
+	],
 	"/api/content/[id]/subtitles": [
 		"src/routes/api/content/[id]/subtitles/+server.ts"
+	],
+	"/api/content/[id]/thumbnail-click": [
+		"src/routes/api/content/[id]/thumbnail-click/+server.ts"
+	],
+	"/api/content/[id]/thumbnail-impression": [
+		"src/routes/api/content/[id]/thumbnail-impression/+server.ts"
 	],
 	"/api/creators/[id]/follow": [
 		"src/routes/api/creators/[id]/follow/+server.ts"
@@ -297,6 +426,15 @@
 	"/api/creator/content": [
 		"src/routes/api/creator/content/+server.ts"
 	],
+	"/api/creator/content/bulk": [
+		"src/routes/api/creator/content/bulk/+server.ts"
+	],
+	"/api/creator/content/lookup": [
+		"src/routes/api/creator/content/lookup/+server.ts"
+	],
+	"/api/creator/content/search": [
+		"src/routes/api/creator/content/search/+server.ts"
+	],
 	"/api/creator/content/[id]": [
 		"src/routes/api/creator/content/[id]/+server.ts"
 	],
@@ -309,14 +447,41 @@
 	"/api/creator/content/[id]/episodes/[episodeId]": [
 		"src/routes/api/creator/content/[id]/episodes/[episodeId]/+server.ts"
 	],
+	"/api/creator/content/[id]/pricing": [
+		"src/routes/api/creator/content/[id]/pricing/+server.ts"
+	],
 	"/api/creator/content/[id]/subtitles": [
 		"src/routes/api/creator/content/[id]/subtitles/+server.ts"
 	],
 	"/api/creator/content/[id]/subtitles/[trackId]": [
 		"src/routes/api/creator/content/[id]/subtitles/[trackId]/+server.ts"
 	],
+	"/api/creator/content/[id]/thread": [
+		"src/routes/api/creator/content/[id]/thread/+server.ts"
+	],
+	"/api/creator/content/[id]/thread/stream": [
+		"src/routes/api/creator/content/[id]/thread/stream/+server.ts"
+	],
+	"/api/creator/content/[id]/thumbnails": [
+		"src/routes/api/creator/content/[id]/thumbnails/+server.ts"
+	],
+	"/api/creator/content/[id]/thumbnails/[vid]": [
+		"src/routes/api/creator/content/[id]/thumbnails/[vid]/+server.ts"
+	],
+	"/api/creator/content/[id]/thumbnails/[vid]/promote": [
+		"src/routes/api/creator/content/[id]/thumbnails/[vid]/promote/+server.ts"
+	],
 	"/api/creator/earnings": [
 		"src/routes/api/creator/earnings/+server.ts"
+	],
+	"/api/creator/encoder-stream": [
+		"src/routes/api/creator/encoder-stream/+server.ts"
+	],
+	"/api/creator/live": [
+		"src/routes/api/creator/live/+server.ts"
+	],
+	"/api/creator/live/[id]": [
+		"src/routes/api/creator/live/[id]/+server.ts"
 	],
 	"/api/creator/messages": [
 		"src/routes/api/creator/messages/+server.ts"
@@ -330,6 +495,12 @@
 	"/api/creator/moderation/forum": [
 		"src/routes/api/creator/moderation/forum/+server.ts"
 	],
+	"/api/creator/moderation/forum/replies/[id]": [
+		"src/routes/api/creator/moderation/forum/replies/[id]/+server.ts"
+	],
+	"/api/creator/moderation/forum/threads/[id]": [
+		"src/routes/api/creator/moderation/forum/threads/[id]/+server.ts"
+	],
 	"/api/creator/moderation/reviews": [
 		"src/routes/api/creator/moderation/reviews/+server.ts"
 	],
@@ -342,14 +513,38 @@
 	"/api/creator/payment-preferences": [
 		"src/routes/api/creator/payment-preferences/+server.ts"
 	],
+	"/api/creator/payouts/method": [
+		"src/routes/api/creator/payouts/method/+server.ts"
+	],
+	"/api/creator/payouts/stripe/onboard": [
+		"src/routes/api/creator/payouts/stripe/onboard/+server.ts"
+	],
+	"/api/creator/payouts/stripe/status": [
+		"src/routes/api/creator/payouts/stripe/status/+server.ts"
+	],
 	"/api/creator/profile": [
 		"src/routes/api/creator/profile/+server.ts"
 	],
 	"/api/creator/stats": [
 		"src/routes/api/creator/stats/+server.ts"
 	],
+	"/api/creator/tax-1099-forms": [
+		"src/routes/api/creator/tax-1099-forms/+server.ts"
+	],
+	"/api/creator/tax-forms": [
+		"src/routes/api/creator/tax-forms/+server.ts"
+	],
+	"/api/cron/ab-auto-promote": [
+		"src/routes/api/cron/ab-auto-promote/+server.ts"
+	],
+	"/api/cron/agents/[name]": [
+		"src/routes/api/cron/agents/[name]/+server.ts"
+	],
 	"/api/cron/creator-payouts": [
 		"src/routes/api/cron/creator-payouts/+server.ts"
+	],
+	"/api/cron/encoder-poll": [
+		"src/routes/api/cron/encoder-poll/+server.ts"
 	],
 	"/api/cron/event-status-sweep": [
 		"src/routes/api/cron/event-status-sweep/+server.ts"
@@ -359,6 +554,9 @@
 	],
 	"/api/cron/newsletter-weekly-digest": [
 		"src/routes/api/cron/newsletter-weekly-digest/+server.ts"
+	],
+	"/api/cron/payout-reserve": [
+		"src/routes/api/cron/payout-reserve/+server.ts"
 	],
 	"/api/cron/renew-subscriptions": [
 		"src/routes/api/cron/renew-subscriptions/+server.ts"
@@ -372,8 +570,17 @@
 	"/api/cron/staking-indexer": [
 		"src/routes/api/cron/staking-indexer/+server.ts"
 	],
+	"/api/cron/stc-settle": [
+		"src/routes/api/cron/stc-settle/+server.ts"
+	],
+	"/api/cron/tax-1099-generate": [
+		"src/routes/api/cron/tax-1099-generate/+server.ts"
+	],
 	"/api/downloads/manifest/[id]": [
 		"src/routes/api/downloads/manifest/[id]/+server.ts"
+	],
+	"/api/encoder/job-state/[jobId]": [
+		"src/routes/api/encoder/job-state/[jobId]/+server.ts"
 	],
 	"/api/encoder/jobs": [
 		"src/routes/api/encoder/jobs/+server.ts"
@@ -387,6 +594,15 @@
 	"/api/encoder/jobs/[jobId]/playback": [
 		"src/routes/api/encoder/jobs/[jobId]/playback/+server.ts"
 	],
+	"/api/encoder/live-finalize": [
+		"src/routes/api/encoder/live-finalize/+server.ts"
+	],
+	"/api/encoder/live-state": [
+		"src/routes/api/encoder/live-state/+server.ts"
+	],
+	"/api/encoder/live-state/validate": [
+		"src/routes/api/encoder/live-state/validate/+server.ts"
+	],
 	"/api/encoder/pending": [
 		"src/routes/api/encoder/pending/+server.ts"
 	],
@@ -398,6 +614,12 @@
 	],
 	"/api/encoder/ready": [
 		"src/routes/api/encoder/ready/+server.ts"
+	],
+	"/api/encoder/scan-ready": [
+		"src/routes/api/encoder/scan-ready/+server.ts"
+	],
+	"/api/encoder/webhook": [
+		"src/routes/api/encoder/webhook/+server.ts"
 	],
 	"/api/events": [
 		"src/routes/api/events/+server.ts"
@@ -440,6 +662,15 @@
 	],
 	"/api/kids/quiz/submit": [
 		"src/routes/api/kids/quiz/submit/+server.ts"
+	],
+	"/api/live/[streamId]/chat": [
+		"src/routes/api/live/[streamId]/chat/+server.ts"
+	],
+	"/api/live/[streamId]/chat/stream": [
+		"src/routes/api/live/[streamId]/chat/stream/+server.ts"
+	],
+	"/api/live/[streamId]/chat/[messageId]": [
+		"src/routes/api/live/[streamId]/chat/[messageId]/+server.ts"
 	],
 	"/api/milestones": [
 		"src/routes/api/milestones/+server.ts"
@@ -546,6 +777,9 @@
 	"/api/users": [
 		"src/routes/api/users/+server.ts"
 	],
+	"/api/users/me/auth-providers": [
+		"src/routes/api/users/me/auth-providers/+server.ts"
+	],
 	"/api/users/me/stc-balance": [
 		"src/routes/api/users/me/stc-balance/+server.ts"
 	],
@@ -564,11 +798,17 @@
 	"/api/watch/history": [
 		"src/routes/api/watch/history/+server.ts"
 	],
+	"/api/watch/live/[id]/stream": [
+		"src/routes/api/watch/live/[id]/stream/+server.ts"
+	],
 	"/api/watch/progress": [
 		"src/routes/api/watch/progress/+server.ts"
 	],
 	"/api/watch/[videoId]": [
 		"src/routes/api/watch/[videoId]/+server.ts"
+	],
+	"/api/webhooks/stripe": [
+		"src/routes/api/webhooks/stripe/+server.ts"
 	],
 	"/(app)/apply/creator": [
 		"src/routes/(app)/apply/creator/+page.server.ts",
@@ -640,6 +880,9 @@
 	"/(creator)/creator/earnings": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(creator)/creator/earnings/tax-forms": [
+		"src/routes/+layout.server.ts"
+	],
 	"/(creator)/creator/events": [
 		"src/routes/+layout.server.ts"
 	],
@@ -656,6 +899,12 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/inbox": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/live": [
+		"src/routes/+layout.server.ts"
+	],
+	"/(creator)/creator/moderation": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator/newsletter": [
@@ -829,6 +1078,10 @@
 	],
 	"/(protected)/watchlist": [
 		"src/routes/(protected)/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/watch/live/[id]": [
+		"src/routes/watch/live/[id]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/watch/[id]": [

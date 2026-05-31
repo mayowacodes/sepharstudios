@@ -8,8 +8,10 @@
   const navItems = [
     { href: '/creator', label: 'Dashboard', icon: '🏠' },
     { href: '/creator/upload', label: 'Upload', icon: '📤' },
+    { href: '/creator/live', label: 'Live', icon: '📡' },
     { href: '/creator/content', label: 'Content', icon: '🎬' },
     { href: '/creator/analytics', label: 'Analytics', icon: '📊' },
+    { href: '/creator/moderation', label: 'Moderation', icon: '🛡️' },
     { href: '/creator/profile', label: 'Profile', icon: '👤' },
     { href: '/creator/guidelines', label: 'Guidelines', icon: '📋' }
   ];
@@ -74,16 +76,20 @@
 
       <!-- User Menu -->
       <div class="flex items-center space-x-4">
+        <!-- ⌘K hint chip -->
+        <span class="hidden md:inline-flex items-center gap-1 text-[10px] text-gray-400 surface-1 rounded-md px-2 py-1 font-mono">
+          <kbd>⌘</kbd><kbd>K</kbd>
+        </span>
         <a
           href="/creator/inbox"
           class="relative text-gray-300 hover:text-white transition-colors inline-flex items-center"
           aria-label={unreadCount > 0 ? `Inbox (${unreadCount} unread)` : 'Inbox'}
           title="Inbox"
         >
-          <Bell class="w-5 h-5" />
+          <Bell class="w-5 h-5" aria-hidden="true" />
           {#if unreadCount > 0}
             <span
-              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
+              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center glow-card"
               aria-hidden="true"
             >{unreadCount > 99 ? '99+' : unreadCount}</span>
           {/if}

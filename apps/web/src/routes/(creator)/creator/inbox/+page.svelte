@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Inbox, Archive, MailOpen } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type Filter = 'unread' | 'all' | 'archived';
 
@@ -75,13 +77,11 @@
 </script>
 
 <div class="container mx-auto py-8 px-4 max-w-3xl space-y-6">
-  <div class="flex items-center gap-3">
-    <Inbox class="w-7 h-7 text-purple-300" />
-    <h1 class="text-2xl font-bold text-white">Inbox</h1>
-  </div>
-  <p class="text-sm text-gray-400">
-    Messages from Sephar Studios about your content, applications, and account.
-  </p>
+  <PageHeader
+    icon={Inbox}
+    title="Inbox"
+    subtitle="Messages from Sephar Studios about your content, applications, and account."
+  />
 
   <div class="flex flex-wrap gap-2">
     {#each (['unread', 'all', 'archived'] as Filter[]) as f (f)}
@@ -94,7 +94,11 @@
   </div>
 
   {#if loading}
-    <div class="text-center text-gray-400 py-12">Loading…</div>
+    <div class="space-y-2">
+      {#each Array(3) as _ (_)}
+        <Skeleton class="h-16 rounded-xl" />
+      {/each}
+    </div>
   {:else if messages.length === 0}
     <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
       {filter === 'unread' ? "You're all caught up." :

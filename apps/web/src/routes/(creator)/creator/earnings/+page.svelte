@@ -21,6 +21,8 @@
     Settings,
     RefreshCw
   } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
 
   interface PaymentRow {
     id: string;
@@ -29,6 +31,16 @@
     status: string;
     createdAt: string;
     metadata?: Record<string, unknown> | null;
+  }
+
+  interface ContentRevenueRow {
+    contentId: string;
+    title: string;
+    thumbnail: string | null;
+    viewCount: number;
+    lifetimeCents: number;
+    last30dCents: number;
+    purchaseCount: number;
   }
 
   // Real earnings from /api/creator/earnings — honest empty-state until the
@@ -44,6 +56,9 @@
     completedWatches: 0
   });
   let paymentHistory = $state<PaymentRow[]>([]);
+  let byContent = $state<ContentRevenueRow[]>([]);
+  let series = $state<{ earnings: number[] }>({ earnings: [] });
+  let earningsDelta = $state(0);
   let loadingEarnings = $state(true);
 
   // Web3 tokenomics data
@@ -66,12 +81,92 @@
     updateResult: ''
   });
 
+  // Stripe Connect / payout-method state (Item 4A)
+  let payoutMethod = $state({
+    processor: 'paystack' as 'paystack' | 'stripe',
+    stripeStatus: null as null | 'pending' | 'restricted' | 'verified' | 'rejected',
+    stripePayoutsEnabled: false,
+    requirementsPastDue: [] as string[],
+    onboarding: false,
+    saving: false
+  });
+
   onMount(async () => {
     await loadEarnings();
+    await loadPayoutMethod();
+    // If the user just returned from Stripe onboarding, refresh status from
+    // Stripe rather than just the mirror.
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('stripe') === 'complete') {
+      await refreshStripeStatus();
+    }
     if ($isConnected && $walletAddress) {
       await loadTokenomicsData();
     }
   });
+
+  async function loadPayoutMethod() {
+    try {
+      const res = await fetch('/api/creator/payouts/method');
+      if (!res.ok) return;
+      const data = await res.json();
+      payoutMethod.processor = (data.payoutProcessor ?? 'paystack') as typeof payoutMethod.processor;
+      payoutMethod.stripeStatus = data.stripeAccountStatus ?? null;
+      payoutMethod.stripePayoutsEnabled = !!data.stripePayoutsEnabled;
+    } catch (err) {
+      console.error('Error loading payout method:', err);
+    }
+  }
+
+  async function refreshStripeStatus() {
+    try {
+      const res = await fetch('/api/creator/payouts/stripe/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      payoutMethod.stripeStatus = data.status ?? null;
+      payoutMethod.stripePayoutsEnabled = !!data.payoutsEnabled;
+      payoutMethod.requirementsPastDue = data.requirementsPastDue ?? [];
+    } catch (err) {
+      console.error('Error refreshing Stripe status:', err);
+    }
+  }
+
+  async function startStripeOnboarding() {
+    payoutMethod.onboarding = true;
+    try {
+      const res = await fetch('/api/creator/payouts/stripe/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error ?? 'Onboarding failed');
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Stripe onboarding failed');
+    } finally {
+      payoutMethod.onboarding = false;
+    }
+  }
+
+  async function switchProcessor(processor: 'paystack' | 'stripe') {
+    payoutMethod.saving = true;
+    try {
+      const res = await fetch('/api/creator/payouts/method', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payoutProcessor: processor })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Switch failed');
+      payoutMethod.processor = processor;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Switch failed');
+    } finally {
+      payoutMethod.saving = false;
+    }
+  }
 
   async function loadEarnings() {
     loadingEarnings = true;
@@ -90,6 +185,9 @@
         completedWatches: data.stats?.completedWatches ?? 0
       };
       paymentHistory = data.recentPayments ?? [];
+      byContent = data.byContent ?? [];
+      series = data.series ?? { earnings: [] };
+      earningsDelta = data.deltas?.earnings ?? 0;
       if (data.paymentPreference) {
         paymentSettings.preference = data.paymentPreference.preference ?? 'mixed';
         paymentSettings.fiatPercentage = data.paymentPreference.fiatPct ?? 50;
@@ -188,68 +286,52 @@
 </script>
 
 <div class="space-y-8">
-  <!-- Header -->
-  <div class="text-center">
-    <h1 class="text-4xl font-bold text-white mb-2">Creator Earnings Dashboard</h1>
-    <p class="text-xl text-gray-300">Track your revenue, STC tokens, and payment preferences</p>
-  </div>
+  <PageHeader
+    icon={Wallet}
+    title="Earnings"
+    subtitle={`Track your revenue, STC tokens, and payment preferences. Tier: ${earningsData.tier === 'top_performer' ? 'Top Performer' : earningsData.tier === 'exclusive' ? 'Exclusive Partner' : 'Standard'} (${earningsData.revenueShare}% share).`}
+  />
 
   <!-- Earnings Overview -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <Card>
-      <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-muted-foreground flex items-center">
-          <DollarSign class="h-4 w-4 mr-2" />
-          This Month
-        </CardTitle>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${(earningsData.monthCents / 100).toFixed(2)}</div>
-        <Badge class="text-xs mt-1" variant="secondary">{earningsData.revenueShare}% share</Badge>
-      </CardContent>
-    </Card>
-
-    <Card>
-      <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-muted-foreground flex items-center">
-          <Calendar class="h-4 w-4 mr-2" />
-          This Year
-        </CardTitle>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${(earningsData.yearCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <Badge class="text-xs mt-1" variant="outline">12 months</Badge>
-      </CardContent>
-    </Card>
-
-    <Card>
-      <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-muted-foreground flex items-center">
-          <TrendingUp class="h-4 w-4 mr-2" />
-          Total Earned
-        </CardTitle>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${(earningsData.lifetimeCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <Badge class="text-xs mt-1 {getTierColor(earningsData.tier)}">
-          {earningsData.tier === 'top_performer' ? 'Top Performer' :
-           earningsData.tier === 'exclusive' ? 'Exclusive Partner' : 'Standard Creator'}
-        </Badge>
-      </CardContent>
-    </Card>
-
-    <Card>
-      <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-muted-foreground flex items-center">
-          <Coins class="h-4 w-4 mr-2" />
-          STC Value
-        </CardTitle>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${tokenomicsData.stcValue.toFixed(2)}</div>
-        <Badge class="text-xs mt-1" variant="secondary">{parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC</Badge>
-      </CardContent>
-    </Card>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <KpiCard
+      label="This Month"
+      value={`$${(earningsData.monthCents / 100).toFixed(2)}`}
+      icon={DollarSign}
+      accent="green"
+      delta={earningsDelta}
+      deltaLabel="vs last month"
+      sparkline={series.earnings}
+      loading={loadingEarnings}
+      index={0}
+    />
+    <KpiCard
+      label="This Year"
+      value={`$${(earningsData.yearCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      icon={Calendar}
+      accent="blue"
+      deltaLabel="12 months"
+      loading={loadingEarnings}
+      index={1}
+    />
+    <KpiCard
+      label="Total Earned"
+      value={`$${(earningsData.lifetimeCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      icon={TrendingUp}
+      accent="purple"
+      deltaLabel="lifetime"
+      loading={loadingEarnings}
+      index={2}
+    />
+    <KpiCard
+      label="STC Value"
+      value={`$${tokenomicsData.stcValue.toFixed(2)}`}
+      icon={Coins}
+      accent="orange"
+      deltaLabel={`${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`}
+      loading={loadingEarnings}
+      index={3}
+    />
   </div>
 
   <!-- Web3 Integration -->
@@ -305,6 +387,143 @@
               </p>
             </div>
           {/if}
+        </div>
+      {/if}
+    </CardContent>
+  </Card>
+
+  <!-- Tax forms link -->
+  <Card>
+    <CardContent class="py-4 flex items-center justify-between">
+      <div>
+        <div class="text-sm font-medium">Tax forms</div>
+        <div class="text-xs text-muted-foreground">Submit W-9 / W-8BEN before annual 1099 generation.</div>
+      </div>
+      <Button href="/creator/earnings/tax-forms" variant="outline" size="sm">Manage forms</Button>
+    </CardContent>
+  </Card>
+
+  <!-- Setup Payouts (Stripe Connect + Paystack picker) -->
+  <Card>
+    <CardHeader>
+      <CardTitle class="flex items-center gap-2">
+        <CreditCard class="h-5 w-5" />
+        <span>Setup payouts</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent class="space-y-4">
+      <p class="text-sm text-muted-foreground">
+        Choose how the platform pays you. Paystack is best for NGN / African
+        creators (instant local-bank settlement). Stripe Connect Express
+        works for USD / global creators (bank or debit card, 30+ countries).
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          type="button"
+          onclick={() => switchProcessor('paystack')}
+          disabled={payoutMethod.saving}
+          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'paystack' ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 hover:bg-white/5'}"
+        >
+          <div class="flex items-center justify-between">
+            <div class="font-medium">Paystack</div>
+            {#if payoutMethod.processor === 'paystack'}
+              <Badge variant="outline">Selected</Badge>
+            {/if}
+          </div>
+          <div class="text-xs text-muted-foreground mt-1">NGN, KES, ZAR, GHS · local bank settlement</div>
+        </button>
+
+        <button
+          type="button"
+          onclick={() => switchProcessor('stripe')}
+          disabled={payoutMethod.saving || !payoutMethod.stripePayoutsEnabled}
+          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'stripe' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:bg-white/5'} {!payoutMethod.stripePayoutsEnabled ? 'opacity-60 cursor-not-allowed' : ''}"
+        >
+          <div class="flex items-center justify-between">
+            <div class="font-medium">Stripe Connect</div>
+            {#if payoutMethod.processor === 'stripe'}
+              <Badge variant="outline">Selected</Badge>
+            {:else if payoutMethod.stripeStatus === 'verified'}
+              <Badge variant="outline" class="text-green-300">Verified</Badge>
+            {:else if payoutMethod.stripeStatus}
+              <Badge variant="outline" class="text-yellow-300">{payoutMethod.stripeStatus}</Badge>
+            {/if}
+          </div>
+          <div class="text-xs text-muted-foreground mt-1">USD, EUR, GBP and more · global bank settlement</div>
+        </button>
+      </div>
+
+      {#if payoutMethod.stripeStatus !== 'verified'}
+        <div class="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4 space-y-3">
+          <div class="text-sm">
+            <strong>Stripe Connect onboarding</strong> — connect a bank account or
+            debit card to receive USD payouts. Stripe handles ID verification
+            and tax forms.
+          </div>
+          {#if payoutMethod.requirementsPastDue.length > 0}
+            <div class="text-xs text-red-300">
+              Past-due requirements: {payoutMethod.requirementsPastDue.join(', ')}
+            </div>
+          {/if}
+          <Button
+            onclick={startStripeOnboarding}
+            disabled={payoutMethod.onboarding}
+          >
+            {payoutMethod.onboarding ? 'Redirecting…' : (payoutMethod.stripeStatus ? 'Continue Stripe setup' : 'Setup with Stripe')}
+          </Button>
+        </div>
+      {/if}
+    </CardContent>
+  </Card>
+
+  <!-- Earnings by content (Item 5A) -->
+  <Card>
+    <CardHeader>
+      <CardTitle class="flex items-center gap-2">
+        <DollarSign class="h-5 w-5" />
+        <span>Earnings by content</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      {#if loadingEarnings}
+        <p class="text-sm text-muted-foreground py-6 text-center">Loading…</p>
+      {:else if byContent.length === 0}
+        <div class="py-8 text-center space-y-2">
+          <p class="text-sm text-muted-foreground">No content earnings yet.</p>
+          <p class="text-xs text-muted-foreground/70">PPV purchases of your content appear here, broken down per-title.</p>
+        </div>
+      {:else}
+        <div class="overflow-x-auto -mx-2">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th class="px-2 py-2">Title</th>
+                <th class="px-2 py-2 text-right">Lifetime</th>
+                <th class="px-2 py-2 text-right">Last 30 days</th>
+                <th class="px-2 py-2 text-right">Purchases</th>
+                <th class="px-2 py-2 text-right">Views</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each byContent as row (row.contentId)}
+                <tr class="border-t border-white/5">
+                  <td class="px-2 py-3">
+                    <a href={`/creator/content/${row.contentId}`} class="flex items-center gap-2 hover:text-purple-300">
+                      {#if row.thumbnail}
+                        <img src={row.thumbnail} alt="" class="w-12 h-7 object-cover rounded" />
+                      {/if}
+                      <span class="font-medium">{row.title}</span>
+                    </a>
+                  </td>
+                  <td class="px-2 py-3 text-right font-medium">${(row.lifetimeCents / 100).toFixed(2)}</td>
+                  <td class="px-2 py-3 text-right">${(row.last30dCents / 100).toFixed(2)}</td>
+                  <td class="px-2 py-3 text-right text-muted-foreground">{row.purchaseCount}</td>
+                  <td class="px-2 py-3 text-right text-muted-foreground">{row.viewCount.toLocaleString()}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
         </div>
       {/if}
     </CardContent>

@@ -343,6 +343,22 @@ input:checked + .slider:before {
 .veil-strong { background: var(--veil-strong); }
 .veil-soft { background: var(--veil-soft); }
 
+/* Semantic surface tokens — used by KpiCard / PageHeader / new dashboard
+   primitives. Solves the bg-white/10 vs bg-white/5 vs bg-blue-600/20 drift
+   across hand-rolled dashboards. */
+.surface-1 {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.surface-2 {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.surface-3 {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .halo-ring {
   box-shadow: 0 0 0 1px rgba(255, 191, 0, 0.5), 0 0 35px rgba(255, 191, 0, 0.35);
 }

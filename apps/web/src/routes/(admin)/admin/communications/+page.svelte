@@ -113,6 +113,34 @@
     newMessage.type = template.type;
     showTemplateModal = false;
   }
+
+  // AI draft state.
+  let aiIntent = $state('');
+  let drafting = $state(false);
+
+  async function draftWithAi() {
+    if (!aiIntent.trim()) return;
+    drafting = true;
+    try {
+      const res = await fetch('/api/ai/admin/draft-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intent: aiIntent,
+          context: newMessage.creatorName ? `Recipient: ${newMessage.creatorName}` : undefined,
+          tone: 'friendly'
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      if (body.subject) newMessage.subject = body.subject;
+      if (body.message) newMessage.message = body.message;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'AI failed');
+    } finally {
+      drafting = false;
+    }
+  }
   
   async function sendMessage() {
     if (!newMessage.subject || !newMessage.message) return;
@@ -424,20 +452,39 @@
             </div>
           </div>
           
+          <!-- AI Draft assist -->
+          <div class="surface-1 rounded-lg p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-purple-300">✨ AI draft</span>
+              <button
+                type="button"
+                onclick={draftWithAi}
+                disabled={drafting}
+                class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40"
+              >{drafting ? 'Drafting…' : 'Draft from intent'}</button>
+            </div>
+            <input
+              type="text"
+              bind:value={aiIntent}
+              placeholder="What is this message about? e.g. 'Thank Sarah for her sermon series and ask about Q3 plans'"
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white placeholder-gray-500"
+            />
+          </div>
+
           <div>
             <label for="subject" class="block text-sm font-medium text-white mb-2">Subject</label>
-            <input 
+            <input
               id="subject"
-              type="text" 
+              type="text"
               bind:value={newMessage.subject}
               placeholder="Enter subject..."
               class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
             />
           </div>
-          
+
           <div>
             <label for="message" class="block text-sm font-medium text-white mb-2">Message</label>
-            <textarea 
+            <textarea
               id="message"
               bind:value={newMessage.message}
               rows="8"

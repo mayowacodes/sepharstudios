@@ -4,26 +4,67 @@
   import { page } from '$app/state';
   import type { User } from '$lib/auth';
   import CreatorNav from '$lib/components/creator/CreatorNav.svelte';
+  import CreatorMobileNav from '$lib/components/creator/CreatorMobileNav.svelte';
   import CreatorFooter from '$lib/components/creator/CreatorFooter.svelte';
+  import CommandPalette from '$lib/components/dashboard/CommandPalette.svelte';
+  import CopilotPanel from '$lib/components/dashboard/CopilotPanel.svelte';
+  import { Sparkles } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
 
   let { children } = $props();
   const user = page.data.user as User | undefined;
+
+  // ⌘K / Ctrl+K opens the command palette; ⌘J / Ctrl+J opens the Copilot.
+  let paletteOpen = $state(false);
+  let copilotOpen = $state(false);
+  function onKeydown(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      paletteOpen = !paletteOpen;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+      e.preventDefault();
+      copilotOpen = !copilotOpen;
+    }
+  }
 </script>
 
 <svelte:head>
   <title>Creator Studio - Sephar Studios</title>
 </svelte:head>
 
+<svelte:window on:keydown={onKeydown} />
+<CommandPalette bind:open={paletteOpen} variant="creator" />
+<CopilotPanel bind:open={copilotOpen} variant="creator" />
+
+<!-- Floating Copilot bubble -->
+{#if user}
+  <button
+    type="button"
+    onclick={() => (copilotOpen = !copilotOpen)}
+    class="fixed bottom-20 right-4 md:bottom-4 z-40 w-12 h-12 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 {copilotOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}"
+    aria-label="Open Copilot (⌘J)"
+    title="Open Copilot (⌘J)"
+  >
+    <Sparkles class="w-5 h-5" aria-hidden="true" />
+  </button>
+{/if}
+
 <!-- This completely replaces the main app layout -->
 <div class="creator-portal">
   {#if user}
     <div class="min-h-screen bg-linear-to-br from-primary/20 via-secondary/10 to-accent/20 flex flex-col">
+      <!-- Skip-to-content for keyboard + screen-reader users. -->
+      <a
+        href="#main-content"
+        class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2 focus:bg-purple-600 focus:text-white focus:rounded"
+      >Skip to content</a>
       <CreatorNav />
-      <main class="container mx-auto px-4 py-8 grow">
+      <main id="main-content" class="container mx-auto px-4 py-8 grow">
         {@render children()}
       </main>
       <CreatorFooter />
+      <CreatorMobileNav />
     </div>
   {:else}
     <div class="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted">

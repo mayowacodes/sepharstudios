@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { sql } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { getRedis } from '$lib/server/redis';
+import { getMeiliClient, isMeiliConfigured } from '$lib/server/meilisearch';
 
 const startedAt = Date.now();
 
@@ -40,6 +41,36 @@ async function checkRedis(): Promise<CheckResult> {
   });
 }
 
+async function checkMeili(): Promise<CheckResult> {
+  if (!isMeiliConfigured()) {
+    return { ok: true, latencyMs: 0, error: 'not_configured' };
+  }
+  return timed(async () => {
+    const client = getMeiliClient();
+    if (!client) throw new Error('Meili client unavailable');
+    const health = await client.health();
+    if (health.status !== 'available') throw new Error(`status=${health.status}`);
+  });
+}
+
+async function checkOrchestrator(): Promise<CheckResult> {
+  const url = env.ORCHESTRATOR_BASE_URL || env.ENCODER_ORCHESTRATOR_URL;
+  if (!url) return { ok: true, latencyMs: 0, error: 'not_configured' };
+  return timed(async () => {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 2500);
+    try {
+      const res = await fetch(`${url.replace(/\/+$/, '')}/health`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } finally {
+      clearTimeout(tid);
+    }
+  });
+}
+
 async function checkMinio(): Promise<CheckResult> {
   // Quick TCP/HTTPS reach test against the MinIO health endpoint. We avoid
   // pulling in the minio client just to verify reachability — a HEAD on the
@@ -72,19 +103,26 @@ async function checkMinio(): Promise<CheckResult> {
  *   { status: "ok" | "degraded", uptimeSec, db: CheckResult, minio: CheckResult }
  */
 export const GET: RequestHandler = async () => {
-  const [dbResult, redisResult, minioResult] = await Promise.all([
+  const [dbResult, redisResult, minioResult, meiliResult, orchestratorResult] = await Promise.all([
     checkDb(),
     checkRedis(),
-    checkMinio()
+    checkMinio(),
+    checkMeili(),
+    checkOrchestrator()
   ]);
 
-  const healthy = dbResult.ok && redisResult.ok && minioResult.ok;
+  // Meili + Orchestrator are optional infra — when not configured, they're
+  // returned ok=true with error='not_configured' so the readiness probe
+  // doesn't fail in dev or in deployments that skip them.
+  const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && orchestratorResult.ok;
   const body = {
     status: healthy ? 'ok' : 'degraded',
     uptimeSec: Math.round((Date.now() - startedAt) / 1000),
     db: dbResult,
     redis: redisResult,
-    minio: minioResult
+    minio: minioResult,
+    meili: meiliResult,
+    orchestrator: orchestratorResult
   };
 
   return json(body, { status: healthy ? 200 : 503 });

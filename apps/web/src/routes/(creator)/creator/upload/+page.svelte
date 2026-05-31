@@ -92,6 +92,40 @@
     }
   }
   
+  /**
+   * Probe the source video's height (client-side) and choose the matching
+   * orchestrator profile. The encoder's HLS ladder is:
+   *   vod-multi      → up to 1080p (H.264)
+   *   vod-multi-2k   → up to 1440p (HEVC ≥1440, H.264 ≤1080)
+   *   vod-multi-4k   → up to 2160p (HEVC ≥1440, H.264 ≤1080)
+   *   vod-480        → 480p only (rarely picked; for tiny clips)
+   * We never upscale, so picking a smaller profile for a tall source just
+   * wastes the source's resolution. Probing happens via a hidden <video>
+   * element — zero bytes leave the browser.
+   */
+  async function pickEncoderProfile(file: File): Promise<'vod-multi' | 'vod-multi-2k' | 'vod-multi-4k' | 'vod-480'> {
+    try {
+      const height = await new Promise<number>((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.muted = true;
+        const cleanup = () => { URL.revokeObjectURL(url); };
+        v.onloadedmetadata = () => { resolve(v.videoHeight); cleanup(); };
+        v.onerror = () => { reject(new Error('metadata read failed')); cleanup(); };
+        // Guard against indefinite hangs on tricky files.
+        setTimeout(() => { reject(new Error('metadata timeout')); cleanup(); }, 8000);
+        v.src = url;
+      });
+      if (!Number.isFinite(height) || height <= 0) return 'vod-multi';
+      if (height >= 1900) return 'vod-multi-4k';
+      if (height >= 1300) return 'vod-multi-2k';
+      return 'vod-multi';
+    } catch {
+      return 'vod-multi';
+    }
+  }
+
   async function submitContent() {
     isSubmitting = true;
     try {
@@ -185,13 +219,20 @@
       // Narrow the optional videoFile — by this point we've returned early
       // for the edit-without-new-video case, so it's guaranteed defined.
       if (!videoFile) throw new Error('Video file is required');
+
+      // Auto-pick the encoder profile from the source resolution. The
+      // browser reads dimensions out of the file via a hidden <video>
+      // element; we never decode the file. Falls back to vod-multi (1080p
+      // ladder) if probing fails or the file isn't readable.
+      const profile = await pickEncoderProfile(videoFile);
+
       const jobRes = await fetch('/api/encoder/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
               contentId,
               filename: videoFile.name,
-              profile: 'vod-multi',
+              profile,
               durationHint: meta.duration ? Number(meta.duration) * 60 : undefined
           })
       });

@@ -51,6 +51,10 @@ export interface MediaDoc {
 	posterUrl: string | null;
 	viewCount: number;
 	createdAt: number;
+	/** Flattened cast names — searchable so "Brett Varvel" finds his films. */
+	castNames: string[];
+	/** Flattened crew names — searchable so "Cyrus Nowrasteh" finds his films. */
+	crewNames: string[];
 }
 
 export interface EpisodeDoc {
@@ -94,8 +98,8 @@ export async function indexMedia(docs: MediaDoc[]): Promise<void> {
 	const client = getMeiliClient();
 	if (!client || docs.length === 0) return;
 	const index = await ensureIndex(client, 'media', {
-		searchable: ['title', 'description', 'genres', 'topics', 'keywords', 'bibleReference'],
-		filterable: ['genres', 'mediaType', 'ageRating', 'year', 'category'],
+		searchable: ['title', 'castNames', 'crewNames', 'description', 'genres', 'topics', 'keywords', 'bibleReference'],
+		filterable: ['genres', 'mediaType', 'ageRating', 'year', 'category', 'castNames', 'crewNames'],
 		sortable: ['viewCount', 'createdAt']
 	});
 	await index.addDocuments(docs);

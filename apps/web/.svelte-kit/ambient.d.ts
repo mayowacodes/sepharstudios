@@ -91,6 +91,8 @@ declare module '$env/static/private' {
 	export const ORCHESTRATOR_API_SECRET: string;
 	export const ORCHESTRATOR_BASE_URL: string;
 	export const ORIGIN: string;
+	export const PLATFORM_BASE_URL: string;
+	export const PLATFORM_WEBHOOK_SECRET: string;
 	export const PORT: string;
 	export const POSTGRES_DATABASE: string;
 	export const POSTGRES_PASSWORD: string;
@@ -98,6 +100,7 @@ declare module '$env/static/private' {
 	export const REDIRECT_URI: string;
 	export const SEPHAR_BACKEND_TOKEN: string;
 	export const SERVER_URL: string;
+	export const TARGET_LANGUAGES: string;
 	export const TELEMETRY: string;
 	export const TELEMETRY_URL: string;
 	export const VAPID_CONTACT: string;
@@ -119,7 +122,6 @@ declare module '$env/static/private' {
 	export const CLAUDE_CODE_EXECPATH: string;
 	export const CLAUDE_CODE_SESSION_ID: string;
 	export const CLAUDE_EFFORT: string;
-	export const COLOR: string;
 	export const COMMONPROGRAMFILES: string;
 	export const CommonProgramW6432: string;
 	export const COMPUTERNAME: string;
@@ -129,7 +131,6 @@ declare module '$env/static/private' {
 	export const COPILOT_OTEL_FILE_EXPORTER_PATH: string;
 	export const COREPACK_ENABLE_AUTO_PIN: string;
 	export const DriverData: string;
-	export const EDITOR: string;
 	export const ELECTRON_RUN_AS_NODE: string;
 	export const EXEPATH: string;
 	export const FPS_BROWSER_APP_PROFILE_STRING: string;
@@ -141,7 +142,6 @@ declare module '$env/static/private' {
 	export const HOME: string;
 	export const HOMEDRIVE: string;
 	export const HOMEPATH: string;
-	export const INIT_CWD: string;
 	export const LOCALAPPDATA: string;
 	export const LOGONSERVER: string;
 	export const MCP_CONNECTION_NONBLOCKING: string;
@@ -150,17 +150,7 @@ declare module '$env/static/private' {
 	export const NoDefaultCurrentDirectoryInExePath: string;
 	export const NODE_ENV: string;
 	export const npm_command: string;
-	export const npm_config_cache: string;
-	export const npm_config_engine_strict: string;
-	export const npm_config_globalconfig: string;
-	export const npm_config_global_prefix: string;
-	export const npm_config_init_module: string;
 	export const npm_config_local_prefix: string;
-	export const npm_config_node_gyp: string;
-	export const npm_config_noproxy: string;
-	export const npm_config_npm_version: string;
-	export const npm_config_prefix: string;
-	export const npm_config_userconfig: string;
 	export const npm_config_user_agent: string;
 	export const npm_execpath: string;
 	export const npm_lifecycle_event: string;
@@ -183,7 +173,6 @@ declare module '$env/static/private' {
 	export const ProgramData: string;
 	export const PROGRAMFILES: string;
 	export const ProgramW6432: string;
-	export const PROMPT: string;
 	export const PSModulePath: string;
 	export const PUBLIC: string;
 	export const PWD: string;
@@ -353,6 +342,8 @@ declare module '$env/dynamic/private' {
 		ORCHESTRATOR_API_SECRET: string;
 		ORCHESTRATOR_BASE_URL: string;
 		ORIGIN: string;
+		PLATFORM_BASE_URL: string;
+		PLATFORM_WEBHOOK_SECRET: string;
 		PORT: string;
 		POSTGRES_DATABASE: string;
 		POSTGRES_PASSWORD: string;
@@ -360,6 +351,7 @@ declare module '$env/dynamic/private' {
 		REDIRECT_URI: string;
 		SEPHAR_BACKEND_TOKEN: string;
 		SERVER_URL: string;
+		TARGET_LANGUAGES: string;
 		TELEMETRY: string;
 		TELEMETRY_URL: string;
 		VAPID_CONTACT: string;
@@ -381,7 +373,6 @@ declare module '$env/dynamic/private' {
 		CLAUDE_CODE_EXECPATH: string;
 		CLAUDE_CODE_SESSION_ID: string;
 		CLAUDE_EFFORT: string;
-		COLOR: string;
 		COMMONPROGRAMFILES: string;
 		CommonProgramW6432: string;
 		COMPUTERNAME: string;
@@ -391,7 +382,6 @@ declare module '$env/dynamic/private' {
 		COPILOT_OTEL_FILE_EXPORTER_PATH: string;
 		COREPACK_ENABLE_AUTO_PIN: string;
 		DriverData: string;
-		EDITOR: string;
 		ELECTRON_RUN_AS_NODE: string;
 		EXEPATH: string;
 		FPS_BROWSER_APP_PROFILE_STRING: string;
@@ -403,7 +393,6 @@ declare module '$env/dynamic/private' {
 		HOME: string;
 		HOMEDRIVE: string;
 		HOMEPATH: string;
-		INIT_CWD: string;
 		LOCALAPPDATA: string;
 		LOGONSERVER: string;
 		MCP_CONNECTION_NONBLOCKING: string;
@@ -412,17 +401,7 @@ declare module '$env/dynamic/private' {
 		NoDefaultCurrentDirectoryInExePath: string;
 		NODE_ENV: string;
 		npm_command: string;
-		npm_config_cache: string;
-		npm_config_engine_strict: string;
-		npm_config_globalconfig: string;
-		npm_config_global_prefix: string;
-		npm_config_init_module: string;
 		npm_config_local_prefix: string;
-		npm_config_node_gyp: string;
-		npm_config_noproxy: string;
-		npm_config_npm_version: string;
-		npm_config_prefix: string;
-		npm_config_userconfig: string;
 		npm_config_user_agent: string;
 		npm_execpath: string;
 		npm_lifecycle_event: string;
@@ -445,7 +424,6 @@ declare module '$env/dynamic/private' {
 		ProgramData: string;
 		PROGRAMFILES: string;
 		ProgramW6432: string;
-		PROMPT: string;
 		PSModulePath: string;
 		PUBLIC: string;
 		PWD: string;

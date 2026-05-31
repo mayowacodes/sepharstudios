@@ -1,5 +1,6 @@
 <!-- Admin Navigation -->
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { navigateToMainSite } from '$lib/utils/portal-navigation';
   import { Bell } from '@lucide/svelte';
@@ -12,11 +13,29 @@
     { href: '/admin/review', label: 'Review Queue', icon: 'Review' },
     { href: '/admin/content', label: 'Content', icon: 'Content' },
     { href: '/admin/creators', label: 'Creators', icon: 'Users' },
+    { href: '/admin/users', label: 'Audience', icon: 'Aud' },
     { href: '/admin/creator-applications', label: 'Applications', icon: 'Apply' },
+    { href: '/admin/abuse', label: 'Abuse', icon: 'Abuse' },
+    { href: '/admin/refunds', label: 'Refunds', icon: 'Refund' },
+    { href: '/admin/disputes', label: 'Disputes', icon: 'Dispute' },
+    { href: '/admin/payouts', label: 'Payouts', icon: 'Pay' },
+    { href: '/admin/tax-forms', label: 'Tax forms', icon: 'Tax' },
+    { href: '/admin/system-health', label: 'Health', icon: 'Ops' },
+    { href: '/admin/ai-runs', label: 'AI Runs', icon: 'AI' },
     { href: '/admin/analytics', label: 'Analytics', icon: 'Stats' },
     { href: '/admin/governance', label: 'Governance', icon: 'Gov' },
     { href: '/admin/settings', label: 'Settings', icon: 'Settings' }
   ];
+
+  // Open-abuse count for the Bell badge. Polls on mount only — refreshes
+  // whenever the admin navigates anywhere.
+  let openAbuseCount = $state(0);
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/admin/abuse?status=open&countOnly=1');
+      if (res.ok) openAbuseCount = (await res.json()).count ?? 0;
+    } catch { /* best-effort */ }
+  });
 
   const externalLinks = [
     { href: 'https://creators.sepharstudios.com/creator', label: 'Creator Portal', icon: '🎬' },
@@ -71,13 +90,22 @@
       </div>
 
       <div class="flex items-center space-x-4">
+        <!-- ⌘K hint chip -->
+        <span class="hidden md:inline-flex items-center gap-1 text-[10px] text-gray-400 surface-1 rounded-md px-2 py-1 font-mono">
+          <kbd>⌘</kbd><kbd>K</kbd>
+        </span>
         <a
-          href="/admin/communications"
-          class="text-gray-300 hover:text-white transition-colors inline-flex items-center"
-          aria-label="Notifications"
-          title="Notifications"
+          href="/admin/abuse"
+          class="relative text-gray-300 hover:text-white transition-colors inline-flex items-center"
+          aria-label="Abuse queue"
+          title={openAbuseCount > 0 ? `${openAbuseCount} open report${openAbuseCount > 1 ? 's' : ''}` : 'No open reports'}
         >
-          <Bell class="w-5 h-5" />
+          <Bell class="w-5 h-5" aria-hidden="true" />
+          {#if openAbuseCount > 0}
+            <span class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center glow-card">
+              {openAbuseCount > 9 ? '9+' : openAbuseCount}
+            </span>
+          {/if}
         </a>
         <a
           href="/admin/settings"

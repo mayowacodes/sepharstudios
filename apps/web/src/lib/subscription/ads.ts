@@ -1,8 +1,9 @@
 /**
  * Ads gating — single source of truth for whether the current user should be
- * shown ads. The actual ad SDK isn't wired yet (deferred per the payment-system
- * round). When you do wire one (Google AdSense, Spotim, etc.), gate the SDK
- * load and ad-slot mount points behind `shouldShowAds()`.
+ * shown ads. The VAST tag is fetched from /api/ads/vast-tag and consumed by
+ * VideoPlayer as a pre-roll; both surfaces gate on `shouldShowAds()`. Set
+ * `ADS_VAST_TAG_URL` env to enable; leave unset to no-op (free of ads even
+ * for non-paying viewers, useful for staging).
  *
  * The decision tree:
  *   - No subscription           → free anonymous viewer, show ads

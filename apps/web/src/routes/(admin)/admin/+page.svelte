@@ -11,7 +11,12 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import { Coins, Crown, TrendingUp, Users, DollarSign, Activity } from '@lucide/svelte';
+  import {
+    Coins, Crown, TrendingUp, Users, DollarSign, Activity,
+    Home, Clock, CheckCircle2, XCircle, Eye, FileCheck, Timer
+  } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
 
   let adminStats = $state({
     pendingReviews: 0,
@@ -117,13 +122,12 @@
 </script>
 
 <div class="space-y-8 container mx-auto px-4 py-4">
-  <!-- Page title row — kept slim so it reads as a section heading, not a second top nav -->
-  <div class="flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold text-white">Dashboard</h1>
-      <p class="text-sm text-gray-400">Manage platform content and creator community</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
+  <PageHeader
+    icon={Home}
+    title="Admin Dashboard"
+    subtitle="Manage platform content and the creator community."
+  >
+    {#snippet actions()}
       <Badge variant="outline" class="bg-green-500/20 text-green-400 border-green-400">
         {adminWeb3Status.isConnected ? 'Web3 Connected' : 'Web3 Disconnected'}
       </Badge>
@@ -135,57 +139,29 @@
           NFT Tier {adminWeb3Status.subscriptionTier} #{adminWeb3Status.subscriptionTokenId}
         </Badge>
       {/if}
-      {#if adminWeb3Status.isConnected}
-        <span class="text-xs text-gray-400 ml-2">
-          {parseFloat(adminWeb3Status.stcBalance).toLocaleString()} STC
-        </span>
-      {/if}
-    </div>
+    {/snippet}
+  </PageHeader>
+
+  <!-- Platform stats -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <KpiCard label="Pending Reviews" value={adminStats.pendingReviews} icon={Clock} accent="yellow" href="/admin/review" index={0} />
+    <KpiCard label="Active Creators" value={adminStats.totalCreators} icon={Users} accent="blue" href="/admin/creators" index={1} />
+    <KpiCard label="Published" value={adminStats.publishedContent} icon={CheckCircle2} accent="green" href="/admin/content?status=approved" index={2} />
+    <KpiCard label="Rejected" value={adminStats.rejectedContent} icon={XCircle} accent="red" href="/admin/content?status=rejected" index={3} />
+    <KpiCard label="Platform Views" value={adminStats.totalViews.toLocaleString()} icon={Eye} accent="purple" href="/admin/analytics" index={4} />
   </div>
 
-  <!-- Platform Stats Grid — each card links into its detail page -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-    <a href="/admin/review" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-yellow-400">{adminStats.pendingReviews}</div>
-      <div class="text-gray-300 text-sm">Pending Reviews</div>
-    </a>
-
-    <a href="/admin/creators" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-blue-400">{adminStats.totalCreators}</div>
-      <div class="text-gray-300 text-sm">Active Creators</div>
-    </a>
-
-    <a href="/admin/content?status=approved" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-green-400">{adminStats.publishedContent}</div>
-      <div class="text-gray-300 text-sm">Published Content</div>
-    </a>
-
-    <a href="/admin/content?status=rejected" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-red-400">{adminStats.rejectedContent}</div>
-      <div class="text-gray-300 text-sm">Rejected Content</div>
-    </a>
-
-    <a href="/admin/analytics" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-purple-400">{adminStats.totalViews.toLocaleString()}</div>
-      <div class="text-gray-300 text-sm">Platform Views</div>
-    </a>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <a href="/admin/creator-applications" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-yellow-300">{adminStats.pendingApplications}</div>
-      <div class="text-gray-300 text-sm">Pending Creator Apps</div>
-    </a>
-    <a href="/admin/creator-applications?status=approved&period=7d" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-green-300">{adminStats.approvedApplications7d}</div>
-      <div class="text-gray-300 text-sm">Approved (7 days)</div>
-    </a>
-    <a href="/admin/creator-applications" class="block bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-xl p-6 text-center transition-colors cursor-pointer">
-      <div class="text-3xl font-bold text-blue-300">
-        {Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}
-      </div>
-      <div class="text-gray-300 text-sm">Avg Approval (hrs)</div>
-    </a>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <KpiCard label="Pending Creator Apps" value={adminStats.pendingApplications} icon={FileCheck} accent="yellow" href="/admin/creator-applications" index={0} />
+    <KpiCard label="Approved (7 days)" value={adminStats.approvedApplications7d} icon={CheckCircle2} accent="green" href="/admin/creator-applications?status=approved&period=7d" index={1} />
+    <KpiCard
+      label="Avg Approval (hrs)"
+      value={Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}
+      icon={Timer}
+      accent="blue"
+      href="/admin/creator-applications"
+      index={2}
+    />
   </div>
 
   <!-- Tokenomics Overview -->

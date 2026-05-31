@@ -67,6 +67,37 @@
     showModal = true;
   }
 
+  // AI summary state (R+2). Keyed by application id.
+  let summaries = $state<Record<string, string>>({});
+  let summarizing = $state<Record<string, boolean>>({});
+
+  async function summarizeApplication(app: Application) {
+    summarizing[app.id] = true;
+    summarizing = { ...summarizing };
+    try {
+      const text = [
+        app.bio ?? '',
+        app.organizationWebsite ? `Website: ${app.organizationWebsite}` : '',
+        app.portfolioUrl ? `Portfolio: ${app.portfolioUrl}` : '',
+        (app.documents ?? []).map((d) => typeof d === 'string' ? d : d.name).join(', ')
+      ].filter(Boolean).join('\n\n');
+      const res = await fetch('/api/ai/admin/summarize-application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      summaries[app.id] = body.summary ?? '';
+      summaries = { ...summaries };
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'AI failed');
+    } finally {
+      summarizing[app.id] = false;
+      summarizing = { ...summarizing };
+    }
+  }
+
   function closeModal() {
     showModal = false;
     selectedApplication = null;
@@ -201,7 +232,20 @@
         {/if}
       </div>
 
-      <div class="mt-6 flex justify-end gap-2">
+      {#if summaries[app.id]}
+        <div class="mt-4 surface-1 rounded p-3 space-y-1">
+          <div class="text-[10px] uppercase tracking-wide text-purple-300">✨ AI summary</div>
+          <p class="text-sm text-gray-200 whitespace-pre-line">{summaries[app.id]}</p>
+        </div>
+      {/if}
+
+      <div class="mt-6 flex justify-end gap-2 flex-wrap">
+        <button
+          type="button"
+          onclick={() => summarizeApplication(app)}
+          disabled={summarizing[app.id]}
+          class="px-3 py-1.5 rounded text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 surface-1 inline-flex items-center gap-1"
+        >✨ {summarizing[app.id] ? 'Summarizing…' : 'AI summary'}</button>
         {#if app.status === 'pending'}
           <Button onclick={() => reviewApplication(app.id, 'approved')}>Approve</Button>
           <Button variant="destructive" onclick={() => reviewApplication(app.id, 'rejected')}>Reject</Button>

@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, contentSubtitleTracks } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -39,7 +39,18 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			rejectionReason: mediaLibrary.rejectionReason,
 			creatorId: mediaLibrary.creatorId,
 			creatorName: user.name,
-			creatorEmail: user.email
+			creatorEmail: user.email,
+			contentScanStatus: mediaLibrary.contentScanStatus,
+			contentScanReport: mediaLibrary.contentScanReport,
+			processingStatus: mediaLibrary.processingStatus,
+			processingProgress: mediaLibrary.processingProgress,
+			processingStage: mediaLibrary.processingStage,
+			processingError: mediaLibrary.processingError,
+			encoderJobId: mediaLibrary.encoderJobId,
+			chapters: mediaLibrary.chapters,
+			previewThumbnailsVtt: mediaLibrary.previewThumbnailsVtt,
+			previewSpriteUrls: mediaLibrary.previewSpriteUrls,
+			posterAutoUrl: mediaLibrary.posterAutoUrl
 		})
 		.from(mediaLibrary)
 		.leftJoin(user, eq(mediaLibrary.creatorId, user.id))
@@ -47,5 +58,20 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		.then(r => r[0]);
 
 	if (!item) return json({ error: 'Content not found' }, { status: 404 });
-	return json(item);
+
+	// Subtitle / caption / description tracks attached to this row — needed
+	// by the admin video preview so reviewers see the same caption tracks
+	// (including orchestrator-generated auto-translations) that viewers do.
+	const tracks = await db
+		.select()
+		.from(contentSubtitleTracks)
+		.where(eq(contentSubtitleTracks.contentId, contentId));
+	const subtitles = tracks
+		.filter((t) => t.kind !== 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
+	const descriptions = tracks
+		.filter((t) => t.kind === 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
+
+	return json({ ...item, subtitles, descriptions });
 };

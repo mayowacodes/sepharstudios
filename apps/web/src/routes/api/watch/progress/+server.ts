@@ -136,7 +136,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			watchTimeSeconds: positionSeconds,
 			totalDurationSeconds: durationSeconds ?? 0,
 			leftReview: !!existingReview,
-			leftComment: false, // comments model not yet wired
 			sharedContent: false,
 			addedToWatchlist,
 			baseStcReward: 10

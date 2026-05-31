@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import PWAInstallPrompt from '$lib/components/widgets/PWAInstallPrompt.svelte';
 	import AICopilot from '$lib/components/widgets/AICopilot.svelte';
+	import LiveRegion from '$lib/components/LiveRegion.svelte';
 
 	let { data, children } = $props();
 
@@ -59,6 +60,7 @@
 <Toaster richColors position="top-center" />
 <ModeWatcher defaultMode="dark" disableTransitions={true} />
 <PWAInstallPrompt />
+<LiveRegion />
 
 {@render children?.()}
 

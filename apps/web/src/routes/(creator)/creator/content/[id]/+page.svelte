@@ -1,10 +1,14 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
+  import ContentThreadPanel from '$lib/components/widgets/ContentThreadPanel.svelte';
+  import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
+  import { COUNTRIES } from '$lib/data/countries';
+  import { announce } from '$lib/stores/live-region';
 
-  type Tab = 'details' | 'images' | 'video' | 'subtitles' | 'episodes' | 'analytics';
+  type Tab = 'details' | 'images' | 'video' | 'subtitles' | 'chapters' | 'episodes' | 'analytics' | 'thread';
 
   interface ContentRow {
     id: string;
@@ -31,11 +35,24 @@
     status: string;
     isActive: boolean;
     processingStatus: string;
+    processingProgress: number | null;
+    processingStage: string | null;
+    processingError: string | null;
+    contentScanStatus: string | null;
     reviewNotes: string | null;
     rejectionReason: string | null;
     viewCount: number | null;
     createdAt: string;
     updatedAt: string;
+    chapters: Array<{ start: number; title: string }> | null;
+    cast: Array<{ name: string; role: string; photoUrl?: string; characterName?: string }>;
+    crew: Array<{ name: string; role: string; photoUrl?: string }>;
+    geoMode: 'all' | 'allow' | 'block';
+    geoRegions: string[];
+    nextUpContentIds: string[];
+    previewThumbnailsVtt: string | null;
+    previewSpriteUrls: string[];
+    posterAutoUrl: string | null;
   }
 
   interface Analytics {
@@ -60,7 +77,14 @@
 
   const contentId = $derived(page.params.id);
 
-  let activeTab = $state<Tab>('details');
+  // Deep-link support: `?tab=thread` opens the Notes-from-admin tab so
+  // the notification action URL lands where the user expects.
+  const initialTabFromQuery = (page.url.searchParams.get('tab') as Tab | null);
+  let activeTab = $state<Tab>(
+    initialTabFromQuery && ['details', 'images', 'video', 'subtitles', 'chapters', 'episodes', 'analytics', 'thread'].includes(initialTabFromQuery)
+      ? initialTabFromQuery
+      : 'details'
+  );
   let loading = $state(true);
   let content = $state<ContentRow | null>(null);
   let analytics = $state<Analytics | null>(null);
@@ -79,7 +103,86 @@
   let editDuration = $state('');
   let editVisibility = $state<'public' | 'unlisted' | 'private'>('public');
   let editScheduledPublishAt = $state('');
+  // Catalog-completion round state
+  let editChapters = $state<Array<{ start: number; title: string }>>([]);
+  let newChapterStart = $state('');
+  let newChapterTitle = $state('');
+  let editCast = $state<Array<{ name: string; role: string; photoUrl?: string; characterName?: string }>>([]);
+  let editCrew = $state<Array<{ name: string; role: string; photoUrl?: string }>>([]);
+  let editGeoMode = $state<'all' | 'allow' | 'block'>('all');
+  let editGeoRegions = $state<string[]>([]);
+  // Curated end-screen next-up picks (creator overrides auto-recs).
+  let editNextUpIds = $state<string[]>([]);
+  let editNextUpTitles = $state<Record<string, string>>({});
+  let nextUpQuery = $state('');
+  let nextUpSearchResults = $state<Array<{ id: string; title: string; thumbnail: string | null }>>([]);
+  let nextUpSearching = $state(false);
+  let nextUpSavingFlag = $state(false);
+  let thumbnailVariants = $state<Array<{
+    id: string;
+    url: string;
+    label: string | null;
+    isActive: boolean;
+    isWinner: boolean;
+    impressions: number;
+    clicks: number;
+    ctr: number;
+  }>>([]);
   let saving = $state(false);
+
+  // Per-region pricing state.
+  interface PricingRow { id: string; regionCode: string; priceCents: number; currency: string }
+  let pricingRows = $state<PricingRow[]>([]);
+  let newRegion = $state('*');
+  let newPriceDollars = $state('');
+  let newCurrency = $state('USD');
+
+  async function loadPricing() {
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}/pricing`);
+      if (res.ok) {
+        const body = await res.json();
+        pricingRows = body.pricing ?? [];
+      }
+    } catch { /* best-effort */ }
+  }
+  async function savePricingRow() {
+    const priceCents = Math.round(parseFloat(newPriceDollars) * 100);
+    if (!Number.isFinite(priceCents) || priceCents < 0) {
+      toast.error('Invalid price');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}/pricing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regionCode: newRegion, priceCents, currency: newCurrency })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Failed');
+      toast.success('Price saved');
+      newPriceDollars = '';
+      await loadPricing();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    }
+  }
+  async function removePricingRow(regionCode: string) {
+    if (!confirm(`Remove ${regionCode} pricing?`)) return;
+    const res = await fetch(`/api/creator/content/${contentId}/pricing?regionCode=${regionCode}`, { method: 'DELETE' });
+    if (res.ok) {
+      toast.success('Removed');
+      await loadPricing();
+    } else toast.error('Failed to remove');
+  }
+
+  // Live encoder state pushed via SSE. Falls back to content.processingX
+  // when the stream isn't connected (first paint, dev with no events).
+  let liveStatus = $state<string | null>(null);
+  let liveProgress = $state<number | null>(null);
+  let liveStage = $state<string | null>(null);
+  let liveError = $state<string | null>(null);
+  let encoderSse: EventSource | null = null;
 
   const isShow = $derived(content?.mediaType === 'show');
 
@@ -111,17 +214,129 @@
         editScheduledPublishAt = content.scheduledPublishAt
           ? new Date(content.scheduledPublishAt).toISOString().slice(0, 16)
           : '';
+        editChapters = Array.isArray(content.chapters) ? [...content.chapters] : [];
+        editCast = Array.isArray(content.cast) ? [...content.cast] : [];
+        editCrew = Array.isArray(content.crew) ? [...content.crew] : [];
+        editGeoMode = (content.geoMode as typeof editGeoMode) ?? 'all';
+        editGeoRegions = Array.isArray(content.geoRegions) ? [...content.geoRegions] : [];
+        editNextUpIds = Array.isArray(content.nextUpContentIds) ? [...content.nextUpContentIds] : [];
+        // Hydrate titles for already-picked next-up IDs so the picker can
+        // show them as chips immediately (one batched call).
+        if (editNextUpIds.length > 0) {
+          void hydrateNextUpTitles(editNextUpIds);
+        }
       }
 
       // Subtitles fetched separately so the tab can refresh independently
       const subRes = await fetch(`/api/content/${contentId}/subtitles`);
       if (subRes.ok) subtitles = (await subRes.json()).tracks ?? [];
+
+      // A/B thumbnail variants — separate endpoint so the panel refreshes
+      // independently after add/remove/promote actions.
+      await loadVariants();
+      await loadPricing();
     } finally {
       loading = false;
     }
   }
 
-  onMount(load);
+  async function loadVariants() {
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}/thumbnails`);
+      if (res.ok) {
+        const body = await res.json();
+        thumbnailVariants = body.variants ?? [];
+      }
+    } catch {
+      // Best-effort; the panel renders the empty state.
+    }
+  }
+
+  async function onThumbnailVariantChosen(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    (e.target as HTMLInputElement).value = '';
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const upRes = await fetch('/api/files', { method: 'POST', body: formData });
+      if (!upRes.ok) throw new Error('File upload failed');
+      const upBody = await upRes.json();
+      const url = upBody.directUrl ?? upBody.url;
+      if (!url) throw new Error('No URL returned from upload');
+      const res = await fetch(`/api/creator/content/${contentId}/thumbnails`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Failed to add variant');
+      toast.success('Variant added');
+      await loadVariants();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    }
+  }
+
+  async function removeVariant(vid: string) {
+    if (!confirm('Remove this variant?')) return;
+    const res = await fetch(`/api/creator/content/${contentId}/thumbnails/${vid}`, { method: 'DELETE' });
+    if (res.ok) {
+      toast.success('Variant removed');
+      await loadVariants();
+    } else {
+      toast.error('Failed to remove');
+    }
+  }
+
+  async function promoteVariant(vid: string) {
+    const res = await fetch(`/api/creator/content/${contentId}/thumbnails/${vid}/promote`, { method: 'POST' });
+    if (res.ok) {
+      toast.success('Winner promoted');
+      await load();
+    } else {
+      toast.error('Failed to promote');
+    }
+  }
+
+  onMount(() => {
+    void load();
+    // Subscribe to the SSE encoder stream so this page reflects live
+    // progress without polling. The server filters events to this creator.
+    try {
+      encoderSse = new EventSource('/api/creator/encoder-stream');
+      encoderSse.onmessage = (e) => {
+        try {
+          const event = JSON.parse(e.data) as {
+            mediaId?: string; status?: string; progress?: number;
+            stage?: string; error?: string | null;
+          };
+          if (event.mediaId !== contentId) return;
+          const prevStage = liveStage;
+          const prevStatus = liveStatus;
+          if (event.status !== undefined) liveStatus = event.status ?? null;
+          if (event.progress !== undefined) liveProgress = event.progress;
+          if (event.stage !== undefined) liveStage = event.stage ?? null;
+          liveError = event.error ?? null;
+          // Announce only on meaningful transitions — stage change, ready,
+          // or failed. Progress ticks are NOT announced (would be deafening).
+          if (event.stage && event.stage !== prevStage) {
+            announce(`Encoding stage: ${event.stage}.`);
+          }
+          if (event.status && event.status !== prevStatus) {
+            if (event.status === 'ready') announce('Encoding complete. Video is ready.');
+            else if (event.status === 'failed') announce('Encoding failed.');
+          }
+          // When the job goes ready, refresh so videoUrl populates.
+          if (event.status === 'ready') void load();
+        } catch { /* malformed event */ }
+      };
+    } catch { /* EventSource not available */ }
+  });
+
+  onDestroy(() => {
+    if (encoderSse) { encoderSse.close(); encoderSse = null; }
+  });
 
   function splitTags(s: string): string[] {
     return s.split(',').map((p) => p.trim()).filter(Boolean);
@@ -179,6 +394,227 @@
     }
   }
 
+  // Chapters editor — add/remove on the client, save as one PATCH.
+  function parseTimeInput(raw: string): number | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    // Accept either plain seconds or m:ss / h:mm:ss.
+    if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+    const parts = trimmed.split(':').map((p) => Number(p));
+    if (parts.some((p) => !Number.isFinite(p) || p < 0)) return null;
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return null;
+  }
+  function formatTime(sec: number): string {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+  function addChapter() {
+    const start = parseTimeInput(newChapterStart);
+    if (start === null) { toast.error('Invalid time (use seconds or m:ss)'); return; }
+    const title = newChapterTitle.trim();
+    if (!title) { toast.error('Title required'); return; }
+    if (editChapters.some((c) => c.start === start)) { toast.error('A chapter already starts at that time'); return; }
+    editChapters = [...editChapters, { start, title }].sort((a, b) => a.start - b.start);
+    newChapterStart = '';
+    newChapterTitle = '';
+  }
+  function removeChapter(idx: number) {
+    editChapters = editChapters.filter((_, i) => i !== idx);
+  }
+
+  // AI-suggested chapters from the orchestrator-generated transcript.
+  // The endpoint returns up to 12 candidates; we surface them as a review
+  // sheet so the creator can accept-all, replace, or merge with existing.
+  let chapterAi = $state<{ loading: boolean; suggestions: Array<{ start: number; title: string }>; error: string | null; mode: 'idle' | 'review' }>({ loading: false, suggestions: [], error: null, mode: 'idle' });
+  async function suggestChaptersFromAi() {
+    chapterAi = { loading: true, suggestions: [], error: null, mode: 'idle' };
+    try {
+      const res = await fetch('/api/ai/suggest/chapters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentId })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      const suggestions = Array.isArray(body.suggestions) ? body.suggestions : [];
+      if (suggestions.length === 0) throw new Error('No suggestions returned');
+      chapterAi = { loading: false, suggestions, error: null, mode: 'review' };
+    } catch (err) {
+      chapterAi = { loading: false, suggestions: [], error: err instanceof Error ? err.message : 'Failed', mode: 'idle' };
+      toast.error(chapterAi.error ?? 'Failed');
+    }
+  }
+  function acceptAiChaptersReplace() {
+    editChapters = [...chapterAi.suggestions].sort((a, b) => a.start - b.start);
+    chapterAi = { loading: false, suggestions: [], error: null, mode: 'idle' };
+    toast.success(`${editChapters.length} chapters applied — review and Save.`);
+  }
+  function acceptAiChaptersMerge() {
+    const merged = [...editChapters];
+    for (const s of chapterAi.suggestions) {
+      if (!merged.some((c) => Math.abs(c.start - s.start) < 2)) merged.push(s);
+    }
+    editChapters = merged.sort((a, b) => a.start - b.start);
+    chapterAi = { loading: false, suggestions: [], error: null, mode: 'idle' };
+    toast.success('Merged — review and Save.');
+  }
+  function dismissAiChapters() {
+    chapterAi = { loading: false, suggestions: [], error: null, mode: 'idle' };
+  }
+
+  // ─── Curated next-up picker ────────────────────────────────────────────
+  // Searches the creator's own catalog so they can hand-pick the end-screen
+  // recommendations. Limited to 3 picks (the overlay only shows three).
+  let nextUpSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  function onNextUpQueryChange() {
+    if (nextUpSearchTimer) clearTimeout(nextUpSearchTimer);
+    if (!nextUpQuery.trim()) {
+      nextUpSearchResults = [];
+      return;
+    }
+    nextUpSearchTimer = setTimeout(() => void runNextUpSearch(), 250);
+  }
+  async function runNextUpSearch() {
+    const q = nextUpQuery.trim();
+    if (!q) return;
+    nextUpSearching = true;
+    try {
+      const res = await fetch(`/api/creator/content/search?q=${encodeURIComponent(q)}&limit=8`);
+      if (res.ok) {
+        const body = await res.json();
+        const items = Array.isArray(body.results) ? body.results : Array.isArray(body) ? body : [];
+        nextUpSearchResults = items
+          .filter((r: { id: string }) => r.id !== contentId && !editNextUpIds.includes(r.id))
+          .slice(0, 8);
+      }
+    } catch {
+      // silent — fall back to empty
+    } finally {
+      nextUpSearching = false;
+    }
+  }
+  async function hydrateNextUpTitles(ids: string[]) {
+    try {
+      const res = await fetch(`/api/creator/content/lookup?ids=${ids.join(',')}`);
+      if (!res.ok) return;
+      const body = await res.json();
+      const items = Array.isArray(body.results) ? body.results : Array.isArray(body) ? body : [];
+      const next = { ...editNextUpTitles };
+      for (const r of items) next[r.id] = r.title;
+      editNextUpTitles = next;
+    } catch { /* silent */ }
+  }
+  function addNextUp(item: { id: string; title: string }) {
+    if (editNextUpIds.length >= 3) {
+      toast.error('End screen shows max 3 cards.');
+      return;
+    }
+    if (editNextUpIds.includes(item.id)) return;
+    editNextUpIds = [...editNextUpIds, item.id];
+    editNextUpTitles = { ...editNextUpTitles, [item.id]: item.title };
+    nextUpSearchResults = nextUpSearchResults.filter((r) => r.id !== item.id);
+  }
+  function removeNextUp(id: string) {
+    editNextUpIds = editNextUpIds.filter((x) => x !== id);
+  }
+  function moveNextUp(id: string, delta: -1 | 1) {
+    const idx = editNextUpIds.indexOf(id);
+    const target = idx + delta;
+    if (idx < 0 || target < 0 || target >= editNextUpIds.length) return;
+    const next = [...editNextUpIds];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    editNextUpIds = next;
+  }
+  async function saveNextUp() {
+    nextUpSavingFlag = true;
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nextUpContentIds: editNextUpIds })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Save failed');
+      toast.success('End-screen picks saved');
+      content = body.content;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      nextUpSavingFlag = false;
+    }
+  }
+  async function saveChapters() {
+    saving = true;
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapters: editChapters })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Save failed');
+      toast.success('Chapters saved');
+      content = body.content;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function saveRegion() {
+    saving = true;
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          geoMode: editGeoMode,
+          geoRegions: editGeoMode === 'all' ? [] : editGeoRegions
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Save failed');
+      toast.success('Region availability saved');
+      content = body.content;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function saveCastCrew() {
+    saving = true;
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cast: editCast, crew: editCrew })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'Save failed');
+      toast.success('Cast & crew saved');
+      content = body.content;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      saving = false;
+    }
+  }
+
+  function addCastMember() {
+    editCast = [...editCast, { name: '', role: 'Actor' }];
+  }
+  function addCrewMember() {
+    editCrew = [...editCrew, { name: '', role: 'Director' }];
+  }
+
   // Asset replacement: upload a single file via /api/files, then PATCH the
   // URL into the named field on the content row.
   async function replaceAsset(field: keyof ContentRow, file: File) {
@@ -210,6 +646,109 @@
     if (!input.files || !input.files[0]) return;
     void replaceAsset(field, input.files[0]);
     input.value = '';
+  }
+
+  // AI Layer 1 helpers — open a modal-style picker with candidates.
+  let aiSuggesting = $state(false);
+  let aiSuggestions = $state<string[]>([]);
+  let aiKind = $state<'title' | 'description' | null>(null);
+
+  async function suggestTitle() {
+    if (!editDescription.trim()) {
+      toast.error('Add a description first so the AI has something to work with.');
+      return;
+    }
+    aiSuggesting = true;
+    aiKind = 'title';
+    aiSuggestions = [];
+    try {
+      const res = await fetch('/api/ai/suggest/title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: editDescription,
+          contentType: editContentType,
+          currentTitle: editTitle
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      aiSuggestions = body.suggestions ?? [];
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI failed');
+      aiKind = null;
+    } finally {
+      aiSuggesting = false;
+    }
+  }
+
+  async function suggestDescription() {
+    if (!editTitle.trim()) {
+      toast.error('Add a title first so the AI has context.');
+      return;
+    }
+    aiSuggesting = true;
+    aiKind = 'description';
+    aiSuggestions = [];
+    try {
+      const res = await fetch('/api/ai/suggest/description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle,
+          contentType: editContentType,
+          genres: splitTags(editGenres),
+          currentDescription: editDescription
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      aiSuggestions = body.suggestions ?? [];
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI failed');
+      aiKind = null;
+    } finally {
+      aiSuggesting = false;
+    }
+  }
+
+  function applySuggestion(text: string) {
+    if (aiKind === 'title') editTitle = text;
+    else if (aiKind === 'description') editDescription = text;
+    aiSuggestions = [];
+    aiKind = null;
+  }
+
+  async function autoTag() {
+    if (!editTitle.trim() || !editDescription.trim()) {
+      toast.error('Add a title and description first.');
+      return;
+    }
+    aiSuggesting = true;
+    try {
+      const res = await fetch('/api/ai/tag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          contentType: editContentType
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? 'AI failed');
+      if (body.metadata) {
+        if (Array.isArray(body.metadata.genres)) editGenres = body.metadata.genres.join(', ');
+        if (Array.isArray(body.metadata.topics)) editTopics = body.metadata.topics.join(', ');
+        if (Array.isArray(body.metadata.keywords)) editKeywords = body.metadata.keywords.join(', ');
+        if (typeof body.metadata.bibleReference === 'string') editBibleReference = body.metadata.bibleReference;
+        toast.success('Tags filled — review and Save details.');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI failed');
+    } finally {
+      aiSuggesting = false;
+    }
   }
 
   async function archive() {
@@ -340,12 +879,12 @@
 
     <!-- Tabs -->
     <div class="flex flex-wrap gap-2 border-b border-white/10">
-      {#each (['details', 'images', 'video', 'subtitles', ...(isShow ? ['episodes' as Tab] : []), 'analytics'] as Tab[]) as tab (tab)}
+      {#each (['details', 'images', 'video', 'subtitles', ...(isShow ? [] : ['chapters' as Tab]), ...(isShow ? ['episodes' as Tab] : []), 'analytics', 'thread'] as Tab[]) as tab (tab)}
         <button
           type="button"
           onclick={() => activeTab = tab}
           class="px-4 py-2 text-sm capitalize transition-colors {activeTab === tab ? 'text-purple-300 border-b-2 border-purple-400 -mb-px' : 'text-gray-400 hover:text-white'}"
-        >{tab}</button>
+        >{tab === 'thread' ? 'Notes from admin' : tab}</button>
       {/each}
     </div>
 
@@ -355,12 +894,44 @@
         {#if activeTab === 'details'}
           <div class="space-y-4">
             <div>
-              <label for="d-title" class="block text-sm text-gray-300 mb-1">Title *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label for="d-title" class="block text-sm text-gray-300">Title *</label>
+                <button type="button" onclick={suggestTitle} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
+                  ✨ {aiSuggesting && aiKind === 'title' ? 'Thinking…' : 'Suggest titles'}
+                </button>
+              </div>
               <input id="d-title" bind:value={editTitle} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+              {#if aiKind === 'title' && aiSuggestions.length > 0}
+                <ul class="mt-2 space-y-1">
+                  {#each aiSuggestions as s, i (i)}
+                    <li>
+                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:bg-white/5 surface-1 rounded px-3 py-2">
+                        {s}
+                      </button>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
             </div>
             <div>
-              <label for="d-desc" class="block text-sm text-gray-300 mb-1">Description</label>
+              <div class="flex items-center justify-between mb-1">
+                <label for="d-desc" class="block text-sm text-gray-300">Description</label>
+                <button type="button" onclick={suggestDescription} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
+                  ✨ {aiSuggesting && aiKind === 'description' ? 'Thinking…' : 'Suggest descriptions'}
+                </button>
+              </div>
               <textarea id="d-desc" bind:value={editDescription} rows="4" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white"></textarea>
+              {#if aiKind === 'description' && aiSuggestions.length > 0}
+                <ul class="mt-2 space-y-1">
+                  {#each aiSuggestions as s, i (i)}
+                    <li>
+                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:bg-white/5 surface-1 rounded px-3 py-2 whitespace-pre-line">
+                        {s}
+                      </button>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -380,7 +951,12 @@
               </div>
             </div>
             <div>
-              <label for="d-genres" class="block text-sm text-gray-300 mb-1">Genres (comma-separated)</label>
+              <div class="flex items-center justify-between mb-1">
+                <label for="d-genres" class="block text-sm text-gray-300">Genres (comma-separated)</label>
+                <button type="button" onclick={autoTag} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
+                  ✨ Auto-tag from description
+                </button>
+              </div>
               <input id="d-genres" bind:value={editGenres} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="Drama, Faith" />
             </div>
             <div>
@@ -408,6 +984,110 @@
             <button type="button" onclick={saveDetails} disabled={saving} class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded">
               {saving ? 'Saving…' : 'Save details'}
             </button>
+
+            <!-- Cast & crew -->
+            <div class="border-t border-white/10 pt-4 space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-medium text-white">Cast & crew</div>
+                <button type="button" onclick={saveCastCrew} disabled={saving} class="text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-3 py-1.5 rounded">
+                  {saving ? 'Saving…' : 'Save cast & crew'}
+                </button>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs uppercase tracking-wide text-gray-400">Cast</span>
+                  <button type="button" onclick={addCastMember} class="text-xs text-purple-300 hover:text-purple-200">+ Add</button>
+                </div>
+                {#if editCast.length === 0}
+                  <p class="text-xs text-gray-500">No cast members yet.</p>
+                {:else}
+                  <ul class="space-y-2">
+                    {#each editCast as c, idx (idx)}
+                      <li class="flex gap-2">
+                        <input
+                          type="text"
+                          bind:value={c.name}
+                          placeholder="Name"
+                          class="flex-1 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                        <input
+                          type="text"
+                          bind:value={c.role}
+                          placeholder="Role"
+                          class="w-32 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                        <input
+                          type="text"
+                          bind:value={c.characterName}
+                          placeholder="Character (optional)"
+                          class="w-44 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                        <button type="button" onclick={() => editCast = editCast.filter((_, i) => i !== idx)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs uppercase tracking-wide text-gray-400">Per-region PPV pricing</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">
+                  Override the default PPV price by country. Region <code>*</code> = default fallback.
+                  Viewers see the price for their detected country at checkout.
+                </p>
+                <div class="surface-1 rounded p-3 space-y-2">
+                  {#if pricingRows.length > 0}
+                    <ul class="space-y-1">
+                      {#each pricingRows as p (p.id)}
+                        <li class="flex items-center gap-2 text-xs">
+                          <code class="bg-white/10 rounded px-1.5 py-0.5">{p.regionCode}</code>
+                          <span class="text-white">{(p.priceCents / 100).toFixed(2)}</span>
+                          <span class="text-gray-400">{p.currency}</span>
+                          <button type="button" onclick={() => removePricingRow(p.regionCode)} class="ml-auto text-red-300 hover:text-red-100">Remove</button>
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
+                  <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <input type="text" bind:value={newRegion} placeholder="* or US" maxlength="2" class="px-2 py-1.5 text-xs surface-2 rounded text-white" />
+                    <input type="number" step="0.01" min="0" bind:value={newPriceDollars} placeholder="9.99" class="px-2 py-1.5 text-xs surface-2 rounded text-white" />
+                    <input type="text" bind:value={newCurrency} placeholder="USD" maxlength="3" class="px-2 py-1.5 text-xs surface-2 rounded text-white uppercase" />
+                    <button type="button" onclick={savePricingRow} class="px-2 py-1.5 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded">Add / update</button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs uppercase tracking-wide text-gray-400">Crew</span>
+                  <button type="button" onclick={addCrewMember} class="text-xs text-purple-300 hover:text-purple-200">+ Add</button>
+                </div>
+                {#if editCrew.length === 0}
+                  <p class="text-xs text-gray-500">No crew members yet.</p>
+                {:else}
+                  <ul class="space-y-2">
+                    {#each editCrew as c, idx (idx)}
+                      <li class="flex gap-2">
+                        <input
+                          type="text"
+                          bind:value={c.name}
+                          placeholder="Name"
+                          class="flex-1 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                        <input
+                          type="text"
+                          bind:value={c.role}
+                          placeholder="Role (e.g. Director)"
+                          class="w-44 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                        <button type="button" onclick={() => editCrew = editCrew.filter((_, i) => i !== idx)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+              </div>
+            </div>
           </div>
         {:else if activeTab === 'images'}
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -438,17 +1118,127 @@
               </div>
             {/each}
           </div>
+
+          <!-- A/B thumbnail testing panel -->
+          <div class="mt-6 surface-1 rounded-lg p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium text-white">A/B thumbnail testing</div>
+                <div class="text-xs text-gray-400">Compare up to 5 thumbnails. Viewers see one deterministic variant; CTR shows which performs best.</div>
+              </div>
+              <label class="block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onchange={(e) => onThumbnailVariantChosen(e)}
+                  class="hidden"
+                  disabled={thumbnailVariants.length >= 5}
+                />
+                <span class="inline-block bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded cursor-pointer">
+                  {thumbnailVariants.length >= 5 ? 'Max 5' : '+ Add variant'}
+                </span>
+              </label>
+            </div>
+            {#if thumbnailVariants.length === 0}
+              <div class="text-center text-gray-400 text-sm py-4">No variants yet.</div>
+            {:else}
+              <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {#each thumbnailVariants as v (v.id)}
+                  <li class="surface-2 rounded-lg p-3 space-y-2">
+                    <div class="aspect-video rounded overflow-hidden bg-black/30">
+                      <img src={v.url} alt={v.label ?? 'variant'} class="w-full h-full object-cover" />
+                    </div>
+                    <div class="text-xs text-gray-400">{v.label ?? '—'}</div>
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-gray-300">
+                        <span class="text-white font-medium">{v.ctr.toFixed(1)}%</span>
+                        <span class="text-gray-500"> CTR</span>
+                      </span>
+                      <span class="text-gray-500">{v.impressions.toLocaleString()} impr / {v.clicks.toLocaleString()} clicks</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        onclick={() => promoteVariant(v.id)}
+                        class="text-xs flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded"
+                      >{v.isWinner ? 'Winner' : 'Promote winner'}</button>
+                      <button
+                        type="button"
+                        onclick={() => removeVariant(v.id)}
+                        class="text-xs text-red-300 hover:text-red-100 px-2"
+                      >Remove</button>
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
         {:else if activeTab === 'video'}
           <div class="space-y-4">
             {#if content.videoUrl}
               <div>
                 <div class="text-sm text-gray-400 mb-2">Current encoded video</div>
-                <!-- svelte-ignore a11y_media_has_caption -->
-                <video src={content.videoUrl} controls class="w-full rounded-lg bg-black"></video>
+                <!-- Full VideoPlayer so the creator's preview matches what
+                     viewers see — HLS playback (raw <video> tag wouldn't
+                     work in Chrome for HLS sources), subtitle tracks,
+                     chapters, end-screen, scrubbing previews. We omit
+                     `contentId` so this preview doesn't inflate the
+                     creator's own watch-progress. -->
+                <VideoPlayer
+                  src={content.videoUrl}
+                  poster={content.backdropUrl ?? content.thumbnail ?? content.posterAutoUrl ?? undefined}
+                  title={content.title}
+                  subtitles={subtitles.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }))}
+                  chapters={content.chapters ?? []}
+                  previewVtt={content.previewThumbnailsVtt ?? undefined}
+                  previewSprites={content.previewSpriteUrls ?? []}
+                />
               </div>
             {:else}
-              <div class="bg-yellow-600/20 border border-yellow-600 text-yellow-100 rounded p-4 text-sm">
-                Video hasn't finished encoding yet (status: {content.processingStatus}).
+              <!-- Live encoder progress (R+1). SSE-driven; falls back to a
+                   one-shot status fetch when the stream isn't connected. -->
+              <div class="surface-1 rounded-lg p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm font-medium text-white">Encoder progress</div>
+                  <span class="text-xs uppercase tracking-wide text-yellow-300">{liveStatus ?? content.processingStatus}</span>
+                </div>
+                <div class="h-2 bg-white/10 rounded overflow-hidden">
+                  <div
+                    class="h-full bg-purple-500 transition-all duration-500"
+                    style="width: {Math.max(0, Math.min(100, liveProgress ?? 0))}%"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-400">
+                  <span>{liveStage ?? content.processingStage ?? 'waiting'}</span>
+                  <span>{Math.max(0, Math.min(100, liveProgress ?? 0))}%</span>
+                </div>
+                {#if liveError ?? content.processingError}
+                  <div class="text-xs text-red-300 mt-1">{liveError ?? content.processingError}</div>
+                {/if}
+              </div>
+            {/if}
+
+            <!-- Content scan status (R+5). Independent of the encode bar:
+                 encode completes at playback-ready; the AI doctrinal +
+                 family-safety scan runs AFTER on the transcript + sampled
+                 frames. Status: idle / in_progress / complete / failed. -->
+            {#if content.contentScanStatus && content.contentScanStatus !== 'idle'}
+              <div class="surface-1 rounded-lg p-3 flex items-center gap-3 text-xs">
+                <span class="text-gray-400">Content scan:</span>
+                {#if content.contentScanStatus === 'in_progress'}
+                  <span class="text-blue-300">running…</span>
+                  <span class="text-gray-500 ml-auto">Doctrinal + family-safety AI review.</span>
+                {:else if content.contentScanStatus === 'complete'}
+                  <span class="text-green-300">complete</span>
+                  <span class="text-gray-500 ml-auto">Admin will see the AI report on review.</span>
+                {:else if content.contentScanStatus === 'failed'}
+                  <span class="text-red-300">failed</span>
+                  <span class="text-gray-500 ml-auto">Admin can re-trigger from the review page.</span>
+                {:else if content.contentScanStatus === 'skipped'}
+                  <span class="text-gray-400">skipped</span>
+                {:else}
+                  <span class="text-yellow-300">{content.contentScanStatus}</span>
+                {/if}
               </div>
             {/if}
             <div>
@@ -573,6 +1363,94 @@
           {:else}
             <p class="text-sm text-gray-400">No analytics yet.</p>
           {/if}
+        {:else if activeTab === 'chapters'}
+          <div class="space-y-4">
+            <div class="flex items-start justify-between gap-3 flex-wrap">
+              <p class="text-sm text-gray-400 flex-1 min-w-60">
+                Add time-coded chapter markers. Viewers see tick marks above the seek bar and can jump with the <kbd class="px-1 bg-white/10 rounded">&gt;</kbd> / <kbd class="px-1 bg-white/10 rounded">&lt;</kbd> keys.
+              </p>
+              <button
+                type="button"
+                onclick={suggestChaptersFromAi}
+                disabled={chapterAi.loading}
+                class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1 surface-1 rounded-lg px-3 py-1.5"
+                title="Generate chapters from the auto-transcript"
+              >
+                ✨ {chapterAi.loading ? 'Thinking…' : 'Suggest from transcript'}
+              </button>
+            </div>
+
+            {#if chapterAi.mode === 'review'}
+              <div class="surface-1 rounded-lg p-4 border border-purple-500/40">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-sm font-semibold text-white">AI suggested {chapterAi.suggestions.length} chapters</h4>
+                  <button type="button" onclick={dismissAiChapters} class="text-xs text-gray-400 hover:text-white">Dismiss</button>
+                </div>
+                <ul class="space-y-1 max-h-64 overflow-y-auto mb-3">
+                  {#each chapterAi.suggestions as s (s.start)}
+                    <li class="flex items-center gap-3 text-sm">
+                      <span class="text-xs font-mono text-purple-300 w-16">{formatTime(s.start)}</span>
+                      <span class="flex-1 text-white">{s.title}</span>
+                    </li>
+                  {/each}
+                </ul>
+                <div class="flex flex-wrap gap-2 justify-end">
+                  <button type="button" onclick={acceptAiChaptersMerge} class="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white">Merge with existing</button>
+                  <button type="button" onclick={acceptAiChaptersReplace} class="text-xs px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white">Replace existing</button>
+                </div>
+              </div>
+            {/if}
+
+            <div class="surface-1 rounded-lg p-4">
+              <div class="text-sm font-medium text-white mb-3">Add chapter</div>
+              <div class="flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  bind:value={newChapterStart}
+                  placeholder="0:00 or 90"
+                  class="w-24 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+                />
+                <input
+                  type="text"
+                  bind:value={newChapterTitle}
+                  placeholder="Chapter title"
+                  class="flex-1 min-w-37.5 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+                />
+                <button
+                  type="button"
+                  onclick={addChapter}
+                  class="px-3 py-2 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                >Add</button>
+              </div>
+            </div>
+            {#if editChapters.length === 0}
+              <div class="text-center text-gray-400 text-sm py-6">No chapters yet.</div>
+            {:else}
+              <ul class="space-y-2">
+                {#each editChapters as c, idx (c.start)}
+                  <li class="flex items-center gap-3 surface-1 rounded-lg px-3 py-2">
+                    <span class="text-xs font-mono text-purple-300 w-16">{formatTime(c.start)}</span>
+                    <span class="flex-1 text-sm text-white">{c.title}</span>
+                    <button
+                      type="button"
+                      onclick={() => removeChapter(idx)}
+                      class="text-xs text-red-300 hover:text-red-100"
+                    >Remove</button>
+                  </li>
+                {/each}
+              </ul>
+              <div class="flex justify-end">
+                <button
+                  type="button"
+                  onclick={saveChapters}
+                  disabled={saving}
+                  class="px-4 py-2 rounded bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm"
+                >{saving ? 'Saving…' : 'Save chapters'}</button>
+              </div>
+            {/if}
+          </div>
+        {:else if activeTab === 'thread'}
+          <ContentThreadPanel contentId={content.id} variant="creator" />
         {/if}
       </div>
 
@@ -611,6 +1489,101 @@
         <button type="button" onclick={saveVisibility} disabled={saving} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
           {saving ? 'Saving…' : 'Save visibility'}
         </button>
+
+        <!-- Region availability -->
+        <div class="border-t border-white/10 pt-4 space-y-3">
+          <div class="text-sm font-medium text-white">Region availability</div>
+          <div class="space-y-2">
+            {#each (['all', 'allow', 'block'] as const) as m (m)}
+              <label class="flex items-start gap-2 text-sm cursor-pointer">
+                <input type="radio" bind:group={editGeoMode} value={m} class="mt-0.5 accent-purple-600" />
+                <div>
+                  <div class="text-white">
+                    {m === 'all' ? 'All countries' : m === 'allow' ? 'Only these countries' : 'All except these'}
+                  </div>
+                </div>
+              </label>
+            {/each}
+          </div>
+          {#if editGeoMode !== 'all'}
+            <select
+              multiple
+              bind:value={editGeoRegions}
+              size="6"
+              class="w-full px-2 py-2 bg-white/10 border border-white/20 rounded text-white text-sm"
+            >
+              {#each COUNTRIES as c (c.code)}
+                <option value={c.code}>{c.name} ({c.code})</option>
+              {/each}
+            </select>
+            <p class="text-xs text-gray-400">Hold Ctrl/Cmd to multi-select.</p>
+          {/if}
+          <button type="button" onclick={saveRegion} disabled={saving} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
+            {saving ? 'Saving…' : 'Save region'}
+          </button>
+        </div>
+
+        <!-- End-screen next-up picks -->
+        <div class="border-t border-white/10 pt-4 space-y-3">
+          <div>
+            <div class="text-sm font-medium text-white">End-screen next-up</div>
+            <p class="text-xs text-gray-400 mt-0.5">Pick up to 3 videos to feature in the end-screen overlay. Leave empty for auto-recommendations.</p>
+          </div>
+
+          {#if editNextUpIds.length > 0}
+            <ul class="space-y-1.5">
+              {#each editNextUpIds as id, idx (id)}
+                <li class="flex items-center gap-2 surface-1 rounded px-2 py-1.5">
+                  <span class="text-[10px] text-gray-500 w-4">{idx + 1}</span>
+                  <span class="flex-1 text-sm text-white truncate" title={editNextUpTitles[id] ?? id}>
+                    {editNextUpTitles[id] ?? '(loading…)'}
+                  </span>
+                  <button type="button" onclick={() => moveNextUp(id, -1)} disabled={idx === 0} class="text-xs text-gray-400 hover:text-white disabled:opacity-30" aria-label="Move up">↑</button>
+                  <button type="button" onclick={() => moveNextUp(id, 1)} disabled={idx === editNextUpIds.length - 1} class="text-xs text-gray-400 hover:text-white disabled:opacity-30" aria-label="Move down">↓</button>
+                  <button type="button" onclick={() => removeNextUp(id)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+
+          {#if editNextUpIds.length < 3}
+            <div class="relative">
+              <input
+                type="text"
+                bind:value={nextUpQuery}
+                oninput={onNextUpQueryChange}
+                placeholder="Search your videos…"
+                class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+              />
+              {#if nextUpSearchResults.length > 0}
+                <ul class="absolute z-10 mt-1 w-full surface-2 border border-white/10 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                  {#each nextUpSearchResults as r (r.id)}
+                    <li>
+                      <button
+                        type="button"
+                        onclick={() => addNextUp(r)}
+                        class="w-full text-left px-3 py-2 hover:bg-white/10 text-sm text-white flex items-center gap-2"
+                      >
+                        {#if r.thumbnail}
+                          <img src={r.thumbnail} alt="" class="w-10 h-6 object-cover rounded" />
+                        {/if}
+                        <span class="truncate flex-1">{r.title}</span>
+                      </button>
+                    </li>
+                  {/each}
+                </ul>
+              {:else if nextUpQuery && !nextUpSearching}
+                <p class="text-xs text-gray-500 mt-1">No matches in your catalog.</p>
+              {/if}
+            </div>
+          {:else}
+            <p class="text-xs text-gray-500">Maximum 3 picks. Remove one to add another.</p>
+          {/if}
+
+          <button type="button" onclick={saveNextUp} disabled={nextUpSavingFlag} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
+            {nextUpSavingFlag ? 'Saving…' : 'Save end-screen picks'}
+          </button>
+        </div>
 
         <div class="border-t border-white/10 pt-4 text-xs text-gray-400 space-y-1">
           <div>Created {new Date(content.createdAt).toLocaleDateString()}</div>

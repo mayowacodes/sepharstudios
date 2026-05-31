@@ -7,8 +7,17 @@ type JsonObject = Record<string, unknown>;
 
 export interface CreateEncoderJobInput {
 	filename: string;
-	profile?: 'vod-1080p' | 'vod-720p' | 'vod-480p' | 'vod-multi';
+	profile?: 'vod-480' | 'vod-multi' | 'vod-multi-2k' | 'vod-multi-4k';
 	durationHint?: number;
+	/**
+	 * Optional media row id. When supplied, the orchestrator echoes it back
+	 * on every webhook (progress + scan-ready), letting us route the
+	 * webhook to the right row WITHOUT a jobId → mediaId lookup.
+	 *
+	 * Strongly recommended: pass the media_library.id so the webhook
+	 * handlers can resolve in O(1).
+	 */
+	mediaId?: string;
 }
 
 export interface EncoderJobStatus {
@@ -64,6 +73,7 @@ export async function createEncoderJob(input: CreateEncoderJobInput) {
 	};
 
 	if (input.durationHint) body.durationHint = input.durationHint;
+	if (input.mediaId) body.mediaId = input.mediaId;
 
 	return orchestratorFetch<{
 		jobId: string;
@@ -72,6 +82,19 @@ export async function createEncoderJob(input: CreateEncoderJobInput) {
 		method: 'POST',
 		body: JSON.stringify(body)
 	});
+}
+
+/**
+ * Cancel a running job. The orchestrator flips state → CANCELLED; the
+ * worker learns on next /control poll, kills FFmpeg, and emits a
+ * `cancelled` progress webhook back to us. The caller should optimistically
+ * show "cancelling" until that webhook arrives.
+ */
+export async function cancelEncoderJob(jobId: string) {
+	return orchestratorFetch<{ jobId: string; status: string }>(
+		`/v1/jobs/${encodeURIComponent(jobId)}/cancel`,
+		{ method: 'POST', body: '{}' }
+	);
 }
 
 export async function commitEncoderJob(jobId: string) {

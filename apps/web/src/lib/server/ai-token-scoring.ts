@@ -27,12 +27,11 @@ export async function scoreWatchEngagement(opts: {
 	watchTimeSeconds: number;
 	totalDurationSeconds: number;
 	leftReview: boolean;
-	leftComment: boolean;
 	sharedContent: boolean;
 	addedToWatchlist: boolean;
 	baseStcReward: number;
 }): Promise<WatchEngagementScore | null> {
-	const { completionPercent, watchTimeSeconds, totalDurationSeconds, leftReview, leftComment, sharedContent, addedToWatchlist, baseStcReward } = opts;
+	const { completionPercent, watchTimeSeconds, totalDurationSeconds, leftReview, sharedContent, addedToWatchlist, baseStcReward } = opts;
 
 	if (completionPercent < 10) {
 		return { tokenMultiplier: 0, isSuspicious: false, engagementQuality: 'low', reasons: ['Watched less than 10% — no reward earned'], recommendedStcReward: 0, aiProvider: 'rule-engine' };
@@ -49,7 +48,6 @@ Session data:
 - Completion: ${completionPercent}%
 - Watch time: ${watchTimeSeconds}s out of ${totalDurationSeconds}s total
 - Left a review: ${leftReview}
-- Left a comment: ${leftComment}
 - Shared content: ${sharedContent}
 - Added to watchlist: ${addedToWatchlist}
 - Base STC reward: ${baseStcReward} STC
@@ -65,7 +63,7 @@ Return ONLY this JSON:
 
 Multiplier rules:
 - < 25% completion: 0.0 | 25–49%: 0.3 | 50–74%: 0.6 | 75–89%: 0.8 | 90–100%: 1.0
-- +0.1 for review, +0.1 for comment, +0.1 for share (max 1.5x total)
+- +0.15 for review, +0.15 for share, +0.1 for watchlist (max 1.5x total)
 - isSuspicious=true if watch time is implausibly fast vs duration`
 			}
 		],
@@ -74,7 +72,7 @@ Multiplier rules:
 
 	if (!result) {
 		const multiplier = completionPercent >= 90 ? 1.0 : completionPercent >= 75 ? 0.8 : completionPercent >= 50 ? 0.6 : completionPercent >= 25 ? 0.3 : 0.0;
-		const bonus = (leftReview ? 0.1 : 0) + (leftComment ? 0.1 : 0) + (sharedContent ? 0.1 : 0);
+		const bonus = (leftReview ? 0.15 : 0) + (sharedContent ? 0.15 : 0) + (addedToWatchlist ? 0.1 : 0);
 		const finalMultiplier = Math.min(1.5, multiplier + bonus);
 		return { tokenMultiplier: finalMultiplier, isSuspicious: false, engagementQuality: finalMultiplier >= 0.8 ? 'high' : finalMultiplier >= 0.5 ? 'medium' : 'low', reasons: ['Rule-based (AI unavailable)'], recommendedStcReward: Math.round(baseStcReward * finalMultiplier), aiProvider: 'rule-engine' };
 	}
@@ -90,7 +88,6 @@ export async function analyzeUserEngagementPattern(opts: {
 	avgSessionDurationSeconds: number;
 	avgCompletionPercent: number;
 	reviewsLeft: number;
-	commentsLeft: number;
 	uniqueContentsWatched: number;
 	stcEarned30Days: number;
 	accountAgedays: number;
@@ -107,7 +104,6 @@ export async function analyzeUserEngagementPattern(opts: {
 - Avg session duration: ${opts.avgSessionDurationSeconds}s
 - Avg completion: ${opts.avgCompletionPercent}%
 - Reviews left: ${opts.reviewsLeft}
-- Comments: ${opts.commentsLeft}
 - Unique titles watched: ${opts.uniqueContentsWatched}
 - STC earned: ${opts.stcEarned30Days}
 - Account age: ${opts.accountAgedays} days
@@ -120,7 +116,7 @@ Return ONLY this JSON:
   "recommendation": "reward"
 }
 
-Risk indicators: very short sessions with high completion, rewatching same content, new account with disproportionate STC, review/comment volume out of proportion with watch time.
+Risk indicators: very short sessions with high completion, rewatching same content, new account with disproportionate STC, review volume out of proportion with watch time.
 recommendation options: "reward" | "reduce" | "hold" | "ban"`
 			}
 		],

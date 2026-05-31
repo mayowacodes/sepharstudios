@@ -58,7 +58,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			thumbnail: mediaLibrary.thumbnail,
 			posterUrl: mediaLibrary.posterUrl,
 			viewCount: mediaLibrary.viewCount,
-			createdAt: mediaLibrary.createdAt
+			createdAt: mediaLibrary.createdAt,
+			cast: mediaLibrary.cast,
+			crew: mediaLibrary.crew
 		})
 			.from(mediaLibrary)
 			.where(and(
@@ -82,7 +84,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			thumbnail: r.thumbnail,
 			posterUrl: r.posterUrl,
 			viewCount: Number(r.viewCount ?? 0),
-			createdAt: r.createdAt.getTime()
+			createdAt: r.createdAt.getTime(),
+			castNames: Array.isArray(r.cast) ? r.cast.map((c) => c.name).filter(Boolean) : [],
+			crewNames: Array.isArray(r.crew) ? r.crew.map((c) => c.name).filter(Boolean) : []
 		}));
 
 		for (let i = 0; i < docs.length; i += BATCH) {

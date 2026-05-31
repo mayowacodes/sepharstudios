@@ -7,12 +7,15 @@ import { and, eq, sql } from 'drizzle-orm';
  * GET /api/users/me/stc-balance
  *
  * Returns the current user's STC balance broken down by status:
- *   - pending:   earned but not yet settled (no on-chain transfer yet)
- *   - completed: settled (would be on-chain once treasury custody is wired)
+ *   - pending:   earned but not yet settled (the next settlement cron
+ *                will flip these to completed)
+ *   - completed: settled. txHash will be `offchain:<id>` for off-chain
+ *                settlements and a real on-chain hash when STC_ONCHAIN_
+ *                ENABLED='true' and the treasury has funds.
+ *   - failed:    settlement attempt failed; admin can re-run the cron.
  *
- * For now everything is pending because we don't yet have a server-side
- * settlement mechanism. The shape is forward-compatible — once settlement
- * lands, the `completed` total starts reflecting on-chain balance.
+ * Settlement runs from /api/cron/stc-settle (see lib/server/stc-
+ * settlement.ts for mode selection).
  */
 export const GET: RequestHandler = async ({ locals }) => {
   const session = await locals.auth.getSession();

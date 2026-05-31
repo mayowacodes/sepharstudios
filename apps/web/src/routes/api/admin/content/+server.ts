@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, ppvContent } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { and, desc, eq, ilike, or } from 'drizzle-orm';
 
@@ -48,10 +48,16 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			createdAt: mediaLibrary.createdAt,
 			creatorId: mediaLibrary.creatorId,
 			creatorName: user.name,
-			creatorEmail: user.email
+			creatorEmail: user.email,
+			// PPV state for the pill — pulled from ppv_content so it
+			// survives a page reload (was previously only present after an
+			// optimistic update by the admin PPV modal).
+			isPpv: ppvContent.isActive,
+			ppvPriceCents: ppvContent.finalPriceCents
 		})
 		.from(mediaLibrary)
-		.leftJoin(user, eq(mediaLibrary.creatorId, user.id));
+		.leftJoin(user, eq(mediaLibrary.creatorId, user.id))
+		.leftJoin(ppvContent, eq(ppvContent.contentId, mediaLibrary.id));
 
 	const query = whereClause ? baseQuery.where(whereClause) : baseQuery;
 

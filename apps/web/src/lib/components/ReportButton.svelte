@@ -85,6 +85,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     role="dialog"
     aria-modal="true"
+    tabindex="-1"
     onclick={(e) => { if (e.target === e.currentTarget) open = false; }}
     onkeydown={(e) => { if (e.key === 'Escape') open = false; }}
   >

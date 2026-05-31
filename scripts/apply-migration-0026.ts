@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -10,7 +11,7 @@ if (!databaseUrl) {
 }
 
 const filename = '0026_payouts_stripe_connect.sql';
-const path = resolve(import.meta.dir, '..', 'drizzle', filename);
+const path = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'drizzle', filename);
 const body = readFileSync(path, 'utf-8');
 
 const sql = postgres(databaseUrl, { max: 1 });

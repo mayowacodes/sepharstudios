@@ -6,7 +6,9 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-  import { Coins, DollarSign, Wallet, Settings, CreditCard, TrendingUp } from '@lucide/svelte';
+  import { Coins, DollarSign, Wallet, Settings, CreditCard, TrendingUp, Users, Clock, FileText } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
 
   interface Creator {
     id: string;
@@ -208,42 +210,27 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white">Creator Management</h1>
-      <p class="text-gray-300">Manage creators and their content on the platform</p>
-    </div>
-    
-    <div class="flex items-center space-x-4">
-      <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-        📧 Send Broadcast
+<div class="container mx-auto px-4 py-4 space-y-6">
+  <PageHeader
+    icon={Users}
+    title="Creator Management"
+    subtitle="Manage creators and their content on the platform."
+  >
+    {#snippet actions()}
+      <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors">
+        Send broadcast
       </button>
-      <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-        ➕ Invite Creator
+      <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors">
+        Invite creator
       </button>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
-  <!-- Summary Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <div class="text-2xl font-bold text-white">{creators.filter(c => c.status === 'active').length}</div>
-      <div class="text-gray-300 text-sm">Active Creators</div>
-    </div>
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <div class="text-2xl font-bold text-yellow-400">{creators.filter(c => c.status === 'pending').length}</div>
-      <div class="text-gray-300 text-sm">Pending Approval</div>
-    </div>
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <div class="text-2xl font-bold text-blue-400">{creators.reduce((sum, c) => sum + c.contentCount, 0)}</div>
-      <div class="text-gray-300 text-sm">Total Content</div>
-    </div>
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <div class="text-2xl font-bold text-green-400">${creators.reduce((sum, c) => sum + c.monthlyEarnings, 0).toFixed(0)}</div>
-      <div class="text-gray-300 text-sm">Monthly Payouts</div>
-    </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <KpiCard label="Active Creators" value={creators.filter(c => c.status === 'active').length} icon={Users} accent="green" variant="compact" index={0} />
+    <KpiCard label="Pending Approval" value={creators.filter(c => c.status === 'pending').length} icon={Clock} accent="yellow" variant="compact" index={1} />
+    <KpiCard label="Total Content" value={creators.reduce((sum, c) => sum + c.contentCount, 0)} icon={FileText} accent="blue" variant="compact" index={2} />
+    <KpiCard label="Monthly Payouts" value={`$${creators.reduce((sum, c) => sum + c.monthlyEarnings, 0).toFixed(0)}`} icon={DollarSign} accent="orange" variant="compact" index={3} />
   </div>
 
   <!-- Search and Filters -->

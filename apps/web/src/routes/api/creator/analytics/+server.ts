@@ -220,11 +220,21 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		.map((r) => ({ country: r.country ?? 'XX', count: Number(r.count) }));
 
 	let trends: Array<{ date: string; views: number }> = [];
+	// Per-day series for sparklines: views + watch-minutes + completion%.
+	// Padded to exactly `seriesDays` points so the sparkline has a stable
+	// width regardless of how many days actually had data.
+	const seriesDays = Math.min(days ?? 30, 30);
+	const seriesViews: number[] = new Array(seriesDays).fill(0);
+	const seriesWatchMinutes: number[] = new Array(seriesDays).fill(0);
+	const seriesCompletion: number[] = new Array(seriesDays).fill(0);
+
 	if (days && days <= 90) {
 		const trendRows = await db
 			.select({
 				day: sql<string>`to_char(date_trunc('day', ${mediaWatchProgress.updatedAt}), 'YYYY-MM-DD')`,
-				views: sql<number>`count(*)::int`
+				views: sql<number>`count(*)::int`,
+				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
+				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
 			})
 			.from(mediaWatchProgress)
 			.where(and(
@@ -234,6 +244,50 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			.groupBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`)
 			.orderBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`);
 		trends = trendRows.map((r) => ({ date: r.day, views: Number(r.views) }));
+
+		// Map rows to the fixed-length series buckets — index is days-ago from today.
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		for (const r of trendRows) {
+			const d = new Date(r.day);
+			const ago = Math.floor((today.getTime() - d.getTime()) / 86_400_000);
+			const idx = seriesDays - 1 - ago;
+			if (idx >= 0 && idx < seriesDays) {
+				seriesViews[idx] = Number(r.views);
+				seriesWatchMinutes[idx] = Math.round(Number(r.watchSeconds) / 60);
+				seriesCompletion[idx] = Math.round(Number(r.avgCompletion));
+			}
+		}
+	}
+
+	// Per-metric period-over-period deltas. Views uses the existing growthRate.
+	// For watchSeconds + avgCompletion we run one quick prior-window query.
+	let watchTimeDelta = 0;
+	let completionDelta = 0;
+	if (cutoff && priorCutoff) {
+		const [priorRow] = await db
+			.select({
+				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
+				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
+			})
+			.from(mediaWatchProgress)
+			.where(and(
+				inArray(mediaWatchProgress.contentId, contentIds),
+				gte(mediaWatchProgress.updatedAt, priorCutoff),
+				lt(mediaWatchProgress.updatedAt, cutoff)
+			));
+		const priorWatchSeconds = Number(priorRow?.watchSeconds ?? 0);
+		const priorAvgCompletion = Number(priorRow?.avgCompletion ?? 0);
+		if (priorWatchSeconds > 0) {
+			watchTimeDelta = Math.round(((totalWatchSeconds - priorWatchSeconds) / priorWatchSeconds) * 1000) / 10;
+		} else if (totalWatchSeconds > 0) {
+			watchTimeDelta = 100;
+		}
+		if (priorAvgCompletion > 0) {
+			completionDelta = Math.round(((overallCompletionRate - priorAvgCompletion) / priorAvgCompletion) * 1000) / 10;
+		} else if (overallCompletionRate > 0) {
+			completionDelta = 100;
+		}
 	}
 
 	// Age + gender breakdown. Join watch_session_meta → user to read
@@ -306,7 +360,17 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			genderDistribution,
 			topCountries
 		},
-		engagementTrends: trends
+		engagementTrends: trends,
+		series: {
+			views: seriesViews,
+			watchMinutes: seriesWatchMinutes,
+			completion: seriesCompletion
+		},
+		deltas: {
+			views: growthRate,
+			watchTime: watchTimeDelta,
+			completion: completionDelta
+		}
 	});
 };
 
@@ -326,6 +390,8 @@ function emptyResponse(period: string) {
 		contentPerformance: [],
 		viewsByDevice: [],
 		demographics: { ageGroups: [], genderDistribution: [], topCountries: [] },
-		engagementTrends: []
+		engagementTrends: [],
+		series: { views: [], watchMinutes: [], completion: [] },
+		deltas: { views: 0, watchTime: 0, completion: 0 }
 	};
 }

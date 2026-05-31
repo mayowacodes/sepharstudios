@@ -12,7 +12,14 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!jobId) return json({ error: 'jobId is required' }, { status: 400 });
 
 	const [content] = await db
-		.select({ id: mediaLibrary.id, creatorId: mediaLibrary.creatorId })
+		.select({
+			id: mediaLibrary.id,
+			creatorId: mediaLibrary.creatorId,
+			processingStatus: mediaLibrary.processingStatus,
+			processingProgress: mediaLibrary.processingProgress,
+			processingStage: mediaLibrary.processingStage,
+			processingError: mediaLibrary.processingError
+		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.encoderJobId, jobId))
 		.limit(1);
@@ -23,11 +30,25 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
+	// The DB columns are the source of truth for the UI progress bar — they
+	// are populated by either the webhook (push path) or the cron (pull
+	// fallback). The orchestrator GET below is best-effort context.
+	const base = {
+		contentId: content.id,
+		jobId,
+		status: content.processingStatus,
+		progress: content.processingProgress ?? 0,
+		stage: content.processingStage,
+		error: content.processingError
+	};
+
 	try {
-		const status = await getEncoderJob(jobId);
-		return json({ contentId: content.id, ...status });
+		const orchestratorStatus = await getEncoderJob(jobId);
+		return json({ ...base, orchestrator: orchestratorStatus });
 	} catch (error) {
-		console.error(`Failed to fetch encoder job ${jobId}:`, error);
-		return json({ error: 'Failed to fetch encoder job' }, { status: 500 });
+		// Orchestrator unreachable — degraded, but the DB-backed fields are
+		// still valid so the UI can keep rendering.
+		console.warn(`Encoder job ${jobId} orchestrator lookup failed; serving DB-only state:`, error);
+		return json(base);
 	}
 };

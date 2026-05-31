@@ -2,6 +2,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { ContentStatus, ContentType } from '$lib/types/creator';
+  import { Video, Clock, CheckCircle2, XCircle, FileText } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
   
   // Content management data
   let allContent = $state<any[]>([]);
@@ -283,33 +286,18 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header with Stats -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">Content Management</h1>
-      <p class="text-gray-300">Manage all submitted content across the platform</p>
-    </div>
-    
-    <!-- Quick Stats -->
-    <div class="mt-4 lg:mt-0 grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-blue-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-blue-400">{allContent.filter(c => c.status === ContentStatus.SUBMITTED).length}</div>
-        <div class="text-blue-200 text-xs">Pending Review</div>
-      </div>
-      <div class="bg-green-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-green-400">{allContent.filter(c => c.status === ContentStatus.PUBLISHED).length}</div>
-        <div class="text-green-200 text-xs">Published</div>
-      </div>
-      <div class="bg-red-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-red-400">{allContent.filter(c => c.status === ContentStatus.REJECTED).length}</div>
-        <div class="text-red-200 text-xs">Rejected</div>
-      </div>
-      <div class="bg-purple-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-purple-400">{allContent.length}</div>
-        <div class="text-purple-200 text-xs">Total Content</div>
-      </div>
-    </div>
+<div class="container mx-auto px-4 py-4 space-y-6">
+  <PageHeader
+    icon={Video}
+    title="Content Management"
+    subtitle="Manage all submitted content across the platform."
+  />
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <KpiCard label="Pending Review" value={allContent.filter(c => c.status === ContentStatus.SUBMITTED).length} icon={Clock} accent="blue" variant="compact" index={0} />
+    <KpiCard label="Published" value={allContent.filter(c => c.status === ContentStatus.PUBLISHED).length} icon={CheckCircle2} accent="green" variant="compact" index={1} />
+    <KpiCard label="Rejected" value={allContent.filter(c => c.status === ContentStatus.REJECTED).length} icon={XCircle} accent="red" variant="compact" index={2} />
+    <KpiCard label="Total Content" value={allContent.length} icon={FileText} accent="purple" variant="compact" index={3} />
   </div>
 
   <!-- Filters and Controls -->

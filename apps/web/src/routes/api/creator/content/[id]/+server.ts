@@ -9,7 +9,7 @@ import {
 import { user } from '$lib/db/schema';
 import { and, eq, sql, gte, isNotNull } from 'drizzle-orm';
 import { Role } from '$lib/constants';
-import { notify } from '$lib/server/notify';
+import { notify, notifyAdmins } from '$lib/server/notify';
 
 /**
  * GET    /api/creator/content/[id] — single content row + per-content analytics
@@ -22,8 +22,9 @@ import { notify } from '$lib/server/notify';
  */
 
 const ALLOWED_PATCH_FIELDS = new Set([
-	// Basic Info
-	'title', 'description', 'contentType', 'ageRating', 'isPpv', 'ppvPriceDollars',
+	// Basic Info — PPV pricing lives in the `ppv_content` table, NOT on
+	// media_library. Creator-suggested PPV happens via the admin PPV modal.
+	'title', 'description', 'contentType', 'ageRating',
 	// Metadata
 	'genres', 'topics', 'keywords', 'bibleReference', 'language', 'duration',
 	'ministryAffiliation', 'hasSubtitles', 'hasClosedCaptions',
@@ -31,11 +32,16 @@ const ALLOWED_PATCH_FIELDS = new Set([
 	'thumbnail', 'posterUrl', 'posterLandscapeUrl', 'posterSquareUrl',
 	'logoTitleUrl', 'backdropUrl', 'trailerUrl',
 	// Visibility + scheduling (creator-controlled)
-	'visibility', 'scheduledPublishAt'
+	'visibility', 'scheduledPublishAt',
+	// Catalog completion round: chapters, cast, crew, region restrictions
+	'chapters', 'cast', 'crew', 'geoMode', 'geoRegions',
+	// Curated end-screen next-up
+	'nextUpContentIds'
 ]);
 
 const ALLOWED_VISIBILITY = new Set(['public', 'unlisted', 'private']);
 const ALLOWED_CONTENT_TYPES = new Set(['movie', 'show', 'documentary']);
+const ALLOWED_GEO_MODES = new Set(['all', 'allow', 'block']);
 
 async function loadOwned(contentId: string, ownerId: string) {
 	const [row] = await db.select()
@@ -173,6 +179,95 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 			updates[key] = Array.isArray(value) ? value.filter((v) => typeof v === 'string') : [];
 			continue;
 		}
+		if (key === 'chapters') {
+			if (value === null) { updates.chapters = null; continue; }
+			if (!Array.isArray(value)) {
+				return json({ error: 'chapters must be an array' }, { status: 400 });
+			}
+			if (value.length > 50) {
+				return json({ error: 'Max 50 chapters' }, { status: 400 });
+			}
+			const cleaned: Array<{ start: number; title: string }> = [];
+			let lastStart = -1;
+			for (const v of value) {
+				if (!v || typeof v !== 'object') {
+					return json({ error: 'Each chapter must be an object' }, { status: 400 });
+				}
+				const start = Number((v as { start: unknown }).start);
+				const title = String((v as { title: unknown }).title ?? '').trim();
+				if (!Number.isFinite(start) || start < 0) {
+					return json({ error: 'chapter.start must be a non-negative number' }, { status: 400 });
+				}
+				if (!title) {
+					return json({ error: 'chapter.title is required' }, { status: 400 });
+				}
+				if (start <= lastStart) {
+					return json({ error: 'chapter starts must be strictly increasing' }, { status: 400 });
+				}
+				lastStart = start;
+				cleaned.push({ start, title: title.slice(0, 80) });
+			}
+			updates.chapters = cleaned;
+			continue;
+		}
+		if (key === 'cast' || key === 'crew') {
+			if (!Array.isArray(value)) {
+				return json({ error: `${key} must be an array` }, { status: 400 });
+			}
+			if (value.length > 50) {
+				return json({ error: `Max 50 ${key} entries` }, { status: 400 });
+			}
+			const cleaned = value.map((v) => {
+				if (!v || typeof v !== 'object') return null;
+				const name = String((v as { name: unknown }).name ?? '').trim();
+				const role = String((v as { role: unknown }).role ?? '').trim();
+				if (!name || !role) return null;
+				const photoUrl = (v as { photoUrl?: unknown }).photoUrl;
+				const out: Record<string, unknown> = {
+					name: name.slice(0, 120),
+					role: role.slice(0, 80)
+				};
+				if (typeof photoUrl === 'string' && photoUrl) out.photoUrl = photoUrl.slice(0, 500);
+				if (key === 'cast') {
+					const characterName = (v as { characterName?: unknown }).characterName;
+					if (typeof characterName === 'string' && characterName) {
+						out.characterName = characterName.trim().slice(0, 120);
+					}
+				}
+				return out;
+			}).filter((v): v is Record<string, unknown> => v !== null);
+			updates[key] = cleaned;
+			continue;
+		}
+		if (key === 'geoMode') {
+			if (typeof value !== 'string' || !ALLOWED_GEO_MODES.has(value)) {
+				return json({ error: 'Invalid geoMode' }, { status: 400 });
+			}
+			updates.geoMode = value;
+			continue;
+		}
+		if (key === 'geoRegions') {
+			if (!Array.isArray(value)) {
+				return json({ error: 'geoRegions must be an array' }, { status: 400 });
+			}
+			const cleaned = value
+				.filter((v): v is string => typeof v === 'string')
+				.map((v) => v.trim().toUpperCase())
+				.filter((v) => /^[A-Z]{2}$/.test(v));
+			updates.geoRegions = cleaned;
+			continue;
+		}
+		if (key === 'nextUpContentIds') {
+			if (!Array.isArray(value)) {
+				return json({ error: 'nextUpContentIds must be an array' }, { status: 400 });
+			}
+			const cleaned = value
+				.filter((v): v is string => typeof v === 'string' && v.length > 0)
+				.filter((v) => v !== row.id)
+				.slice(0, 12);
+			updates.nextUpContentIds = Array.from(new Set(cleaned));
+			continue;
+		}
 		// Catch-all for the remaining text / boolean / nullable fields.
 		updates[key] = value as never;
 	}
@@ -187,7 +282,7 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 		.returning();
 
 	// Side-effect: re-index in Meilisearch when discoverable fields change.
-	const reindexFields = ['title', 'description', 'genres', 'topics', 'keywords', 'bibleReference'];
+	const reindexFields = ['title', 'description', 'genres', 'topics', 'keywords', 'bibleReference', 'cast', 'crew'];
 	if (updated.status === 'published' && reindexFields.some((f) => f in updates)) {
 		try {
 			const { indexMedia, isMeiliConfigured } = await import('$lib/server/meilisearch');
@@ -207,7 +302,9 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 					thumbnail: updated.thumbnail,
 					posterUrl: updated.posterUrl,
 					viewCount: Number(updated.viewCount ?? 0),
-					createdAt: updated.createdAt.getTime()
+					createdAt: updated.createdAt.getTime(),
+					castNames: Array.isArray(updated.cast) ? updated.cast.map((c) => c.name).filter(Boolean) : [],
+					crewNames: Array.isArray(updated.crew) ? updated.crew.map((c) => c.name).filter(Boolean) : []
 				}]);
 			}
 		} catch (err) {
@@ -215,11 +312,17 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 		}
 	}
 
-	// Side-effect: if contentType changes, notify the creator via in-app msg —
-	// admin needs to re-review since the catalog category shifted. We don't
-	// have a generic "system → all admins" notify; just log for now.
+	// Side-effect: if contentType changes, ping every admin so the catalog
+	// team can re-review (the row may have shifted into a different review
+	// bucket — movie vs show vs documentary).
 	if ('mediaType' in updates && row.mediaType !== updates.mediaType) {
 		console.info(`[creator/content PATCH] mediaType change ${row.mediaType} → ${updates.mediaType} on ${row.id}`);
+		notifyAdmins({
+			kind: 'system',
+			title: `Content type changed: "${updated.title.slice(0, 50)}"`,
+			message: `Creator changed mediaType from ${row.mediaType} to ${updates.mediaType}. Re-review may be needed.`,
+			actionUrl: `/admin/review/${updated.id}`
+		}).catch(() => undefined);
 	}
 
 	return json({ success: true, content: updated });

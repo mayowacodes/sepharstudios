@@ -1,6 +1,11 @@
 <!-- Creator Analytics Dashboard -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { BarChart3, Eye, Clock, Target, Heart } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import TrendChart from '$lib/components/dashboard/TrendChart.svelte';
+  import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   // Real analytics — pulled from /api/creator/analytics
   let analyticsData = $state<any>({});
@@ -50,7 +55,9 @@
       contentPerformance: [],
       viewsByDevice: [],
       demographics: { ageGroups: [], genderDistribution: [], topCountries: [] },
-      engagementTrends: []
+      engagementTrends: [],
+      series: { views: [], watchMinutes: [], completion: [] },
+      deltas: { views: 0, watchTime: 0, completion: 0 }
     };
   }
 
@@ -95,36 +102,23 @@
 </script>
 
 <div class="space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>
-      <p class="text-gray-300">Track your content performance and audience engagement</p>
-    </div>
-    
-    <!-- Time Period Selector -->
-    <div class="mt-4 sm:mt-0 flex space-x-3">
-      <select 
+  <PageHeader
+    icon={BarChart3}
+    title="Analytics"
+    subtitle="Track your content performance and audience engagement."
+  >
+    {#snippet actions()}
+      <select
         bind:value={selectedPeriod}
-        class="px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+        class="px-3 py-1.5 surface-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-purple-600"
       >
         <option value="7d">Last 7 days</option>
         <option value="30d">Last 30 days</option>
         <option value="90d">Last 90 days</option>
         <option value="1y">Last year</option>
       </select>
-      
-      <select 
-        bind:value={selectedContent}
-        class="px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-      >
-        <option value="all">All Content</option>
-        <option value="3">Worship Night Live</option>
-        <option value="1">Faith in Action</option>
-        <option value="2">Sunday Sermon Series</option>
-      </select>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
   <!-- AI Insights panel — real data from /api/ai/creator-insights -->
   <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
@@ -201,66 +195,64 @@
   </div>
 
   {#if isLoading}
-    <!-- Loading State -->
-    <div class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      <p class="text-white ml-4">Loading analytics...</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {#each Array(4) as _ (_)}
+        <Skeleton class="h-28 rounded-xl" />
+      {/each}
     </div>
+    <Skeleton class="h-64 rounded-xl" />
   {:else}
-    <!-- Overview Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-linear-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold">{formatNumber(analyticsData.overview.totalViews)}</div>
-            <div class="text-blue-100 text-sm">Total Views</div>
-          </div>
-          <div class="text-3xl opacity-80">👁️</div>
-        </div>
-        <div class="mt-2 text-blue-100 text-xs">
-          +{analyticsData.overview.growthRate}% from last period
-        </div>
-      </div>
-      
-      <div class="bg-linear-to-r from-green-600 to-green-700 rounded-xl p-6 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold">{formatDuration(analyticsData.overview.totalWatchTime)}</div>
-            <div class="text-green-100 text-sm">Total Watch Time</div>
-          </div>
-          <div class="text-3xl opacity-80">⏱️</div>
-        </div>
-        <div class="mt-2 text-green-100 text-xs">
-          Avg: {analyticsData.overview.averageWatchTime} min per view
-        </div>
-      </div>
-      
-      <div class="bg-linear-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold">{analyticsData.overview.completionRate}%</div>
-            <div class="text-purple-100 text-sm">Completion Rate</div>
-          </div>
-          <div class="text-3xl opacity-80">📊</div>
-        </div>
-        <div class="mt-2 text-purple-100 text-xs">
-          Average across all content
-        </div>
-      </div>
-      
-      <div class="bg-linear-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold">{formatNumber(analyticsData.overview.totalLikes)}</div>
-            <div class="text-orange-100 text-sm">Total Engagement</div>
-          </div>
-          <div class="text-3xl opacity-80">❤️</div>
-        </div>
-        <div class="mt-2 text-orange-100 text-xs">
-          {formatNumber(analyticsData.overview.totalShares)} shares
-        </div>
-      </div>
+    <!-- KPI grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <KpiCard
+        label="Total Views"
+        value={formatNumber(analyticsData.overview.totalViews)}
+        icon={Eye}
+        accent="blue"
+        delta={analyticsData.deltas?.views ?? analyticsData.overview.growthRate ?? 0}
+        deltaLabel="vs prior period"
+        sparkline={analyticsData.series?.views ?? []}
+        index={0}
+      />
+      <KpiCard
+        label="Watch Time"
+        value={formatDuration(analyticsData.overview.totalWatchTime)}
+        icon={Clock}
+        accent="green"
+        delta={analyticsData.deltas?.watchTime ?? 0}
+        deltaLabel="vs prior period"
+        sparkline={analyticsData.series?.watchMinutes ?? []}
+        index={1}
+      />
+      <KpiCard
+        label="Completion"
+        value={`${analyticsData.overview.completionRate}%`}
+        icon={Target}
+        accent="purple"
+        delta={analyticsData.deltas?.completion ?? 0}
+        deltaLabel="vs prior period"
+        sparkline={analyticsData.series?.completion ?? []}
+        index={2}
+      />
+      <KpiCard
+        label="Engagement"
+        value={formatNumber(analyticsData.overview.totalLikes)}
+        icon={Heart}
+        accent="orange"
+        deltaLabel={`${formatNumber(analyticsData.overview.totalShares)} shares`}
+        index={3}
+      />
     </div>
+
+    <!-- Engagement trend chart -->
+    {#if analyticsData.engagementTrends?.length > 0}
+      <TrendChart
+        data={analyticsData.engagementTrends.map((t: { date: string; views: number }) => ({ date: t.date, value: t.views }))}
+        label="Daily views"
+        accent="purple"
+        formatValue={(v) => formatNumber(v)}
+      />
+    {/if}
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Content Performance -->

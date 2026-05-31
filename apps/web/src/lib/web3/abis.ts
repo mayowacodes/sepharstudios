@@ -1,11 +1,19 @@
-// Contract ABIs - These will be auto-generated after contract compilation
-// For now, we'll include the key functions needed
+// Contract ABIs for client + server-side web3 calls. The set below is
+// hand-maintained against the deployed Solidity contracts (see the
+// `/contracts` workspace). When you change a contract, regenerate the
+// matching block here — typechain output isn't wired into this app.
 
 export const STUDIO_CHAIN_TOKEN_ABI = [
-  // Basic ERC20 functions
+  // ERC-20 metadata
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)',
+
+  // ERC-20 core
   'function balanceOf(address owner) view returns (uint256)',
   'function totalSupply() view returns (uint256)',
   'function transfer(address to, uint256 amount) returns (bool)',
+  'function transferFrom(address from, address to, uint256 amount) returns (bool)',
   'function approve(address spender, uint256 amount) returns (bool)',
   'function allowance(address owner, address spender) view returns (uint256)',
 
@@ -16,12 +24,14 @@ export const STUDIO_CHAIN_TOKEN_ABI = [
   'function getUserDiscount(address user) view returns (uint256)',
   'function getStakingInfo(address user) view returns (uint256 amount, uint256 stakingTime, uint256 lockPeriod, uint256 discountTier, bool isUnlocked)',
 
-  // Reward functions
+  // Reward functions (treasury → user)
   'function rewardUser(address user, uint256 amount, string memory rewardType)',
+  'function batchRewardUsers(address[] users, uint256[] amounts, string memory rewardType)',
   'function userRewardsEarned(address user) view returns (uint256)',
 
   // Events
   'event Transfer(address indexed from, address indexed to, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)',
   'event TokensStaked(address indexed user, uint256 amount, uint256 lockPeriod)',
   'event TokensUnstaked(address indexed user, uint256 amount)',
   'event RewardClaimed(address indexed user, uint256 amount, string rewardType)'

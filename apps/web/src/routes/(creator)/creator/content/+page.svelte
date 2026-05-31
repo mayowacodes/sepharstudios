@@ -9,6 +9,61 @@
   let searchTerm = $state('');
   let selectedType = $state('all');
   let isLoading = $state(true);
+
+  // Bulk-action state (Item 5B)
+  let selected = $state<Record<string, boolean>>({});
+  const selectedIds = $derived(Object.keys(selected).filter((id) => selected[id]));
+  let bulkBusy = $state(false);
+
+  function toggleOne(id: string) {
+    selected[id] = !selected[id];
+    selected = { ...selected };
+  }
+  function toggleAll() {
+    const ids = filteredContent.map((c: any) => c.id);
+    const allSelected = ids.every((id: string) => selected[id]);
+    selected = allSelected ? {} : Object.fromEntries(ids.map((id: string) => [id, true]));
+  }
+  async function bulkAction(action: 'publish' | 'unlist' | 'private' | 'archive' | 'delete') {
+    if (selectedIds.length === 0) return;
+    const destructive = action === 'archive' || action === 'delete';
+    if (destructive && !confirm(`${action === 'delete' ? 'Delete' : 'Archive'} ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}? This will hide them from viewers.`)) return;
+    bulkBusy = true;
+    try {
+      const res = await fetch('/api/creator/content/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds, action })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Bulk action failed');
+      selected = {};
+      // Reload list so visibility / status reflects the bulk change.
+      const r = await fetch('/api/creator/content');
+      if (r.ok) {
+        const items = await r.json();
+        contentLibrary = items.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          contentType: item.mediaType ?? ContentType.MOVIE,
+          status: item.status ?? ContentStatus.SUBMITTED,
+          submittedAt: item.createdAt ? new Date(item.createdAt) : null,
+          lastUpdated: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          thumbnailUrl: item.thumbnail || item.posterUrl || item.backdropUrl || '',
+          duration: item.duration ? Number(item.duration) : 0,
+          tags: item.genres ?? item.keywords ?? [],
+          reviewNotes: item.reviewNotes || undefined,
+          rejectionReason: item.rejectionReason || undefined,
+          views: item.viewCount || 0
+        }));
+      }
+    } catch (err: any) {
+      alert(err.message ?? 'Failed');
+    } finally {
+      bulkBusy = false;
+    }
+  }
   
   // Filter content based on status and search
   const filteredContent = $derived(
@@ -217,15 +272,42 @@
       <p class="text-white ml-4">Loading your content...</p>
     </div>
   {:else}
+    <!-- Bulk action bar -->
+    {#if selectedIds.length > 0}
+      <div class="sticky top-4 z-20 bg-purple-900/90 backdrop-blur border border-purple-500/40 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3 shadow-lg">
+        <span class="text-sm text-white font-medium">{selectedIds.length} selected</span>
+        <button type="button" onclick={toggleAll} class="text-xs text-purple-200 hover:text-white underline">
+          {filteredContent.every((c: any) => selected[c.id]) ? 'Clear' : 'Select all visible'}
+        </button>
+        <div class="flex flex-wrap gap-2 ml-auto">
+          <button type="button" onclick={() => bulkAction('publish')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white">Make public</button>
+          <button type="button" onclick={() => bulkAction('unlist')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white">Unlist</button>
+          <button type="button" onclick={() => bulkAction('private')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white">Make private</button>
+          <button type="button" onclick={() => bulkAction('archive')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white">Archive</button>
+          <button type="button" onclick={() => bulkAction('delete')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white">Delete</button>
+        </div>
+      </div>
+    {/if}
+
     <!-- Content Grid -->
     <div class="space-y-4">
       {#each filteredContent as content}
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/15 transition-all">
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/15 transition-all {selected[content.id] ? 'ring-2 ring-purple-500' : ''}">
           <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+            <!-- Selection checkbox -->
+            <div class="flex-shrink-0 pt-2">
+              <input
+                type="checkbox"
+                checked={!!selected[content.id]}
+                onchange={() => toggleOne(content.id)}
+                class="w-4 h-4 accent-purple-500"
+                aria-label={`Select ${content.title}`}
+              />
+            </div>
             <!-- Thumbnail -->
             <div class="flex-shrink-0">
-              <img 
-                src={content.thumbnailUrl} 
+              <img
+                src={content.thumbnailUrl}
                 alt={content.title}
                 class="w-full lg:w-48 h-32 object-cover rounded-lg"
               />

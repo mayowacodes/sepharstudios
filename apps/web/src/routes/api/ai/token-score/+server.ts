@@ -27,7 +27,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				watchTimeSeconds = 0,
 				totalDurationSeconds = 0,
 				leftReview = false,
-				leftComment = false,
 				sharedContent = false,
 				addedToWatchlist = false,
 				baseStcReward = 10
@@ -38,7 +37,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				watchTimeSeconds,
 				totalDurationSeconds,
 				leftReview,
-				leftComment,
 				sharedContent,
 				addedToWatchlist,
 				baseStcReward
@@ -54,7 +52,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				avgSessionDurationSeconds = 0,
 				avgCompletionPercent = 0,
 				reviewsLeft = 0,
-				commentsLeft = 0,
 				uniqueContentsWatched = 0,
 				stcEarned30Days = 0,
 				accountAgedays = 0
@@ -66,7 +63,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				avgSessionDurationSeconds,
 				avgCompletionPercent,
 				reviewsLeft,
-				commentsLeft,
 				uniqueContentsWatched,
 				stcEarned30Days,
 				accountAgedays

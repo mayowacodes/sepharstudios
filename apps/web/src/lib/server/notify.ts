@@ -29,6 +29,7 @@ export type NotificationKind =
   | 'content_publish'
   | 'achievement'
   | 'event_reminder'
+  | 'admin_message'
   | 'system';
 
 interface NotifyArgs {
@@ -44,6 +45,27 @@ interface NotifyArgs {
   /** Optional: function to send the email. Receives the user's email address
    *  and display name. Called only if `emailPref` exists and is `true`. */
   emailFn?: (toEmail: string, displayName: string) => Promise<void>;
+}
+
+/**
+ * Fan out an in-app notification to every admin. Useful when something
+ * needs cross-team review (a creator's mediaType changed, a payout
+ * dispute landed, a content scan flagged something). The per-admin
+ * notifies are fire-and-forget — one failed insert never blocks the rest.
+ */
+export async function notifyAdmins(args: Omit<NotifyArgs, 'userId'>): Promise<void> {
+  try {
+    const admins = await db.select({ id: user.id })
+      .from(user)
+      .where(eq(user.role, 'admin'));
+    await Promise.all(admins.map((a) =>
+      notify({ ...args, userId: a.id }).catch((err) => {
+        console.warn('[notifyAdmins] per-admin notify failed:', a.id, err);
+      })
+    ));
+  } catch (err) {
+    console.error('[notifyAdmins] admin lookup failed:', err);
+  }
 }
 
 export async function notify(args: NotifyArgs): Promise<void> {

@@ -161,6 +161,63 @@ export const mediaLibrary = pgTable('media_library', {
 	encoderJobId: text('encoder_job_id'),
 	processingStatus: varchar('processing_status', { length: 30 }).default('not_started').notNull(),
 	processingError: text('processing_error'),
+	// Encoder progress (R+1): % done (0-100) + active pipeline stage so the
+	// UI can render a meaningful progress bar while jobs are running.
+	processingProgress: integer('processing_progress'),
+	processingStage: varchar('processing_stage', { length: 40 }),
+	// Pre-publish content scan (R+5). The orchestrator delivers a transcript
+	// + sampled frames to /api/encoder/scan-ready; the platform runs AI
+	// doctrinal + family-safety checks on the actual content (not metadata).
+	// Status: 'idle' | 'in_progress' | 'complete' | 'failed' | 'skipped'.
+	// Report shape: see ContentScanReport in lib/types/content-scan.ts.
+	contentScanStatus: varchar('content_scan_status', { length: 20 }).default('idle').notNull(),
+	contentScanReport: jsonb('content_scan_report').$type<{
+		// Legacy single-track shape — kept for backwards compat with rows
+		// produced before the multi-track contract. Newer rows use subtitles[].
+		transcript?: { vttUrl?: string; txtUrl?: string; durationSec?: number; language?: string; wordCount?: number };
+		// New multi-track shape from the orchestrator's scan-ready webhook.
+		// One entry per language; the `default: true` row is the source-language
+		// auto-detected transcription. Translations are machine-translated.
+		subtitles?: Array<{
+			language: string;
+			kind: 'transcription' | 'translation';
+			default: boolean;
+			vttUrl?: string;
+			txtUrl?: string;
+			durationSec?: number;
+			wordCount?: number;
+			quality?: {
+				parseOk?: boolean;
+				cueCount?: number;
+				avgLogProb?: number;
+				noSpeechRatio?: number;
+				avgCompressionRatio?: number;
+				wordRate?: number;
+				suspectedHallucination?: boolean;
+				machineTranslated?: boolean;
+			};
+		}>;
+		// Player scrubbing-preview artifacts (also mirrored to dedicated
+		// columns for fast lookup).
+		thumbnails?: { posterUrl?: string; spriteUrls?: string[]; vttUrl?: string };
+		frames?: Array<{ index: number; timestampSec: number; url: string }>;
+		audioAvailable?: boolean;
+		videoDurationSec?: number;
+		aiVerdict?: {
+			verdict: 'approve' | 'flag' | 'reject';
+			theologyScore: number;
+			familySafeScore: number;
+			recommendedAgeRating: string;
+			flags: string[];
+			reason: string;
+			transcriptExcerpts?: Array<{ text: string; reason: string }>;
+		};
+		startedAt?: string;
+		completedAt?: string;
+		/** When set, the orchestrator timed out the scan and the payload is
+		 *  partial (subtitles or frames may be empty). */
+		partial?: boolean;
+	}>(),
 	processedAt: timestamp('processed_at'),
 	creatorId: text('creator_id').references(() => user.id, { onDelete: 'set null' }),
 	
@@ -205,6 +262,26 @@ export const mediaLibrary = pgTable('media_library', {
 	// When set, the scheduled-publish cron flips status to 'published' +
 	// isActive=true at this time (provided status='approved' already).
 	scheduledPublishAt: timestamp('scheduled_publish_at'),
+	// Viewer-engagement round additions:
+	//   chapters: [{ start: number (sec), title: string }, ...]
+	//   cast:     [{ name, role, photoUrl?, characterName? }, ...]
+	//   crew:     [{ name, role, photoUrl? }, ...]
+	chapters: jsonb('chapters').$type<Array<{ start: number; title: string }>>(),
+	cast: jsonb('cast').$type<Array<{ name: string; role: string; photoUrl?: string; characterName?: string }>>().default(sql`'[]'::jsonb`).notNull(),
+	crew: jsonb('crew').$type<Array<{ name: string; role: string; photoUrl?: string }>>().default(sql`'[]'::jsonb`).notNull(),
+	// Region gating. geoMode='all' = no restriction; 'allow' = whitelist; 'block' = blacklist.
+	geoMode: varchar('geo_mode', { length: 10 }).default('all').notNull(),
+	geoRegions: jsonb('geo_regions').$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+	// Creator-curated end-screen next-up. When non-empty, the watch page
+	// uses these IDs (in this order) instead of the auto-rec algorithm.
+	nextUpContentIds: jsonb('next_up_content_ids').$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+	// Player scrubbing-preview artifacts produced by the encoder
+	// orchestrator's scan-ready webhook. The VTT cues reference sprite
+	// sheet regions via `sprite_N.jpg#xywh=x,y,w,h`. posterAutoUrl is the
+	// fallback we use when the creator hasn't uploaded their own poster.
+	previewThumbnailsVtt: text('preview_thumbnails_vtt'),
+	previewSpriteUrls: jsonb('preview_sprite_urls').$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+	posterAutoUrl: text('poster_auto_url'),
 	reviewNotes: text('review_notes'),
 	rejectionReason: text('rejection_reason'),
 	reviewedAt: timestamp('reviewed_at'),
@@ -259,9 +336,72 @@ export const contentSubtitleTracks = pgTable('content_subtitle_tracks', {
 	label: varchar('label', { length: 60 }).notNull(),                     // human-readable
 	fileUrl: text('file_url').notNull(),                                   // VTT URL from /api/files
 	isDefault: boolean('is_default').default(false),
+	// True when this track was generated by the orchestrator's Whisper pass
+	// (R+5 transcript). Lets the creator distinguish auto from manually
+	// uploaded captions and re-run when the AI model improves.
+	autoGenerated: boolean('auto_generated').default(false).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 }, (t) => ({
 	contentIdx: index('content_subtitle_tracks_content_idx').on(t.contentId)
+}));
+
+// Live streaming foundation. One row per live stream the creator has set
+// up; status transitions: idle → ingest → live → ending → ended. After
+// `ended`, if `recordingMediaId` is set, the VOD recording lives in
+// media_library.
+export const liveStreams = pgTable('live_streams', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	streamKey: text('stream_key').notNull().unique(),
+	rtmpIngestUrl: text('rtmp_ingest_url'),
+	playbackUrl: text('playback_url'),
+	thumbnailUrl: text('thumbnail_url'),
+	status: varchar('status', { length: 20 }).default('idle').notNull(),
+	// 'idle' | 'ingest' | 'live' | 'ending' | 'ended' | 'errored'
+	visibility: varchar('visibility', { length: 20 }).default('public').notNull(),
+	scheduledStartAt: timestamp('scheduled_start_at'),
+	startedAt: timestamp('started_at'),
+	endedAt: timestamp('ended_at'),
+	viewerCount: integer('viewer_count').default(0).notNull(),
+	viewerCountPeak: integer('viewer_count_peak').default(0).notNull(),
+	recordingMediaId: text('recording_media_id'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	creatorIdx: index('live_streams_creator_idx').on(t.creatorId, t.createdAt),
+	statusIdx: index('live_streams_status_idx').on(t.status)
+}));
+
+// Live chat messages. Per-stream chat, AI-moderated on POST. Creator can
+// pin / delete; admin can purge.
+export const liveChatMessages = pgTable('live_chat_messages', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	streamId: text('stream_id').notNull().references(() => liveStreams.id, { onDelete: 'cascade' }),
+	authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	body: text('body').notNull(),
+	status: varchar('status', { length: 20 }).default('published').notNull(),
+	// 'published' | 'pending' | 'hidden' | 'removed'
+	pinned: boolean('pinned').default(false).notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	streamIdx: index('live_chat_messages_stream_idx').on(t.streamId, t.createdAt)
+}));
+
+// Per-region PPV pricing. The platform resolves an exact-region match
+// first, then a wildcard ('*') default row, then falls back to the
+// admin-approved ppvContent.finalPriceCents. Currency code is ISO-4217.
+export const contentPricing = pgTable('content_pricing', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	regionCode: varchar('region_code', { length: 2 }).notNull(), // ISO-3166-1 alpha-2; '*' = default
+	priceCents: integer('price_cents').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	contentRegionIdx: index('content_pricing_content_region_idx').on(t.contentId, t.regionCode)
 }));
 
 // User table extension (add to existing user table)
@@ -1015,8 +1155,176 @@ export const payouts = pgTable('payouts', {
 	approvedBy: text('approved_by').references(() => user.id),
 	approvedAt: timestamp('approved_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
-	paidAt: timestamp('paid_at')
+	paidAt: timestamp('paid_at'),
+	// Reserve hold (Payouts 4C). When set, the payout cron skips this row
+	// until `held_until` passes. Used to cover dispute window + chargebacks.
+	heldUntil: timestamp('held_until')
 }, (t) => ({
 	creatorIdx: index('payouts_creator_idx').on(t.creatorId),
 	statusIdx: index('payouts_status_idx').on(t.status)
+}));
+
+// Payout disputes (Payouts 4C). Created by Stripe webhook on
+// `charge.dispute.created`; closed by `charge.dispute.closed`.
+export const payoutDisputes = pgTable('payout_disputes', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	processor: varchar('processor', { length: 20 }).notNull(),       // 'stripe' | 'paystack'
+	processorDisputeId: text('processor_dispute_id').notNull().unique(),
+	payoutId: text('payout_id').references(() => payouts.id),
+	ppvPurchaseId: text('ppv_purchase_id'),
+	amountCents: bigint('amount_cents', { mode: 'number' }).notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	reason: varchar('reason', { length: 60 }),
+	status: varchar('status', { length: 20 }).default('open').notNull(),
+	// 'open' | 'won' | 'lost' | 'withdrawn' | 'warning_closed'
+	evidenceDueAt: timestamp('evidence_due_at'),
+	rawPayload: jsonb('raw_payload'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	closedAt: timestamp('closed_at')
+}, (t) => ({
+	statusIdx: index('payout_disputes_status_idx').on(t.status),
+	payoutIdx: index('payout_disputes_payout_idx').on(t.payoutId)
+}));
+
+// Tax forms (Payouts 4B). One row per creator + form_kind + tax_year.
+// W-9 (US persons), W-8BEN (foreign individuals), W-8BEN-E (foreign
+// entities). Sensitive fields (TIN/SSN) are stored encrypted at the
+// application layer before insert; this column is jsonb just so we can
+// roundtrip the form schema.
+export const taxForms = pgTable('tax_forms', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => creators.id, { onDelete: 'cascade' }),
+	formKind: varchar('form_kind', { length: 20 }).notNull(),
+	// 'W-9' | 'W-8BEN' | 'W-8BEN-E'
+	taxYear: integer('tax_year').notNull(),
+	formData: jsonb('form_data').notNull(),
+	status: varchar('status', { length: 20 }).default('submitted').notNull(),
+	// 'submitted' | 'verified' | 'rejected' | 'expired'
+	verifiedBy: text('verified_by').references(() => user.id),
+	verifiedAt: timestamp('verified_at'),
+	rejectionReason: text('rejection_reason'),
+	pdfUrl: text('pdf_url'),
+	submittedAt: timestamp('submitted_at').defaultNow().notNull()
+}, (t) => ({
+	creatorIdx: index('tax_forms_creator_idx').on(t.creatorId, t.taxYear),
+	statusIdx: index('tax_forms_status_idx').on(t.status)
+}));
+
+// 1099 forms (Payouts 4B). Generated annually for US creators (with W-9
+// on file) whose total annual earnings ≥ $600. PDF rendered + uploaded
+// to MinIO; URL stored here.
+export const tax1099Forms = pgTable('tax_1099_forms', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => creators.id, { onDelete: 'cascade' }),
+	taxYear: integer('tax_year').notNull(),
+	totalPaidCents: bigint('total_paid_cents', { mode: 'number' }).notNull(),
+	pdfUrl: text('pdf_url'),
+	emailedAt: timestamp('emailed_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	creatorIdx: index('tax_1099_forms_creator_idx').on(t.creatorId, t.taxYear)
+}));
+
+// A/B thumbnail testing — multiple poster variants per content with
+// impression + click counters. The rotation helper picks one per (user,
+// content) deterministically. Promoting a winner copies its URL into
+// mediaLibrary.thumbnail.
+export const contentThumbnailVariants = pgTable('content_thumbnail_variants', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	url: text('url').notNull(),
+	label: varchar('label', { length: 40 }),
+	isActive: boolean('is_active').default(true).notNull(),
+	isWinner: boolean('is_winner').default(false).notNull(),
+	impressions: integer('impressions').default(0).notNull(),
+	clicks: integer('clicks').default(0).notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	// Auto-promote timestamp. Set by the cron when a winner emerges with
+	// statistical significance (see lib/server/ab-promote.ts).
+	promotedAt: timestamp('promoted_at')
+}, (t) => ({
+	contentIdx: index('content_thumbnail_variants_content_idx').on(t.contentId)
+}));
+
+// Copilot conversations + messages (R+3 — AI Layer 2). One conversation
+// per chat session per user. Messages store the rolling transcript so the
+// Copilot can resume across page navigations.
+export const copilotConversations = pgTable('copilot_conversations', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	variant: varchar('variant', { length: 10 }).notNull(),
+	title: text('title'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	userIdx: index('copilot_conversations_user_idx').on(t.userId, t.updatedAt)
+}));
+
+export const copilotMessages = pgTable('copilot_messages', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	conversationId: text('conversation_id').notNull().references(() => copilotConversations.id, { onDelete: 'cascade' }),
+	role: varchar('role', { length: 20 }).notNull(),
+	content: text('content').notNull(),
+	toolName: varchar('tool_name', { length: 60 }),
+	toolInput: jsonb('tool_input').$type<Record<string, unknown>>(),
+	toolOutput: jsonb('tool_output').$type<Record<string, unknown>>(),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	convoIdx: index('copilot_messages_convo_idx').on(t.conversationId, t.createdAt)
+}));
+
+// AI tool-call audit (R+3). Every mutating tool call logs here so admins
+// can answer "the AI did what?" later.
+export const aiActionLog = pgTable('ai_action_log', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	conversationId: text('conversation_id'),
+	tool: varchar('tool', { length: 60 }).notNull(),
+	input: jsonb('input').$type<Record<string, unknown>>(),
+	output: jsonb('output').$type<Record<string, unknown>>(),
+	approved: boolean('approved').default(false).notNull(),
+	executedAt: timestamp('executed_at'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	userIdx: index('ai_action_log_user_idx').on(t.userId, t.createdAt),
+	toolIdx: index('ai_action_log_tool_idx').on(t.tool)
+}));
+
+// AI Layer 3 agent runs (R+4). One row per autonomous agent invocation.
+// `summary` is a short human-readable description for the admin run list.
+export const agentRuns = pgTable('agent_runs', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	agent: varchar('agent', { length: 60 }).notNull(),
+	status: varchar('status', { length: 20 }).default('running').notNull(),
+	startedAt: timestamp('started_at').defaultNow().notNull(),
+	finishedAt: timestamp('finished_at'),
+	steps: integer('steps').default(0).notNull(),
+	costCents: integer('cost_cents').default(0).notNull(),
+	itemsProcessed: integer('items_processed').default(0).notNull(),
+	itemsActioned: integer('items_actioned').default(0).notNull(),
+	summary: text('summary'),
+	error: text('error')
+}, (t) => ({
+	agentIdx: index('agent_runs_agent_idx').on(t.agent, t.startedAt),
+	statusIdx: index('agent_runs_status_idx').on(t.status)
+}));
+
+// AI Layer 1 call audit (R+2). One row per inline-AI call. Drives the
+// admin "AI usage" view and powers the per-user monthly budget cap.
+export const aiCallLog = pgTable('ai_call_log', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	surface: varchar('surface', { length: 60 }).notNull(),
+	model: varchar('model', { length: 80 }),
+	provider: varchar('provider', { length: 20 }),
+	tokensIn: integer('tokens_in').default(0).notNull(),
+	tokensOut: integer('tokens_out').default(0).notNull(),
+	costCents: integer('cost_cents').default(0).notNull(),
+	latencyMs: integer('latency_ms').default(0).notNull(),
+	ok: boolean('ok').default(true).notNull(),
+	error: text('error'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	userIdx: index('ai_call_log_user_idx').on(t.userId, t.createdAt),
+	surfaceIdx: index('ai_call_log_surface_idx').on(t.surface)
 }));

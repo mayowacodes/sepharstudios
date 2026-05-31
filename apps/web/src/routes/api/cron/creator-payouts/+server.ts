@@ -6,7 +6,8 @@ import {
 	mediaLibrary,
 	mediaWatchProgress,
 	transactions,
-	paymentIntents
+	paymentIntents,
+	payouts
 } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { and, eq, gte, sql, inArray, isNotNull } from 'drizzle-orm';
@@ -73,6 +74,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			displayName: creators.displayName,
 			creatorType: creators.creatorType,
 			preferences: creators.preferences,
+			payoutProcessor: creators.payoutProcessor,
+			stripePayoutsEnabled: creators.stripePayoutsEnabled,
 			email: user.email
 		})
 		.from(creators)
@@ -259,6 +262,27 @@ export const POST: RequestHandler = async ({ request }) => {
 			} else if (stcCents > 0) {
 				results.stcQueued += 1;
 			}
+
+			// Write a unified row into the new `payouts` table for the admin
+			// payouts queue + Stripe Connect flow. Branch by processor: stripe
+			// creators with payouts enabled go to status='pending' (admin
+			// approves + we fire the transfer); everyone else is recorded for
+			// the existing settlement path.
+			const processor = creator.payoutProcessor === 'stripe' && creator.stripePayoutsEnabled
+				? 'stripe'
+				: 'paystack';
+			const platformFeeCents = grossCents - shareCents;
+			await db.insert(payouts).values({
+				creatorId: creator.id,
+				processor,
+				periodStart,
+				periodEnd: now,
+				grossCents,
+				platformFeeCents,
+				netCents: shareCents,
+				currency: 'USD',
+				status: 'pending'
+			});
 
 			// Update lifetime earnings counter on the creator row (denormalized
 			// for fast dashboard reads — the live `transactions` table remains

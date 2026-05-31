@@ -2,11 +2,14 @@
   import { page } from '$app/stores';
   import { onDestroy } from 'svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
+  import PPVPaywall from '$lib/components/widgets/PPVPaywall.svelte';
+  import { invalidateAll } from '$app/navigation';
   import ReviewSection from '$lib/components/widgets/ReviewSection.svelte';
   import ShareButton from '$lib/components/widgets/ShareButton.svelte';
   import ReportButton from '$lib/components/ReportButton.svelte';
   import { copilotContext } from '$lib/stores/copilot';
   import { SiteMeta } from '$lib/constants';
+  import { translateRole, sectionLabel } from '$lib/i18n/role-labels';
 
   const { data } = $props();
   const content = $derived(data.content);
@@ -93,17 +96,34 @@
 </svelte:head>
 
 <div class="min-h-screen bg-[#0b0c10] text-white">
-  <!-- Video Player -->
+  <!-- Video Player / paywall -->
   <div class="w-full bg-black">
-    {#if src()}
+    {#if data.paywall?.required}
+      <!-- PPV-gated: show the paywall instead of the player. Successful
+           purchase invalidates the load() to flip `paywall.required=false`
+           and reveal the player. -->
+      <div class="aspect-video flex items-center justify-center bg-zinc-900">
+        <PPVPaywall
+          contentId={content.id}
+          contentTitle={content.title}
+          priceCents={data.paywall.priceCents}
+          onPurchased={() => void invalidateAll()}
+        />
+      </div>
+    {:else if src()}
       <VideoPlayer
         src={src()}
-        poster={content.backdropUrl ?? content.thumbnail ?? undefined}
+        poster={content.backdropUrl ?? content.thumbnail ?? content.posterAutoUrl ?? undefined}
         contentId={content.id}
         startAt={startAt()}
         title={content.title}
         subtitles={data.subtitles}
         descriptions={data.descriptions}
+        chapters={content.chapters ?? []}
+        endScreen={data.nextUp ?? []}
+        previewVtt={content.previewThumbnailsVtt ?? undefined}
+        previewSprites={content.previewSpriteUrls ?? []}
+        enableAds={true}
         onEnded={handleEnded}
       />
     {:else}
@@ -170,6 +190,54 @@
         <span>📖</span>
         <span>{content.bibleReference}</span>
       </div>
+    {/if}
+
+    <!-- Cast & crew accordion -->
+    {#if (content.cast && content.cast.length > 0) || (content.crew && content.crew.length > 0)}
+      <details class="mb-6 surface-1 rounded-xl">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-white">
+          {sectionLabel('castAndCrew', data.viewerLocale)}
+        </summary>
+        <div class="px-4 pb-4 space-y-4">
+          {#if content.cast && content.cast.length > 0}
+            <div>
+              <div class="text-xs uppercase tracking-wide text-gray-400 mb-2">{sectionLabel('cast', data.viewerLocale)}</div>
+              <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {#each content.cast as p (p.name + p.role)}
+                  <li class="flex items-center gap-2">
+                    {#if p.photoUrl}
+                      <img src={p.photoUrl} alt="" class="w-8 h-8 rounded-full object-cover" />
+                    {:else}
+                      <div class="w-8 h-8 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
+                        {(p.name ?? '?').charAt(0).toUpperCase()}
+                      </div>
+                    {/if}
+                    <div class="min-w-0">
+                      <div class="text-sm text-white truncate">{p.name}</div>
+                      <div class="text-xs text-gray-400 truncate">
+                        {p.characterName ? `${sectionLabel('as', data.viewerLocale)} ${p.characterName}` : translateRole(p.role, data.viewerLocale)}
+                      </div>
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+            </div>
+          {/if}
+          {#if content.crew && content.crew.length > 0}
+            <div>
+              <div class="text-xs uppercase tracking-wide text-gray-400 mb-2">{sectionLabel('crew', data.viewerLocale)}</div>
+              <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                {#each content.crew as p (p.name + p.role)}
+                  <li class="flex justify-between text-gray-200">
+                    <span>{p.name}</span>
+                    <span class="text-gray-400">{translateRole(p.role, data.viewerLocale)}</span>
+                  </li>
+                {/each}
+              </ul>
+            </div>
+          {/if}
+        </div>
+      </details>
     {/if}
 
     <!-- Divider -->

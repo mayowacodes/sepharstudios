@@ -1,0 +1,180 @@
+import { json, type RequestHandler } from '@sveltejs/kit';
+import type Stripe from 'stripe';
+import { db } from '$lib/db/drizzle';
+import { creators, payouts, payoutDisputes } from '$lib/db/schema/sepharstudios';
+import { eq } from 'drizzle-orm';
+import { getStripe, getWebhookSecret, isStripeConfigured } from '$lib/server/stripe';
+import { user } from '$lib/db/schema';
+import { notify } from '$lib/server/notify';
+
+/**
+ * POST /api/webhooks/stripe
+ *
+ * Verifies the Stripe signature and routes the event:
+ *   account.updated                       → sync creator status mirror
+ *   payout.paid                           → mark payout paid + set paid_at
+ *   payout.failed                         → mark payout failed + record failure reason
+ *   charge.dispute.{created,updated,
+ *     closed,funds_withdrawn,
+ *     funds_reinstated}                   → upsert payout_disputes row + admin notify
+ *
+ * Unknown events return 200 — Stripe retries on non-2xx, and retrying
+ * events we don't handle yet is wasteful.
+ */
+
+function mapAccountStatus(account: Stripe.Account): string {
+	const reqs = account.requirements;
+	if (reqs?.disabled_reason) return 'restricted';
+	if (account.payouts_enabled && account.charges_enabled) return 'verified';
+	if (reqs?.past_due && reqs.past_due.length > 0) return 'restricted';
+	return 'pending';
+}
+
+export const POST: RequestHandler = async ({ request }) => {
+	if (!isStripeConfigured()) {
+		return json({ error: 'Stripe not configured' }, { status: 503 });
+	}
+
+	const signature = request.headers.get('stripe-signature');
+	if (!signature) return json({ error: 'Missing signature' }, { status: 400 });
+
+	const rawBody = await request.text();
+	const stripe = getStripe();
+
+	let event: Stripe.Event;
+	try {
+		event = stripe.webhooks.constructEvent(rawBody, signature, getWebhookSecret());
+	} catch (err) {
+		console.warn('[webhooks/stripe] signature verification failed:', err);
+		return json({ error: 'Invalid signature' }, { status: 400 });
+	}
+
+	try {
+		switch (event.type) {
+			case 'account.updated': {
+				const account = event.data.object as Stripe.Account;
+				const status = mapAccountStatus(account);
+				await db.update(creators)
+					.set({
+						stripeAccountStatus: status,
+						stripePayoutsEnabled: account.payouts_enabled,
+						stripeChargesEnabled: account.charges_enabled,
+						stripeCountry: account.country ?? undefined,
+						updatedAt: new Date()
+					})
+					.where(eq(creators.stripeAccountId, account.id));
+				break;
+			}
+			case 'payout.paid': {
+				const payout = event.data.object as Stripe.Payout;
+				await db.update(payouts)
+					.set({
+						status: 'paid',
+						paidAt: new Date(payout.arrival_date * 1000)
+					})
+					.where(eq(payouts.processorPayoutId, payout.id));
+				break;
+			}
+			case 'payout.failed': {
+				const payout = event.data.object as Stripe.Payout;
+				await db.update(payouts)
+					.set({
+						status: 'failed',
+						failureReason: payout.failure_message ?? payout.failure_code ?? 'unknown'
+					})
+					.where(eq(payouts.processorPayoutId, payout.id));
+				break;
+			}
+			case 'charge.dispute.created':
+			case 'charge.dispute.updated':
+			case 'charge.dispute.closed':
+			case 'charge.dispute.funds_withdrawn':
+			case 'charge.dispute.funds_reinstated': {
+				const dispute = event.data.object as Stripe.Dispute;
+				await handleDispute(event.type, dispute);
+				break;
+			}
+			default:
+				break;
+		}
+	} catch (err) {
+		console.error(`[webhooks/stripe] handler for ${event.type} threw:`, err);
+		return json({ received: true, warning: 'handler error logged' });
+	}
+
+	return json({ received: true });
+};
+
+/**
+ * Persist or update a payout_dispute row for a Stripe dispute event, fan
+ * out admin notifications on creation + close, and hold any related
+ * payout for the duration of the dispute window.
+ */
+async function handleDispute(eventType: string, dispute: Stripe.Dispute): Promise<void> {
+	const statusMap: Record<string, string> = {
+		'won': 'won',
+		'lost': 'lost',
+		'warning_closed': 'warning_closed',
+		'charge_refunded': 'withdrawn',
+		'needs_response': 'open',
+		'under_review': 'open',
+		'warning_needs_response': 'open',
+		'warning_under_review': 'open'
+	};
+	const localStatus = statusMap[dispute.status] ?? 'open';
+
+	const [existing] = await db.select({ id: payoutDisputes.id })
+		.from(payoutDisputes)
+		.where(eq(payoutDisputes.processorDisputeId, dispute.id))
+		.limit(1);
+
+	if (!existing) {
+		await db.insert(payoutDisputes).values({
+			processor: 'stripe',
+			processorDisputeId: dispute.id,
+			payoutId: null,
+			ppvPurchaseId: null,
+			amountCents: dispute.amount,
+			currency: dispute.currency.toUpperCase(),
+			reason: dispute.reason.slice(0, 60),
+			status: localStatus,
+			evidenceDueAt: dispute.evidence_details?.due_by ? new Date(dispute.evidence_details.due_by * 1000) : null,
+			rawPayload: dispute as unknown as Record<string, unknown>,
+			closedAt: dispute.status === 'won' || dispute.status === 'lost' || dispute.status === 'warning_closed' ? new Date() : null
+		});
+	} else {
+		await db.update(payoutDisputes)
+			.set({
+				status: localStatus,
+				evidenceDueAt: dispute.evidence_details?.due_by ? new Date(dispute.evidence_details.due_by * 1000) : null,
+				rawPayload: dispute as unknown as Record<string, unknown>,
+				closedAt: dispute.status === 'won' || dispute.status === 'lost' || dispute.status === 'warning_closed' ? new Date() : null
+			})
+			.where(eq(payoutDisputes.processorDisputeId, dispute.id));
+	}
+
+	// Notify admins on first creation + any close. Stripe's
+	// charge.dispute.funds_withdrawn / reinstated also matter — let admins
+	// see those so they can adjust reserves.
+	if (eventType === 'charge.dispute.created' || eventType === 'charge.dispute.closed' || eventType === 'charge.dispute.funds_withdrawn' || eventType === 'charge.dispute.funds_reinstated') {
+		try {
+			const admins = await db.select({ id: user.id })
+				.from(user)
+				.where(eq(user.role, 'admin'));
+			const title = eventType === 'charge.dispute.created'
+				? `New Stripe dispute · $${(dispute.amount / 100).toFixed(2)}`
+				: eventType === 'charge.dispute.closed'
+					? `Stripe dispute closed · ${dispute.status}`
+					: `Stripe dispute funds ${eventType.includes('withdrawn') ? 'withdrawn' : 'reinstated'}`;
+			await Promise.all(admins.map((a) => notify({
+				userId: a.id,
+				kind: 'system',
+				title,
+				message: `Reason: ${dispute.reason}. Open the disputes admin page to view + respond.`,
+				actionUrl: '/admin/disputes'
+			}).catch(() => undefined)));
+		} catch (err) {
+			console.warn('[webhooks/stripe] dispute notify failed:', err);
+		}
+	}
+}

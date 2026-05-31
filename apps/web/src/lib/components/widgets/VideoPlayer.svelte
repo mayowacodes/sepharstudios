@@ -27,14 +27,229 @@
      * out alongside the video soundtrack.
      */
     descriptions?: Array<{ label: string; src: string; srclang: string }>;
+    /**
+     * Chapter markers. start in seconds; tick marks render above the seek
+     * bar and `>` / `<` keys jump between chapters.
+     */
+    chapters?: Array<{ start: number; title: string }>;
+    /** Slots for the end-screen overlay (Item 3). */
+    endScreen?: Array<{ id: string; title: string; thumbnail: string | null; duration: string | null }>;
+    /**
+     * Scrubbing-preview VTT URL produced by the encoder orchestrator's
+     * scan-ready webhook. Cues encode a sprite-sheet region in the cue
+     * text as `sprite_N.jpg#xywh=x,y,w,h` (relative path or absolute URL).
+     */
+    previewVtt?: string;
+    /**
+     * Sprite sheet URLs that the VTT cues reference. Used to resolve
+     * relative `sprite_N.jpg` cue text against the right host.
+     */
+    previewSprites?: string[];
     onEnded?: () => void;
+    /** Fires on every `timeupdate` (~4×/sec). Useful when the parent
+     *  wants to anchor a UI affordance to the playhead (e.g. the admin
+     *  review page's "Add note at MM:SS" button). */
+    onTimeUpdate?: (currentTime: number, duration: number) => void;
+    /**
+     * When true (and contentId set), VideoPlayer auto-fetches
+     * /api/ads/vast-tag and plays the returned URL as a pre-roll before
+     * the main content. Treats the URL as a direct video src — sufficient
+     * for raw MP4 creatives.
+     *
+     * Upgrade path to full VAST tracking (impression / quartile / click-
+     * thru / complete pings): replace the inline pre-roll <video> below
+     * with a Google IMA SDK ad-display container, parse the URL as VAST
+     * XML, and fire the tracking events emitted by IMA. The contract this
+     * exposes (skip on null, swap to main src on ad complete) is
+     * unchanged so the upgrade is local to the player.
+     */
+    enableAds?: boolean;
   }
 
-  let { src, poster, contentId, startAt = 0, title, subtitles = [], descriptions = [], onEnded }: Props = $props();
+  let {
+    src, poster, contentId, startAt = 0, title,
+    subtitles = [], descriptions = [], chapters = [], endScreen = [],
+    previewVtt, previewSprites = [],
+    enableAds = false,
+    onEnded, onTimeUpdate
+  }: Props = $props();
+
+  // End-screen overlay state. Dismiss persists until the next mount;
+  // countdown decrements each second once the overlay is visible.
+  let endScreenDismissed = $state(false);
+  let endScreenCountdown = $state(10);
+  let endScreenInterval: ReturnType<typeof setInterval> | null = null;
+
+  $effect(() => {
+    const visible = endScreen && endScreen.length > 0 && duration > 0
+      && currentTime / duration > 0.9 && !endScreenDismissed;
+    if (visible && !endScreenInterval) {
+      endScreenInterval = setInterval(() => {
+        endScreenCountdown = Math.max(0, endScreenCountdown - 1);
+        if (endScreenCountdown === 0 && endScreen[0]) {
+          if (endScreenInterval) { clearInterval(endScreenInterval); endScreenInterval = null; }
+          // Navigate to the first card.
+          window.location.href = `/watch/${endScreen[0].id}`;
+        }
+      }, 1000);
+    } else if (!visible && endScreenInterval) {
+      clearInterval(endScreenInterval);
+      endScreenInterval = null;
+    }
+  });
+
+  // Current chapter label, recomputed on every timeupdate.
+  const currentChapter = $derived.by(() => {
+    if (!chapters || chapters.length === 0) return null;
+    let active: { start: number; title: string } | null = null;
+    for (const c of chapters) {
+      if (c.start <= currentTime) active = c;
+      else break;
+    }
+    return active;
+  });
+
+  function jumpToChapter(start: number) {
+    if (videoEl && Number.isFinite(start)) videoEl.currentTime = start;
+  }
+
+  function nextChapter() {
+    if (!chapters || chapters.length === 0) return;
+    const idx = chapters.findIndex((c) => c.start > currentTime);
+    if (idx >= 0) jumpToChapter(chapters[idx].start);
+  }
+
+  function prevChapter() {
+    if (!chapters || chapters.length === 0) return;
+    // Find the chapter that started before "current minus 2s" so a quick
+    // double-tap on `<` walks backwards instead of restarting the current.
+    const cutoff = currentTime - 2;
+    let target = chapters[0].start;
+    for (const c of chapters) {
+      if (c.start < cutoff) target = c.start;
+      else break;
+    }
+    jumpToChapter(target);
+  }
 
   let videoEl = $state<HTMLVideoElement | undefined>();
   let containerEl = $state<HTMLDivElement | undefined>();
   let hls: HlsType | null = null;
+
+  // ─── Scrubbing-preview thumbnails ──────────────────────────────────────
+  // Cues parsed from `previewVtt`. Each cue covers a time window and
+  // points at a sprite region (`sprite_N.jpg#xywh=x,y,w,h`).
+  interface PreviewCue {
+    startSec: number;
+    endSec: number;
+    spriteUrl: string;
+    x: number; y: number; w: number; h: number;
+  }
+  let previewCues = $state<PreviewCue[]>([]);
+
+  function resolveSpriteUrl(ref: string): string {
+    // Absolute → use as-is. Relative → resolve against the first sprite URL
+    // (they all share a directory) or the previewVtt URL itself.
+    if (/^https?:\/\//.test(ref) || ref.startsWith('/')) return ref;
+    const base = previewSprites[0] ?? previewVtt;
+    if (!base) return ref;
+    try {
+      return new URL(ref, base).toString();
+    } catch {
+      return ref;
+    }
+  }
+
+  function vttTimeToSeconds(ts: string): number {
+    const parts = ts.split(':');
+    const sec = parseFloat(parts.pop() ?? '0');
+    const min = parseInt(parts.pop() ?? '0', 10);
+    const hr = parseInt(parts.pop() ?? '0', 10);
+    return (Number.isFinite(hr) ? hr : 0) * 3600 + (Number.isFinite(min) ? min : 0) * 60 + (Number.isFinite(sec) ? sec : 0);
+  }
+
+  function parsePreviewVtt(vtt: string): PreviewCue[] {
+    const out: PreviewCue[] = [];
+    const blocks = vtt.replace(/\r\n/g, '\n').split(/\n\n+/);
+    for (const block of blocks) {
+      const lines = block.split('\n').filter(Boolean);
+      if (lines.length === 0) continue;
+      if (lines[0] === 'WEBVTT' || lines[0].startsWith('NOTE') || lines[0].startsWith('STYLE')) continue;
+      const tsLine = lines.find((l) => l.includes('-->'));
+      if (!tsLine) continue;
+      const [startRaw, endRaw] = tsLine.split('-->').map((s) => s.trim());
+      const startSec = vttTimeToSeconds(startRaw);
+      const endSec = vttTimeToSeconds(endRaw);
+      if (!Number.isFinite(startSec) || !Number.isFinite(endSec) || endSec <= startSec) continue;
+      const payload = lines.slice(lines.indexOf(tsLine) + 1).join('').trim();
+      if (!payload) continue;
+      const hashIdx = payload.indexOf('#xywh=');
+      if (hashIdx === -1) continue;
+      const ref = payload.slice(0, hashIdx);
+      const xywh = payload.slice(hashIdx + '#xywh='.length).split(',').map((n) => parseInt(n, 10));
+      if (xywh.length !== 4 || xywh.some((n) => !Number.isFinite(n))) continue;
+      out.push({
+        startSec,
+        endSec,
+        spriteUrl: resolveSpriteUrl(ref),
+        x: xywh[0], y: xywh[1], w: xywh[2], h: xywh[3]
+      });
+    }
+    return out.sort((a, b) => a.startSec - b.startSec);
+  }
+
+  $effect(() => {
+    // Re-fetch when previewVtt changes.
+    const url = previewVtt;
+    if (!url) { previewCues = []; return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const text = await res.text();
+        if (!cancelled) previewCues = parsePreviewVtt(text);
+      } catch { /* silent — no previews is acceptable */ }
+    })();
+    return () => { cancelled = true; };
+  });
+
+  function findPreviewCue(sec: number): PreviewCue | null {
+    if (previewCues.length === 0) return null;
+    // Cues are sorted; binary-search would be overkill (<200 entries
+    // typically), linear is fine and predictable.
+    for (let i = 0; i < previewCues.length; i++) {
+      const c = previewCues[i];
+      if (sec >= c.startSec && sec < c.endSec) return c;
+    }
+    return previewCues[previewCues.length - 1];
+  }
+
+  // Hover state for the floating preview.
+  let previewHoverPct = $state<number | null>(null);
+  let previewHoverSec = $state(0);
+  const hoveredCue = $derived(previewHoverPct !== null ? findPreviewCue(previewHoverSec) : null);
+
+  function onProgressMove(e: MouseEvent) {
+    if (previewCues.length === 0 || duration <= 0) return;
+    const bar = e.currentTarget as HTMLElement;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    previewHoverPct = ratio * 100;
+    previewHoverSec = ratio * duration;
+  }
+  function onProgressLeave() {
+    previewHoverPct = null;
+  }
+  function formatHover(sec: number): string {
+    const total = Math.max(0, Math.floor(sec));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h > 0
+      ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      : `${m}:${s.toString().padStart(2, '0')}`;
+  }
 
   // Playback state
   let playing = $state(false);
@@ -231,6 +446,8 @@
       case 'ArrowDown': volume = Math.max(0, volume - 0.1); if (videoEl) videoEl.volume = volume; break;
       case 'f': toggleFullscreen(); break;
       case 'm': toggleMute(); break;
+      case '.': case '>': e.preventDefault(); nextChapter(); break;
+      case ',': case '<': e.preventDefault(); prevChapter(); break;
     }
   }
 
@@ -240,13 +457,60 @@
     currentLevel === -1 ? 'Auto' : levels[currentLevel] ? `${levels[currentLevel].height}p` : 'Auto'
   );
 
+  // Pre-roll ad state. When the player is mounted with enableAds=true and
+  // the server returns a non-null preroll URL, we play that first, then
+  // swap to the main content on `ended`. Skip button shows after 5s.
+  let prerollUrl = $state<string | null>(null);
+  let prerollActive = $state(false);
+  let prerollSkippableAt = $state(5);
+  let prerollSkippableTimer: ReturnType<typeof setInterval> | null = null;
+
+  function endPreroll(reason: 'completed' | 'skipped' | 'error') {
+    prerollActive = false;
+    if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
+    try {
+      const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
+      op?.('ad_preroll_end', { contentId, reason });
+    } catch { /* analytics best-effort */ }
+    if (videoEl && src) initHls(videoEl, src);
+  }
+
   onMount(() => {
     if (!videoEl) return;
 
     const v = videoEl;
     v.volume = volume;
 
-    initHls(v, src);
+    if (enableAds && contentId) {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/ads/vast-tag?contentId=${encodeURIComponent(contentId)}`);
+          if (!res.ok) { initHls(v, src); return; }
+          const body = await res.json();
+          if (!body?.url) { initHls(v, src); return; }
+          prerollUrl = body.url;
+          prerollActive = true;
+          prerollSkippableAt = 5;
+          prerollSkippableTimer = setInterval(() => {
+            prerollSkippableAt = Math.max(0, prerollSkippableAt - 1);
+            if (prerollSkippableAt === 0 && prerollSkippableTimer) {
+              clearInterval(prerollSkippableTimer);
+              prerollSkippableTimer = null;
+            }
+          }, 1000);
+          v.src = body.url;
+          v.play().catch(() => endPreroll('error'));
+          try {
+            const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
+            op?.('ad_preroll_start', { contentId });
+          } catch { /* analytics best-effort */ }
+        } catch {
+          initHls(v, src);
+        }
+      })();
+    } else {
+      initHls(v, src);
+    }
 
     // Track the first play of this session — used for funnel analysis (sign-up
     // → subscribe → watch-start → watch-complete). Subsequent plays (pause →
@@ -268,12 +532,22 @@
       }
     });
     v.addEventListener('pause', () => { playing = false; controlsVisible = true; clearTimeout(controlsTimer); });
-    v.addEventListener('timeupdate', () => { currentTime = v.currentTime; });
+    v.addEventListener('timeupdate', () => {
+      currentTime = v.currentTime;
+      onTimeUpdate?.(v.currentTime, v.duration);
+    });
     v.addEventListener('durationchange', () => { duration = v.duration; });
     v.addEventListener('progress', () => {
       if (v.buffered.length > 0) buffered = v.buffered.end(v.buffered.length - 1);
     });
-    v.addEventListener('ended', () => { onEnded?.(); reportProgress(); });
+    v.addEventListener('ended', () => {
+      if (prerollActive) {
+        endPreroll('completed');
+        return;
+      }
+      onEnded?.();
+      reportProgress();
+    });
     v.addEventListener('volumechange', () => { volume = v.volume; muted = v.muted; });
 
     document.addEventListener('fullscreenchange', () => { fullscreen = !!document.fullscreenElement; });
@@ -342,6 +616,72 @@
     {/each}
   </video>
 
+  <!-- Pre-roll ad chrome. The pre-roll plays from the same <video>; this
+       overlay shows the "Ad" badge + countdown + skip button. -->
+  {#if prerollActive && prerollUrl}
+    <div class="absolute top-3 left-3 z-20 inline-flex items-center gap-2 bg-black/70 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded">
+      Ad
+    </div>
+    <div class="absolute bottom-3 right-3 z-20">
+      {#if prerollSkippableAt > 0}
+        <span class="bg-black/70 text-white text-xs px-3 py-1.5 rounded">Skip in {prerollSkippableAt}s</span>
+      {:else}
+        <button
+          type="button"
+          onclick={() => endPreroll('skipped')}
+          class="bg-white/90 hover:bg-white text-black text-xs font-semibold px-3 py-1.5 rounded"
+        >Skip ad →</button>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- End-screen overlay: appears during the last 10% of playback if there
+       are next-up cards. Click any card to navigate; X dismisses. -->
+  {#if endScreen && endScreen.length > 0 && duration > 0 && currentTime / duration > 0.9 && !endScreenDismissed}
+    <div
+      class="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 transition-opacity"
+      role="region"
+      aria-label="Next up suggestions"
+    >
+      <div class="w-full max-w-3xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-white text-lg font-semibold">Up next</h3>
+          <button
+            type="button"
+            onclick={() => (endScreenDismissed = true)}
+            class="text-gray-300 hover:text-white text-sm"
+            aria-label="Dismiss"
+          >Dismiss</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-{Math.min(endScreen.length, 3)} gap-3">
+          {#each endScreen as item, i (item.id)}
+            <a
+              href={`/watch/${item.id}`}
+              class="block group surface-1 rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all"
+            >
+              <div class="aspect-video bg-black/50 relative">
+                {#if item.thumbnail}
+                  <img src={item.thumbnail} alt="" class="w-full h-full object-cover" />
+                {/if}
+                {#if i === 0 && endScreenCountdown > 0}
+                  <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                    Playing in {endScreenCountdown}s
+                  </div>
+                {/if}
+              </div>
+              <div class="p-2">
+                <div class="text-sm text-white font-medium line-clamp-2 group-hover:text-purple-300">{item.title}</div>
+                {#if item.duration}
+                  <div class="text-xs text-gray-400 mt-0.5">{item.duration}</div>
+                {/if}
+              </div>
+            </a>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Controls overlay — click is only used to stop propagation to the container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -355,11 +695,20 @@
       <div class="absolute top-4 left-4 text-white text-sm font-medium drop-shadow">{title}</div>
     {/if}
 
+    <!-- Current chapter label (only when chapters are present) -->
+    {#if currentChapter}
+      <div class="mx-4 mb-1 text-xs text-white/80 truncate">
+        <span class="text-white/60">Chapter:</span> {currentChapter.title}
+      </div>
+    {/if}
+
     <!-- Progress bar — keyboard arrow keys handled globally by handleKeyDown -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="mx-4 mb-2 h-1.5 bg-white/20 rounded-full cursor-pointer group/bar hover:h-3 transition-all relative"
       onclick={seek}
+      onmousemove={onProgressMove}
+      onmouseleave={onProgressLeave}
       onkeydown={() => {}}
       role="slider"
       aria-label="Video progress"
@@ -368,12 +717,39 @@
       aria-valuenow={Math.round(progressPct)}
       tabindex="0"
     >
+      <!-- Floating scrubbing-preview thumbnail (R+5 sprite/VTT artifacts). -->
+      {#if hoveredCue && previewHoverPct !== null}
+        <div
+          class="absolute bottom-full mb-3 -translate-x-1/2 pointer-events-none rounded-md overflow-hidden shadow-2xl ring-1 ring-black/50 bg-black"
+          style="left: {previewHoverPct}%; width: {hoveredCue.w}px; height: {hoveredCue.h}px;"
+        >
+          <div
+            class="absolute inset-0"
+            style="background-image: url({hoveredCue.spriteUrl}); background-position: -{hoveredCue.x}px -{hoveredCue.y}px; background-repeat: no-repeat;"
+          ></div>
+          <div class="absolute bottom-0 inset-x-0 text-center text-[10px] text-white bg-black/70 px-1 py-0.5 font-mono">
+            {formatHover(previewHoverSec)}
+          </div>
+        </div>
+      {/if}
       <!-- Buffered -->
       <div class="absolute inset-y-0 left-0 bg-white/30 rounded-full" style="width: {bufferedPct}%"></div>
       <!-- Played -->
       <div class="absolute inset-y-0 left-0 bg-[#FF5E0E] rounded-full" style="width: {progressPct}%">
         <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover/bar:opacity-100 transition-opacity shadow"></div>
       </div>
+      <!-- Chapter tick marks (skip the 0s start; that's just the bar origin) -->
+      {#if chapters && chapters.length > 0 && duration > 0}
+        {#each chapters as c (c.start)}
+          {#if c.start > 0 && c.start < duration}
+            <div
+              class="absolute top-1/2 -translate-y-1/2 w-0.5 h-full bg-white/70 pointer-events-none"
+              style="left: {(c.start / duration) * 100}%"
+              title={c.title}
+            ></div>
+          {/if}
+        {/each}
+      {/if}
     </div>
 
     <!-- Controls row -->
