@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { toast } from 'svelte-sonner';
+  import { Inbox } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   type Tab = 'stories' | 'sponsorships' | 'tickets';
 
@@ -64,17 +67,22 @@
     try {
       if (active === 'stories') {
         const res = await fetch(`/api/admin/success-stories?status=${statusFilter}`);
+        if (!res.ok) throw new Error(`stories: HTTP ${res.status}`);
         const body = await res.json();
         stories = body.stories ?? [];
       } else if (active === 'sponsorships') {
         const res = await fetch(`/api/admin/sponsorships?status=${statusFilter}`);
+        if (!res.ok) throw new Error(`sponsorships: HTTP ${res.status}`);
         const body = await res.json();
         sponsorships = body.applications ?? [];
       } else {
         const res = await fetch(`/api/admin/support-tickets?status=${statusFilter}`);
+        if (!res.ok) throw new Error(`tickets: HTTP ${res.status}`);
         const body = await res.json();
         tickets = body.tickets ?? [];
       }
+    } catch (err) {
+      toast.error(`Load failed — ${err instanceof Error ? err.message : 'unknown error'}`);
     } finally {
       loading = false;
     }
@@ -88,43 +96,59 @@
 
   onMount(() => { void load(); });
 
+  async function runReview(endpoint: string, body: Record<string, unknown>, successMsg: string) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
+      toast.success(successMsg);
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Review failed');
+      return false;
+    }
+  }
+
   async function reviewStory(id: string, status: string) {
     const note = noteDrafts[id] ?? '';
-    await fetch(`/api/admin/success-stories/${id}/review`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, moderationNote: note || null })
-    });
-    delete noteDrafts[id];
-    await load();
+    const ok = await runReview(`/api/admin/success-stories/${id}/review`,
+      { status, moderationNote: note || null },
+      `Story marked ${status}`);
+    if (ok) {
+      delete noteDrafts[id];
+      await load();
+    }
   }
   async function reviewSponsorship(id: string, status: string) {
     const note = noteDrafts[id] ?? '';
-    await fetch(`/api/admin/sponsorships/${id}/review`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, adminNote: note || null })
-    });
-    delete noteDrafts[id];
-    await load();
+    const ok = await runReview(`/api/admin/sponsorships/${id}/review`,
+      { status, adminNote: note || null },
+      `Application marked ${status}`);
+    if (ok) {
+      delete noteDrafts[id];
+      await load();
+    }
   }
   async function reviewTicket(id: string, status: string) {
     const note = noteDrafts[id] ?? '';
-    await fetch(`/api/admin/support-tickets/${id}/review`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, adminResponse: note || null })
-    });
-    delete noteDrafts[id];
-    await load();
+    const ok = await runReview(`/api/admin/support-tickets/${id}/review`,
+      { status, adminResponse: note || null },
+      `Ticket marked ${status.replace('_', ' ')}`);
+    if (ok) {
+      delete noteDrafts[id];
+      await load();
+    }
   }
 </script>
 
-<div class="min-h-screen p-6 text-white space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold mb-2">Submissions Moderation</h1>
-    <p class="text-sm text-gray-400">Triage success stories, sponsorship pitches, and support tickets.</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Inbox} title="Submissions" subtitle="Triage success stories, sponsorship pitches, and support tickets." />
 
   <!-- Tab chips -->
   <div class="flex flex-wrap gap-2">
@@ -132,13 +156,13 @@
       <button
         type="button"
         onclick={() => active = tab as Tab}
-        class="px-4 py-2 rounded-lg text-sm capitalize {active === tab ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/15'}"
+        class="px-4 py-2 rounded-lg text-sm capitalize transition-colors {active === tab ? 'bg-primary text-primary-foreground' : 'surface-1 text-foreground/80 hover:surface-2'}"
       >{tab}</button>
     {/each}
     <div class="flex-1"></div>
     <select
       bind:value={statusFilter}
-      class="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm"
+      class="px-3 py-2 surface-2 border border-border rounded-lg text-sm"
     >
       {#each STATUS_OPTIONS[active] as s}
         <option value={s}>{s}</option>
@@ -147,19 +171,19 @@
   </div>
 
   {#if loading}
-    <div class="text-center text-gray-400 py-12">Loading…</div>
+    <div class="text-center text-muted-foreground py-12">Loading…</div>
   {:else if active === 'stories'}
     {#if stories.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">No stories in this state.</div>
+      <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">No stories in this state.</div>
     {:else}
       <div class="space-y-3">
         {#each stories as s (s.id)}
-          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div class="surface-1 border border-border/40 rounded-xl p-4">
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <h3 class="font-semibold">{s.name}{s.channel ? ` — ${s.channel}` : ''}</h3>
-                <p class="text-sm text-gray-300 mt-1 whitespace-pre-line">{s.story}</p>
-                <p class="text-xs text-gray-500 mt-2">Submitted {new Date(s.createdAt).toLocaleString()}</p>
+                <p class="text-sm text-foreground/80 mt-1 whitespace-pre-line">{s.story}</p>
+                <p class="text-xs text-muted-foreground mt-2">Submitted {new Date(s.createdAt).toLocaleString()}</p>
               </div>
               <span class="text-xs px-2 py-1 rounded-full bg-purple-700/40 text-purple-200">{s.status}</span>
             </div>
@@ -167,12 +191,12 @@
               type="text"
               bind:value={noteDrafts[s.id]}
               placeholder="Optional moderation note"
-              class="w-full mt-3 px-3 py-2 bg-white/10 border border-white/20 rounded text-sm"
+              class="w-full mt-3 px-3 py-2 surface-2 border border-border rounded text-sm"
             />
             <div class="flex gap-2 mt-3">
               <button onclick={() => reviewStory(s.id, 'approved')} class="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded text-sm">Approve</button>
               <button onclick={() => reviewStory(s.id, 'rejected')} class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm">Reject</button>
-              <button onclick={() => reviewStory(s.id, 'pending')} class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-sm">Reset</button>
+              <button onclick={() => reviewStory(s.id, 'pending')} class="surface-2 hover:surface-3 px-3 py-1.5 rounded text-sm">Reset</button>
             </div>
           </div>
         {/each}
@@ -180,16 +204,16 @@
     {/if}
   {:else if active === 'sponsorships'}
     {#if sponsorships.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">No applications in this state.</div>
+      <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">No applications in this state.</div>
     {:else}
       <div class="space-y-3">
         {#each sponsorships as a (a.id)}
-          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div class="surface-1 border border-border/40 rounded-xl p-4">
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <h3 class="font-semibold">{a.projectTitle}</h3>
-                <p class="text-xs text-gray-400 mt-1">Genre: {a.genre ?? 'unspecified'} • Contact: {a.contactEmail ?? '—'}</p>
-                <p class="text-sm text-gray-300 mt-2 line-clamp-3 whitespace-pre-line">{a.synopsis}</p>
+                <p class="text-xs text-muted-foreground mt-1">Genre: {a.genre ?? 'unspecified'} • Contact: {a.contactEmail ?? '—'}</p>
+                <p class="text-sm text-foreground/80 mt-2 line-clamp-3 whitespace-pre-line">{a.synopsis}</p>
                 {#if a.documents && a.documents.length > 0}
                   <div class="flex flex-wrap gap-2 mt-2">
                     {#each a.documents as doc}
@@ -206,13 +230,13 @@
               type="text"
               bind:value={noteDrafts[a.id]}
               placeholder="Optional admin note (will be shown to submitter)"
-              class="w-full mt-3 px-3 py-2 bg-white/10 border border-white/20 rounded text-sm"
+              class="w-full mt-3 px-3 py-2 surface-2 border border-border rounded text-sm"
             />
             <div class="flex flex-wrap gap-2 mt-3">
               <button onclick={() => reviewSponsorship(a.id, 'reviewing')} class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded text-sm">Mark reviewing</button>
               <button onclick={() => reviewSponsorship(a.id, 'approved')} class="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded text-sm">Approve</button>
               <button onclick={() => reviewSponsorship(a.id, 'rejected')} class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm">Reject</button>
-              <button onclick={() => detailFor = a} class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-sm">Full pitch</button>
+              <button onclick={() => detailFor = a} class="surface-2 hover:surface-3 px-3 py-1.5 rounded text-sm">Full pitch</button>
             </div>
           </div>
         {/each}
@@ -220,16 +244,16 @@
     {/if}
   {:else}
     {#if tickets.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">No tickets in this state.</div>
+      <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">No tickets in this state.</div>
     {:else}
       <div class="space-y-3">
         {#each tickets as t (t.id)}
-          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div class="surface-1 border border-border/40 rounded-xl p-4">
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <h3 class="font-semibold">{t.subject}</h3>
-                <p class="text-xs text-gray-400 mt-1">From {t.email} • {t.category ?? 'unspecified'} • priority: {t.priority}</p>
-                <p class="text-sm text-gray-300 mt-2 line-clamp-4 whitespace-pre-line">{t.description}</p>
+                <p class="text-xs text-muted-foreground mt-1">From {t.email} • {t.category ?? 'unspecified'} • priority: {t.priority}</p>
+                <p class="text-sm text-foreground/80 mt-2 line-clamp-4 whitespace-pre-line">{t.description}</p>
                 {#if t.attachments && t.attachments.length > 0}
                   <div class="flex flex-wrap gap-2 mt-2">
                     {#each t.attachments as att}
@@ -246,13 +270,13 @@
               bind:value={noteDrafts[t.id]}
               rows="2"
               placeholder="Response (shown to submitter)"
-              class="w-full mt-3 px-3 py-2 bg-white/10 border border-white/20 rounded text-sm"
+              class="w-full mt-3 px-3 py-2 surface-2 border border-border rounded text-sm"
             ></textarea>
             <div class="flex flex-wrap gap-2 mt-3">
               <button onclick={() => reviewTicket(t.id, 'in_progress')} class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded text-sm">In progress</button>
               <button onclick={() => reviewTicket(t.id, 'resolved')} class="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded text-sm">Resolved</button>
               <button onclick={() => reviewTicket(t.id, 'closed')} class="bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-sm">Close</button>
-              <button onclick={() => detailFor = t} class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-sm">Full ticket</button>
+              <button onclick={() => detailFor = t} class="surface-2 hover:surface-3 px-3 py-1.5 rounded text-sm">Full ticket</button>
             </div>
           </div>
         {/each}
@@ -270,16 +294,16 @@
     role="presentation"
   >
     <div
-      class="bg-zinc-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+      class="bg-zinc-900 border border-border/40 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
       role="dialog"
       aria-modal="true"
       tabindex="-1"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
     >
-      <pre class="text-sm text-white whitespace-pre-wrap wrap-break-word">{JSON.stringify(detailFor, null, 2)}</pre>
+      <pre class="text-sm text-foreground whitespace-pre-wrap wrap-break-word">{JSON.stringify(detailFor, null, 2)}</pre>
       <div class="flex justify-end mt-4">
-        <button onclick={() => detailFor = null} class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded text-sm">Close</button>
+        <button onclick={() => detailFor = null} class="surface-2 hover:surface-3 px-4 py-2 rounded text-sm">Close</button>
       </div>
     </div>
   </div>

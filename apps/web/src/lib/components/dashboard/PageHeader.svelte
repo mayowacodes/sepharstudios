@@ -15,13 +15,13 @@
   <div class="flex items-start gap-3">
     {#if Icon}
       <div class="surface-2 rounded-xl p-2.5 mt-0.5">
-        <Icon class="w-5 h-5 text-purple-300" />
+        <Icon class="w-5 h-5 text-primary" />
       </div>
     {/if}
     <div>
-      <h1 class="text-2xl font-semibold text-white tracking-tight">{title}</h1>
+      <h1 class="text-2xl font-semibold text-foreground tracking-tight">{title}</h1>
       {#if subtitle}
-        <p class="text-sm text-gray-400 mt-1">{subtitle}</p>
+        <p class="text-sm text-muted-foreground mt-1">{subtitle}</p>
       {/if}
     </div>
   </div>

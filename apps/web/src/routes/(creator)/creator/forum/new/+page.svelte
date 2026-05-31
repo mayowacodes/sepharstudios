@@ -1,5 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { ArrowLeft, MessageSquarePlus } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   const categories = [
     { id: 'getting-started', title: 'Getting Started', icon: '🚀' },
@@ -44,19 +46,18 @@
   }
 </script>
 
-<div class="max-w-3xl mx-auto py-8 space-y-6">
-  <div>
-    <a href="/creator/forum" class="text-purple-400 hover:text-purple-300 text-sm">← Back to forum</a>
-    <h1 class="text-3xl font-bold text-white mt-2">Start a New Discussion</h1>
-    <p class="text-gray-300 text-sm mt-1">All posts are moderated by AI before publishing. Be kind and on-topic.</p>
-  </div>
+<div class="container mx-auto max-w-3xl py-8 px-4 space-y-6">
+  <a href="/creator/forum" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
+    <ArrowLeft class="w-3 h-3" /> Back to forum
+  </a>
+  <PageHeader icon={MessageSquarePlus} title="Start a Discussion" subtitle="All posts are moderated by AI before publishing. Be kind and on-topic." />
 
   <form
-    class="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-4"
+    class="surface-2 backdrop-blur-sm rounded-xl p-6 space-y-4"
     onsubmit={(e) => { e.preventDefault(); submit(); }}
   >
     <div>
-      <label for="thread-title" class="block text-white font-medium mb-2">Title *</label>
+      <label for="thread-title" class="block text-foreground font-medium mb-2">Title *</label>
       <input
         id="thread-title"
         type="text"
@@ -64,17 +65,17 @@
         minlength="5"
         maxlength="255"
         required
-        class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
+        class="w-full px-4 py-2 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"
       />
     </div>
 
     <div>
-      <label for="thread-category" class="block text-white font-medium mb-2">Category *</label>
+      <label for="thread-category" class="block text-foreground font-medium mb-2">Category *</label>
       <select
         id="thread-category"
         bind:value={category}
         required
-        class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
+        class="w-full px-4 py-2 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"
       >
         <option value="">Choose a category</option>
         {#each categories as cat (cat.id)}
@@ -84,7 +85,7 @@
     </div>
 
     <div>
-      <label for="thread-body" class="block text-white font-medium mb-2">Body *</label>
+      <label for="thread-body" class="block text-foreground font-medium mb-2">Body *</label>
       <textarea
         id="thread-body"
         bind:value={body}
@@ -92,7 +93,7 @@
         minlength="20"
         maxlength="10000"
         required
-        class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
+        class="w-full px-4 py-2 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"
         placeholder="Share your question, idea, or testimony…"
       ></textarea>
     </div>
@@ -102,7 +103,7 @@
     {/if}
 
     <div class="flex justify-end gap-2">
-      <button type="button" onclick={() => goto('/creator/forum')} class="px-4 py-2 text-gray-300 hover:text-white">Cancel</button>
+      <button type="button" onclick={() => goto('/creator/forum')} class="px-4 py-2 text-foreground/80 hover:text-foreground">Cancel</button>
       <button
         type="submit"
         disabled={submitting}

@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { reviews, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { and, eq, desc } from 'drizzle-orm';
 import { moderateComment, scoreReviewQuality } from '$lib/server/ai-moderation';
+import { take } from '$lib/server/rate-limit';
 
 // GET /api/reviews?contentId=xxx — get approved reviews for content
 export const GET: RequestHandler = async ({ url }) => {
@@ -17,10 +18,23 @@ export const GET: RequestHandler = async ({ url }) => {
 	return json(rows);
 };
 
-// POST /api/reviews — submit a review
-export const POST: RequestHandler = async ({ request, locals }) => {
+// POST /api/reviews — submit a review.
+//
+// Rate-limited per user because every submission fires TWO AI calls
+// (moderateComment + scoreReviewQuality). Without throttling a single
+// authenticated account could spam the endpoint to flood the moderation
+// queue and burn AI credits. Capacity 5, refill 1 every 600s = sustained
+// 6/hour with burst up to 5 — generous for a real human reviewing many
+// movies, hostile to a script.
+export const POST: RequestHandler = async ({ request, locals, getClientAddress }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
+
+	const bucketKey = `reviews:${session.user.id ?? `ip:${getClientAddress()}`}`;
+	const limit = await take(bucketKey, { capacity: 5, refillPerSec: 1 / 600 });
+	if (!limit.allowed) {
+		return json({ error: 'Too many reviews submitted recently. Try again in a few minutes.' }, { status: 429 });
+	}
 
 	const { contentId, contentType, rating, reviewText, profileId } = await request.json() as {
 		contentId: string; contentType?: string; rating: number; reviewText?: string; profileId?: string;

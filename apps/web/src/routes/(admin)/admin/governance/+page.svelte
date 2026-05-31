@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import GovernanceStatusCard from '$lib/components/admin/governance/GovernanceStatusCard.svelte';
+	import { Landmark } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type StatusResponse = {
 		policyMode: string;
@@ -35,15 +37,16 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-6">
-	<div class="flex items-center justify-between">
-		<h1 class="text-3xl font-bold text-white">Governance Control Center</h1>
-		<a href="/admin/governance/create" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">New Proposal</a>
-	</div>
+	<PageHeader icon={Landmark} title="Governance" subtitle="DAO proposals, treasury, and on-chain controls.">
+		{#snippet actions()}
+			<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New Proposal</a>
+		{/snippet}
+	</PageHeader>
 
 	{#if loading}
 		<div class="grid md:grid-cols-4 gap-4">
 			{#each [1, 2, 3, 4] as _}
-				<div class="h-24 rounded-xl bg-white/5 animate-pulse"></div>
+				<div class="h-24 rounded-xl surface-1 animate-pulse"></div>
 			{/each}
 		</div>
 	{:else if status}
@@ -55,20 +58,20 @@
 		</div>
 
 		<div class="grid md:grid-cols-2 gap-4">
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<h2 class="text-lg font-semibold text-white mb-2">Timelock Delays</h2>
-				<p class="text-sm text-gray-300">Routine actions: {status.timelockDelays.routineHours}h</p>
-				<p class="text-sm text-gray-300">Monetary changes: {status.timelockDelays.monetaryChangeHours}h</p>
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<h2 class="text-lg font-semibold text-foreground mb-2">Timelock Delays</h2>
+				<p class="text-sm text-foreground/80">Routine actions: {status.timelockDelays.routineHours}h</p>
+				<p class="text-sm text-foreground/80">Monetary changes: {status.timelockDelays.monetaryChangeHours}h</p>
 			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<h2 class="text-lg font-semibold text-white mb-2">Multisig & Emergency</h2>
-				<p class="text-sm text-gray-300 mb-2">
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<h2 class="text-lg font-semibold text-foreground mb-2">Multisig & Emergency</h2>
+				<p class="text-sm text-foreground/80 mb-2">
 					Multisig threshold: {status.multisig.threshold}/{status.multisig.totalSigners}
 				</p>
-				<p class="text-xs text-gray-400 mb-2">Audit events: {status.metrics.auditEvents}</p>
+				<p class="text-xs text-muted-foreground mb-2">Audit events: {status.metrics.auditEvents}</p>
 				{#if status.incident}
 					<p class="text-sm text-red-300">Active pause: {status.incident.reason}</p>
-					<p class="text-xs text-gray-400 mt-1">{new Date(status.incident.triggeredAt).toLocaleString()}</p>
+					<p class="text-xs text-muted-foreground mt-1">{new Date(status.incident.triggeredAt).toLocaleString()}</p>
 				{:else}
 					<p class="text-sm text-green-300">No active incident.</p>
 				{/if}
@@ -77,29 +80,29 @@
 	{/if}
 
 	<div class="grid md:grid-cols-3 gap-4">
-		<a href="/admin/governance/proposals" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Proposals</h3>
-			<p class="text-xs text-gray-400 mt-1">View and review governance proposals</p>
+		<a href="/admin/governance/proposals" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Proposals</h3>
+			<p class="text-xs text-muted-foreground mt-1">View and review governance proposals</p>
 		</a>
-		<a href="/admin/governance/execution" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Execution</h3>
-			<p class="text-xs text-gray-400 mt-1">Queue and execute timelock actions</p>
+		<a href="/admin/governance/execution" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Execution</h3>
+			<p class="text-xs text-muted-foreground mt-1">Queue and execute timelock actions</p>
 		</a>
-		<a href="/admin/governance/treasury" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Treasury</h3>
-			<p class="text-xs text-gray-400 mt-1">Monitor pools, inflows and runway</p>
+		<a href="/admin/governance/treasury" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Treasury</h3>
+			<p class="text-xs text-muted-foreground mt-1">Monitor pools, inflows and runway</p>
 		</a>
-		<a href="/admin/governance/emergency" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Emergency</h3>
-			<p class="text-xs text-gray-400 mt-1">Pause controls and incident logs</p>
+		<a href="/admin/governance/emergency" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Emergency</h3>
+			<p class="text-xs text-muted-foreground mt-1">Pause controls and incident logs</p>
 		</a>
-		<a href="/admin/governance/roles" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Roles</h3>
-			<p class="text-xs text-gray-400 mt-1">Permissions matrix and admin roster</p>
+		<a href="/admin/governance/roles" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Roles</h3>
+			<p class="text-xs text-muted-foreground mt-1">Permissions matrix and admin roster</p>
 		</a>
-		<a href="/admin/governance/reports" class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors">
-			<h3 class="text-white font-semibold">Reports</h3>
-			<p class="text-xs text-gray-400 mt-1">Generate governance transparency reports</p>
+		<a href="/admin/governance/reports" class="rounded-xl border border-border/40 surface-1 p-4 hover:surface-2 transition-colors">
+			<h3 class="text-foreground font-semibold">Reports</h3>
+			<p class="text-xs text-muted-foreground mt-1">Generate governance transparency reports</p>
 		</a>
 	</div>
 </div>

@@ -2,6 +2,8 @@
   import { ShieldCheck, Smartphone, Monitor, Tablet, Tv, Activity, Users, Clock } from "@lucide/svelte";
   import { Badge } from "$lib/components/ui/badge";
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "$lib/components/ui/card";
+  import PageHeader from "$lib/components/dashboard/PageHeader.svelte";
+  import StatChip from "$lib/components/dashboard/StatChip.svelte";
   
   const { data } = $props();
 
@@ -26,27 +28,13 @@
   const totalSessions = $derived(data.deviceStats.reduce((acc: number, curr: { count: number }) => acc + curr.count, 0));
 </script>
 
-<div class="p-8 max-w-7xl mx-auto space-y-10">
-  <!-- Header Section -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div class="space-y-1">
-      <div class="flex items-center gap-2 text-orange-500 font-medium">
-        <ShieldCheck class="w-4 h-4" />
-        <span>Admin Security Console</span>
-      </div>
-      <h1 class="text-4xl font-bold tracking-tight">Platform Pulse</h1>
-      <p class="text-muted-foreground text-lg">Real-time device monitoring and session oversight.</p>
-    </div>
-    
-    <div class="flex items-center gap-4 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10">
-      <div class="flex flex-col items-end">
-        <span class="text-sm text-muted-foreground">Active Sessions</span>
-        <span class="text-2xl font-bold font-mono tracking-tighter">{totalSessions}</span>
-      </div>
-      <div class="h-8 w-px bg-muted-foreground/20"></div>
-      <Activity class="w-8 h-8 text-green-500 animate-pulse" />
-    </div>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={ShieldCheck} title="Platform Pulse" subtitle="Real-time device monitoring and session oversight.">
+    {#snippet actions()}
+      <StatChip label="active sessions" value={totalSessions} tone="green" />
+      <Activity class="w-4 h-4 text-green-500 animate-pulse" />
+    {/snippet}
+  </PageHeader>
 
   <!-- Stats Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -83,22 +83,22 @@
 
   <div class="flex flex-wrap gap-3 items-center">
     <div class="relative w-80">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <input
         type="text"
         bind:value={q}
         oninput={onSearchInput}
         placeholder="Search name or email…"
-        class="w-full surface-2 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-gray-500"
+        class="w-full surface-2 rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder-gray-500"
       />
     </div>
-    <select bind:value={roleFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-white">
+    <select bind:value={roleFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-foreground">
       <option value="all">All roles</option>
       <option value="user">User</option>
       <option value="creator">Creator</option>
       <option value="admin">Admin</option>
     </select>
-    <select bind:value={bannedFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-white">
+    <select bind:value={bannedFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-foreground">
       <option value="all">All status</option>
       <option value="false">Active</option>
       <option value="true">Banned</option>
@@ -110,12 +110,12 @@
       {#each Array(8) as _ (_)}<Skeleton class="h-14 rounded-lg" />{/each}
     </div>
   {:else if users.length === 0}
-    <div class="surface-1 rounded-xl p-12 text-center text-gray-400">No users match these filters.</div>
+    <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No users match these filters.</div>
   {:else}
     <div class="surface-1 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-white/5">
-          <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+        <thead class="surface-1">
+          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th class="px-4 py-3">User</th>
             <th class="px-4 py-3">Role</th>
             <th class="px-4 py-3">Joined</th>
@@ -127,7 +127,7 @@
         </thead>
         <tbody>
           {#each users as u (u.id)}
-            <tr class="border-t border-white/5 hover:bg-white/5">
+            <tr class="border-t border-white/5 hover:surface-1">
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2">
                   {#if u.image}
@@ -138,18 +138,18 @@
                     </div>
                   {/if}
                   <div>
-                    <div class="text-white">{u.name}</div>
-                    <div class="text-xs text-gray-500">{u.email}</div>
+                    <div class="text-foreground">{u.name}</div>
+                    <div class="text-xs text-muted-foreground">{u.email}</div>
                   </div>
                   {#if u.banned}
                     <span class="ml-1 text-xs px-2 py-0.5 rounded bg-red-600/30 text-red-200">Banned</span>
                   {/if}
                 </div>
               </td>
-              <td class="px-4 py-3 text-xs text-gray-300 capitalize">{u.role ?? 'user'}</td>
-              <td class="px-4 py-3 text-xs text-gray-400">{new Date(u.createdAt).toLocaleDateString()}</td>
-              <td class="px-4 py-3 text-xs text-gray-400">{relativeTime(u.lastSeenAt)}</td>
-              <td class="px-4 py-3 text-right text-white tabular-nums">${(u.ppvLifetimeCents / 100).toFixed(2)}</td>
+              <td class="px-4 py-3 text-xs text-foreground/80 capitalize">{u.role ?? 'user'}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString()}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{relativeTime(u.lastSeenAt)}</td>
+              <td class="px-4 py-3 text-right text-foreground tabular-nums">${(u.ppvLifetimeCents / 100).toFixed(2)}</td>
               <td class="px-4 py-3 text-right text-yellow-300">{u.abuseReportsAgainst || ''}</td>
               <td class="px-4 py-3 text-right">
                 <a href={`/admin/users/${u.id}`} class="text-xs text-purple-300 hover:text-purple-200">Open →</a>

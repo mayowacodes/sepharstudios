@@ -86,7 +86,7 @@
   function statusBadge(s: string) {
     if (s === 'verified') return 'bg-green-600/30 text-green-200';
     if (s === 'rejected') return 'bg-red-600/30 text-red-200';
-    if (s === 'expired') return 'bg-gray-600/30 text-gray-300';
+    if (s === 'expired') return 'bg-gray-600/30 text-foreground/80';
     return 'bg-yellow-600/30 text-yellow-200';
   }
 
@@ -109,7 +109,7 @@
       <button
         type="button"
         onclick={() => (filter = f)}
-        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-white' : 'surface-2 text-gray-300 hover:text-white'}"
+        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-foreground' : 'surface-2 text-foreground/80 text-white hover:text-white'}"
       >{f}</button>
     {/each}
   </div>
@@ -119,7 +119,7 @@
       {#each Array(4) as _ (_)}<Skeleton class="h-16 rounded-xl" />{/each}
     </div>
   {:else if forms.length === 0}
-    <div class="surface-1 rounded-xl p-12 text-center text-gray-400">No forms match this filter.</div>
+    <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No forms match this filter.</div>
   {:else}
     <ul class="space-y-2">
       {#each forms as f (f.id)}
@@ -127,27 +127,27 @@
           <button
             type="button"
             onclick={() => { expanded[f.id] = !expanded[f.id]; expanded = { ...expanded }; }}
-            class="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-white/5"
+            class="w-full px-4 py-3 flex items-center gap-3 text-left hover:surface-1"
           >
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-white">{f.formKind}</span>
-                <span class="text-xs text-gray-400">· tax year {f.taxYear}</span>
+                <span class="text-sm font-semibold text-foreground">{f.formKind}</span>
+                <span class="text-xs text-muted-foreground">· tax year {f.taxYear}</span>
                 <span class="text-xs px-2 py-0.5 rounded capitalize {statusBadge(f.status)}">{f.status}</span>
               </div>
-              <div class="text-xs text-gray-400 mt-1">
+              <div class="text-xs text-muted-foreground mt-1">
                 {f.creatorDisplayName ?? f.userName ?? '—'} · {f.creatorEmail ?? ''}
               </div>
             </div>
-            <span class="text-xs text-gray-500">{new Date(f.submittedAt).toLocaleDateString()}</span>
+            <span class="text-xs text-muted-foreground">{new Date(f.submittedAt).toLocaleDateString()}</span>
           </button>
           {#if expanded[f.id]}
-            <div class="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
+            <div class="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
               <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                 {#each Object.entries(f.formData ?? {}) as [k, v] (k)}
                   <div class="flex justify-between gap-3 surface-2 rounded px-2 py-1.5">
-                    <dt class="text-gray-400 capitalize">{k}</dt>
-                    <dd class="text-white text-right truncate">
+                    <dt class="text-muted-foreground capitalize">{k}</dt>
+                    <dd class="text-foreground text-right truncate">
                       {k === 'tin' || k === 'foreignTaxId' ? mask(v) : String(v)}
                     </dd>
                   </div>

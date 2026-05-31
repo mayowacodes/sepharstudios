@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { Wallet, CheckCircle2, PauseOctagon } from '@lucide/svelte';
+  import { Wallet, CheckCircle2, PauseOctagon, RotateCcw } from '@lucide/svelte';
   import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
@@ -70,6 +70,24 @@
     }
   }
 
+  async function retry(r: PayoutRow) {
+    if (!confirm(`Retry failed payout to ${r.creatorDisplayName ?? r.creatorName ?? r.creatorEmail ?? 'creator'}?`)) return;
+    busy[r.id] = true;
+    busy = { ...busy };
+    try {
+      const res = await fetch(`/api/admin/payouts/${r.id}/retry`, { method: 'POST' });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? body.detail ?? 'Retry failed');
+      toast.success(r.processor === 'stripe' ? 'Transfer resent' : 'Queued for retry');
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Retry failed');
+    } finally {
+      busy[r.id] = false;
+      busy = { ...busy };
+    }
+  }
+
   async function hold(r: PayoutRow) {
     const reason = prompt('Reason for hold:');
     if (!reason) return;
@@ -116,22 +134,22 @@
 
   <div class="space-y-3">
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-gray-400 mr-2">Status:</span>
+      <span class="text-xs text-muted-foreground mr-2">Status:</span>
       {#each (['pending', 'approved', 'in_transit', 'paid', 'failed', 'on_hold', 'all'] as StatusFilter[]) as s (s)}
         <button
           type="button"
           onclick={() => (status = s)}
-          class="px-3 py-1 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{s.replace('_', ' ')}</button>
       {/each}
     </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-gray-400 mr-2">Processor:</span>
+      <span class="text-xs text-muted-foreground mr-2">Processor:</span>
       {#each (['all', 'paystack', 'stripe'] as ProcessorFilter[]) as p (p)}
         <button
           type="button"
           onclick={() => (processor = p)}
-          class="px-3 py-1 rounded text-xs capitalize {processor === p ? 'bg-purple-700 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1 rounded text-xs capitalize {processor === p ? 'bg-purple-700 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{p}</button>
       {/each}
     </div>
@@ -142,14 +160,14 @@
       {#each Array(5) as _ (_)}<Skeleton class="h-12 rounded-lg" />{/each}
     </div>
   {:else if rows.length === 0}
-    <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
       No payouts match these filters.
     </div>
   {:else}
-    <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+    <div class="surface-1 border border-border/40 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-white/5">
-          <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+        <thead class="surface-1">
+          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th class="px-4 py-3">Creator</th>
             <th class="px-4 py-3">Processor</th>
             <th class="px-4 py-3">Period</th>
@@ -160,10 +178,10 @@
         </thead>
         <tbody>
           {#each rows as r (r.id)}
-            <tr class="border-t border-white/5 hover:bg-white/5">
-              <td class="px-4 py-3 text-gray-200">
+            <tr class="border-t border-white/5 hover:surface-1">
+              <td class="px-4 py-3 text-foreground/90">
                 {r.creatorDisplayName ?? r.creatorName ?? '—'}
-                {#if r.creatorEmail}<div class="text-xs text-gray-500">{r.creatorEmail}</div>{/if}
+                {#if r.creatorEmail}<div class="text-xs text-muted-foreground">{r.creatorEmail}</div>{/if}
               </td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded text-xs uppercase tracking-wide {processorBadge(r.processor)}">{r.processor}</span>
@@ -171,12 +189,12 @@
                   <div class="text-xs text-red-300 mt-0.5">Stripe not verified</div>
                 {/if}
               </td>
-              <td class="px-4 py-3 text-xs text-gray-400">
+              <td class="px-4 py-3 text-xs text-muted-foreground">
                 {new Date(r.periodStart).toLocaleDateString()} → {new Date(r.periodEnd).toLocaleDateString()}
               </td>
-              <td class="px-4 py-3 text-white font-medium">
+              <td class="px-4 py-3 text-foreground font-medium">
                 {money(r.netCents, r.currency)}
-                <div class="text-xs text-gray-500">gross {money(r.grossCents, r.currency)}</div>
+                <div class="text-xs text-muted-foreground">gross {money(r.grossCents, r.currency)}</div>
               </td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded text-xs capitalize {statusBadge(r.status)}">{r.status.replace('_', ' ')}</span>
@@ -198,8 +216,15 @@
                       class="px-2.5 py-1 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-1"
                     ><PauseOctagon class="w-3 h-3" />Hold</button>
                   </div>
+                {:else if r.status === 'failed'}
+                  <button
+                    type="button"
+                    onclick={() => retry(r)}
+                    disabled={busy[r.id]}
+                    class="px-2.5 py-1 rounded text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white inline-flex items-center gap-1"
+                  ><RotateCcw class="w-3 h-3" />{busy[r.id] ? 'Retrying…' : 'Retry'}</button>
                 {:else}
-                  <span class="text-xs text-gray-500">—</span>
+                  <span class="text-xs text-muted-foreground">—</span>
                 {/if}
               </td>
             </tr>

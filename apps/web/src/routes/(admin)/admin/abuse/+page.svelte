@@ -153,7 +153,7 @@
   function categoryBadgeClass(c: string): string {
     if (c === 'harassment' || c === 'self_harm' || c === 'illegal') return 'bg-red-600/30 text-red-200';
     if (c === 'sexual' || c === 'violence') return 'bg-orange-600/30 text-orange-200';
-    return 'bg-white/10 text-gray-300';
+    return 'surface-2 text-foreground/80';
   }
 </script>
 
@@ -166,22 +166,22 @@
 
   <div class="space-y-3">
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-gray-400 mr-2">Type:</span>
+      <span class="text-xs text-muted-foreground mr-2">Type:</span>
       {#each (['all', 'review', 'forum_thread', 'forum_reply', 'content', 'user'] as Filter[]) as f (f)}
         <button
           type="button"
           onclick={() => filter = f}
-          class="px-3 py-1.5 rounded text-xs {filter === f ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1.5 rounded text-xs {filter === f ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{f.replace('_', ' ')}</button>
       {/each}
     </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-gray-400 mr-2">Status:</span>
+      <span class="text-xs text-muted-foreground mr-2">Status:</span>
       {#each (['open', 'resolved', 'all'] as Status[]) as s (s)}
         <button
           type="button"
           onclick={() => statusFilter = s}
-          class="px-3 py-1.5 rounded text-xs capitalize {statusFilter === s ? 'bg-purple-700 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1.5 rounded text-xs capitalize {statusFilter === s ? 'bg-purple-700 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{s}</button>
       {/each}
     </div>
@@ -192,53 +192,53 @@
       {#each Array(4) as _ (_)}<Skeleton class="h-20 rounded-xl" />{/each}
     </div>
   {:else if reports.length === 0}
-    <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
       Queue is empty.
     </div>
   {:else}
     <ul class="space-y-2">
       {#each reports as r (r.id)}
-        <li class="bg-white/5 border border-white/10 rounded-xl">
+        <li class="surface-1 border border-border/40 rounded-xl">
           <button
             type="button"
             onclick={() => { expanded[r.id] = !expanded[r.id]; expanded = { ...expanded }; }}
-            class="w-full text-left px-4 py-3 hover:bg-white/10"
+            class="w-full text-left px-4 py-3 hover:surface-2"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs uppercase tracking-wide px-2 py-0.5 rounded {categoryBadgeClass(r.category)}">{r.category.replace('_', ' ')}</span>
-                  <span class="text-xs text-gray-400 capitalize">{r.targetType.replace('_', ' ')}</span>
-                  <span class="text-xs text-gray-500">· {relativeTime(r.createdAt)}</span>
+                  <span class="text-xs text-muted-foreground capitalize">{r.targetType.replace('_', ' ')}</span>
+                  <span class="text-xs text-muted-foreground">· {relativeTime(r.createdAt)}</span>
                   {#if r.status !== 'open'}
                     <span class="text-xs text-green-300">· {r.status}{r.resolution ? ` (${r.resolution})` : ''}</span>
                   {/if}
                 </div>
-                <p class="text-sm text-gray-200 mt-1 line-clamp-2">{r.preview ?? '(target deleted)'}</p>
-                <div class="text-xs text-gray-500 mt-1">
+                <p class="text-sm text-foreground/90 mt-1 line-clamp-2">{r.preview ?? '(target deleted)'}</p>
+                <div class="text-xs text-muted-foreground mt-1">
                   Reported by {r.reporterName ?? 'anonymous'}
                 </div>
               </div>
-              <Flag class="w-4 h-4 text-gray-500 shrink-0 mt-1" />
+              <Flag class="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
             </div>
           </button>
           {#if expanded[r.id]}
-            <div class="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
+            <div class="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
               {#if r.description}
                 <div>
-                  <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Reporter note</div>
-                  <p class="text-sm text-gray-200">{r.description}</p>
+                  <div class="text-xs text-muted-foreground uppercase tracking-wide mb-1">Reporter note</div>
+                  <p class="text-sm text-foreground/90">{r.description}</p>
                 </div>
               {/if}
               <div>
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Target preview</div>
-                <p class="text-sm text-gray-200 whitespace-pre-line">{r.preview ?? '(not available — target may be deleted)'}</p>
+                <div class="text-xs text-muted-foreground uppercase tracking-wide mb-1">Target preview</div>
+                <p class="text-sm text-foreground/90 whitespace-pre-line">{r.preview ?? '(not available — target may be deleted)'}</p>
               </div>
 
               {#if severities[r.id]}
                 <div class="surface-1 rounded p-2 flex items-center gap-2 text-xs">
                   <span class="px-2 py-0.5 rounded text-xs uppercase tracking-wide font-semibold {severityBadge(severities[r.id].severity)}">{severities[r.id].severity}</span>
-                  <span class="text-gray-300 flex-1">{severities[r.id].rationale}</span>
+                  <span class="text-foreground/80 flex-1">{severities[r.id].rationale}</span>
                   <span class="text-purple-300">✨ AI</span>
                 </div>
               {/if}
@@ -278,7 +278,7 @@
                   <button
                     type="button"
                     onclick={() => dismiss(r)}
-                    class="px-3 py-1.5 rounded text-xs bg-white/10 hover:bg-white/15 text-white inline-flex items-center gap-1"
+                    class="px-3 py-1.5 rounded text-xs surface-2 hover:surface-3 text-foreground inline-flex items-center gap-1"
                   ><X class="w-3.5 h-3.5" />Dismiss</button>
                   <button
                     type="button"

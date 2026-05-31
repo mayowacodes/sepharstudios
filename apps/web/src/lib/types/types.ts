@@ -1,3 +1,9 @@
+// Single source of truth for the media-side type primitives. Earlier
+// revisions of this file accidentally declared `AudioTrack`, `Subtitle`,
+// and `Chapter` multiple times — TypeScript's interface-merging silently
+// merged them into a union of every field, which let buggy code compile
+// (e.g. a track with both `lang` and `language`). Keep one declaration
+// per concept.
 
 export interface Chapter {
   title: string;
@@ -11,8 +17,11 @@ export interface Subtitle {
 }
 
 export interface AudioTrack {
+  // `id` and `language` are required everywhere they're actually used;
+  // older spots passed `lang` instead — those have been migrated.
+  id: string;
   label: string;
-  lang: string;
+  language: string;
   src: string;
 }
 
@@ -78,19 +87,6 @@ export interface Movie {
   subtitles: Subtitle[];
 }
 
-export interface AudioTrack {
-  id: string;
-  label: string;
-  language: string;
-  src: string;
-}
-
-export interface Subtitle {
-  label: string;
-  src: string;
-  srclang: string;
-}
-
 export interface UserType {
   id: string;
   name: string;
@@ -105,7 +101,7 @@ export interface Profile {
   avatar: string;
   email?: string;
   image?: string;
-  avatarUrl?: string;  
+  avatarUrl?: string;
   parental: boolean;
 }
 
@@ -122,24 +118,6 @@ export interface VideoMetadata {
   views: number;
   isLive: boolean;
   ageRestriction?: string;
-}
-
-export interface AudioTrack {
-  id: string;
-  label: string;
-  language: string;
-  src: string;
-}
-
-export interface Chapter {
-  time: number;
-  title: string;
-}
-
-export interface Subtitle {
-  label: string;
-  src: string;
-  srclang: string;
 }
 
 export interface PlayerSettings {
@@ -161,8 +139,6 @@ export interface PlayerSettings {
   };
   size: 'responsive' | 'fluid' | 'fixed';
 }
-
-
 
 export interface UserPreferences {
   userId: string;

@@ -48,8 +48,8 @@
       <button
         class="flex justify-between items-center py-4 w-full text-left cursor-pointer hover:bg-[#FFBF00]/10 transition-colors"
         aria-expanded={expandedIndex === index}
-        on:click={() => toggleFAQ(index)}
-        on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleFAQ(index)}
+        onclick={() => toggleFAQ(index)}
+        onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleFAQ(index)}
       >
         <h2 class="text-xl font-semibold text-[#AF6E4D]">
           {faq.question}

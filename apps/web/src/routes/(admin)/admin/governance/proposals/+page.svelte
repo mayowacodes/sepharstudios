@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { FileText } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type Proposal = {
 		id: string;
@@ -44,14 +46,15 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-4">
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold text-white">Governance Proposals</h1>
-		<a href="/admin/governance/create" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">Create Proposal</a>
-	</div>
+	<PageHeader icon={FileText} title="Governance Proposals" subtitle="Pending, queued, and historical DAO proposals.">
+		{#snippet actions()}
+			<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New</a>
+		{/snippet}
+	</PageHeader>
 
-	<div class="rounded-xl border border-white/10 overflow-hidden">
+	<div class="rounded-xl border border-border/40 overflow-hidden">
 		<table class="w-full text-sm">
-			<thead class="bg-white/5 text-gray-300">
+			<thead class="surface-1 text-foreground/80">
 				<tr>
 					<th class="px-4 py-3 text-left">Title</th>
 					<th class="px-4 py-3 text-left">Type</th>
@@ -63,24 +66,24 @@
 			</thead>
 			<tbody>
 				{#if loading}
-					<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Loading proposals...</td></tr>
+					<tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">Loading proposals...</td></tr>
 				{:else if proposals.length === 0}
-					<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">No proposals yet.</td></tr>
+					<tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">No proposals yet.</td></tr>
 				{:else}
 					{#each proposals as p}
-						<tr class="border-t border-white/10">
+						<tr class="border-t border-border/40">
 							<td class="px-4 py-3">
-								<p class="text-white">{p.title}</p>
-								<p class="text-xs text-gray-400 mt-1 line-clamp-2">{p.description}</p>
+								<p class="text-foreground">{p.title}</p>
+								<p class="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
 							</td>
-							<td class="px-4 py-3 text-gray-300">{p.type}</td>
+							<td class="px-4 py-3 text-foreground/80">{p.type}</td>
 							<td class="px-4 py-3"><span class={`px-2 py-1 rounded text-xs ${riskClass(p.riskLevel)}`}>{p.riskLevel}</span></td>
-							<td class="px-4 py-3 text-gray-300">{p.approvals?.length ?? 0}/{p.requiredApprovals ?? 4}</td>
-							<td class="px-4 py-3 text-gray-300">{p.status}</td>
-							<td class="px-4 py-3 text-gray-400">{new Date(p.createdAt).toLocaleString()}</td>
+							<td class="px-4 py-3 text-foreground/80">{p.approvals?.length ?? 0}/{p.requiredApprovals ?? 4}</td>
+							<td class="px-4 py-3 text-foreground/80">{p.status}</td>
+							<td class="px-4 py-3 text-muted-foreground">{new Date(p.createdAt).toLocaleString()}</td>
 						</tr>
 						{#if (p.guardrailWarnings?.length ?? 0) > 0}
-							<tr class="border-t border-white/10 bg-amber-500/5">
+							<tr class="border-t border-border/40 bg-amber-500/5">
 								<td colspan="6" class="px-4 py-2 text-xs text-amber-300">
 									{#each p.guardrailWarnings ?? [] as w}
 										<p>- {w}</p>

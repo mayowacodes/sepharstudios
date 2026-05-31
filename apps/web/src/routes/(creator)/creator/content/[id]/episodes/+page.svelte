@@ -2,6 +2,8 @@
   import { page } from '$app/state';
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
+  import { ArrowLeft, Plus, Tv } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   interface Episode {
     id: string;
@@ -155,50 +157,52 @@
 </script>
 
 <div class="container mx-auto py-8 px-4 space-y-6">
-  <a href={`/creator/content/${showId}`} class="text-purple-400 hover:text-purple-300 text-sm">← Back to show</a>
+  <a href={`/creator/content/${showId}`} class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
+    <ArrowLeft class="w-3 h-3" /> Back to show
+  </a>
 
-  <div class="flex items-end justify-between flex-wrap gap-3">
-    <div>
-      <h1 class="text-2xl font-bold text-white">Episodes</h1>
-      <p class="text-sm text-gray-400">{episodes.length} {episodes.length === 1 ? 'episode' : 'episodes'} across {grouped.length} {grouped.length === 1 ? 'season' : 'seasons'}.</p>
-    </div>
-    <button type="button" onclick={openCreate} class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">+ Add Episode</button>
-  </div>
+  <PageHeader icon={Tv} title="Episodes" subtitle="{episodes.length} {episodes.length === 1 ? 'episode' : 'episodes'} across {grouped.length} {grouped.length === 1 ? 'season' : 'seasons'}.">
+    {#snippet actions()}
+      <button type="button" onclick={openCreate} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
+        <Plus class="w-3 h-3" /> Add episode
+      </button>
+    {/snippet}
+  </PageHeader>
 
   {#if loading}
-    <div class="text-center text-gray-400 py-12">Loading…</div>
+    <div class="text-center text-muted-foreground py-12">Loading…</div>
   {:else if episodes.length === 0}
-    <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
       No episodes yet. Add Season 1 Episode 1 to get started.
     </div>
   {:else}
     {#each grouped as [season, eps] (season)}
       <div class="space-y-2">
-        <h2 class="text-lg font-semibold text-white">Season {season}</h2>
+        <h2 class="text-lg font-semibold text-foreground">Season {season}</h2>
         <ul class="space-y-2">
           {#each eps as e (e.id)}
-            <li class="bg-white/5 border border-white/10 rounded-lg p-4 flex items-start gap-4">
+            <li class="surface-1 border border-border/40 rounded-lg p-4 flex items-start gap-4">
               {#if e.thumbnail}
                 <img src={e.thumbnail} alt="" class="w-24 h-14 object-cover rounded shrink-0" />
               {:else}
-                <div class="w-24 h-14 bg-white/10 rounded grid place-items-center text-xs text-gray-500 shrink-0">no thumb</div>
+                <div class="w-24 h-14 surface-2 rounded grid place-items-center text-xs text-muted-foreground shrink-0">no thumb</div>
               {/if}
               <div class="flex-1 min-w-0">
-                <div class="text-white">
+                <div class="text-foreground">
                   <span class="text-purple-300 text-sm">S{e.seasonNumber}E{e.episodeNumber}</span>
                   <span class="font-medium ml-2">{e.title}</span>
                 </div>
                 {#if e.description}
-                  <p class="text-xs text-gray-400 mt-1 line-clamp-2">{e.description}</p>
+                  <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{e.description}</p>
                 {/if}
-                <div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-2">
+                <div class="text-xs text-muted-foreground mt-1 flex flex-wrap gap-2">
                   {#if e.duration}<span>{e.duration}</span>{/if}
                   {#if e.airDate}<span>Aired {e.airDate}</span>{/if}
                   {#if !e.videoUrl}<span class="text-yellow-400">⚠ No video uploaded</span>{/if}
                 </div>
               </div>
               <div class="flex flex-col gap-1 shrink-0">
-                <button type="button" onclick={() => openEdit(e)} class="text-xs bg-white/10 hover:bg-white/15 text-white px-3 py-1.5 rounded">Edit</button>
+                <button type="button" onclick={() => openEdit(e)} class="text-xs surface-2 hover:surface-3 text-foreground px-3 py-1.5 rounded">Edit</button>
                 <button type="button" onclick={() => removeEpisode(e)} class="text-xs bg-red-600/30 hover:bg-red-600/50 text-red-100 px-3 py-1.5 rounded">Delete</button>
               </div>
             </li>
@@ -218,46 +222,46 @@
     onkeydown={(e) => { if (e.key === 'Escape') dialogOpen = false; }}
   >
     <div
-      class="bg-zinc-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4"
+      class="bg-zinc-900 border border-border/40 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4"
       role="dialog"
       aria-modal="true"
       tabindex="-1"
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
     >
-      <h2 class="text-xl font-bold text-white">{editingId ? 'Edit episode' : 'Add episode'}</h2>
+      <h2 class="text-xl font-bold text-foreground">{editingId ? 'Edit episode' : 'Add episode'}</h2>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="ep-season" class="block text-xs text-gray-300 mb-1">Season #</label>
-          <input id="ep-season" type="number" min="1" bind:value={form.seasonNumber} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+          <label for="ep-season" class="block text-xs text-foreground/80 mb-1">Season #</label>
+          <input id="ep-season" type="number" min="1" bind:value={form.seasonNumber} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
         </div>
         <div>
-          <label for="ep-num" class="block text-xs text-gray-300 mb-1">Episode #</label>
-          <input id="ep-num" type="number" min="1" bind:value={form.episodeNumber} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+          <label for="ep-num" class="block text-xs text-foreground/80 mb-1">Episode #</label>
+          <input id="ep-num" type="number" min="1" bind:value={form.episodeNumber} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
         </div>
       </div>
       <div>
-        <label for="ep-title" class="block text-xs text-gray-300 mb-1">Title *</label>
-        <input id="ep-title" bind:value={form.title} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+        <label for="ep-title" class="block text-xs text-foreground/80 mb-1">Title *</label>
+        <input id="ep-title" bind:value={form.title} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
       </div>
       <div>
-        <label for="ep-desc" class="block text-xs text-gray-300 mb-1">Description</label>
-        <textarea id="ep-desc" bind:value={form.description} rows="3" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white"></textarea>
+        <label for="ep-desc" class="block text-xs text-foreground/80 mb-1">Description</label>
+        <textarea id="ep-desc" bind:value={form.description} rows="3" class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground"></textarea>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="ep-dur" class="block text-xs text-gray-300 mb-1">Duration</label>
-          <input id="ep-dur" bind:value={form.duration} placeholder="e.g. 42m" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+          <label for="ep-dur" class="block text-xs text-foreground/80 mb-1">Duration</label>
+          <input id="ep-dur" bind:value={form.duration} placeholder="e.g. 42m" class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
         </div>
         <div>
-          <label for="ep-air" class="block text-xs text-gray-300 mb-1">Air date</label>
-          <input id="ep-air" type="date" bind:value={form.airDate} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+          <label for="ep-air" class="block text-xs text-foreground/80 mb-1">Air date</label>
+          <input id="ep-air" type="date" bind:value={form.airDate} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
         </div>
       </div>
 
       <div>
-        <div class="text-xs text-gray-300 mb-1">Thumbnail</div>
+        <div class="text-xs text-foreground/80 mb-1">Thumbnail</div>
         {#if form.thumbnail}
           <img src={form.thumbnail} alt="" class="w-32 h-20 object-cover rounded mb-2" />
         {/if}
@@ -270,7 +274,7 @@
       </div>
 
       <div>
-        <div class="text-xs text-gray-300 mb-1">Video file</div>
+        <div class="text-xs text-foreground/80 mb-1">Video file</div>
         {#if form.videoUrl}
           <p class="text-xs text-green-400 mb-2">✓ Video uploaded</p>
         {/if}
@@ -280,11 +284,11 @@
             {form.videoUrl ? 'Replace video' : 'Upload video'}
           </span>
         </label>
-        <p class="text-xs text-gray-500 mt-1">Episode videos skip the full encoder pipeline — uploads directly to storage.</p>
+        <p class="text-xs text-muted-foreground mt-1">Episode videos skip the full encoder pipeline — uploads directly to storage.</p>
       </div>
 
-      <div class="flex justify-end gap-2 border-t border-white/10 pt-4">
-        <button type="button" onclick={() => dialogOpen = false} class="px-4 py-2 text-gray-300 hover:text-white text-sm">Cancel</button>
+      <div class="flex justify-end gap-2 border-t border-border/40 pt-4">
+        <button type="button" onclick={() => dialogOpen = false} class="px-4 py-2 text-foreground/80 hover:text-foreground text-sm">Cancel</button>
         <button type="button" onclick={save} class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">
           {editingId ? 'Save changes' : 'Add episode'}
         </button>

@@ -151,6 +151,19 @@
   }
 
   async function switchProcessor(processor: 'paystack' | 'stripe') {
+    // Pre-flight: switching to Stripe before the connected account is
+    // verified would leave the creator unable to actually receive payouts
+    // — the next settlement would fail with a 400 "account not ready"
+    // and they'd have no idea why. Block the switch client-side with a
+    // concrete next-step instead of letting the PUT silently succeed.
+    if (processor === 'stripe' && !payoutMethod.stripePayoutsEnabled) {
+      alert(
+        payoutMethod.stripeStatus === null
+          ? 'Connect a Stripe account first — Stripe payouts need a verified Connect account.'
+          : `Stripe account is ${payoutMethod.stripeStatus ?? 'not ready'} (payouts disabled). Finish Stripe onboarding before switching.`
+      );
+      return;
+    }
     payoutMethod.saving = true;
     try {
       const res = await fetch('/api/creator/payouts/method', {
@@ -323,15 +336,17 @@
       loading={loadingEarnings}
       index={2}
     />
-    <KpiCard
-      label="STC Value"
-      value={`$${tokenomicsData.stcValue.toFixed(2)}`}
-      icon={Coins}
-      accent="orange"
-      deltaLabel={`${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`}
-      loading={loadingEarnings}
-      index={3}
-    />
+    {#if $isConnected}
+      <KpiCard
+        label="STC Value"
+        value={`$${tokenomicsData.stcValue.toFixed(2)}`}
+        icon={Coins}
+        accent="orange"
+        deltaLabel={`${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`}
+        loading={loadingEarnings}
+        index={3}
+      />
+    {/if}
   </div>
 
   <!-- Web3 Integration -->
@@ -423,7 +438,7 @@
           type="button"
           onclick={() => switchProcessor('paystack')}
           disabled={payoutMethod.saving}
-          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'paystack' ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 hover:bg-white/5'}"
+          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'paystack' ? 'border-orange-500 bg-orange-500/10' : 'border-border/40 hover:surface-1'}"
         >
           <div class="flex items-center justify-between">
             <div class="font-medium">Paystack</div>
@@ -438,7 +453,7 @@
           type="button"
           onclick={() => switchProcessor('stripe')}
           disabled={payoutMethod.saving || !payoutMethod.stripePayoutsEnabled}
-          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'stripe' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:bg-white/5'} {!payoutMethod.stripePayoutsEnabled ? 'opacity-60 cursor-not-allowed' : ''}"
+          class="text-left rounded-xl border p-4 transition-colors {payoutMethod.processor === 'stripe' ? 'border-purple-500 bg-purple-500/10' : 'border-border/40 hover:surface-1'} {!payoutMethod.stripePayoutsEnabled ? 'opacity-60 cursor-not-allowed' : ''}"
         >
           <div class="flex items-center justify-between">
             <div class="font-medium">Stripe Connect</div>

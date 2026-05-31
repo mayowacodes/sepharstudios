@@ -186,6 +186,9 @@
 	"/api/admin/content/[id]/ppv": [
 		"src/routes/api/admin/content/[id]/ppv/+server.ts"
 	],
+	"/api/admin/content/[id]/pricing": [
+		"src/routes/api/admin/content/[id]/pricing/+server.ts"
+	],
 	"/api/admin/content/[id]/publish": [
 		"src/routes/api/admin/content/[id]/publish/+server.ts"
 	],
@@ -209,6 +212,9 @@
 	],
 	"/api/admin/creators": [
 		"src/routes/api/admin/creators/+server.ts"
+	],
+	"/api/admin/creators/invite": [
+		"src/routes/api/admin/creators/invite/+server.ts"
 	],
 	"/api/admin/disputes": [
 		"src/routes/api/admin/disputes/+server.ts"
@@ -276,11 +282,17 @@
 	"/api/admin/payouts/[id]/hold": [
 		"src/routes/api/admin/payouts/[id]/hold/+server.ts"
 	],
+	"/api/admin/payouts/[id]/retry": [
+		"src/routes/api/admin/payouts/[id]/retry/+server.ts"
+	],
 	"/api/admin/policies": [
 		"src/routes/api/admin/policies/+server.ts"
 	],
 	"/api/admin/refunds": [
 		"src/routes/api/admin/refunds/+server.ts"
+	],
+	"/api/admin/refunds/lookup": [
+		"src/routes/api/admin/refunds/lookup/+server.ts"
 	],
 	"/api/admin/reviews": [
 		"src/routes/api/admin/reviews/+server.ts"
@@ -486,6 +498,9 @@
 	"/api/creator/messages": [
 		"src/routes/api/creator/messages/+server.ts"
 	],
+	"/api/creator/messages/bulk": [
+		"src/routes/api/creator/messages/bulk/+server.ts"
+	],
 	"/api/creator/messages/[id]/archive": [
 		"src/routes/api/creator/messages/[id]/archive/+server.ts"
 	],
@@ -656,6 +671,9 @@
 	],
 	"/api/health": [
 		"src/routes/api/health/+server.ts"
+	],
+	"/api/internal/refunds/sweep-pending": [
+		"src/routes/api/internal/refunds/sweep-pending/+server.ts"
 	],
 	"/api/kids/quiz/generate": [
 		"src/routes/api/kids/quiz/generate/+server.ts"

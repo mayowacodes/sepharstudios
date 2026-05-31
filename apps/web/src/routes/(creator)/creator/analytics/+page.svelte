@@ -1,10 +1,11 @@
 <!-- Creator Analytics Dashboard -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { BarChart3, Eye, Clock, Target, Heart } from '@lucide/svelte';
+  import { BarChart3, Eye, Clock, Target, Heart, LineChart } from '@lucide/svelte';
   import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
   import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
   import TrendChart from '$lib/components/dashboard/TrendChart.svelte';
+  import EmptyState from '$lib/components/dashboard/EmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   // Real analytics — pulled from /api/creator/analytics
@@ -110,7 +111,7 @@
     {#snippet actions()}
       <select
         bind:value={selectedPeriod}
-        class="px-3 py-1.5 surface-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-purple-600"
+        class="px-3 py-1.5 surface-2 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-purple-600"
       >
         <option value="7d">Last 7 days</option>
         <option value="30d">Last 30 days</option>
@@ -127,13 +128,13 @@
         <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1">
           <span>✨</span> AI Insights
         </div>
-        <h2 class="text-xl font-bold text-white">What your data is telling us</h2>
+        <h2 class="text-xl font-bold text-foreground">What your data is telling us</h2>
       </div>
       <button
         type="button"
         onclick={loadAIInsights}
         disabled={aiLoading}
-        class="text-xs text-purple-200 hover:text-white border border-purple-500/40 hover:border-purple-400 rounded-md px-3 py-1.5 transition-colors disabled:opacity-40"
+        class="text-xs text-purple-200 hover:text-foreground border border-purple-500/40 hover:border-purple-400 rounded-md px-3 py-1.5 transition-colors disabled:opacity-40"
       >
         {aiLoading ? 'Analysing…' : 'Refresh'}
       </button>
@@ -142,7 +143,7 @@
     {#if aiLoading && !aiInsights}
       <div class="grid sm:grid-cols-2 gap-3">
         {#each [1,2,3,4] as _}
-          <div class="h-20 bg-white/5 rounded-lg animate-pulse"></div>
+          <div class="h-20 surface-1 rounded-lg animate-pulse"></div>
         {/each}
       </div>
     {:else if aiError}
@@ -201,6 +202,19 @@
       {/each}
     </div>
     <Skeleton class="h-64 rounded-xl" />
+  {:else if (analyticsData.overview?.totalViews ?? 0) === 0 && (analyticsData.contentPerformance?.length ?? 0) === 0}
+    <EmptyState
+      icon={LineChart}
+      title="No analytics yet"
+      description="Once your published content starts being watched, view counts, completion rates, and demographic breakdowns will appear here. New creators usually see their first data within 24 hours of publishing."
+      tone="default"
+    >
+      {#snippet action()}
+        <a href="/creator/upload" class="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
+          Upload your first video
+        </a>
+      {/snippet}
+    </EmptyState>
   {:else}
     <!-- KPI grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -256,40 +270,40 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Content Performance -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-xl font-bold text-white mb-4">Content Performance</h3>
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+        <h3 class="text-xl font-bold text-foreground mb-4">Content Performance</h3>
         <div class="space-y-4">
           {#each analyticsData.contentPerformance as content}
-            <div class="bg-white/5 rounded-lg p-4">
+            <div class="surface-1 rounded-lg p-4">
               <div class="flex justify-between items-start mb-3">
                 <div>
-                  <div class="font-medium text-white">{content.title}</div>
-                  <div class="text-sm text-gray-400">{formatNumber(content.views)} views</div>
+                  <div class="font-medium text-foreground">{content.title}</div>
+                  <div class="text-sm text-muted-foreground">{formatNumber(content.views)} views</div>
                 </div>
                 <div class="text-right">
                   <div class="text-sm font-medium text-green-400">{content.completionRate}%</div>
-                  <div class="text-xs text-gray-400">completion</div>
+                  <div class="text-xs text-muted-foreground">completion</div>
                 </div>
               </div>
               
               <div class="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <div class="text-gray-400">Watch Time</div>
-                  <div class="text-white font-medium">{formatDuration(content.watchTime)}</div>
+                  <div class="text-muted-foreground">Watch Time</div>
+                  <div class="text-foreground font-medium">{formatDuration(content.watchTime)}</div>
                 </div>
                 <div>
-                  <div class="text-gray-400">Likes</div>
-                  <div class="text-white font-medium">{content.likes}</div>
+                  <div class="text-muted-foreground">Likes</div>
+                  <div class="text-foreground font-medium">{content.likes}</div>
                 </div>
                 <div>
-                  <div class="text-gray-400">Shares</div>
-                  <div class="text-white font-medium">{content.shares}</div>
+                  <div class="text-muted-foreground">Shares</div>
+                  <div class="text-foreground font-medium">{content.shares}</div>
                 </div>
               </div>
               
               <!-- Engagement Bar -->
               <div class="mt-3">
-                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <div class="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Engagement Score</span>
                   <span>{content.engagement}/10</span>
                 </div>
@@ -306,20 +320,20 @@
       </div>
 
       <!-- Device Breakdown -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-xl font-bold text-white mb-4">Viewing Devices</h3>
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+        <h3 class="text-xl font-bold text-foreground mb-4">Viewing Devices</h3>
         <div class="space-y-4">
           {#each analyticsData.viewsByDevice as device}
             <div class="flex items-center justify-between">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full bg-linear-to-r from-purple-600 to-blue-600 mr-3"></div>
                 <div>
-                  <div class="text-white font-medium">{device.device}</div>
-                  <div class="text-sm text-gray-400">{formatNumber(device.views)} views</div>
+                  <div class="text-foreground font-medium">{device.device}</div>
+                  <div class="text-sm text-muted-foreground">{formatNumber(device.views)} views</div>
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-white font-bold">{device.percentage}%</div>
+                <div class="text-foreground font-bold">{device.percentage}%</div>
               </div>
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
@@ -336,14 +350,14 @@
     <!-- Demographics -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Age Groups -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-xl font-bold text-white mb-4">Age Demographics</h3>
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+        <h3 class="text-xl font-bold text-foreground mb-4">Age Demographics</h3>
         <div class="space-y-3">
           {#each analyticsData.demographics.ageGroups as group}
             <div class="flex items-center justify-between">
-              <div class="text-white">{group.range}</div>
+              <div class="text-foreground">{group.range}</div>
               <div class="flex items-center">
-                <div class="text-white font-medium mr-2">{group.percentage}%</div>
+                <div class="text-foreground font-medium mr-2">{group.percentage}%</div>
                 <div class="w-16 bg-gray-700 rounded-full h-2">
                   <div 
                     class="bg-linear-to-r from-green-600 to-blue-600 h-2 rounded-full"
@@ -357,13 +371,13 @@
       </div>
 
       <!-- Gender Distribution -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-xl font-bold text-white mb-4">Gender Distribution</h3>
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+        <h3 class="text-xl font-bold text-foreground mb-4">Gender Distribution</h3>
         <div class="space-y-4">
           {#each analyticsData.demographics.genderDistribution as gender}
             <div class="flex items-center justify-between">
-              <div class="text-white">{gender.gender}</div>
-              <div class="text-white font-bold">{gender.percentage}%</div>
+              <div class="text-foreground">{gender.gender}</div>
+              <div class="text-foreground font-bold">{gender.percentage}%</div>
             </div>
             <div class="w-full bg-gray-700 rounded-full h-2">
               <div 
@@ -376,14 +390,14 @@
       </div>
 
       <!-- Top Countries -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <h3 class="text-xl font-bold text-white mb-4">Top Countries</h3>
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+        <h3 class="text-xl font-bold text-foreground mb-4">Top Countries</h3>
         <div class="space-y-3">
           {#each analyticsData.demographics.topCountries as country}
             <div class="flex items-center justify-between">
-              <div class="text-white">{country.country}</div>
+              <div class="text-foreground">{country.country}</div>
               <div class="flex items-center">
-                <div class="text-white font-medium mr-2">{country.percentage}%</div>
+                <div class="text-foreground font-medium mr-2">{country.percentage}%</div>
                 <div class="w-16 bg-gray-700 rounded-full h-2">
                   <div 
                     class="bg-linear-to-r from-yellow-600 to-orange-600 h-2 rounded-full"
@@ -398,28 +412,28 @@
     </div>
 
     <!-- Growth Insights -->
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-      <h3 class="text-xl font-bold text-white mb-4">Performance Insights</h3>
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+      <h3 class="text-xl font-bold text-foreground mb-4">Performance Insights</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="text-center">
           <div class="text-2xl font-bold text-green-400 mb-2">📈</div>
-          <div class="text-white font-medium">Best Performing</div>
-          <div class="text-gray-400 text-sm">Worship content shows highest engagement</div>
+          <div class="text-foreground font-medium">Best Performing</div>
+          <div class="text-muted-foreground text-sm">Worship content shows highest engagement</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-bold text-blue-400 mb-2">📱</div>
-          <div class="text-white font-medium">Mobile First</div>
-          <div class="text-gray-400 text-sm">47% of views come from mobile devices</div>
+          <div class="text-foreground font-medium">Mobile First</div>
+          <div class="text-muted-foreground text-sm">47% of views come from mobile devices</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-bold text-purple-400 mb-2">⏰</div>
-          <div class="text-white font-medium">Peak Hours</div>
-          <div class="text-gray-400 text-sm">Most active 7-9 PM local time</div>
+          <div class="text-foreground font-medium">Peak Hours</div>
+          <div class="text-muted-foreground text-sm">Most active 7-9 PM local time</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-bold text-orange-400 mb-2">🎯</div>
-          <div class="text-white font-medium">Target Audience</div>
-          <div class="text-gray-400 text-sm">25-44 age group most engaged</div>
+          <div class="text-foreground font-medium">Target Audience</div>
+          <div class="text-muted-foreground text-sm">25-44 age group most engaged</div>
         </div>
       </div>
     </div>

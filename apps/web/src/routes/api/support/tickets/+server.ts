@@ -1,18 +1,47 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { supportTickets } from '$lib/db/schema/sepharstudios';
+import { desc, eq } from 'drizzle-orm';
 import { take } from '$lib/server/rate-limit';
 import { sendEmailAction } from '$lib/authentication/server';
 import { Constants } from '$lib/constants';
 import { notify } from '$lib/server/notify';
 
 /**
- * POST /api/support/tickets — submit a tech-support ticket.
+ * GET  /api/support/tickets?mine=1 — list the current user's tickets.
+ * POST /api/support/tickets        — submit a tech-support ticket.
  *
  * Auth optional. Rate-limited 3/hr per user/IP. Inserts a `support_tickets`
  * row, emails Constants.SUPPORTEMAIL, and fires an in-app `notify()` so the
  * submitter sees confirmation in their notification center.
  */
+
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (url.searchParams.get('mine') !== '1') {
+		return json({ error: 'Only ?mine=1 listing is supported' }, { status: 400 });
+	}
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
+
+	const rows = await db.select({
+		id: supportTickets.id,
+		subject: supportTickets.subject,
+		category: supportTickets.category,
+		priority: supportTickets.priority,
+		description: supportTickets.description,
+		status: supportTickets.status,
+		adminResponse: supportTickets.adminResponse,
+		attachments: supportTickets.attachments,
+		createdAt: supportTickets.createdAt,
+		updatedAt: supportTickets.updatedAt
+	})
+		.from(supportTickets)
+		.where(eq(supportTickets.userId, session.user.id))
+		.orderBy(desc(supportTickets.createdAt))
+		.limit(100);
+
+	return json({ tickets: rows });
+};
 
 const ALLOWED_CATEGORIES = new Set([
 	'video-playback', 'audio-issues', 'streaming-quality', 'login', 'profile',

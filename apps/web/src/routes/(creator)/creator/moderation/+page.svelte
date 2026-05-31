@@ -178,12 +178,12 @@
     <button
       type="button"
       onclick={() => tab = 'reviews'}
-      class="px-4 py-2 rounded-lg text-sm {tab === 'reviews' ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/15'}"
+      class="px-4 py-2 rounded-lg text-sm {tab === 'reviews' ? 'bg-purple-600 text-foreground' : 'surface-2 text-white/80 hover:surface-3'}"
     >Reviews on my content</button>
     <button
       type="button"
       onclick={() => tab = 'forum'}
-      class="px-4 py-2 rounded-lg text-sm {tab === 'forum' ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/15'}"
+      class="px-4 py-2 rounded-lg text-sm {tab === 'forum' ? 'bg-purple-600 text-foreground' : 'surface-2 text-white/80 hover:surface-3'}"
     >My forum threads</button>
   </div>
 
@@ -193,7 +193,7 @@
         <button
           type="button"
           onclick={() => reviewFilter = f}
-          class="px-3 py-1.5 rounded text-xs capitalize {reviewFilter === f ? 'bg-purple-700 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1.5 rounded text-xs capitalize {reviewFilter === f ? 'bg-purple-700 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{f}</button>
       {/each}
     </div>
@@ -205,19 +205,19 @@
         {/each}
       </div>
     {:else if reviews.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+      <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
         Nothing to moderate.
       </div>
     {:else}
       <ul class="space-y-3">
         {#each reviews as r (r.id)}
-          <li class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+          <li class="surface-1 border border-border/40 rounded-xl p-4 space-y-3">
             <div class="flex items-start gap-3">
               {#if r.content?.thumbnail}
                 <img src={r.content.thumbnail} alt="" class="w-16 h-10 rounded object-cover" />
               {/if}
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 text-xs text-gray-400">
+                <div class="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{r.reviewerName ?? 'Unknown'}</span>
                   <span>·</span>
                   <span>{relativeTime(r.createdAt)}</span>
@@ -233,7 +233,7 @@
                   <a href={`/creator/content/${r.content.id}`} class="text-xs text-purple-300 hover:text-purple-200">{r.content.title}</a>
                 {/if}
                 {#if r.reviewText}
-                  <p class="text-sm text-gray-200 mt-1 whitespace-pre-line">{r.reviewText}</p>
+                  <p class="text-sm text-foreground/90 mt-1 whitespace-pre-line">{r.reviewText}</p>
                 {/if}
               </div>
             </div>
@@ -243,11 +243,11 @@
                 <textarea
                   bind:value={drafts[r.id]}
                   rows="2"
-                  class="w-full text-sm bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white resize-none"
+                  class="w-full text-sm surface-1 border border-border/40 rounded px-2 py-1.5 text-foreground resize-none"
                 ></textarea>
                 <div class="flex gap-2 justify-end text-xs">
                   <button type="button" onclick={() => copyDraft(r.id)} class="text-purple-300 hover:text-purple-200">Copy</button>
-                  <button type="button" onclick={() => { drafts[r.id] = ''; drafts = { ...drafts }; }} class="text-gray-400 hover:text-white">Dismiss</button>
+                  <button type="button" onclick={() => { drafts[r.id] = ''; drafts = { ...drafts }; }} class="text-muted-foreground hover:text-foreground">Dismiss</button>
                 </div>
               </div>
             {/if}
@@ -283,17 +283,17 @@
         {/each}
       </div>
     {:else if threads.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+      <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
         You haven't authored any forum threads yet.
       </div>
     {:else}
       <ul class="space-y-3">
         {#each threads as t (t.id)}
-          <li class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+          <li class="surface-1 border border-border/40 rounded-xl p-4 space-y-3">
             <div class="flex items-center justify-between gap-3">
               <div class="flex-1 min-w-0">
-                <a href={`/creator/forum/${t.id}`} class="text-white font-medium hover:text-purple-300">{t.title}</a>
-                <div class="text-xs text-gray-400 mt-1">
+                <a href={`/creator/forum/${t.id}`} class="text-foreground font-medium hover:text-purple-300">{t.title}</a>
+                <div class="text-xs text-muted-foreground mt-1">
                   <span class="inline-flex items-center gap-1"><MessageSquare class="w-3 h-3" />{t.replyCount}</span>
                   · {relativeTime(t.createdAt)}
                   {#if t.isLocked}<span class="text-red-300">· locked</span>{/if}
@@ -302,22 +302,22 @@
               <button
                 type="button"
                 onclick={() => toggleLock(t)}
-                class="px-3 py-1.5 rounded text-xs {t.isLocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-white/10 hover:bg-white/15'} text-white"
+                class="px-3 py-1.5 rounded text-xs {t.isLocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'surface-2 hover:surface-3'} text-white"
               >{t.isLocked ? 'Unlock' : 'Lock'}</button>
             </div>
 
             {#if repliesForThread(t.id).length > 0}
-              <ul class="space-y-2 pl-3 border-l border-white/10">
+              <ul class="space-y-2 pl-3 border-l border-border/40">
                 {#each repliesForThread(t.id) as r (r.id)}
                   <li class="text-xs">
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex-1 min-w-0">
-                        <div class="text-gray-400">
+                        <div class="text-muted-foreground">
                           {r.authorName ?? 'Unknown'} · {relativeTime(r.createdAt)}
                           {#if r.openReports > 0}<span class="text-red-300"> · {r.openReports} flag{r.openReports > 1 ? 's' : ''}</span>{/if}
                           {#if r.status === 'hidden'}<span class="text-yellow-400"> · hidden</span>{/if}
                         </div>
-                        <p class="text-gray-200 mt-0.5 line-clamp-2">{r.body}</p>
+                        <p class="text-foreground/90 mt-0.5 line-clamp-2">{r.body}</p>
                       </div>
                       {#if r.status !== 'hidden'}
                         <button

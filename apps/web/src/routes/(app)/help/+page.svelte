@@ -174,7 +174,7 @@
     <h2 class="text-center text-3xl font-bold mb-6">Contact Support</h2>
     <Card class="max-w-3xl mx-auto bg-background border">
       <CardContent class="p-6">
-        <form on:submit|preventDefault={handleContactSubmit} class="space-y-4">
+        <form onsubmit={(e) => { e.preventDefault(); handleContactSubmit(); }} class="space-y-4">
           <div class="grid sm:grid-cols-2 gap-4">
             <Input placeholder="Name" bind:value={contactForm.name} required />
             <Input type="email" placeholder="Email" bind:value={contactForm.email} required />

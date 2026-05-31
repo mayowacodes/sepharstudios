@@ -3,6 +3,10 @@
   import { onMount } from 'svelte';
   import type { ReviewQueueItem } from '$lib/types/admin';
   import { ReviewType } from '$lib/types/admin';
+  import { ShieldCheck, Inbox, AlertTriangle, Cross, Shield, Users, Wrench, CheckCircle2 } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import StatChip from '$lib/components/dashboard/StatChip.svelte';
+  import EmptyState from '$lib/components/dashboard/EmptyState.svelte';
   
   let reviewQueue = $state<ReviewQueueItem[]>([]);
   let selectedType = $state<ReviewType | 'all'>('all');
@@ -91,8 +95,8 @@
       case 'urgent': return 'bg-red-600 text-white';
       case 'high': return 'bg-yellow-600 text-black';
       case 'normal': return 'bg-blue-600 text-white';
-      case 'low': return 'bg-gray-600 text-white';
-      default: return 'bg-gray-600 text-white';
+      case 'low': return 'bg-gray-600 text-foreground';
+      default: return 'bg-gray-600 text-foreground';
     }
   }
   
@@ -102,7 +106,7 @@
       case ReviewType.CONTENT_MODERATION: return 'bg-green-600 text-white';
       case ReviewType.FAMILY_SAFETY: return 'bg-pink-600 text-white';
       case ReviewType.TECHNICAL_QA: return 'bg-blue-600 text-white';
-      default: return 'bg-gray-600 text-white';
+      default: return 'bg-gray-600 text-foreground';
     }
   }
   
@@ -230,46 +234,30 @@
   </div>
 {/if}
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-4xl font-bold text-white mb-2">Review Queue</h1>
-      <p class="text-xl text-gray-300">Content and user reviews awaiting moderation</p>
-    </div>
-    
-    <!-- Queue Stats -->
-    <div class="grid grid-cols-4 gap-4">
-      <div class="bg-red-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-red-400">{reviewQueue.filter(i => i.priority === 'urgent').length}</div>
-        <div class="text-xs text-red-200">Urgent</div>
-      </div>
-      <div class="bg-yellow-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-yellow-400">{reviewQueue.filter(i => i.priority === 'high').length}</div>
-        <div class="text-xs text-yellow-200">High</div>
-      </div>
-      <div class="bg-blue-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-blue-400">{reviewQueue.filter(i => i.priority === 'normal').length}</div>
-        <div class="text-xs text-blue-200">Normal</div>
-      </div>
-      <div class="bg-gray-600/20 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-gray-400">{reviewQueue.length}</div>
-        <div class="text-xs text-gray-200">Total</div>
-      </div>
-    </div>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader
+    icon={ShieldCheck}
+    title="Review Queue"
+    subtitle="Content and user reviews awaiting moderation."
+  >
+    {#snippet actions()}
+      <StatChip label="urgent" value={reviewQueue.filter(i => i.priority === 'urgent').length} tone="red" />
+      <StatChip label="high" value={reviewQueue.filter(i => i.priority === 'high').length} tone="yellow" />
+      <StatChip label="total" value={reviewQueue.length} tone="default" />
+    {/snippet}
+  </PageHeader>
   
   <!-- Tabs -->
-  <div class="flex gap-2 border-b border-white/10 pb-0">
+  <div class="flex gap-2 border-b border-border/40 pb-0">
     <button
       onclick={() => activeTab = 'content'}
-      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'content' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}"
+      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'content' ? 'surface-2 text-foreground' : 'text-muted-foreground hover:text-foreground'}"
     >
       Content Queue ({reviewQueue.length})
     </button>
     <button
       onclick={() => activeTab = 'user-reviews'}
-      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'user-reviews' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}"
+      class="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors {activeTab === 'user-reviews' ? 'surface-2 text-foreground' : 'text-muted-foreground hover:text-foreground'}"
     >
       User Reviews ({userReviews.filter(r => !r.isApproved).length} pending)
     </button>
@@ -278,30 +266,26 @@
   {#if activeTab === 'user-reviews'}
     <!-- User Reviews Moderation -->
     {#if userReviewsLoading}
-      <div class="text-center py-12 text-gray-400">Loading reviews...</div>
+      <div class="text-center py-12 text-muted-foreground">Loading reviews...</div>
     {:else if userReviews.length === 0}
-      <div class="text-center py-12">
-        <div class="text-4xl mb-4">✅</div>
-        <div class="text-xl text-white mb-2">All caught up</div>
-        <div class="text-gray-400">No pending user reviews to moderate</div>
-      </div>
+      <EmptyState icon={CheckCircle2} title="All caught up" description="No pending user reviews to moderate." tone="success" />
     {:else}
       <div class="space-y-4">
         {#each userReviews as review (review.id)}
-          <div class="bg-white/5 rounded-xl p-5 space-y-3">
+          <div class="surface-1 rounded-xl p-5 space-y-3">
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="text-yellow-400">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-                  <span class="text-xs text-gray-400 uppercase">{review.contentType}</span>
-                  <span class="text-xs text-gray-500">Content: {review.contentId.slice(0, 8)}…</span>
+                  <span class="text-xs text-muted-foreground uppercase">{review.contentType}</span>
+                  <span class="text-xs text-muted-foreground">Content: {review.contentId.slice(0, 8)}…</span>
                 </div>
                 {#if review.reviewText}
-                  <p class="text-white text-sm leading-relaxed">{review.reviewText}</p>
+                  <p class="text-foreground text-sm leading-relaxed">{review.reviewText}</p>
                 {:else}
-                  <p class="text-gray-500 text-sm italic">No text — rating only</p>
+                  <p class="text-muted-foreground text-sm italic">No text — rating only</p>
                 {/if}
-                <p class="text-xs text-gray-500">Submitted {new Date(review.createdAt).toLocaleDateString()}</p>
+                <p class="text-xs text-muted-foreground">Submitted {new Date(review.createdAt).toLocaleDateString()}</p>
               </div>
               <div class="flex gap-2 shrink-0">
                 <button
@@ -325,14 +309,14 @@
   {:else}
 
   <!-- Filters -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label for="reviewType" class="block text-sm font-medium text-white mb-2">Review Type</label>
+        <label for="reviewType" class="block text-sm font-medium text-foreground mb-2">Review Type</label>
         <select 
           id="reviewType"
           bind:value={selectedType}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600 focus:border-transparent"
         >
           <option value="all">All Types</option>
           <option value={ReviewType.THEOLOGICAL}>Theological Review</option>
@@ -343,11 +327,11 @@
       </div>
       
       <div>
-        <label for="priority" class="block text-sm font-medium text-white mb-2">Priority</label>
+        <label for="priority" class="block text-sm font-medium text-foreground mb-2">Priority</label>
         <select 
           id="priority"
           bind:value={selectedPriority}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600 focus:border-transparent"
         >
           <option value="all">All Priorities</option>
           <option value="urgent">Urgent</option>
@@ -360,33 +344,33 @@
   </div>
   
   <!-- Review Queue Table -->
-  <div class="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden">
+  <div class="surface-1 backdrop-blur-sm rounded-xl overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-white/10">
+        <thead class="surface-2">
           <tr>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Content</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Creator</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Review Type</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Priority</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Due Date</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Status</th>
-            <th class="px-6 py-4 text-left text-sm font-medium text-white">Actions</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Content</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Creator</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Review Type</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Priority</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Due Date</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Status</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-foreground">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-700">
           {#each filteredQueue as item}
             {@const daysUntilDue = getDaysUntilDue(item.dueDate)}
-            <tr class="hover:bg-white/5 transition-colors">
+            <tr class="hover:surface-1 transition-colors">
               <td class="px-6 py-4">
                 <div>
-                  <div class="font-medium text-white">{item.title}</div>
-                  <div class="text-sm text-gray-400">{item.contentType}</div>
+                  <div class="font-medium text-foreground">{item.title}</div>
+                  <div class="text-sm text-muted-foreground">{item.contentType}</div>
                 </div>
               </td>
               <td class="px-6 py-4">
-                <div class="text-sm text-white">{item.creatorName}</div>
-                <div class="text-xs text-gray-400">Submitted {formatDate(item.submittedAt)}</div>
+                <div class="text-sm text-foreground">{item.creatorName}</div>
+                <div class="text-xs text-muted-foreground">Submitted {formatDate(item.submittedAt)}</div>
               </td>
               <td class="px-6 py-4">
                 <span class="px-3 py-1 text-xs rounded-full {getReviewTypeColor(item.reviewType)}">
@@ -399,19 +383,19 @@
                 </span>
               </td>
               <td class="px-6 py-4">
-                <div class="text-sm text-white">{formatDate(item.dueDate)}</div>
+                <div class="text-sm text-foreground">{formatDate(item.dueDate)}</div>
                 {#if daysUntilDue !== null}
-                  <div class="text-xs {daysUntilDue <= 1 ? 'text-red-400' : daysUntilDue <= 3 ? 'text-yellow-400' : 'text-gray-400'}">
+                  <div class="text-xs {daysUntilDue <= 1 ? 'text-red-400' : daysUntilDue <= 3 ? 'text-yellow-400' : 'text-muted-foreground'}">
                     {daysUntilDue <= 0 ? 'Overdue' : `${daysUntilDue} days left`}
                   </div>
                 {:else}
-                  <div class="text-xs text-gray-400">No deadline</div>
+                  <div class="text-xs text-muted-foreground">No deadline</div>
                 {/if}
               </td>
               <td class="px-6 py-4">
                 {#if item.assignedTo}
                   <div class="text-sm text-green-400">Assigned</div>
-                  <div class="text-xs text-gray-400">{item.assignedTo}</div>
+                  <div class="text-xs text-muted-foreground">{item.assignedTo}</div>
                 {:else}
                   <div class="text-sm text-yellow-400">Unassigned</div>
                 {/if}
@@ -440,39 +424,40 @@
       </table>
       
       {#if filteredQueue.length === 0}
-        <div class="text-center py-12">
-          <div class="text-4xl mb-4">📋</div>
-          <div class="text-xl text-white mb-2">No items in queue</div>
-          <div class="text-gray-400">No content matches your current filters</div>
-        </div>
+        <EmptyState icon={Inbox} title="No items in queue" description="No content matches your current filters." />
       {/if}
     </div>
   </div>
   
-  <!-- Quick Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <button class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg text-center transition-colors">
-      <div class="text-2xl mb-2">⛪</div>
-      <div class="font-medium">Theological Reviews</div>
-      <div class="text-sm opacity-80">{reviewQueue.filter(i => i.reviewType === ReviewType.THEOLOGICAL).length} pending</div>
+  <!-- Filter quick-jumps -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <button onclick={() => (selectedType = ReviewType.THEOLOGICAL)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-3 text-left flex items-center gap-3">
+      <Cross class="w-4 h-4 text-purple-500" />
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium text-foreground">Theological</div>
+        <div class="text-xs text-muted-foreground">{reviewQueue.filter(i => i.reviewType === ReviewType.THEOLOGICAL).length} pending</div>
+      </div>
     </button>
-    
-    <button class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg text-center transition-colors">
-      <div class="text-2xl mb-2">🛡️</div>
-      <div class="font-medium">Content Moderation</div>
-      <div class="text-sm opacity-80">{reviewQueue.filter(i => i.reviewType === ReviewType.CONTENT_MODERATION).length} pending</div>
+    <button onclick={() => (selectedType = ReviewType.CONTENT_MODERATION)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-3 text-left flex items-center gap-3">
+      <Shield class="w-4 h-4 text-green-500" />
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium text-foreground">Moderation</div>
+        <div class="text-xs text-muted-foreground">{reviewQueue.filter(i => i.reviewType === ReviewType.CONTENT_MODERATION).length} pending</div>
+      </div>
     </button>
-    
-    <button class="bg-pink-600 hover:bg-pink-700 text-white p-4 rounded-lg text-center transition-colors">
-      <div class="text-2xl mb-2">👨‍👩‍👧‍👦</div>
-      <div class="font-medium">Family Safety</div>
-      <div class="text-sm opacity-80">{reviewQueue.filter(i => i.reviewType === ReviewType.FAMILY_SAFETY).length} pending</div>
+    <button onclick={() => (selectedType = ReviewType.FAMILY_SAFETY)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-3 text-left flex items-center gap-3">
+      <Users class="w-4 h-4 text-pink-500" />
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium text-foreground">Family safety</div>
+        <div class="text-xs text-muted-foreground">{reviewQueue.filter(i => i.reviewType === ReviewType.FAMILY_SAFETY).length} pending</div>
+      </div>
     </button>
-    
-    <button class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg text-center transition-colors">
-      <div class="text-2xl mb-2">🔧</div>
-      <div class="font-medium">Technical QA</div>
-      <div class="text-sm opacity-80">{reviewQueue.filter(i => i.reviewType === ReviewType.TECHNICAL_QA).length} pending</div>
+    <button onclick={() => (selectedType = ReviewType.TECHNICAL_QA)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-3 text-left flex items-center gap-3">
+      <Wrench class="w-4 h-4 text-blue-500" />
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium text-foreground">Technical QA</div>
+        <div class="text-xs text-muted-foreground">{reviewQueue.filter(i => i.reviewType === ReviewType.TECHNICAL_QA).length} pending</div>
+      </div>
     </button>
   </div>
 

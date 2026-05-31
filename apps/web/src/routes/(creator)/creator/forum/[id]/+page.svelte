@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import ForumReply from './ForumReply.svelte';
   import ReportButton from '$lib/components/ReportButton.svelte';
+  import { ArrowLeft, Pin, Lock, Heart, MessageSquare } from '@lucide/svelte';
 
   interface ReplyNode {
     id: string;
@@ -96,6 +97,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: newReply, parentReplyId })
       });
+      // Mirror the toggleThreadLike behavior above — a 401 means the
+      // session expired mid-thread, so redirect back through login with
+      // a return-to that brings the user back to this exact thread.
+      if (res.status === 401) {
+        goto(`/auth/login?redirectTo=/creator/forum/${thread.id}`);
+        return;
+      }
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? 'Reply failed');
       newReply = '';
@@ -124,67 +132,68 @@
   }
 </script>
 
-<div class="max-w-4xl mx-auto py-6 space-y-6">
-  <a href="/creator/forum" class="text-purple-400 hover:text-purple-300 text-sm">← Back to forum</a>
+<div class="container mx-auto max-w-4xl py-6 px-4 space-y-6">
+  <a href="/creator/forum" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
+    <ArrowLeft class="w-3 h-3" /> Back to forum
+  </a>
 
   {#if loading}
-    <div class="text-center text-gray-400 py-12">Loading…</div>
+    <div class="text-center text-muted-foreground py-12">Loading…</div>
   {:else if !thread}
     <div class="bg-red-600/20 border border-red-600 text-red-100 rounded-lg p-6 text-center">
       Thread not found or has been removed.
     </div>
   {:else}
-    <!-- Thread header -->
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-4">
+    <!-- Thread header — title acts as the page header. -->
+    <header class="surface-1 rounded-xl p-5 space-y-4">
       <div class="flex items-start justify-between gap-4">
-        <div class="flex-1">
-          <div class="flex items-center gap-2 flex-wrap mb-2">
-            {#if thread.isSticky}<span class="text-yellow-400">📌</span>{/if}
-            {#if thread.isLocked}<span class="text-red-400">🔒</span>{/if}
-            <h1 class="text-2xl font-bold text-white">{thread.title}</h1>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap mb-1">
+            {#if thread.isSticky}<Pin class="w-3.5 h-3.5 text-yellow-500" aria-label="Pinned" />{/if}
+            {#if thread.isLocked}<Lock class="w-3.5 h-3.5 text-red-500" aria-label="Locked" />{/if}
           </div>
-          <div class="flex items-center gap-3 text-xs text-gray-400">
-            <span>by <strong class="text-purple-400">{thread.authorName ?? 'unknown'}</strong></span>
-            <span>•</span>
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground">{thread.title}</h1>
+          <div class="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
+            <span>by <strong class="text-foreground">{thread.authorName ?? 'unknown'}</strong></span>
+            <span>·</span>
             <span>{relativeTime(thread.createdAt)}</span>
-            <span>•</span>
-            <span class="capitalize">{thread.category.replace('-', ' ')}</span>
+            <span>·</span>
+            <span class="capitalize rounded-full surface-2 px-2 py-0.5">{thread.category.replace('-', ' ')}</span>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 shrink-0">
           {#if !isAuthor}
             <ReportButton targetType="forum_thread" targetId={thread.id} variant="button" />
           {/if}
           {#if isAuthor || isAdmin}
-            <button type="button" onclick={deleteThread} class="text-red-300 hover:text-red-100 text-sm">Delete</button>
+            <button type="button" onclick={deleteThread} class="text-xs text-red-400 hover:text-red-300">Delete</button>
           {/if}
         </div>
       </div>
 
-      <p class="text-gray-200 whitespace-pre-line">{thread.body}</p>
+      <p class="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">{thread.body}</p>
 
-      <div class="flex items-center gap-4 text-sm">
+      <div class="flex items-center gap-4 text-xs">
         <button
           type="button"
           onclick={toggleThreadLike}
-          class="flex items-center gap-1 hover:text-pink-300 transition-colors {thread.likedByMe ? 'text-pink-400' : 'text-gray-300'}"
+          class="inline-flex items-center gap-1 hover:opacity-80 transition-opacity {thread.likedByMe ? 'text-pink-500' : 'text-muted-foreground'}"
         >
-          <span>❤️</span>
-          <span>{thread.likeCount}</span>
+          <Heart class="w-3.5 h-3.5" /> {thread.likeCount}
         </button>
-        <span class="text-gray-400 flex items-center gap-1">
-          <span>💬</span><span>{thread.replyCount} {thread.replyCount === 1 ? 'reply' : 'replies'}</span>
+        <span class="text-muted-foreground inline-flex items-center gap-1">
+          <MessageSquare class="w-3.5 h-3.5" /> {thread.replyCount} {thread.replyCount === 1 ? 'reply' : 'replies'}
         </span>
       </div>
-    </div>
+    </header>
 
     <!-- Reply form -->
     {#if !thread.isLocked}
       <form
-        class="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3"
+        class="surface-2 backdrop-blur-sm rounded-xl p-4 space-y-3"
         onsubmit={(e) => { e.preventDefault(); postReply(null); }}
       >
-        <label for="reply-body" class="text-sm font-medium text-white">Add a reply</label>
+        <label for="reply-body" class="text-sm font-medium text-foreground">Add a reply</label>
         <textarea
           id="reply-body"
           bind:value={newReply}
@@ -192,7 +201,7 @@
           minlength="3"
           maxlength="5000"
           required
-          class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+          class="w-full px-3 py-2 surface-2 border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-purple-500"
           placeholder="Share your thoughts…"
         ></textarea>
         {#if postError}<p class="text-red-300 text-xs">{postError}</p>{/if}
@@ -214,7 +223,7 @@
 
     <!-- Replies (nested) -->
     {#if replies.length === 0}
-      <div class="text-center text-gray-400 py-6">No replies yet — be the first.</div>
+      <div class="text-center text-muted-foreground py-6">No replies yet — be the first.</div>
     {:else}
       <div class="space-y-3">
         {#each replies as reply (reply.id)}

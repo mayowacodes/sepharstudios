@@ -122,41 +122,41 @@
     <!-- Quick aggregates -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div class="surface-1 rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wide text-gray-400 inline-flex items-center gap-1">
+        <div class="text-xs uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1">
           <Banknote class="w-3 h-3" /> Lifetime PPV
         </div>
-        <div class="text-2xl font-bold text-white mt-1">${(data.ppvLifetimeCents / 100).toFixed(2)}</div>
-        <div class="text-xs text-gray-500 mt-1">{data.ppvPurchases.length} purchases</div>
+        <div class="text-2xl font-bold text-foreground mt-1">${(data.ppvLifetimeCents / 100).toFixed(2)}</div>
+        <div class="text-xs text-muted-foreground mt-1">{data.ppvPurchases.length} purchases</div>
       </div>
       <div class="surface-1 rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wide text-gray-400">Subscription</div>
+        <div class="text-xs uppercase tracking-wide text-muted-foreground">Subscription</div>
         {#if data.subscription}
-          <div class="text-2xl font-bold text-white mt-1 capitalize">{data.subscription.tier}</div>
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="text-2xl font-bold text-foreground mt-1 capitalize">{data.subscription.tier}</div>
+          <div class="text-xs text-muted-foreground mt-1">
             until {new Date(data.subscription.endDate).toLocaleDateString()}{data.subscription.autoRenew ? ' · auto-renew' : ''}
           </div>
         {:else}
-          <div class="text-2xl font-bold text-gray-500 mt-1">—</div>
-          <div class="text-xs text-gray-500 mt-1">No active subscription</div>
+          <div class="text-2xl font-bold text-muted-foreground mt-1">—</div>
+          <div class="text-xs text-muted-foreground mt-1">No active subscription</div>
         {/if}
       </div>
       <div class="surface-1 rounded-xl p-4">
-        <div class="text-xs uppercase tracking-wide text-gray-400 inline-flex items-center gap-1">
+        <div class="text-xs uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1">
           <ShieldAlert class="w-3 h-3" /> Reports against
         </div>
-        <div class="text-2xl font-bold text-white mt-1">{data.abuseReportsAgainst.length}</div>
-        <div class="text-xs text-gray-500 mt-1">{data.abuseReportsBy.length} filed by them</div>
+        <div class="text-2xl font-bold text-foreground mt-1">{data.abuseReportsAgainst.length}</div>
+        <div class="text-xs text-muted-foreground mt-1">{data.abuseReportsBy.length} filed by them</div>
       </div>
     </div>
 
     {#if data.ownedContent.length > 0}
       <section>
-        <h2 class="text-sm font-semibold text-white mb-2 inline-flex items-center gap-1.5">
+        <h2 class="text-sm font-semibold text-foreground mb-2 inline-flex items-center gap-1.5">
           <Video class="w-4 h-4" /> Content they own
         </h2>
         <div class="surface-1 rounded-xl overflow-hidden">
           <table class="w-full text-sm">
-            <thead class="bg-white/5"><tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+            <thead class="surface-1"><tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th class="px-4 py-2">Title</th>
               <th class="px-4 py-2">Status</th>
               <th class="px-4 py-2 text-right">Views</th>
@@ -164,9 +164,9 @@
             <tbody>
               {#each data.ownedContent as c (c.id)}
                 <tr class="border-t border-white/5">
-                  <td class="px-4 py-2 text-white">{c.title}</td>
-                  <td class="px-4 py-2 text-xs text-gray-300">{c.status}</td>
-                  <td class="px-4 py-2 text-right text-gray-300 tabular-nums">{(c.viewCount ?? 0).toLocaleString()}</td>
+                  <td class="px-4 py-2 text-foreground">{c.title}</td>
+                  <td class="px-4 py-2 text-xs text-foreground/80">{c.status}</td>
+                  <td class="px-4 py-2 text-right text-foreground/80 tabular-nums">{(c.viewCount ?? 0).toLocaleString()}</td>
                 </tr>
               {/each}
             </tbody>
@@ -177,10 +177,10 @@
 
     {#if data.ppvPurchases.length > 0}
       <section>
-        <h2 class="text-sm font-semibold text-white mb-2">PPV purchases</h2>
+        <h2 class="text-sm font-semibold text-foreground mb-2">PPV purchases</h2>
         <div class="surface-1 rounded-xl overflow-hidden">
           <table class="w-full text-sm">
-            <thead class="bg-white/5"><tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+            <thead class="surface-1"><tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th class="px-4 py-2">Content</th>
               <th class="px-4 py-2">Date</th>
               <th class="px-4 py-2 text-right">Amount</th>
@@ -188,8 +188,8 @@
             <tbody>
               {#each data.ppvPurchases as p (p.id)}
                 <tr class="border-t border-white/5">
-                  <td class="px-4 py-2 text-white">{p.contentTitle ?? p.contentId.slice(0, 12)}</td>
-                  <td class="px-4 py-2 text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString()}</td>
+                  <td class="px-4 py-2 text-foreground">{p.contentTitle ?? p.contentId.slice(0, 12)}</td>
+                  <td class="px-4 py-2 text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</td>
                   <td class="px-4 py-2 text-right tabular-nums">${(p.amountPaidCents / 100).toFixed(2)} {p.currency ?? 'USD'}</td>
                 </tr>
               {/each}
@@ -201,15 +201,15 @@
 
     {#if data.abuseReportsAgainst.length > 0}
       <section>
-        <h2 class="text-sm font-semibold text-white mb-2 inline-flex items-center gap-1.5">
+        <h2 class="text-sm font-semibold text-foreground mb-2 inline-flex items-center gap-1.5">
           <ShieldAlert class="w-4 h-4 text-yellow-300" /> Reports against this user
         </h2>
         <ul class="space-y-1">
           {#each data.abuseReportsAgainst as r (r.id)}
             <li class="surface-1 rounded p-2 text-xs flex items-center gap-2">
               <span class="text-yellow-200 capitalize">{r.category.replace('_', ' ')}</span>
-              <span class="text-gray-500">· {new Date(r.createdAt).toLocaleDateString()}</span>
-              <span class="ml-auto text-gray-400">{r.status}</span>
+              <span class="text-muted-foreground">· {new Date(r.createdAt).toLocaleDateString()}</span>
+              <span class="ml-auto text-muted-foreground">{r.status}</span>
             </li>
           {/each}
         </ul>
@@ -218,12 +218,12 @@
 
     {#if data.recentSessions.length > 0}
       <section>
-        <h2 class="text-sm font-semibold text-white mb-2">Recent sessions</h2>
+        <h2 class="text-sm font-semibold text-foreground mb-2">Recent sessions</h2>
         <ul class="space-y-1 text-xs">
           {#each data.recentSessions as s, i (i)}
-            <li class="surface-1 rounded p-2 flex justify-between text-gray-300">
+            <li class="surface-1 rounded p-2 flex justify-between text-foreground/80">
               <span>{s.deviceType ?? 'unknown'} · {s.ip ?? '?'}</span>
-              <span class="text-gray-500">{new Date(s.expiresAt).toLocaleString()}</span>
+              <span class="text-muted-foreground">{new Date(s.expiresAt).toLocaleString()}</span>
             </li>
           {/each}
         </ul>

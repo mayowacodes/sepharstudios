@@ -92,6 +92,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			});
 			return json({ success: true, refundId: auditRow.id, stripe: refund });
 		} catch (err) {
+			// Persist the full error to the audit row so support can debug
+			// later, but only return a generic message to the client. Raw
+			// processor errors can leak card last-4, declined-reason chains,
+			// internal Stripe ids, etc.
 			await db.update(refunds)
 				.set({
 					status: 'failed',
@@ -100,9 +104,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				.where(eq(refunds.id, auditRow.id));
 			console.error('[admin/refunds] Stripe refund failed:', err);
 			return json({
-				error: 'Stripe refund failed',
-				refundId: auditRow.id,
-				detail: (err as Error).message
+				error: 'Stripe refund failed — see audit row for details',
+				refundId: auditRow.id
 			}, { status: 502 });
 		}
 	}
@@ -119,9 +122,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	}).returning();
 
 	try {
+		// Use the resolved amountCents (falls back to the intent total when
+		// the admin omits an explicit amount) rather than raw body input —
+		// raw body.amountCents can be undefined here, which would either
+		// blow up Paystack or default to a different amount than the audit
+		// row records.
 		const paystackResult = await createRefund({
 			transactionReference: body.reference,
-			amountKobo: body.amountCents,
+			amountKobo: amountCents,
 			merchantNote: body.reason
 		});
 
@@ -159,9 +167,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 		console.error('[admin/refunds] Paystack refund failed:', err);
 		return json({
-			error: 'Paystack refund failed',
-			refundId: auditRow.id,
-			detail: (err as Error).message
+			error: 'Paystack refund failed — see audit row for details',
+			refundId: auditRow.id
 		}, { status: 502 });
 	}
 };

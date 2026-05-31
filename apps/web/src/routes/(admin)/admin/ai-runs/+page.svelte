@@ -107,7 +107,7 @@
       <button
         type="button"
         onclick={load}
-        class="px-3 py-1.5 rounded surface-2 text-white text-xs inline-flex items-center gap-1"
+        class="px-3 py-1.5 rounded surface-2 text-foreground text-xs inline-flex items-center gap-1"
       >
         <RefreshCw class="w-3.5 h-3.5" />
         Refresh
@@ -123,23 +123,23 @@
   </div>
 
   <div>
-    <h2 class="text-lg font-semibold text-white mb-3">Registered agents</h2>
+    <h2 class="text-lg font-semibold text-foreground mb-3">Registered agents</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       {#each AGENTS as a (a.name)}
         <div class="surface-1 rounded-xl p-4 space-y-2">
           <div class="flex items-center justify-between gap-2">
             <div>
-              <div class="text-white font-medium">{a.name}</div>
-              <div class="text-xs text-gray-400 uppercase tracking-wide">{a.schedule}</div>
+              <div class="text-foreground font-medium">{a.name}</div>
+              <div class="text-xs text-muted-foreground uppercase tracking-wide">{a.schedule}</div>
             </div>
             <button
               type="button"
               onclick={() => manualFire(a.name)}
               disabled={manualFiring[a.name]}
               class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40"
-            >How to fire</button>
+            >{manualFiring[a.name] ? 'Firing…' : 'Fire now'}</button>
           </div>
-          <p class="text-xs text-gray-300">{a.description}</p>
+          <p class="text-xs text-foreground/80">{a.description}</p>
         </div>
       {/each}
     </div>
@@ -147,8 +147,8 @@
 
   <div>
     <div class="flex items-center justify-between mb-3">
-      <h2 class="text-lg font-semibold text-white">Run history</h2>
-      <select bind:value={filter} class="surface-2 rounded-lg px-3 py-1.5 text-sm text-white">
+      <h2 class="text-lg font-semibold text-foreground">Run history</h2>
+      <select bind:value={filter} class="surface-2 rounded-lg px-3 py-1.5 text-sm text-foreground">
         <option value="all">All agents</option>
         {#each AGENTS as a (a.name)}
           <option value={a.name}>{a.name}</option>
@@ -161,14 +161,14 @@
         {#each Array(5) as _ (_)}<Skeleton class="h-14 rounded-lg" />{/each}
       </div>
     {:else if runs.length === 0}
-      <div class="surface-1 rounded-xl p-12 text-center text-gray-400">
+      <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">
         No runs yet. Set <code>AI_AGENTS_ENABLED=true</code> + add cron entries to start.
       </div>
     {:else}
       <div class="surface-1 rounded-xl overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-white/5">
-            <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+          <thead class="surface-1">
+            <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th class="px-4 py-3">Agent</th>
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3">Started</th>
@@ -182,16 +182,16 @@
           <tbody>
             {#each runs as r (r.id)}
               <tr class="border-t border-white/5">
-                <td class="px-4 py-3 text-white">{r.agent}</td>
+                <td class="px-4 py-3 text-foreground">{r.agent}</td>
                 <td class="px-4 py-3">
                   <span class="px-2 py-0.5 rounded text-xs {statusBadge(r.status)}">{r.status}</span>
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-400">{new Date(r.startedAt).toLocaleString()}</td>
-                <td class="px-4 py-3 text-xs text-gray-400">{duration(r.startedAt, r.finishedAt)}</td>
-                <td class="px-4 py-3 text-right text-gray-300">{r.itemsProcessed}</td>
-                <td class="px-4 py-3 text-right text-white font-medium">{r.itemsActioned}</td>
-                <td class="px-4 py-3 text-right text-gray-300">${(r.costCents / 100).toFixed(2)}</td>
-                <td class="px-4 py-3 max-w-xs text-xs text-gray-300">
+                <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(r.startedAt).toLocaleString()}</td>
+                <td class="px-4 py-3 text-xs text-muted-foreground">{duration(r.startedAt, r.finishedAt)}</td>
+                <td class="px-4 py-3 text-right text-foreground/80">{r.itemsProcessed}</td>
+                <td class="px-4 py-3 text-right text-foreground font-medium">{r.itemsActioned}</td>
+                <td class="px-4 py-3 text-right text-foreground/80">${(r.costCents / 100).toFixed(2)}</td>
+                <td class="px-4 py-3 max-w-xs text-xs text-foreground/80">
                   {#if r.error}
                     <span class="text-red-300 inline-flex items-center gap-1">
                       <X class="w-3 h-3" /> {r.error.slice(0, 100)}

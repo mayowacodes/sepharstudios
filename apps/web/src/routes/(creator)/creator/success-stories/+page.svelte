@@ -1,5 +1,8 @@
 <!-- Creator Success Stories -->
 <script lang="ts">
+  import { Trophy } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
   let activeFilter = $state('all');
 
   // Submission form state — wires to POST /api/success-stories.
@@ -12,6 +15,11 @@
 
   async function submitStoryForm() {
     submitError = '';
+    // Clear the prior success banner too — if a creator submitted once
+    // and is now retrying, leaving submitSuccess=true makes the page
+    // render both the stale green "submitted!" banner AND any new red
+    // error from this attempt, which is visually contradictory.
+    submitSuccess = false;
     submitting = true;
     try {
       const res = await fetch('/api/success-stories', {
@@ -170,16 +178,12 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-white mb-2">Creator Success Stories</h1>
-    <p class="text-gray-300">Be inspired by fellow creators who are making a real impact through their ministry</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Trophy} title="Success Stories" subtitle="Be inspired by fellow creators making a real impact through their ministry." />
 
   <!-- Impact Statistics -->
   <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
-    <h2 class="text-xl font-bold text-white mb-4 text-center">🌟 Community Impact</h2>
+    <h2 class="text-xl font-bold text-foreground mb-4 text-center">🌟 Community Impact</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="text-center">
         <div class="text-2xl font-bold text-purple-400">12.8M</div>
@@ -201,21 +205,21 @@
   </div>
 
   <!-- Featured Stories -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-    <h3 class="text-xl font-bold text-white mb-6">🏆 Featured Success Stories</h3>
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+    <h3 class="text-xl font-bold text-foreground mb-6">🏆 Featured Success Stories</h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       {#each featuredStories as story}
-        <div class="bg-white/5 rounded-lg p-4">
+        <div class="surface-1 rounded-lg p-4">
           <div class="flex items-center space-x-3 mb-3">
             <div class="bg-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-white font-bold">
               {story.name.charAt(0)}
             </div>
             <div>
-              <div class="text-white font-medium">{story.name}</div>
-              <div class="text-gray-400 text-sm">{story.channel}</div>
+              <div class="text-foreground font-medium">{story.name}</div>
+              <div class="text-muted-foreground text-sm">{story.channel}</div>
             </div>
           </div>
-          <p class="text-gray-300 text-sm mb-3">{story.achievement}</p>
+          <p class="text-foreground/80 text-sm mb-3">{story.achievement}</p>
           <div class="text-purple-400 text-xs">
             {story.subscribers} subscribers
           </div>
@@ -232,7 +236,7 @@
         class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {
           activeFilter === filter.id
             ? 'bg-purple-600 text-white'
-            : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+            : 'surface-2 text-foreground/80 hover:surface-3 hover:text-foreground'
         }"
       >
         <span class="mr-2">{filter.icon}</span>
@@ -244,7 +248,7 @@
   <!-- Success Stories Grid -->
   <div class="space-y-8">
     {#each filteredStories as story}
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Creator Info -->
           <div class="lg:col-span-1">
@@ -253,8 +257,8 @@
                 {story.name.charAt(0)}
               </div>
               <div>
-                <h3 class="text-xl font-bold text-white">{story.name}</h3>
-                <p class="text-gray-400">{story.channel}</p>
+                <h3 class="text-xl font-bold text-foreground">{story.name}</h3>
+                <p class="text-muted-foreground">{story.channel}</p>
                 <div class="flex items-center space-x-2 mt-1">
                   <span class="bg-{getCategoryColor(story.category)}-600 text-{getCategoryColor(story.category)}-100 text-xs px-2 py-1 rounded capitalize">
                     {story.category}
@@ -265,13 +269,13 @@
             </div>
 
             <!-- Metrics -->
-            <div class="bg-white/5 rounded-lg p-4">
-              <h4 class="text-white font-medium mb-3">Key Metrics</h4>
+            <div class="surface-1 rounded-lg p-4">
+              <h4 class="text-foreground font-medium mb-3">Key Metrics</h4>
               <div class="space-y-2">
                 {#each Object.entries(story.metrics) as [key, value]}
                   <div class="flex justify-between">
-                    <span class="text-gray-400 capitalize text-sm">{key}:</span>
-                    <span class="text-white text-sm">{value}</span>
+                    <span class="text-muted-foreground capitalize text-sm">{key}:</span>
+                    <span class="text-foreground text-sm">{value}</span>
                   </div>
                 {/each}
               </div>
@@ -281,13 +285,13 @@
           <!-- Story Content -->
           <div class="lg:col-span-2">
             <div class="mb-4">
-              <h4 class="text-lg font-bold text-white mb-2">🎯 Achievement</h4>
+              <h4 class="text-lg font-bold text-foreground mb-2">🎯 Achievement</h4>
               <p class="text-green-400 font-medium">{story.achievement}</p>
             </div>
 
             <div class="mb-4">
-              <h4 class="text-lg font-bold text-white mb-2">📖 Story</h4>
-              <p class="text-gray-300">{story.story}</p>
+              <h4 class="text-lg font-bold text-foreground mb-2">📖 Story</h4>
+              <p class="text-foreground/80">{story.story}</p>
             </div>
 
             <div class="bg-blue-600/20 border-l-4 border-blue-600 pl-4 py-2">
@@ -316,7 +320,7 @@
   <div class="bg-linear-to-r from-green-600/20 to-blue-600/20 border border-green-500/30 rounded-xl p-8">
     <div class="text-center">
       <div class="text-4xl mb-4">✨</div>
-      <h2 class="text-2xl font-bold text-white mb-4">Share Your Success Story</h2>
+      <h2 class="text-2xl font-bold text-foreground mb-4">Share Your Success Story</h2>
       <p class="text-green-200 mb-6 max-w-2xl mx-auto">
         Have you seen God work through your content in amazing ways? We'd love to hear your story and
         inspire other creators in our community. Your testimony could be the encouragement someone needs!
@@ -329,13 +333,13 @@
             bind:value={submitName}
             placeholder="Your name"
             required
-            class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+            class="px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-green-500"
           />
           <input
             type="text"
             bind:value={submitChannel}
             placeholder="Channel name"
-            class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+            class="px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-green-500"
           />
         </div>
         <textarea
@@ -345,7 +349,7 @@
           minlength="40"
           maxlength="4000"
           rows="4"
-          class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+          class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-green-500"
         ></textarea>
         {#if submitError}
           <p class="text-sm text-red-400">{submitError}</p>
@@ -362,19 +366,19 @@
         </button>
       </form>
 
-      <p class="text-xs text-gray-400 mt-4">
+      <p class="text-xs text-muted-foreground mt-4">
         By submitting, you agree to let us feature your story (with your permission) to inspire other creators.
       </p>
     </div>
   </div>
 
   <!-- Success Tips -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-    <h3 class="text-xl font-bold text-white mb-6">💡 Common Success Patterns</h3>
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+    <h3 class="text-xl font-bold text-foreground mb-6">💡 Common Success Patterns</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <h4 class="text-lg font-medium text-white mb-4">📈 Growth Strategies</h4>
-        <ul class="space-y-2 text-gray-300 text-sm">
+        <h4 class="text-lg font-medium text-foreground mb-4">📈 Growth Strategies</h4>
+        <ul class="space-y-2 text-foreground/80 text-sm">
           <li>• Consistent posting schedule (weekly minimum)</li>
           <li>• Authentic, personal storytelling</li>
           <li>• Active community engagement</li>
@@ -384,8 +388,8 @@
         </ul>
       </div>
       <div>
-        <h4 class="text-lg font-medium text-white mb-4">🎯 Ministry Impact</h4>
-        <ul class="space-y-2 text-gray-300 text-sm">
+        <h4 class="text-lg font-medium text-foreground mb-4">🎯 Ministry Impact</h4>
+        <ul class="space-y-2 text-foreground/80 text-sm">
           <li>• Clear Gospel message in content</li>
           <li>• Personal testimony sharing</li>
           <li>• Interactive community features</li>
@@ -399,7 +403,7 @@
 
   <!-- Creator Spotlight Program -->
   <div class="bg-purple-600/20 border border-purple-600 rounded-xl p-6">
-    <h3 class="text-lg font-bold text-white mb-4">🌟 Monthly Creator Spotlight</h3>
+    <h3 class="text-lg font-bold text-foreground mb-4">🌟 Monthly Creator Spotlight</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <p class="text-purple-200 mb-4">
@@ -418,7 +422,7 @@
         <button class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
           Nominate a Creator
         </button>
-        <button class="w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium">
+        <button class="w-full surface-2 hover:surface-3 text-foreground px-4 py-2 rounded-lg font-medium">
           Apply for Spotlight
         </button>
       </div>
@@ -427,7 +431,7 @@
 
   <!-- Community Support -->
   <div class="bg-yellow-600/20 border border-yellow-600 rounded-xl p-4">
-    <h3 class="text-lg font-bold text-white mb-2">🤝 Creator Community Support</h3>
+    <h3 class="text-lg font-bold text-foreground mb-2">🤝 Creator Community Support</h3>
     <p class="text-yellow-200 text-sm">
       Join our Creator Forum to connect with successful creators, ask questions, and get mentorship.
       Many of our featured creators actively participate and share their insights.

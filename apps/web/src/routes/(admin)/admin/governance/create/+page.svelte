@@ -1,5 +1,7 @@
 <script lang="ts">
 	import GuardrailValidator from '$lib/components/admin/governance/GuardrailValidator.svelte';
+	import { FilePlus2 } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	let title = $state('');
 	let description = $state('');
@@ -73,17 +75,17 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 max-w-3xl space-y-4">
-	<h1 class="text-2xl font-bold text-white">Create Governance Proposal</h1>
+	<PageHeader icon={FilePlus2} title="Create Proposal" subtitle="Draft a new governance proposal for the DAO." />
 
-	<div class="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4">
+	<div class="rounded-xl border border-border/40 surface-1 p-5 space-y-4">
 		<div>
-			<label for="proposal-title" class="text-xs text-gray-300">Title</label>
-			<input id="proposal-title" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-white" bind:value={title} />
+			<label for="proposal-title" class="text-xs text-foreground/80">Title</label>
+			<input id="proposal-title" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground" bind:value={title} />
 		</div>
 
 		<div>
-			<label for="proposal-type" class="text-xs text-gray-300">Type</label>
-			<select id="proposal-type" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-white" bind:value={type}>
+			<label for="proposal-type" class="text-xs text-foreground/80">Type</label>
+			<select id="proposal-type" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground" bind:value={type}>
 				<option value="parameter_update">parameter_update</option>
 				<option value="treasury_action">treasury_action</option>
 				<option value="policy_change">policy_change</option>
@@ -92,13 +94,13 @@
 		</div>
 
 		<div>
-			<label for="proposal-description" class="text-xs text-gray-300">Description</label>
-			<textarea id="proposal-description" class="mt-1 w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-white" bind:value={description}></textarea>
+			<label for="proposal-description" class="text-xs text-foreground/80">Description</label>
+			<textarea id="proposal-description" class="mt-1 w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground" bind:value={description}></textarea>
 		</div>
 
 		<div>
-			<label for="proposal-payload" class="text-xs text-gray-300">Payload (JSON)</label>
-			<textarea id="proposal-payload" class="mt-1 w-full min-h-32 bg-black/40 border border-white/15 rounded px-3 py-2 text-white font-mono text-xs" bind:value={payloadText}></textarea>
+			<label for="proposal-payload" class="text-xs text-foreground/80">Payload (JSON)</label>
+			<textarea id="proposal-payload" class="mt-1 w-full min-h-32 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground font-mono text-xs" bind:value={payloadText}></textarea>
 		</div>
 
 		<GuardrailValidator warnings={evaluateGuardrails()} />
@@ -107,7 +109,7 @@
 			<button class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50" disabled={saving} onclick={submit}>
 				{saving ? 'Creating...' : 'Create Proposal'}
 			</button>
-			<a href="/admin/governance/proposals" class="text-sm text-gray-300 hover:text-white">Back to proposals</a>
+			<a href="/admin/governance/proposals" class="text-sm text-foreground/80 hover:text-foreground">Back to proposals</a>
 		</div>
 
 		{#if resultMsg}

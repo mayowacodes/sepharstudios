@@ -2,14 +2,22 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { creators as creatorsTable, mediaLibrary, transactions } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/admin-auth';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, url }) => {
 	const { error } = await requireAdmin(locals);
 	if (error) return error;
 
-	const users = await db
+	// Optional ?search=… for typeahead (used by SendCreatorNotePanel +
+	// other admin slide-overs). When omitted the endpoint returns every
+	// creator for the full creator-list page.
+	const search = url.searchParams.get('search')?.trim() ?? '';
+	const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') ?? '500', 10)));
+
+	const searchPattern = search ? `%${search.replace(/[%_]/g, (m) => `\\${m}`)}%` : null;
+
+	const baseQuery = db
 		.select({
 			id: user.id,
 			name: user.name,
@@ -18,8 +26,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 			createdAt: user.createdAt,
 			banned: user.banned
 		})
-		.from(user)
-		.where(eq(user.role, 'creator'));
+		.from(user);
+
+	const where = searchPattern
+		? and(eq(user.role, 'creator'), or(ilike(user.name, searchPattern), ilike(user.email, searchPattern)))
+		: eq(user.role, 'creator');
+
+	const users = await baseQuery.where(where).limit(limit);
 
 	const creatorProfiles = await db
 		.select({

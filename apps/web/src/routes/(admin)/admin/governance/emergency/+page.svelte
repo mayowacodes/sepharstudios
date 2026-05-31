@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { AlertTriangle } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type PauseEvent = {
 		id: string;
@@ -55,12 +57,12 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-6">
-	<h1 class="text-2xl font-bold text-white">Emergency Controls</h1>
+	<PageHeader icon={AlertTriangle} title="Emergency Controls" subtitle="Security-incident pause + audit log." />
 
-	<div class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
-		<h2 class="text-lg text-white font-semibold">Trigger Emergency Pause</h2>
-		<p class="text-xs text-gray-400">Use only for security incidents. Reason is mandatory and audited.</p>
-		<textarea class="w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-white" bind:value={reason}></textarea>
+	<div class="rounded-xl border border-border/40 surface-1 p-4 space-y-3">
+		<h2 class="text-lg text-foreground font-semibold">Trigger Emergency Pause</h2>
+		<p class="text-xs text-muted-foreground">Use only for security incidents. Reason is mandatory and audited.</p>
+		<textarea class="w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground" bind:value={reason}></textarea>
 		<button class="px-4 py-2 rounded bg-red-600 hover:bg-red-700 disabled:opacity-50" disabled={saving || !!active} onclick={triggerPause}>
 			{saving ? 'Submitting...' : active ? 'Pause Already Active' : 'Trigger Pause'}
 		</button>
@@ -68,26 +70,26 @@
 		{#if error}<p class="text-sm text-red-300">{error}</p>{/if}
 	</div>
 
-	<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-		<h2 class="text-lg text-white font-semibold mb-2">Active Incident</h2>
+	<div class="rounded-xl border border-border/40 surface-1 p-4">
+		<h2 class="text-lg text-foreground font-semibold mb-2">Active Incident</h2>
 		{#if active}
 			<p class="text-sm text-red-300">{active.reason}</p>
-			<p class="text-xs text-gray-400 mt-1">By {active.triggeredByName} at {new Date(active.triggeredAt).toLocaleString()}</p>
+			<p class="text-xs text-muted-foreground mt-1">By {active.triggeredByName} at {new Date(active.triggeredAt).toLocaleString()}</p>
 		{:else}
 			<p class="text-sm text-green-300">No active emergency pause.</p>
 		{/if}
 	</div>
 
-	<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-		<h2 class="text-lg text-white font-semibold mb-2">Pause History</h2>
+	<div class="rounded-xl border border-border/40 surface-1 p-4">
+		<h2 class="text-lg text-foreground font-semibold mb-2">Pause History</h2>
 		{#if history.length === 0}
-			<p class="text-sm text-gray-400">No incidents logged.</p>
+			<p class="text-sm text-muted-foreground">No incidents logged.</p>
 		{:else}
 			<ul class="space-y-2">
 				{#each history as evt}
-					<li class="text-sm text-gray-300 border-t border-white/10 pt-2">
+					<li class="text-sm text-foreground/80 border-t border-border/40 pt-2">
 						<p>{evt.reason}</p>
-						<p class="text-xs text-gray-500">By {evt.triggeredByName} at {new Date(evt.triggeredAt).toLocaleString()}</p>
+						<p class="text-xs text-muted-foreground">By {evt.triggeredByName} at {new Date(evt.triggeredAt).toLocaleString()}</p>
 					</li>
 				{/each}
 			</ul>

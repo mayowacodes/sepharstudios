@@ -8,6 +8,8 @@
   import ContentThreadPanel from '$lib/components/widgets/ContentThreadPanel.svelte';
   import ContentScanReport from '$lib/components/admin/ContentScanReport.svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import { ArrowLeft, ShieldCheck } from '@lucide/svelte';
 
   // Scan state pulled from the admin content GET.
   let scanStatus = $state<string>('idle');
@@ -133,7 +135,7 @@
   function encoderStatusClass(s: string | null): string {
     if (s === 'ready') return 'text-green-300';
     if (s === 'failed') return 'text-red-300';
-    if (s === 'cancelled' || s === 'cancelling') return 'text-gray-400';
+    if (s === 'cancelled' || s === 'cancelling') return 'text-muted-foreground';
     return 'text-yellow-300';
   }
 
@@ -193,6 +195,12 @@
 </script>
 
 {#if contentData}
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <a href="/admin/review" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
+    <ArrowLeft class="w-3 h-3" /> Back to review queue
+  </a>
+  <PageHeader icon={ShieldCheck} title={contentData.title} subtitle="{contentData.contentType} · {contentData.ageRating} · {contentData.duration} min · {contentData.language}" />
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Content Preview (Left Column) -->
   <div class="lg:col-span-2 space-y-6">
@@ -219,31 +227,20 @@
     </div>
     
     <!-- Content Information -->
-    <div class="bg-white/10 rounded-xl p-6">
+    <div class="surface-1 rounded-xl p-5">
       <div class="flex justify-between items-start mb-4">
-        <div>
-          <h1 class="text-2xl font-bold text-white mb-2">{contentData.title}</h1>
-          <div class="flex items-center space-x-4 text-sm text-gray-400">
-            <span>{contentData.contentType}</span>
-            <span>{contentData.ageRating}</span>
-            <span>{contentData.duration} min</span>
-            <span>{contentData.language}</span>
-          </div>
-        </div>
-        
-        <div class="text-right">
-          <div class="bg-yellow-600 text-white px-3 py-1 rounded-full text-sm">
-            {contentData.status.replace('_', ' ')}
-          </div>
-        </div>
+        <span class="text-xs uppercase tracking-wide text-muted-foreground">Submission details</span>
+        <span class="text-[10px] uppercase tracking-wide bg-yellow-500/15 text-yellow-600 dark:text-yellow-300 rounded-full px-2 py-0.5">
+          {contentData.status.replace('_', ' ')}
+        </span>
       </div>
-      
-      <p class="text-gray-300 mb-6">{contentData.description}</p>
+
+      <p class="text-foreground/80 mb-6 text-sm leading-relaxed">{contentData.description}</p>
       
       <!-- Additional Details -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 class="font-medium text-white mb-2">Bible References</h3>
+          <h3 class="font-medium text-foreground mb-2">Bible References</h3>
           <div class="space-y-1">
             {#each contentData.bibleReferences || [] as ref}
               <div class="text-sm text-purple-300">{ref}</div>
@@ -252,7 +249,7 @@
         </div>
         
         <div>
-          <h3 class="font-medium text-white mb-2">Themes</h3>
+          <h3 class="font-medium text-foreground mb-2">Themes</h3>
           <div class="flex flex-wrap gap-2">
             {#each contentData.themes || [] as theme}
               <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">{theme}</span>
@@ -261,13 +258,13 @@
         </div>
         
         <div>
-          <h3 class="font-medium text-white mb-2">Ministry</h3>
-          <div class="text-sm text-gray-300">{contentData.ministryAffiliation || 'Not specified'}</div>
+          <h3 class="font-medium text-foreground mb-2">Ministry</h3>
+          <div class="text-sm text-foreground/80">{contentData.ministryAffiliation || 'Not specified'}</div>
         </div>
         
         <div>
-          <h3 class="font-medium text-white mb-2">Accessibility</h3>
-          <div class="text-sm text-gray-300">
+          <h3 class="font-medium text-foreground mb-2">Accessibility</h3>
+          <div class="text-sm text-foreground/80">
             {contentData.hasSubtitles ? '✓ Subtitles' : '✗ No subtitles'}
             <br>
             {contentData.hasClosedCaptions ? '✓ Closed captions' : '✗ No closed captions'}
@@ -277,18 +274,18 @@
     </div>
     
     <!-- Asset Preview -->
-    <div class="bg-white/10 rounded-xl p-6">
-      <h3 class="text-xl font-bold text-white mb-4">Image Assets</h3>
+    <div class="surface-2 rounded-xl p-6">
+      <h3 class="text-xl font-bold text-foreground mb-4">Image Assets</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         {#if contentData.assets.posterPortrait}
           <div>
-            <div class="text-sm text-gray-400 mb-2">Portrait Poster</div>
+            <div class="text-sm text-muted-foreground mb-2">Portrait Poster</div>
             <img src={contentData.assets.posterPortrait} alt="Portrait poster" class="w-full aspect-[2/3] object-cover rounded">
           </div>
         {/if}
         {#if contentData.assets.backdropHero}
           <div>
-            <div class="text-sm text-gray-400 mb-2">Hero Backdrop</div>
+            <div class="text-sm text-muted-foreground mb-2">Hero Backdrop</div>
             <img src={contentData.assets.backdropHero} alt="Hero backdrop" class="w-full aspect-video object-cover rounded">
           </div>
         {/if}
@@ -304,14 +301,14 @@
     {#if encoderStatus}
       <div class="surface-1 rounded-xl p-4 space-y-3">
         <div class="flex items-center justify-between">
-          <div class="text-sm font-semibold text-white">Encoder pipeline</div>
+          <div class="text-sm font-semibold text-foreground">Encoder pipeline</div>
           <span class="text-xs uppercase tracking-wide {encoderStatusClass(encoderStatus)}">{encoderStatus}</span>
         </div>
         {#if encoderInFlight}
-          <div class="h-2 bg-white/10 rounded overflow-hidden">
+          <div class="h-2 surface-2 rounded overflow-hidden">
             <div class="h-full bg-purple-500 transition-all duration-500" style="width: {Math.max(0, Math.min(100, encoderProgress ?? 0))}%"></div>
           </div>
-          <div class="flex items-center justify-between text-xs text-gray-400">
+          <div class="flex items-center justify-between text-xs text-muted-foreground">
             <span>{encoderStage ?? 'waiting'}</span>
             <span>{Math.max(0, Math.min(100, encoderProgress ?? 0))}%</span>
           </div>
@@ -320,7 +317,7 @@
           <div class="text-xs text-red-300">{encoderError}</div>
         {/if}
         {#if encoderJobId}
-          <div class="text-[10px] text-gray-500 font-mono break-all">job: {encoderJobId}</div>
+          <div class="text-[10px] text-muted-foreground font-mono break-all">job: {encoderJobId}</div>
         {/if}
         {#if encoderInFlight}
           <button
@@ -350,16 +347,16 @@
     {/if}
 
     <!-- Review Form -->
-    <div class="bg-white/10 rounded-xl p-6">
-      <h3 class="text-xl font-bold text-white mb-4">Review Assessment</h3>
+    <div class="surface-2 rounded-xl p-6">
+      <h3 class="text-xl font-bold text-foreground mb-4">Review Assessment</h3>
       
       <!-- Review Type -->
       <div class="mb-4">
-        <label for="reviewType" class="block text-sm font-medium text-white mb-2">Review Type</label>
+        <label for="reviewType" class="block text-sm font-medium text-foreground mb-2">Review Type</label>
         <select 
           id="reviewType"
           bind:value={currentReview.reviewType}
-          class="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded text-white"
+          class="w-full px-3 py-2 surface-2 border border-gray-600 rounded text-foreground"
         >
           <option value={ReviewType.THEOLOGICAL}>Theological Review</option>
           <option value={ReviewType.CONTENT_MODERATION}>Content Moderation</option>
@@ -371,7 +368,7 @@
       <!-- Review Result -->
       <div class="mb-4">
         <fieldset>
-          <legend class="block text-sm font-medium text-white mb-2">Decision</legend>
+          <legend class="block text-sm font-medium text-foreground mb-2">Decision</legend>
           <div class="space-y-2">
           <label class="flex items-center">
             <input 
@@ -406,20 +403,20 @@
       
       <!-- General Feedback -->
       <div class="mb-4">
-        <label for="generalFeedback" class="block text-sm font-medium text-white mb-2">General Feedback</label>
+        <label for="generalFeedback" class="block text-sm font-medium text-foreground mb-2">General Feedback</label>
         <textarea 
           id="generalFeedback"
           bind:value={currentReview.feedback}
           placeholder="Provide detailed feedback for the creator..."
           rows="4"
-          class="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded text-white placeholder-gray-400 resize-none"
+          class="w-full px-3 py-2 surface-2 border border-gray-600 rounded text-foreground placeholder-gray-400 resize-none"
         ></textarea>
       </div>
       
       <!-- Timestamp Notes -->
       <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
-          <span class="text-sm font-medium text-white">Timestamp Notes</span>
+          <span class="text-sm font-medium text-foreground">Timestamp Notes</span>
           <button 
             onclick={addTimestampNote}
             class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
@@ -431,7 +428,7 @@
         {#if currentReview.detailedNotes && currentReview.detailedNotes.length > 0}
           <div class="space-y-2">
             {#each currentReview.detailedNotes as note, index}
-              <div class="bg-white/5 p-3 rounded">
+              <div class="surface-1 p-3 rounded">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm text-blue-400">{formatTime(note.timestamp)}</span>
                   <button 
@@ -445,11 +442,11 @@
                   bind:value={note.note}
                   placeholder="Add your note here..."
                   rows="2"
-                  class="w-full px-2 py-1 bg-white/10 border border-gray-600 rounded text-white placeholder-gray-400 text-sm resize-none"
+                  class="w-full px-2 py-1 surface-2 border border-gray-600 rounded text-foreground placeholder-gray-400 text-sm resize-none"
                 ></textarea>
                 <select 
                   bind:value={note.severity}
-                  class="mt-2 px-2 py-1 bg-white/10 border border-gray-600 rounded text-white text-xs"
+                  class="mt-2 px-2 py-1 surface-2 border border-gray-600 rounded text-foreground text-xs"
                 >
                   <option value="info">Info</option>
                   <option value="warning">Warning</option>
@@ -459,7 +456,7 @@
             {/each}
           </div>
         {:else}
-          <div class="text-gray-400 text-sm">No timestamp notes yet</div>
+          <div class="text-muted-foreground text-sm">No timestamp notes yet</div>
         {/if}
       </div>
       
@@ -477,7 +474,7 @@
         
         <button 
           onclick={() => window.location.href = '/admin/review'}
-          class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded"
+          class="w-full bg-gray-600 hover:bg-gray-700 text-foreground py-2 rounded"
         >
           Back to Queue
         </button>
@@ -487,7 +484,7 @@
     <!-- Review Guidelines -->
     {#if currentReview.reviewType === ReviewType.THEOLOGICAL}
       <div class="bg-purple-600/20 border border-purple-600 rounded-xl p-4">
-        <h4 class="font-medium text-white mb-2">Theological Review Guidelines</h4>
+        <h4 class="font-medium text-foreground mb-2">Theological Review Guidelines</h4>
         <div class="text-sm text-purple-200 space-y-1">
           <div>• Verify biblical accuracy of references</div>
           <div>• Check doctrinal alignment with core Christian beliefs</div>
@@ -497,7 +494,7 @@
       </div>
     {:else if currentReview.reviewType === ReviewType.FAMILY_SAFETY}
       <div class="bg-pink-600/20 border border-pink-600 rounded-xl p-4">
-        <h4 class="font-medium text-white mb-2">Family Safety Guidelines</h4>
+        <h4 class="font-medium text-foreground mb-2">Family Safety Guidelines</h4>
         <div class="text-sm text-pink-200 space-y-1">
           <div>• Verify age-appropriate content</div>
           <div>• Check for inappropriate language</div>
@@ -508,10 +505,10 @@
     {/if}
   </div>
 </div>
+</div>
 
 {:else}
-<div class="text-center py-12">
-  <div class="text-4xl mb-4">📋</div>
-  <div class="text-xl text-white mb-2">Loading content...</div>
+<div class="container mx-auto px-4 py-12 text-center text-muted-foreground">
+  <div class="text-sm">Loading content…</div>
 </div>
 {/if}

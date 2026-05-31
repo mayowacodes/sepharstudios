@@ -1,41 +1,93 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { Role } from '$lib/constants';
 
-export const GET: RequestHandler = async ({ locals }) => {
+const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 25;
+
+export const GET: RequestHandler = async ({ locals, url }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 	if (![Role.CREATOR, Role.ADMIN].includes(session.user.role as Role)) {
 		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
-	const items = await db
-		.select({
-			id: mediaLibrary.id,
-			title: mediaLibrary.title,
-			description: mediaLibrary.description,
-			mediaType: mediaLibrary.mediaType,
-			status: mediaLibrary.status,
-			isActive: mediaLibrary.isActive,
-			thumbnail: mediaLibrary.thumbnail,
-			posterUrl: mediaLibrary.posterUrl,
-			backdropUrl: mediaLibrary.backdropUrl,
-			duration: mediaLibrary.duration,
-			viewCount: mediaLibrary.viewCount,
-			genres: mediaLibrary.genres,
-			keywords: mediaLibrary.keywords,
-			createdAt: mediaLibrary.createdAt,
-			updatedAt: mediaLibrary.updatedAt,
-			reviewNotes: mediaLibrary.reviewNotes,
-			rejectionReason: mediaLibrary.rejectionReason
-		})
-		.from(mediaLibrary)
-		.where(eq(mediaLibrary.creatorId, session.user.id))
-		.orderBy(desc(mediaLibrary.createdAt));
+	const status = url.searchParams.get('status');
+	const type = url.searchParams.get('type');
+	const q = url.searchParams.get('q')?.trim();
+	const hasPaginationParam = url.searchParams.has('page') || url.searchParams.has('pageSize');
 
-	return json(items);
+	const conds: SQL[] = [eq(mediaLibrary.creatorId, session.user.id)];
+	if (status && status !== 'all') conds.push(eq(mediaLibrary.status, status));
+	if (type && type !== 'all') conds.push(eq(mediaLibrary.mediaType, type));
+	if (q) {
+		const pat = `%${q}%`;
+		const searchExpr = or(ilike(mediaLibrary.title, pat), ilike(mediaLibrary.description, pat));
+		if (searchExpr) conds.push(searchExpr);
+	}
+	const whereExpr = conds.length === 1 ? conds[0] : and(...conds);
+
+	const columns = {
+		id: mediaLibrary.id,
+		title: mediaLibrary.title,
+		description: mediaLibrary.description,
+		mediaType: mediaLibrary.mediaType,
+		status: mediaLibrary.status,
+		isActive: mediaLibrary.isActive,
+		thumbnail: mediaLibrary.thumbnail,
+		posterUrl: mediaLibrary.posterUrl,
+		backdropUrl: mediaLibrary.backdropUrl,
+		duration: mediaLibrary.duration,
+		viewCount: mediaLibrary.viewCount,
+		genres: mediaLibrary.genres,
+		keywords: mediaLibrary.keywords,
+		createdAt: mediaLibrary.createdAt,
+		updatedAt: mediaLibrary.updatedAt,
+		reviewNotes: mediaLibrary.reviewNotes,
+		rejectionReason: mediaLibrary.rejectionReason
+	};
+
+	// Back-compat: if no pagination params are present we keep returning a
+	// bare array so the existing callers (creator dashboard, upload prefill)
+	// keep working unchanged. Content library page opts in by passing
+	// page/pageSize and gets the structured response with pagination meta.
+	if (!hasPaginationParam) {
+		const items = await db
+			.select(columns)
+			.from(mediaLibrary)
+			.where(whereExpr)
+			.orderBy(desc(mediaLibrary.createdAt));
+		return json(items);
+	}
+
+	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+	const requested = parseInt(url.searchParams.get('pageSize') ?? `${DEFAULT_PAGE_SIZE}`, 10) || DEFAULT_PAGE_SIZE;
+	const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, requested));
+	const offset = (page - 1) * pageSize;
+
+	const [items, totals] = await Promise.all([
+		db.select(columns)
+			.from(mediaLibrary)
+			.where(whereExpr)
+			.orderBy(desc(mediaLibrary.createdAt))
+			.limit(pageSize)
+			.offset(offset),
+		db.select({ count: sql<number>`count(*)::int` })
+			.from(mediaLibrary)
+			.where(whereExpr)
+	]);
+	const total = totals[0]?.count ?? 0;
+	return json({
+		items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.max(1, Math.ceil(total / pageSize))
+		}
+	});
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {

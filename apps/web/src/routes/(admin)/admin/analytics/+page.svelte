@@ -287,7 +287,7 @@
       <select
         bind:value={selectedTimeRange}
         onchange={loadAnalytics}
-        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         <option value="7d">Last 7 Days</option>
         <option value="30d">Last 30 Days</option>
@@ -336,7 +336,7 @@
   <div class="flex items-center justify-end gap-2">
       <select
         bind:value={selectedMetric}
-        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         <option value="views">Views</option>
         <option value="revenue">Revenue</option>
@@ -395,14 +395,14 @@
               <div class="flex items-center space-x-3">
                 <Wallet class="h-6 w-6 text-blue-400" />
                 <div>
-                  <h4 class="font-medium text-white">Admin Wallet Connected</h4>
+                  <h4 class="font-medium text-foreground">Admin Wallet Connected</h4>
                   <p class="text-sm text-muted-foreground">
                     {$walletAddress ? `${$walletAddress.slice(0, 8)}...${$walletAddress.slice(-6)}` : 'Not Connected'}
                   </p>
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-lg font-bold text-white">
+                <div class="text-lg font-bold text-foreground">
                   {parseFloat(adminWalletInfo.stcBalance).toLocaleString()} STC
                 </div>
                 <div class="text-xs text-muted-foreground">Admin Balance</div>
@@ -425,32 +425,32 @@
 
           <!-- Key Tokenomics Metrics -->
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <Coins class="h-6 w-6 text-accent mx-auto mb-2" />
               <div class="text-lg font-bold">{parseFloat(tokenomicsMetrics.stcPrice).toFixed(4)}</div>
               <div class="text-xs text-muted-foreground">STC Price (USD)</div>
             </div>
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <TrendingUp class="h-6 w-6 text-primary mx-auto mb-2" />
               <div class="text-lg font-bold">${formatNumber(tokenomicsMetrics.marketCap)}</div>
               <div class="text-xs text-muted-foreground">Market Cap</div>
             </div>
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <Activity class="h-6 w-6 text-secondary mx-auto mb-2" />
               <div class="text-lg font-bold">{formatNumber(parseFloat(tokenomicsMetrics.totalStaked))}</div>
               <div class="text-xs text-muted-foreground">Total Staked</div>
             </div>
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <Crown class="h-6 w-6 text-green-500 mx-auto mb-2" />
               <div class="text-lg font-bold">{tokenomicsMetrics.nftHolders.toLocaleString()}</div>
               <div class="text-xs text-muted-foreground">NFT Holders</div>
             </div>
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <DollarSign class="h-6 w-6 text-yellow-500 mx-auto mb-2" />
               <div class="text-lg font-bold">{tokenomicsMetrics.stakingAPY}%</div>
               <div class="text-xs text-muted-foreground">Staking APY</div>
             </div>
-            <div class="text-center p-4 bg-white/10 rounded-lg">
+            <div class="text-center p-4 surface-2 rounded-lg">
               <Users class="h-6 w-6 text-purple-500 mx-auto mb-2" />
               <div class="text-lg font-bold">${formatNumber(tokenomicsMetrics.subscriptionRevenue)}</div>
               <div class="text-xs text-muted-foreground">Sub Revenue</div>
@@ -492,7 +492,7 @@
               </h3>
               <div class="space-y-3">
                 {#each stakingTiers as tier}
-                  <div class="p-3 bg-white/5 rounded-lg">
+                  <div class="p-3 surface-1 rounded-lg">
                     <div class="flex items-center justify-between mb-2">
                       <span class="font-medium">{tier.tier}</span>
                       <Badge variant="outline">{tier.discount}% discount</Badge>
@@ -527,49 +527,49 @@
   {#if loading}
     <div class="text-center py-12">
       <div class="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-      <p class="text-gray-300">Loading analytics data...</p>
+      <p class="text-foreground/80">Loading analytics data...</p>
     </div>
   {:else}
     <!-- Key Metrics Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-2xl font-bold text-white">{formatNumber(platformMetrics.totalUsers)}</div>
-            <div class="text-gray-300 text-sm">Total Users</div>
+            <div class="text-2xl font-bold text-foreground">{formatNumber(platformMetrics.totalUsers)}</div>
+            <div class="text-foreground/80 text-sm">Total Users</div>
             <div class="text-green-400 text-xs mt-1">+{platformMetrics.newUsersToday} today</div>
           </div>
           <div class="text-blue-400 text-3xl">👥</div>
         </div>
       </div>
       
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-2xl font-bold text-white">{platformMetrics.activeCreators}</div>
-            <div class="text-gray-300 text-sm">Active Creators</div>
+            <div class="text-2xl font-bold text-foreground">{platformMetrics.activeCreators}</div>
+            <div class="text-foreground/80 text-sm">Active Creators</div>
             <div class="text-purple-400 text-xs mt-1">{formatNumber(platformMetrics.totalContent)} content items</div>
           </div>
           <div class="text-purple-400 text-3xl">🎬</div>
         </div>
       </div>
       
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-2xl font-bold text-white">{formatNumber(platformMetrics.totalViews)}</div>
-            <div class="text-gray-300 text-sm">Total Views</div>
+            <div class="text-2xl font-bold text-foreground">{formatNumber(platformMetrics.totalViews)}</div>
+            <div class="text-foreground/80 text-sm">Total Views</div>
             <div class="text-green-400 text-xs mt-1">+{formatNumber(platformMetrics.viewsToday)} today</div>
           </div>
           <div class="text-green-400 text-3xl">👁️</div>
         </div>
       </div>
       
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-2xl font-bold text-white">{formatCurrency(platformMetrics.totalRevenue)}</div>
-            <div class="text-gray-300 text-sm">Total Revenue</div>
+            <div class="text-2xl font-bold text-foreground">{formatCurrency(platformMetrics.totalRevenue)}</div>
+            <div class="text-foreground/80 text-sm">Total Revenue</div>
             <div class="text-yellow-400 text-xs mt-1">{platformMetrics.contentPublishedToday} published today</div>
           </div>
           <div class="text-yellow-400 text-3xl">💰</div>
@@ -579,8 +579,8 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Content Categories -->
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-        <h2 class="text-xl font-bold text-white mb-4">
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+        <h2 class="text-xl font-bold text-foreground mb-4">
           Content by Category ({selectedMetric === 'views' ? 'Views' : selectedMetric === 'revenue' ? 'Revenue' : selectedMetric === 'engagement' ? 'Engagement' : 'Users'})
         </h2>
         <div class="space-y-4">
@@ -588,11 +588,11 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <div class="w-3 h-3 rounded-full {getCategoryColor(category.category)}"></div>
-                <span class="text-white">{category.category}</span>
+                <span class="text-foreground">{category.category}</span>
               </div>
               <div class="text-right">
-                <div class="text-white font-medium">{category.count} items</div>
-                <div class="text-gray-400 text-sm">
+                <div class="text-foreground font-medium">{category.count} items</div>
+                <div class="text-muted-foreground text-sm">
                   {#if selectedMetric === 'views'}
                     {formatNumber(category.views)} views
                   {:else if selectedMetric === 'revenue'}
@@ -632,12 +632,12 @@
       </div>
 
       <!-- Geographic Distribution -->
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-        <h2 class="text-xl font-bold text-white mb-4">Users by Country</h2>
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+        <h2 class="text-xl font-bold text-foreground mb-4">Users by Country</h2>
         <div class="space-y-3">
           {#each geographicData.slice(0, 6) as country}
             <div class="flex items-center justify-between">
-              <span class="text-white">{country.country}</span>
+              <span class="text-foreground">{country.country}</span>
               <div class="flex items-center space-x-3">
                 <div class="w-24 bg-gray-700 rounded-full h-2">
                   <div 
@@ -645,7 +645,7 @@
                     style="width: {country.percentage}%"
                   ></div>
                 </div>
-                <span class="text-gray-300 text-sm w-12 text-right">{country.percentage}%</span>
+                <span class="text-foreground/80 text-sm w-12 text-right">{country.percentage}%</span>
               </div>
             </div>
           {/each}
@@ -654,8 +654,8 @@
     </div>
 
     <!-- Revenue Chart -->
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <h2 class="text-xl font-bold text-white mb-4">Revenue & Payouts Trend</h2>
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+      <h2 class="text-xl font-bold text-foreground mb-4">Revenue & Payouts Trend</h2>
       <div class="grid grid-cols-4 md:grid-cols-8 gap-4 items-end h-64">
         {#each revenueData as data}
           <div class="flex flex-col items-center space-y-2">
@@ -671,26 +671,26 @@
                 title="Payouts: {formatCurrency(data.payouts)}"
               ></div>
             </div>
-            <span class="text-gray-300 text-xs">{data.month}</span>
+            <span class="text-foreground/80 text-xs">{data.month}</span>
           </div>
         {/each}
       </div>
       <div class="flex items-center justify-center space-x-6 mt-4">
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 bg-green-500 rounded"></div>
-          <span class="text-gray-300 text-sm">Revenue</span>
+          <span class="text-foreground/80 text-sm">Revenue</span>
         </div>
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 bg-blue-500 rounded"></div>
-          <span class="text-gray-300 text-sm">Payouts</span>
+          <span class="text-foreground/80 text-sm">Payouts</span>
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Top Creators -->
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-        <h2 class="text-xl font-bold text-white mb-4">Top Creators</h2>
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+        <h2 class="text-xl font-bold text-foreground mb-4">Top Creators</h2>
         <div class="space-y-4">
           {#each topCreators as creator, index}
             <div class="flex items-center space-x-4">
@@ -698,12 +698,12 @@
                 {index + 1}
               </div>
               <div class="flex-1">
-                <div class="text-white font-medium">{creator.name}</div>
-                <div class="text-gray-400 text-sm">{creator.ministry}</div>
+                <div class="text-foreground font-medium">{creator.name}</div>
+                <div class="text-muted-foreground text-sm">{creator.ministry}</div>
               </div>
               <div class="text-right">
-                <div class="text-white font-medium">{formatNumber(creator.views)} views</div>
-                <div class="text-gray-400 text-sm">{creator.content} content • {formatCurrency(creator.revenue)}</div>
+                <div class="text-foreground font-medium">{formatNumber(creator.views)} views</div>
+                <div class="text-muted-foreground text-sm">{creator.content} content • {formatCurrency(creator.revenue)}</div>
               </div>
             </div>
           {/each}
@@ -711,8 +711,8 @@
       </div>
 
       <!-- Top Content -->
-      <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-        <h2 class="text-xl font-bold text-white mb-4">Top Content</h2>
+      <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+        <h2 class="text-xl font-bold text-foreground mb-4">Top Content</h2>
         <div class="space-y-4">
           {#each topContent as content, index}
             <div class="flex items-center space-x-4">
@@ -720,12 +720,12 @@
                 {index + 1}
               </div>
               <div class="flex-1">
-                <div class="text-white font-medium">{content.title}</div>
-                <div class="text-gray-400 text-sm">{content.creator} • {content.category}</div>
+                <div class="text-foreground font-medium">{content.title}</div>
+                <div class="text-muted-foreground text-sm">{content.creator} • {content.category}</div>
               </div>
               <div class="text-right">
-                <div class="text-white font-medium">{formatNumber(content.views)} views</div>
-                <div class="text-gray-400 text-sm">{formatPercentage(content.engagement)} engagement</div>
+                <div class="text-foreground font-medium">{formatNumber(content.views)} views</div>
+                <div class="text-muted-foreground text-sm">{formatPercentage(content.engagement)} engagement</div>
               </div>
             </div>
           {/each}
@@ -734,8 +734,8 @@
     </div>
 
     <!-- User Growth Chart -->
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-      <h2 class="text-xl font-bold text-white mb-4">User Growth Trend</h2>
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6">
+      <h2 class="text-xl font-bold text-foreground mb-4">User Growth Trend</h2>
       <div class="grid grid-cols-6 gap-4 items-end h-48">
         {#each userGrowthData as data}
           <div class="flex flex-col items-center space-y-2">
@@ -751,18 +751,18 @@
                 title="Creators: {data.creators}"
               ></div>
             </div>
-            <span class="text-gray-300 text-xs">{new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+            <span class="text-foreground/80 text-xs">{new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
           </div>
         {/each}
       </div>
       <div class="flex items-center justify-center space-x-6 mt-4">
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 bg-blue-500 rounded"></div>
-          <span class="text-gray-300 text-sm">Users</span>
+          <span class="text-foreground/80 text-sm">Users</span>
         </div>
         <div class="flex items-center space-x-2">
           <div class="w-3 h-3 bg-purple-500 rounded"></div>
-          <span class="text-gray-300 text-sm">Creators</span>
+          <span class="text-foreground/80 text-sm">Creators</span>
         </div>
       </div>
     </div>

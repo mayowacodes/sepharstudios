@@ -4,6 +4,8 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
+  import { Coins as CoinsIcon } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   // contracts.ts pulls all ABIs + viem helpers — deferred so the tokenomics
@@ -198,37 +200,33 @@
   }
 </script>
 
-<div class="space-y-8">
-  <!-- Header -->
-  <div class="text-center">
-    <h1 class="text-4xl font-bold text-white mb-2">Tokenomics Control Panel</h1>
-    <p class="text-xl text-gray-300">Manage STC token economics and revenue distribution</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={CoinsIcon} title="Tokenomics" subtitle="STC token economics and revenue distribution." />
 
   <!-- Token Supply Information -->
   <Card class="bg-linear-to-r from-primary/20 to-secondary/20">
     <CardHeader>
-      <CardTitle class="text-white flex items-center">
+      <CardTitle class="text-foreground flex items-center">
         <Coins class="h-5 w-5 mr-2" />
         STC Token Supply Information
       </CardTitle>
     </CardHeader>
     <CardContent>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="text-center p-4 bg-white/10 rounded-lg">
-          <div class="text-2xl font-bold text-white">{parseFloat(tokenomicsData.totalSupply).toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Total Supply</div>
-          <div class="text-xs text-gray-400">Maximum STC tokens</div>
+        <div class="text-center p-4 surface-2 rounded-lg">
+          <div class="text-2xl font-bold text-foreground">{parseFloat(tokenomicsData.totalSupply).toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Total Supply</div>
+          <div class="text-xs text-muted-foreground">Maximum STC tokens</div>
         </div>
-        <div class="text-center p-4 bg-white/10 rounded-lg">
-          <div class="text-2xl font-bold text-white">{parseFloat(tokenomicsData.circulatingSupply).toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Circulating Supply</div>
-          <div class="text-xs text-gray-400">{((parseFloat(tokenomicsData.circulatingSupply) / parseFloat(tokenomicsData.totalSupply)) * 100).toFixed(1)}% of total</div>
+        <div class="text-center p-4 surface-2 rounded-lg">
+          <div class="text-2xl font-bold text-foreground">{parseFloat(tokenomicsData.circulatingSupply).toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Circulating Supply</div>
+          <div class="text-xs text-muted-foreground">{((parseFloat(tokenomicsData.circulatingSupply) / parseFloat(tokenomicsData.totalSupply)) * 100).toFixed(1)}% of total</div>
         </div>
-        <div class="text-center p-4 bg-white/10 rounded-lg">
-          <div class="text-2xl font-bold text-white">{parseFloat(tokenomicsData.totalStaked).toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Total Staked</div>
-          <div class="text-xs text-gray-400">{((parseFloat(tokenomicsData.totalStaked) / parseFloat(tokenomicsData.circulatingSupply)) * 100).toFixed(1)}% of circulating</div>
+        <div class="text-center p-4 surface-2 rounded-lg">
+          <div class="text-2xl font-bold text-foreground">{parseFloat(tokenomicsData.totalStaked).toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Total Staked</div>
+          <div class="text-xs text-muted-foreground">{((parseFloat(tokenomicsData.totalStaked) / parseFloat(tokenomicsData.circulatingSupply)) * 100).toFixed(1)}% of circulating</div>
         </div>
       </div>
       <div class="mt-4 flex justify-center">
@@ -248,39 +246,39 @@
   <!-- Staking Tiers Distribution -->
   <Card class="bg-linear-to-r from-accent/20 to-secondary/20">
     <CardHeader>
-      <CardTitle class="text-white flex items-center">
+      <CardTitle class="text-foreground flex items-center">
         <Users class="h-5 w-5 mr-2" />
         Staking Tiers Distribution
       </CardTitle>
     </CardHeader>
     <CardContent>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-4 bg-white/10 rounded-lg">
+        <div class="text-center p-4 surface-2 rounded-lg">
           <div class="text-2xl font-bold text-yellow-500">{tokenomicsData.stakingTiers.bronze.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Bronze Tier</div>
-          <div class="text-xs text-gray-400">1K+ STC • 10% discount</div>
+          <div class="text-sm text-foreground/80">Bronze Tier</div>
+          <div class="text-xs text-muted-foreground">1K+ STC • 10% discount</div>
         </div>
-        <div class="text-center p-4 bg-white/10 rounded-lg">
-          <div class="text-2xl font-bold text-gray-400">{tokenomicsData.stakingTiers.silver.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Silver Tier</div>
-          <div class="text-xs text-gray-400">5K+ STC • 25% discount</div>
+        <div class="text-center p-4 surface-2 rounded-lg">
+          <div class="text-2xl font-bold text-muted-foreground">{tokenomicsData.stakingTiers.silver.toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Silver Tier</div>
+          <div class="text-xs text-muted-foreground">5K+ STC • 25% discount</div>
         </div>
-        <div class="text-center p-4 bg-white/10 rounded-lg">
+        <div class="text-center p-4 surface-2 rounded-lg">
           <div class="text-2xl font-bold text-amber-500">{tokenomicsData.stakingTiers.gold.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Gold Tier</div>
-          <div class="text-xs text-gray-400">25K+ STC • 40% discount</div>
+          <div class="text-sm text-foreground/80">Gold Tier</div>
+          <div class="text-xs text-muted-foreground">25K+ STC • 40% discount</div>
         </div>
-        <div class="text-center p-4 bg-white/10 rounded-lg">
+        <div class="text-center p-4 surface-2 rounded-lg">
           <div class="text-2xl font-bold text-purple-400">{tokenomicsData.stakingTiers.platinum.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Platinum Tier</div>
-          <div class="text-xs text-gray-400">100K+ STC • 50% discount</div>
+          <div class="text-sm text-foreground/80">Platinum Tier</div>
+          <div class="text-xs text-muted-foreground">100K+ STC • 50% discount</div>
         </div>
       </div>
       <div class="mt-4 text-center">
-        <div class="text-sm text-gray-300">
+        <div class="text-sm text-foreground/80">
           Total Stakers: {(tokenomicsData.stakingTiers.bronze + tokenomicsData.stakingTiers.silver + tokenomicsData.stakingTiers.gold + tokenomicsData.stakingTiers.platinum).toLocaleString()}
         </div>
-        <div class="text-xs text-gray-400 mt-1">
+        <div class="text-xs text-muted-foreground mt-1">
           Distribution drives subscription discount utilization and platform loyalty
         </div>
       </div>
@@ -291,61 +289,61 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <Card class="bg-primary/20">
       <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-gray-300 flex items-center">
+        <CardTitle class="text-sm font-medium text-foreground/80 flex items-center">
           <DollarSign class="h-4 w-4 mr-2" />
           STC Price
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${tokenomicsData.stcPrice.slice(0,8)}</div>
+        <div class="text-2xl font-bold text-foreground">${tokenomicsData.stcPrice.slice(0,8)}</div>
         <Badge class="text-xs mt-1" variant="secondary">USDC</Badge>
       </CardContent>
     </Card>
 
     <Card class="bg-secondary/20">
       <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-gray-300 flex items-center">
+        <CardTitle class="text-sm font-medium text-foreground/80 flex items-center">
           <Coins class="h-4 w-4 mr-2" />
           Total Staked
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">{parseFloat(tokenomicsData.totalStaked).toLocaleString()}</div>
+        <div class="text-2xl font-bold text-foreground">{parseFloat(tokenomicsData.totalStaked).toLocaleString()}</div>
         <Badge class="text-xs mt-1" variant="secondary">STC</Badge>
       </CardContent>
     </Card>
 
     <Card class="bg-accent/20">
       <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-gray-300 flex items-center">
+        <CardTitle class="text-sm font-medium text-foreground/80 flex items-center">
           <TrendingUp class="h-4 w-4 mr-2" />
           Monthly Revenue
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${parseFloat(tokenomicsData.monthlyRevenue).toLocaleString()}</div>
+        <div class="text-2xl font-bold text-foreground">${parseFloat(tokenomicsData.monthlyRevenue).toLocaleString()}</div>
         <Badge class="text-xs mt-1" variant="secondary">USD</Badge>
       </CardContent>
     </Card>
 
     <Card class="bg-green-500/20">
       <CardHeader class="pb-2">
-        <CardTitle class="text-sm font-medium text-gray-300 flex items-center">
+        <CardTitle class="text-sm font-medium text-foreground/80 flex items-center">
           <Activity class="h-4 w-4 mr-2" />
           Monthly Buyback
         </CardTitle>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="text-2xl font-bold text-white">${parseFloat(tokenomicsData.buybackAmount).toLocaleString()}</div>
+        <div class="text-2xl font-bold text-foreground">${parseFloat(tokenomicsData.buybackAmount).toLocaleString()}</div>
         <Badge class="text-xs mt-1" variant="secondary">USD</Badge>
       </CardContent>
     </Card>
   </div>
 
   <!-- Revenue Distribution Management -->
-  <Card class="bg-white/5">
+  <Card class="surface-1">
     <CardHeader>
-      <CardTitle class="text-white flex items-center">
+      <CardTitle class="text-foreground flex items-center">
         <Settings class="h-5 w-5 mr-2" />
         Revenue Distribution Settings
       </CardTitle>
@@ -353,42 +351,42 @@
     <CardContent class="space-y-6">
       <!-- Current Distribution -->
       <div>
-        <h4 class="text-lg font-medium text-white mb-4">Current Distribution</h4>
+        <h4 class="text-lg font-medium text-foreground mb-4">Current Distribution</h4>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div class="text-center p-4 bg-blue-500/20 rounded-lg">
-            <div class="text-2xl font-bold text-white">{revenueDistribution.platformOperations}%</div>
-            <div class="text-sm text-gray-300">Platform Operations</div>
-            <div class="text-xs text-gray-400">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformOperations / 100).toLocaleString()}</div>
+            <div class="text-2xl font-bold text-foreground">{revenueDistribution.platformOperations}%</div>
+            <div class="text-sm text-foreground/80">Platform Operations</div>
+            <div class="text-xs text-muted-foreground">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformOperations / 100).toLocaleString()}</div>
           </div>
           <div class="text-center p-4 bg-green-500/20 rounded-lg">
-            <div class="text-2xl font-bold text-white">{revenueDistribution.creatorRevenue}%</div>
-            <div class="text-sm text-gray-300">Creator Revenue</div>
-            <div class="text-xs text-gray-400">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.creatorRevenue / 100).toLocaleString()}</div>
+            <div class="text-2xl font-bold text-foreground">{revenueDistribution.creatorRevenue}%</div>
+            <div class="text-sm text-foreground/80">Creator Revenue</div>
+            <div class="text-xs text-muted-foreground">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.creatorRevenue / 100).toLocaleString()}</div>
           </div>
           <div class="text-center p-4 bg-orange-500/20 rounded-lg">
-            <div class="text-2xl font-bold text-white">{revenueDistribution.stcBuyback}%</div>
-            <div class="text-sm text-gray-300">STC Buyback</div>
-            <div class="text-xs text-gray-400">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.stcBuyback / 100).toLocaleString()}</div>
+            <div class="text-2xl font-bold text-foreground">{revenueDistribution.stcBuyback}%</div>
+            <div class="text-sm text-foreground/80">STC Buyback</div>
+            <div class="text-xs text-muted-foreground">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.stcBuyback / 100).toLocaleString()}</div>
           </div>
           <div class="text-center p-4 bg-purple-500/20 rounded-lg">
-            <div class="text-2xl font-bold text-white">{revenueDistribution.userRewards}%</div>
-            <div class="text-sm text-gray-300">User Rewards</div>
-            <div class="text-xs text-gray-400">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.userRewards / 100).toLocaleString()}</div>
+            <div class="text-2xl font-bold text-foreground">{revenueDistribution.userRewards}%</div>
+            <div class="text-sm text-foreground/80">User Rewards</div>
+            <div class="text-xs text-muted-foreground">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.userRewards / 100).toLocaleString()}</div>
           </div>
           <div class="text-center p-4 bg-gray-500/20 rounded-lg">
-            <div class="text-2xl font-bold text-white">{revenueDistribution.platformReserve}%</div>
-            <div class="text-sm text-gray-300">Platform Reserve</div>
-            <div class="text-xs text-gray-400">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformReserve / 100).toLocaleString()}</div>
+            <div class="text-2xl font-bold text-foreground">{revenueDistribution.platformReserve}%</div>
+            <div class="text-sm text-foreground/80">Platform Reserve</div>
+            <div class="text-xs text-muted-foreground">${(parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformReserve / 100).toLocaleString()}</div>
           </div>
         </div>
       </div>
 
       <!-- Adjustment Form -->
       <div class="border-t border-gray-600 pt-6">
-        <h4 class="text-lg font-medium text-white mb-4">Adjust Distribution</h4>
+        <h4 class="text-lg font-medium text-foreground mb-4">Adjust Distribution</h4>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <Label class="text-gray-300">Platform Operations (%)</Label>
+            <Label class="text-foreground/80">Platform Operations (%)</Label>
             <Input
               type="number"
               step="0.1"
@@ -398,7 +396,7 @@
             />
           </div>
           <div>
-            <Label class="text-gray-300">Creator Revenue (%)</Label>
+            <Label class="text-foreground/80">Creator Revenue (%)</Label>
             <Input
               type="number"
               step="0.1"
@@ -408,7 +406,7 @@
             />
           </div>
           <div>
-            <Label class="text-gray-300">STC Buyback (%)</Label>
+            <Label class="text-foreground/80">STC Buyback (%)</Label>
             <Input
               type="number"
               step="0.1"
@@ -418,7 +416,7 @@
             />
           </div>
           <div>
-            <Label class="text-gray-300">User Rewards (%)</Label>
+            <Label class="text-foreground/80">User Rewards (%)</Label>
             <Input
               type="number"
               step="0.1"
@@ -428,7 +426,7 @@
             />
           </div>
           <div>
-            <Label class="text-gray-300">Platform Reserve (%)</Label>
+            <Label class="text-foreground/80">Platform Reserve (%)</Label>
             <Input
               type="number"
               step="0.1"
@@ -440,7 +438,7 @@
         </div>
 
         <div class="mt-4 flex items-center space-x-4">
-          <div class="text-sm text-gray-300">
+          <div class="text-sm text-foreground/80">
             Total: {Object.values(adminActions.newDistribution).reduce((sum, val) => sum + Number(val), 0).toFixed(1)}%
           </div>
           {#if Math.abs(Object.values(adminActions.newDistribution).reduce((sum, val) => sum + Number(val), 0) - 100) > 0.1}
@@ -472,7 +470,7 @@
 
         {#if adminActions.actionResult}
           <div class="mt-4 p-3 bg-gray-800 border rounded-lg">
-            <p class="text-sm text-white">{adminActions.actionResult}</p>
+            <p class="text-sm text-foreground">{adminActions.actionResult}</p>
           </div>
         {/if}
       </div>
@@ -480,9 +478,9 @@
   </Card>
 
   <!-- Creator Revenue Analytics -->
-  <Card class="bg-white/5">
+  <Card class="surface-1">
     <CardHeader>
-      <CardTitle class="text-white flex items-center">
+      <CardTitle class="text-foreground flex items-center">
         <Users class="h-5 w-5 mr-2" />
         Creator Revenue Analytics
       </CardTitle>
@@ -490,20 +488,20 @@
     <CardContent>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="text-center p-4 bg-green-500/20 rounded-lg">
-          <div class="text-2xl font-bold text-white">{creatorStats.totalCreators}</div>
-          <div class="text-sm text-gray-300">Active Creators</div>
+          <div class="text-2xl font-bold text-foreground">{creatorStats.totalCreators}</div>
+          <div class="text-sm text-foreground/80">Active Creators</div>
         </div>
         <div class="text-center p-4 bg-blue-500/20 rounded-lg">
-          <div class="text-2xl font-bold text-white">${creatorStats.averageRevenue.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Average Monthly Revenue</div>
+          <div class="text-2xl font-bold text-foreground">${creatorStats.averageRevenue.toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Average Monthly Revenue</div>
         </div>
         <div class="text-center p-4 bg-yellow-500/20 rounded-lg">
-          <div class="text-2xl font-bold text-white">${creatorStats.topCreatorEarnings.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Top Creator Earnings</div>
+          <div class="text-2xl font-bold text-foreground">${creatorStats.topCreatorEarnings.toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Top Creator Earnings</div>
         </div>
         <div class="text-center p-4 bg-purple-500/20 rounded-lg">
-          <div class="text-2xl font-bold text-white">${creatorStats.totalPayments.toLocaleString()}</div>
-          <div class="text-sm text-gray-300">Total Monthly Payouts</div>
+          <div class="text-2xl font-bold text-foreground">${creatorStats.totalPayments.toLocaleString()}</div>
+          <div class="text-sm text-foreground/80">Total Monthly Payouts</div>
         </div>
       </div>
 

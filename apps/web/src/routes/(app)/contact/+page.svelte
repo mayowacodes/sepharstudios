@@ -61,7 +61,7 @@
   {/if}
 
   <!-- Contact Form -->
-  <form on:submit={handleSubmit} class="space-y-6">
+  <form onsubmit={handleSubmit} class="space-y-6">
     {#each Object.entries(formData) as [key, value]}
     <div>
       <label for={key} class="block text-sm font-medium text-[#AF6E4D]">

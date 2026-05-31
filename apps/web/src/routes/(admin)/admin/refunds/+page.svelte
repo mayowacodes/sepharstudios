@@ -59,9 +59,27 @@
       toast.error('Reference is required');
       return;
     }
+    // Client-side amount validation — saves a server round-trip for
+    // obvious mistakes and gives the admin instant feedback.
+    let amountCents: number | undefined;
+    if (issueAmount.trim()) {
+      const parsed = parseFloat(issueAmount.trim());
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        toast.error('Amount must be a positive number');
+        return;
+      }
+      amountCents = Math.round(parsed * 100);
+      if (amountCents < 99) {
+        toast.error('Refund amount must be at least 0.99');
+        return;
+      }
+      if (amountCents > 1_000_000_00) {
+        toast.error('Refund amount looks unreasonably large');
+        return;
+      }
+    }
     issuing = true;
     try {
-      const amountCents = issueAmount ? Math.round(parseFloat(issueAmount) * 100) : undefined;
       const res = await fetch('/api/admin/refunds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,18 +139,18 @@
         <button
           type="button"
           onclick={() => (status = s)}
-          class="px-3 py-1.5 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+          class="px-3 py-1.5 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
         >{s}</button>
       {/each}
     </div>
     <div class="relative ml-auto w-72">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <input
         type="text"
         bind:value={q}
         oninput={onSearchInput}
         placeholder="Search reference, email, name…"
-        class="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-gray-500"
+        class="w-full surface-1 border border-border/40 rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder-gray-500"
       />
     </div>
   </div>
@@ -142,14 +160,14 @@
       {#each Array(5) as _ (_)}<Skeleton class="h-12 rounded-lg" />{/each}
     </div>
   {:else if rows.length === 0}
-    <div class="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-gray-400">
+    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
       No refunds match these filters.
     </div>
   {:else}
-    <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+    <div class="surface-1 border border-border/40 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-white/5">
-          <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+        <thead class="surface-1">
+          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th class="px-4 py-3">Reference</th>
             <th class="px-4 py-3">User</th>
             <th class="px-4 py-3">Amount</th>
@@ -160,18 +178,18 @@
         </thead>
         <tbody>
           {#each rows as r (r.id)}
-            <tr class="border-t border-white/5 hover:bg-white/5">
-              <td class="px-4 py-3 font-mono text-xs text-gray-300">{r.reference.slice(0, 16)}…</td>
-              <td class="px-4 py-3 text-gray-200">
+            <tr class="border-t border-white/5 hover:surface-1">
+              <td class="px-4 py-3 font-mono text-xs text-foreground/80">{r.reference.slice(0, 16)}…</td>
+              <td class="px-4 py-3 text-foreground/90">
                 {r.userName ?? '—'}
-                {#if r.userEmail}<div class="text-xs text-gray-500">{r.userEmail}</div>{/if}
+                {#if r.userEmail}<div class="text-xs text-muted-foreground">{r.userEmail}</div>{/if}
               </td>
-              <td class="px-4 py-3 text-white font-medium">{money(r.amountCents, r.currency)}</td>
-              <td class="px-4 py-3 text-gray-300 max-w-xs truncate">{r.reason ?? '—'}</td>
+              <td class="px-4 py-3 text-foreground font-medium">{money(r.amountCents, r.currency)}</td>
+              <td class="px-4 py-3 text-foreground/80 max-w-xs truncate">{r.reason ?? '—'}</td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded text-xs uppercase tracking-wide {statusBadge(r.status)}">{r.status}</span>
               </td>
-              <td class="px-4 py-3 text-xs text-gray-400">{new Date(r.createdAt).toLocaleString()}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString()}</td>
             </tr>
           {/each}
         </tbody>
@@ -189,44 +207,44 @@
     onclick={(e) => { if (e.target === e.currentTarget) issueOpen = false; }}
     onkeydown={(e) => { if (e.key === 'Escape') issueOpen = false; }}
   >
-    <div class="bg-gray-900 border border-white/10 rounded-xl max-w-md w-full p-6 space-y-4">
+    <div class="bg-gray-900 border border-border/40 rounded-xl max-w-md w-full p-6 space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-white">Issue refund</h2>
-        <button type="button" onclick={() => (issueOpen = false)} class="text-gray-400 hover:text-white">
+        <h2 class="text-lg font-semibold text-foreground">Issue refund</h2>
+        <button type="button" onclick={() => (issueOpen = false)} class="text-muted-foreground hover:text-foreground">
           <X class="w-5 h-5" />
         </button>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label for="ref" class="block text-sm text-gray-300 mb-1">Paystack reference</label>
+          <label for="ref" class="block text-sm text-foreground/80 mb-1">Paystack reference</label>
           <input
             id="ref"
             type="text"
             bind:value={issueRef}
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono"
+            class="w-full surface-1 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground font-mono"
             placeholder="paystack-txn-ref"
           />
         </div>
         <div>
-          <label for="amt" class="block text-sm text-gray-300 mb-1">Amount (USD, optional)</label>
+          <label for="amt" class="block text-sm text-foreground/80 mb-1">Amount (USD, optional)</label>
           <input
             id="amt"
             type="number"
             min="0"
             step="0.01"
             bind:value={issueAmount}
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+            class="w-full surface-1 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground"
             placeholder="Leave blank for full refund"
           />
         </div>
         <div>
-          <label for="rsn" class="block text-sm text-gray-300 mb-1">Reason (optional)</label>
+          <label for="rsn" class="block text-sm text-foreground/80 mb-1">Reason (optional)</label>
           <textarea
             id="rsn"
             rows="3"
             bind:value={issueReason}
-            class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white resize-none"
+            class="w-full surface-1 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground resize-none"
             placeholder="Why is this being refunded?"
           ></textarea>
         </div>
@@ -236,7 +254,7 @@
         <button
           type="button"
           onclick={() => (issueOpen = false)}
-          class="px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10"
+          class="px-4 py-2 rounded-lg text-sm text-foreground/80 hover:surface-2"
         >Cancel</button>
         <button
           type="button"

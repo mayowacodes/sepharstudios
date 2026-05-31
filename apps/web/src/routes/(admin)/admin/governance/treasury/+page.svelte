@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import TreasuryPoolsTable from '$lib/components/admin/governance/TreasuryPoolsTable.svelte';
 	import GovernanceStatusCard from '$lib/components/admin/governance/GovernanceStatusCard.svelte';
+	import { Wallet } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type TreasuryData = {
 		pools: Array<{ key: string; label: string; control: string; status: string }>;
@@ -33,10 +35,10 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-6">
-	<h1 class="text-2xl font-bold text-white">Governance Treasury Monitor</h1>
+	<PageHeader icon={Wallet} title="Treasury Monitor" subtitle="Pool balances, flows, and buyback execution." />
 
 	{#if loading}
-		<p class="text-sm text-gray-400">Loading treasury data...</p>
+		<p class="text-sm text-muted-foreground">Loading treasury data...</p>
 	{:else if data}
 		<div class="grid md:grid-cols-4 gap-4">
 			<GovernanceStatusCard title="Active Subs" value={data.activity.activeSubscriptions} />
@@ -45,8 +47,8 @@
 			<GovernanceStatusCard title="Watch Events" value={data.activity.watchEvents.toLocaleString()} />
 		</div>
 
-		<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-			<h2 class="text-lg font-semibold text-white mb-3">Pool Control Status</h2>
+		<div class="rounded-xl border border-border/40 surface-1 p-4">
+			<h2 class="text-lg font-semibold text-foreground mb-3">Pool Control Status</h2>
 			<TreasuryPoolsTable pools={data.pools} />
 		</div>
 	{/if}

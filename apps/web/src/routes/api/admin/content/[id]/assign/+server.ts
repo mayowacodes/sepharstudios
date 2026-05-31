@@ -33,8 +33,13 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	}
 
 	const now = new Date();
+	// Record both the assignee (assigned_to) AND the acting admin
+	// (assigned_by). Without assigned_by the audit log can't distinguish
+	// self-claims from one-admin-stealing-another-admin's-work — the
+	// notify() call below sends the assigner's name to the assignee, but
+	// nothing was persisting that link until now.
 	const [updated] = await db.update(mediaLibrary)
-		.set({ assignedTo: adminId, assignedAt: now, updatedAt: now })
+		.set({ assignedTo: adminId, assignedBy: session.user.id, assignedAt: now, updatedAt: now })
 		.where(eq(mediaLibrary.id, params.id!))
 		.returning({ id: mediaLibrary.id, title: mediaLibrary.title });
 
@@ -59,7 +64,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	if (error) return error;
 
 	const [updated] = await db.update(mediaLibrary)
-		.set({ assignedTo: null, assignedAt: null, updatedAt: new Date() })
+		.set({ assignedTo: null, assignedBy: null, assignedAt: null, updatedAt: new Date() })
 		.where(eq(mediaLibrary.id, params.id!))
 		.returning({ id: mediaLibrary.id });
 

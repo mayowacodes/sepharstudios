@@ -11,8 +11,13 @@
 
 	let { data, children } = $props();
 
-	// AICopilot is only mounted for logged-in users
-	let isLoggedIn = $derived(!!data?.user);
+	// AICopilot is only mounted for logged-in users on PUBLIC pages. The
+	// admin + creator portals have their own Copilot rail (PortalShell)
+	// so the floating bubble would double up on those routes.
+	let isPortalRoute = $derived(
+		page.url.pathname.startsWith('/admin') || page.url.pathname.startsWith('/creator')
+	);
+	let isLoggedIn = $derived(!!data?.user && !isPortalRoute);
 
 	// Canonical URL — strip query strings + trailing slash so duplicate-content
 	// signals don't fragment. Per-page <svelte:head> can override with a more

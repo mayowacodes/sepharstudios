@@ -1,12 +1,13 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
+  import { goto, beforeNavigate } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
   import ContentThreadPanel from '$lib/components/widgets/ContentThreadPanel.svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import { COUNTRIES } from '$lib/data/countries';
   import { announce } from '$lib/stores/live-region';
+  import { ArrowLeft, ExternalLink, Archive as ArchiveIcon } from '@lucide/svelte';
 
   type Tab = 'details' | 'images' | 'video' | 'subtitles' | 'chapters' | 'episodes' | 'analytics' | 'thread';
 
@@ -130,6 +131,30 @@
   }>>([]);
   let saving = $state(false);
 
+  // Unsaved-changes guard. We snapshot the form fields every time the
+  // content row is loaded or successfully saved, then compare to a derived
+  // snapshot of the current edit state. If they differ, warn the creator
+  // on navigation / tab close so a half-typed description isn't lost when
+  // they bounce between content/[id] tabs or hit a SidebarLink mid-edit.
+  let savedSnapshot = $state('');
+  const currentSnapshot = $derived(JSON.stringify({
+    editTitle, editDescription, editContentType, editAgeRating,
+    editGenres, editTopics, editKeywords, editBibleReference,
+    editLanguage, editDuration, editVisibility, editScheduledPublishAt,
+    editChapters, editCast, editCrew, editGeoMode, editGeoRegions,
+    editNextUpIds
+  }));
+  const isDirty = $derived(savedSnapshot !== '' && currentSnapshot !== savedSnapshot);
+  function captureSnapshot() {
+    savedSnapshot = JSON.stringify({
+      editTitle, editDescription, editContentType, editAgeRating,
+      editGenres, editTopics, editKeywords, editBibleReference,
+      editLanguage, editDuration, editVisibility, editScheduledPublishAt,
+      editChapters, editCast, editCrew, editGeoMode, editGeoRegions,
+      editNextUpIds
+    });
+  }
+
   // Per-region pricing state.
   interface PricingRow { id: string; regionCode: string; priceCents: number; currency: string }
   let pricingRows = $state<PricingRow[]>([]);
@@ -225,6 +250,7 @@
         if (editNextUpIds.length > 0) {
           void hydrateNextUpTitles(editNextUpIds);
         }
+        captureSnapshot();
       }
 
       // Subtitles fetched separately so the tab can refresh independently
@@ -299,8 +325,27 @@
     }
   }
 
+  // Block SvelteKit nav (sidebar link, back button) when there are
+  // unsaved cross-section edits. The browser's own beforeunload covers
+  // tab close + hard reload; this covers everything inside the SPA.
+  beforeNavigate(({ cancel }) => {
+    if (isDirty && !confirm('You have unsaved changes. Leave anyway?')) {
+      cancel();
+    }
+  });
+
+  function beforeUnloadHandler(e: BeforeUnloadEvent) {
+    if (isDirty) {
+      e.preventDefault();
+      // Most modern browsers ignore custom strings — setting returnValue
+      // is enough to surface the generic "Leave site?" prompt.
+      e.returnValue = '';
+    }
+  }
+
   onMount(() => {
     void load();
+    window.addEventListener('beforeunload', beforeUnloadHandler);
     // Subscribe to the SSE encoder stream so this page reflects live
     // progress without polling. The server filters events to this creator.
     try {
@@ -336,6 +381,9 @@
 
   onDestroy(() => {
     if (encoderSse) { encoderSse.close(); encoderSse = null; }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
   });
 
   function splitTags(s: string): string[] {
@@ -365,6 +413,7 @@
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
       toast.success('Details saved');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -387,6 +436,7 @@
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
       toast.success('Visibility updated');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -395,12 +445,16 @@
   }
 
   // Chapters editor — add/remove on the client, save as one PATCH.
+  // Accepts plain seconds (e.g. "90", "90.5") OR m:ss / h:mm:ss with any
+  // leading-zero variant ("01:05", "0:30", "00:00:45"). We explicitly
+  // require each colon-separated piece to be a non-empty digit run so
+  // junk like "1::30" or "abc:30" can't slip through as 30s.
   function parseTimeInput(raw: string): number | null {
     const trimmed = raw.trim();
     if (!trimmed) return null;
-    // Accept either plain seconds or m:ss / h:mm:ss.
     if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
-    const parts = trimmed.split(':').map((p) => Number(p));
+    if (!/^\d+(:\d+){1,2}$/.test(trimmed)) return null;
+    const parts = trimmed.split(':').map((p) => parseInt(p, 10));
     if (parts.some((p) => !Number.isFinite(p) || p < 0)) return null;
     if (parts.length === 2) return parts[0] * 60 + parts[1];
     if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
@@ -485,15 +539,25 @@
     nextUpSearching = true;
     try {
       const res = await fetch(`/api/creator/content/search?q=${encodeURIComponent(q)}&limit=8`);
-      if (res.ok) {
-        const body = await res.json();
-        const items = Array.isArray(body.results) ? body.results : Array.isArray(body) ? body : [];
-        nextUpSearchResults = items
-          .filter((r: { id: string }) => r.id !== contentId && !editNextUpIds.includes(r.id))
-          .slice(0, 8);
+      if (!res.ok) {
+        // Don't toast on every keystroke-driven failure, but at least log
+        // so the creator can ask support what they're seeing instead of
+        // assuming "no results" is the truth.
+        console.warn(`[next-up search] HTTP ${res.status} for query "${q}"`);
+        nextUpSearchResults = [];
+        return;
       }
-    } catch {
-      // silent — fall back to empty
+      const body = await res.json();
+      const items = Array.isArray(body.results) ? body.results : Array.isArray(body) ? body : [];
+      nextUpSearchResults = items
+        .filter((r: { id: string }) => r.id !== contentId && !editNextUpIds.includes(r.id))
+        .slice(0, 8);
+    } catch (err) {
+      console.warn('[next-up search] failed:', err);
+      nextUpSearchResults = [];
+      // Surface a one-line toast so the creator knows the search isn't
+      // running — empty results otherwise look like "no matches".
+      toast.error('Next-up search failed. Try again.');
     } finally {
       nextUpSearching = false;
     }
@@ -531,6 +595,17 @@
     editNextUpIds = next;
   }
   async function saveNextUp() {
+    // Saving an empty list is allowed (it clears curated picks and falls
+    // back to auto-recommendations), but most creators reach this button
+    // expecting to save the picks they just made. Confirm the empty case
+    // so an accidental "Save" doesn't quietly wipe a previously-curated
+    // end-screen.
+    if (editNextUpIds.length === 0) {
+      const hadPrior = Array.isArray(content?.nextUpContentIds) && content.nextUpContentIds.length > 0;
+      if (hadPrior && !confirm('Save with no end-screen picks? Auto-recommendations will be used instead.')) {
+        return;
+      }
+    }
     nextUpSavingFlag = true;
     try {
       const res = await fetch(`/api/creator/content/${contentId}`, {
@@ -540,8 +615,11 @@
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
-      toast.success('End-screen picks saved');
+      toast.success(editNextUpIds.length === 0
+        ? 'Curated picks cleared — auto-recommendations active.'
+        : 'End-screen picks saved');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -560,6 +638,7 @@
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
       toast.success('Chapters saved');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -582,6 +661,7 @@
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
       toast.success('Region availability saved');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -601,6 +681,7 @@
       if (!res.ok) throw new Error(body.error ?? 'Save failed');
       toast.success('Cast & crew saved');
       content = body.content;
+      captureSnapshot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -753,12 +834,20 @@
 
   async function archive() {
     if (!confirm('Archive this content? It will no longer be visible to viewers.')) return;
-    const res = await fetch(`/api/creator/content/${contentId}`, { method: 'DELETE' });
-    if (res.ok) {
-      toast.success('Archived');
-      goto('/creator/content');
-    } else {
-      toast.error('Archive failed');
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Archived');
+        goto('/creator/content');
+        return;
+      }
+      // Surface the server's reason so the creator can actually fix what
+      // they did wrong (e.g. "Cannot archive content with active PPV
+      // entitlements" — generic "Archive failed" makes that invisible).
+      const body = await res.json().catch(() => ({}));
+      toast.error(body.error ?? `Archive failed (HTTP ${res.status})`);
+    } catch (err) {
+      toast.error(`Archive failed: ${err instanceof Error ? err.message : 'network error'}`);
     }
   }
 
@@ -822,47 +911,54 @@
     if (status === 'published') return 'bg-green-600/30 text-green-200';
     if (status === 'approved') return 'bg-blue-600/30 text-blue-200';
     if (status === 'rejected') return 'bg-red-600/30 text-red-200';
-    if (status === 'archived') return 'bg-gray-600/30 text-gray-200';
+    if (status === 'archived') return 'bg-gray-600/30 text-foreground/90';
     return 'bg-yellow-600/30 text-yellow-200';
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 space-y-6 min-h-screen">
-  <a href="/creator/content" class="text-purple-400 hover:text-purple-300 text-sm">← Back to content</a>
+<div class="container mx-auto py-6 px-4 space-y-6 min-h-screen">
+  <a href="/creator/content" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
+    <ArrowLeft class="w-3 h-3" /> Back to content
+  </a>
 
   {#if loading}
-    <div class="text-center text-gray-400 py-12">Loading…</div>
+    <div class="text-center text-muted-foreground py-12">Loading…</div>
   {:else if !content}
     <div class="bg-red-600/20 border border-red-600 text-red-100 rounded-lg p-6 text-center">
       Content not found or you don't have access.
     </div>
   {:else}
-    <!-- Header -->
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="flex items-start gap-4">
+    <!-- Header — content title acts as the page header, with status
+         chips inline and quick actions on the right. -->
+    <header class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex items-start gap-3 min-w-0 flex-1">
         {#if content.thumbnail}
-          <img src={content.thumbnail} alt="" class="w-24 h-14 object-cover rounded" />
+          <img src={content.thumbnail} alt="" class="w-20 h-12 object-cover rounded-md surface-1 shrink-0" />
         {:else}
-          <div class="w-24 h-14 bg-white/10 rounded grid place-items-center text-gray-500 text-xs">no thumb</div>
+          <div class="w-20 h-12 surface-1 rounded-md grid place-items-center text-muted-foreground text-[10px] shrink-0">no thumb</div>
         {/if}
-        <div>
-          <h1 class="text-2xl font-bold text-white">{content.title}</h1>
-          <div class="flex items-center gap-2 mt-1 text-xs">
-            <span class="px-2 py-0.5 rounded-full {statusBadgeClass(content.status)}">{content.status}</span>
-            <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300">{content.visibility}</span>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground truncate">{content.title}</h1>
+          <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            <span class="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 {statusBadgeClass(content.status)}">{content.status}</span>
+            <span class="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 surface-1 text-foreground/80">{content.visibility}</span>
             {#if content.processingStatus && content.processingStatus !== 'not_started' && content.processingStatus !== 'ready'}
-              <span class="px-2 py-0.5 rounded-full bg-orange-600/30 text-orange-200">{content.processingStatus}</span>
+              <span class="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 bg-orange-500/15 text-orange-600 dark:text-orange-300">{content.processingStatus}</span>
             {/if}
           </div>
         </div>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         {#if content.isActive}
-          <a href={`/watch/${content.id}`} target="_blank" rel="noopener" class="bg-white/10 hover:bg-white/15 text-white px-3 py-2 rounded text-sm">View live ↗</a>
+          <a href={`/watch/${content.id}`} target="_blank" rel="noopener" class="text-xs surface-1 hover:surface-2 text-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 transition-colors">
+            View live <ExternalLink class="w-3 h-3" />
+          </a>
         {/if}
-        <button type="button" onclick={archive} class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm">Archive</button>
+        <button type="button" onclick={archive} class="text-xs bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-300 rounded-full px-3 py-1.5 inline-flex items-center gap-1 transition-colors">
+          <ArchiveIcon class="w-3 h-3" /> Archive
+        </button>
       </div>
-    </div>
+    </header>
 
     {#if content.rejectionReason}
       <div class="bg-red-600/20 border border-red-600 rounded-lg p-4 text-red-100 text-sm">
@@ -878,34 +974,34 @@
     {/if}
 
     <!-- Tabs -->
-    <div class="flex flex-wrap gap-2 border-b border-white/10">
+    <div class="flex flex-wrap gap-2 border-b border-border/40">
       {#each (['details', 'images', 'video', 'subtitles', ...(isShow ? [] : ['chapters' as Tab]), ...(isShow ? ['episodes' as Tab] : []), 'analytics', 'thread'] as Tab[]) as tab (tab)}
         <button
           type="button"
           onclick={() => activeTab = tab}
-          class="px-4 py-2 text-sm capitalize transition-colors {activeTab === tab ? 'text-purple-300 border-b-2 border-purple-400 -mb-px' : 'text-gray-400 hover:text-white'}"
+          class="px-4 py-2 text-sm capitalize transition-colors {activeTab === tab ? 'text-purple-300 border-b-2 border-purple-400 -mb-px' : 'text-muted-foreground hover:text-foreground'}"
         >{tab === 'thread' ? 'Notes from admin' : tab}</button>
       {/each}
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main tab content -->
-      <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-6">
+      <div class="lg:col-span-2 surface-1 border border-border/40 rounded-xl p-6">
         {#if activeTab === 'details'}
           <div class="space-y-4">
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label for="d-title" class="block text-sm text-gray-300">Title *</label>
+                <label for="d-title" class="block text-sm text-foreground/80">Title *</label>
                 <button type="button" onclick={suggestTitle} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
                   ✨ {aiSuggesting && aiKind === 'title' ? 'Thinking…' : 'Suggest titles'}
                 </button>
               </div>
-              <input id="d-title" bind:value={editTitle} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+              <input id="d-title" bind:value={editTitle} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
               {#if aiKind === 'title' && aiSuggestions.length > 0}
                 <ul class="mt-2 space-y-1">
                   {#each aiSuggestions as s, i (i)}
                     <li>
-                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:bg-white/5 surface-1 rounded px-3 py-2">
+                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:surface-1 surface-1 rounded px-3 py-2">
                         {s}
                       </button>
                     </li>
@@ -915,17 +1011,17 @@
             </div>
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label for="d-desc" class="block text-sm text-gray-300">Description</label>
+                <label for="d-desc" class="block text-sm text-foreground/80">Description</label>
                 <button type="button" onclick={suggestDescription} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
                   ✨ {aiSuggesting && aiKind === 'description' ? 'Thinking…' : 'Suggest descriptions'}
                 </button>
               </div>
-              <textarea id="d-desc" bind:value={editDescription} rows="4" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white"></textarea>
+              <textarea id="d-desc" bind:value={editDescription} rows="4" class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground"></textarea>
               {#if aiKind === 'description' && aiSuggestions.length > 0}
                 <ul class="mt-2 space-y-1">
                   {#each aiSuggestions as s, i (i)}
                     <li>
-                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:bg-white/5 surface-1 rounded px-3 py-2 whitespace-pre-line">
+                      <button type="button" onclick={() => applySuggestion(s)} class="w-full text-left text-sm text-purple-200 hover:surface-1 surface-1 rounded px-3 py-2 whitespace-pre-line">
                         {s}
                       </button>
                     </li>
@@ -935,8 +1031,8 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="d-type" class="block text-sm text-gray-300 mb-1">Content type</label>
-                <select id="d-type" bind:value={editContentType} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white">
+                <label for="d-type" class="block text-sm text-foreground/80 mb-1">Content type</label>
+                <select id="d-type" bind:value={editContentType} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground">
                   <option value="movie">Movie</option>
                   <option value="show">Show</option>
                   <option value="documentary">Documentary</option>
@@ -946,39 +1042,39 @@
                 {/if}
               </div>
               <div>
-                <label for="d-age" class="block text-sm text-gray-300 mb-1">Age rating</label>
-                <input id="d-age" bind:value={editAgeRating} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+                <label for="d-age" class="block text-sm text-foreground/80 mb-1">Age rating</label>
+                <input id="d-age" bind:value={editAgeRating} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
               </div>
             </div>
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label for="d-genres" class="block text-sm text-gray-300">Genres (comma-separated)</label>
+                <label for="d-genres" class="block text-sm text-foreground/80">Genres (comma-separated)</label>
                 <button type="button" onclick={autoTag} disabled={aiSuggesting} class="text-xs text-purple-300 hover:text-purple-200 disabled:opacity-40 inline-flex items-center gap-1">
                   ✨ Auto-tag from description
                 </button>
               </div>
-              <input id="d-genres" bind:value={editGenres} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="Drama, Faith" />
+              <input id="d-genres" bind:value={editGenres} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" placeholder="Drama, Faith" />
             </div>
             <div>
-              <label for="d-topics" class="block text-sm text-gray-300 mb-1">Topics / themes</label>
-              <input id="d-topics" bind:value={editTopics} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="Forgiveness, Hope" />
+              <label for="d-topics" class="block text-sm text-foreground/80 mb-1">Topics / themes</label>
+              <input id="d-topics" bind:value={editTopics} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" placeholder="Forgiveness, Hope" />
             </div>
             <div>
-              <label for="d-keywords" class="block text-sm text-gray-300 mb-1">Keywords</label>
-              <input id="d-keywords" bind:value={editKeywords} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" />
+              <label for="d-keywords" class="block text-sm text-foreground/80 mb-1">Keywords</label>
+              <input id="d-keywords" bind:value={editKeywords} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" />
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label for="d-bible" class="block text-sm text-gray-300 mb-1">Bible reference</label>
-                <input id="d-bible" bind:value={editBibleReference} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="John 3:16" />
+                <label for="d-bible" class="block text-sm text-foreground/80 mb-1">Bible reference</label>
+                <input id="d-bible" bind:value={editBibleReference} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" placeholder="John 3:16" />
               </div>
               <div>
-                <label for="d-lang" class="block text-sm text-gray-300 mb-1">Language</label>
-                <input id="d-lang" bind:value={editLanguage} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="English" />
+                <label for="d-lang" class="block text-sm text-foreground/80 mb-1">Language</label>
+                <input id="d-lang" bind:value={editLanguage} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" placeholder="English" />
               </div>
               <div>
-                <label for="d-dur" class="block text-sm text-gray-300 mb-1">Duration</label>
-                <input id="d-dur" bind:value={editDuration} class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white" placeholder="1h 30m" />
+                <label for="d-dur" class="block text-sm text-foreground/80 mb-1">Duration</label>
+                <input id="d-dur" bind:value={editDuration} class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground" placeholder="1h 30m" />
               </div>
             </div>
             <button type="button" onclick={saveDetails} disabled={saving} class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded">
@@ -986,20 +1082,20 @@
             </button>
 
             <!-- Cast & crew -->
-            <div class="border-t border-white/10 pt-4 space-y-4">
+            <div class="border-t border-border/40 pt-4 space-y-4">
               <div class="flex items-center justify-between">
-                <div class="text-sm font-medium text-white">Cast & crew</div>
+                <div class="text-sm font-medium text-foreground">Cast & crew</div>
                 <button type="button" onclick={saveCastCrew} disabled={saving} class="text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-3 py-1.5 rounded">
                   {saving ? 'Saving…' : 'Save cast & crew'}
                 </button>
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs uppercase tracking-wide text-gray-400">Cast</span>
+                  <span class="text-xs uppercase tracking-wide text-muted-foreground">Cast</span>
                   <button type="button" onclick={addCastMember} class="text-xs text-purple-300 hover:text-purple-200">+ Add</button>
                 </div>
                 {#if editCast.length === 0}
-                  <p class="text-xs text-gray-500">No cast members yet.</p>
+                  <p class="text-xs text-muted-foreground">No cast members yet.</p>
                 {:else}
                   <ul class="space-y-2">
                     {#each editCast as c, idx (idx)}
@@ -1008,19 +1104,19 @@
                           type="text"
                           bind:value={c.name}
                           placeholder="Name"
-                          class="flex-1 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          class="flex-1 px-2 py-1.5 surface-2 border border-border rounded text-foreground text-sm"
                         />
                         <input
                           type="text"
                           bind:value={c.role}
                           placeholder="Role"
-                          class="w-32 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          class="w-32 px-2 py-1.5 surface-2 border border-border rounded text-foreground text-sm"
                         />
                         <input
                           type="text"
                           bind:value={c.characterName}
                           placeholder="Character (optional)"
-                          class="w-44 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          class="w-44 px-2 py-1.5 surface-2 border border-border rounded text-foreground text-sm"
                         />
                         <button type="button" onclick={() => editCast = editCast.filter((_, i) => i !== idx)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
                       </li>
@@ -1030,9 +1126,9 @@
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs uppercase tracking-wide text-gray-400">Per-region PPV pricing</span>
+                  <span class="text-xs uppercase tracking-wide text-muted-foreground">Per-region PPV pricing</span>
                 </div>
-                <p class="text-xs text-gray-500 mb-2">
+                <p class="text-xs text-muted-foreground mb-2">
                   Override the default PPV price by country. Region <code>*</code> = default fallback.
                   Viewers see the price for their detected country at checkout.
                 </p>
@@ -1041,18 +1137,18 @@
                     <ul class="space-y-1">
                       {#each pricingRows as p (p.id)}
                         <li class="flex items-center gap-2 text-xs">
-                          <code class="bg-white/10 rounded px-1.5 py-0.5">{p.regionCode}</code>
-                          <span class="text-white">{(p.priceCents / 100).toFixed(2)}</span>
-                          <span class="text-gray-400">{p.currency}</span>
+                          <code class="surface-2 rounded px-1.5 py-0.5">{p.regionCode}</code>
+                          <span class="text-foreground">{(p.priceCents / 100).toFixed(2)}</span>
+                          <span class="text-muted-foreground">{p.currency}</span>
                           <button type="button" onclick={() => removePricingRow(p.regionCode)} class="ml-auto text-red-300 hover:text-red-100">Remove</button>
                         </li>
                       {/each}
                     </ul>
                   {/if}
                   <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <input type="text" bind:value={newRegion} placeholder="* or US" maxlength="2" class="px-2 py-1.5 text-xs surface-2 rounded text-white" />
-                    <input type="number" step="0.01" min="0" bind:value={newPriceDollars} placeholder="9.99" class="px-2 py-1.5 text-xs surface-2 rounded text-white" />
-                    <input type="text" bind:value={newCurrency} placeholder="USD" maxlength="3" class="px-2 py-1.5 text-xs surface-2 rounded text-white uppercase" />
+                    <input type="text" bind:value={newRegion} placeholder="* or US" maxlength="2" class="px-2 py-1.5 text-xs surface-2 rounded text-foreground" />
+                    <input type="number" step="0.01" min="0" bind:value={newPriceDollars} placeholder="9.99" class="px-2 py-1.5 text-xs surface-2 rounded text-foreground" />
+                    <input type="text" bind:value={newCurrency} placeholder="USD" maxlength="3" class="px-2 py-1.5 text-xs surface-2 rounded text-foreground uppercase" />
                     <button type="button" onclick={savePricingRow} class="px-2 py-1.5 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded">Add / update</button>
                   </div>
                 </div>
@@ -1060,11 +1156,11 @@
 
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs uppercase tracking-wide text-gray-400">Crew</span>
+                  <span class="text-xs uppercase tracking-wide text-muted-foreground">Crew</span>
                   <button type="button" onclick={addCrewMember} class="text-xs text-purple-300 hover:text-purple-200">+ Add</button>
                 </div>
                 {#if editCrew.length === 0}
-                  <p class="text-xs text-gray-500">No crew members yet.</p>
+                  <p class="text-xs text-muted-foreground">No crew members yet.</p>
                 {:else}
                   <ul class="space-y-2">
                     {#each editCrew as c, idx (idx)}
@@ -1073,13 +1169,13 @@
                           type="text"
                           bind:value={c.name}
                           placeholder="Name"
-                          class="flex-1 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          class="flex-1 px-2 py-1.5 surface-2 border border-border rounded text-foreground text-sm"
                         />
                         <input
                           type="text"
                           bind:value={c.role}
                           placeholder="Role (e.g. Director)"
-                          class="w-44 px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          class="w-44 px-2 py-1.5 surface-2 border border-border rounded text-foreground text-sm"
                         />
                         <button type="button" onclick={() => editCrew = editCrew.filter((_, i) => i !== idx)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
                       </li>
@@ -1092,16 +1188,16 @@
         {:else if activeTab === 'images'}
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {#each ASSET_SLOTS as slot (slot.field)}
-              <div class="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
+              <div class="surface-1 border border-border/40 rounded-lg p-3 space-y-2">
                 <div>
-                  <div class="text-white font-medium text-sm">{slot.title}</div>
-                  <div class="text-xs text-gray-400">{slot.ratio}</div>
+                  <div class="text-foreground font-medium text-sm">{slot.title}</div>
+                  <div class="text-xs text-muted-foreground">{slot.ratio}</div>
                 </div>
                 <div class={`${slot.aspect} bg-black/30 rounded overflow-hidden`}>
                   {#if content[slot.field]}
                     <img src={content[slot.field] as string} alt={slot.title} class="w-full h-full object-cover" />
                   {:else}
-                    <div class="w-full h-full grid place-items-center text-gray-500 text-xs">Not uploaded</div>
+                    <div class="w-full h-full grid place-items-center text-muted-foreground text-xs">Not uploaded</div>
                   {/if}
                 </div>
                 <label class="block">
@@ -1123,8 +1219,8 @@
           <div class="mt-6 surface-1 rounded-lg p-4 space-y-4">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-sm font-medium text-white">A/B thumbnail testing</div>
-                <div class="text-xs text-gray-400">Compare up to 5 thumbnails. Viewers see one deterministic variant; CTR shows which performs best.</div>
+                <div class="text-sm font-medium text-foreground">A/B thumbnail testing</div>
+                <div class="text-xs text-muted-foreground">Compare up to 5 thumbnails. Viewers see one deterministic variant; CTR shows which performs best.</div>
               </div>
               <label class="block">
                 <input
@@ -1140,7 +1236,7 @@
               </label>
             </div>
             {#if thumbnailVariants.length === 0}
-              <div class="text-center text-gray-400 text-sm py-4">No variants yet.</div>
+              <div class="text-center text-muted-foreground text-sm py-4">No variants yet.</div>
             {:else}
               <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {#each thumbnailVariants as v (v.id)}
@@ -1148,13 +1244,13 @@
                     <div class="aspect-video rounded overflow-hidden bg-black/30">
                       <img src={v.url} alt={v.label ?? 'variant'} class="w-full h-full object-cover" />
                     </div>
-                    <div class="text-xs text-gray-400">{v.label ?? '—'}</div>
+                    <div class="text-xs text-muted-foreground">{v.label ?? '—'}</div>
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-gray-300">
-                        <span class="text-white font-medium">{v.ctr.toFixed(1)}%</span>
-                        <span class="text-gray-500"> CTR</span>
+                      <span class="text-foreground/80">
+                        <span class="text-foreground font-medium">{v.ctr.toFixed(1)}%</span>
+                        <span class="text-muted-foreground"> CTR</span>
                       </span>
-                      <span class="text-gray-500">{v.impressions.toLocaleString()} impr / {v.clicks.toLocaleString()} clicks</span>
+                      <span class="text-muted-foreground">{v.impressions.toLocaleString()} impr / {v.clicks.toLocaleString()} clicks</span>
                     </div>
                     <div class="flex gap-2">
                       <button
@@ -1177,7 +1273,7 @@
           <div class="space-y-4">
             {#if content.videoUrl}
               <div>
-                <div class="text-sm text-gray-400 mb-2">Current encoded video</div>
+                <div class="text-sm text-muted-foreground mb-2">Current encoded video</div>
                 <!-- Full VideoPlayer so the creator's preview matches what
                      viewers see — HLS playback (raw <video> tag wouldn't
                      work in Chrome for HLS sources), subtitle tracks,
@@ -1199,16 +1295,16 @@
                    one-shot status fetch when the stream isn't connected. -->
               <div class="surface-1 rounded-lg p-4 space-y-3">
                 <div class="flex items-center justify-between">
-                  <div class="text-sm font-medium text-white">Encoder progress</div>
+                  <div class="text-sm font-medium text-foreground">Encoder progress</div>
                   <span class="text-xs uppercase tracking-wide text-yellow-300">{liveStatus ?? content.processingStatus}</span>
                 </div>
-                <div class="h-2 bg-white/10 rounded overflow-hidden">
+                <div class="h-2 surface-2 rounded overflow-hidden">
                   <div
                     class="h-full bg-purple-500 transition-all duration-500"
                     style="width: {Math.max(0, Math.min(100, liveProgress ?? 0))}%"
                   ></div>
                 </div>
-                <div class="flex items-center justify-between text-xs text-gray-400">
+                <div class="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{liveStage ?? content.processingStage ?? 'waiting'}</span>
                   <span>{Math.max(0, Math.min(100, liveProgress ?? 0))}%</span>
                 </div>
@@ -1224,25 +1320,25 @@
                  frames. Status: idle / in_progress / complete / failed. -->
             {#if content.contentScanStatus && content.contentScanStatus !== 'idle'}
               <div class="surface-1 rounded-lg p-3 flex items-center gap-3 text-xs">
-                <span class="text-gray-400">Content scan:</span>
+                <span class="text-muted-foreground">Content scan:</span>
                 {#if content.contentScanStatus === 'in_progress'}
                   <span class="text-blue-300">running…</span>
-                  <span class="text-gray-500 ml-auto">Doctrinal + family-safety AI review.</span>
+                  <span class="text-muted-foreground ml-auto">Doctrinal + family-safety AI review.</span>
                 {:else if content.contentScanStatus === 'complete'}
                   <span class="text-green-300">complete</span>
-                  <span class="text-gray-500 ml-auto">Admin will see the AI report on review.</span>
+                  <span class="text-muted-foreground ml-auto">Admin will see the AI report on review.</span>
                 {:else if content.contentScanStatus === 'failed'}
                   <span class="text-red-300">failed</span>
-                  <span class="text-gray-500 ml-auto">Admin can re-trigger from the review page.</span>
+                  <span class="text-muted-foreground ml-auto">Admin can re-trigger from the review page.</span>
                 {:else if content.contentScanStatus === 'skipped'}
-                  <span class="text-gray-400">skipped</span>
+                  <span class="text-muted-foreground">skipped</span>
                 {:else}
                   <span class="text-yellow-300">{content.contentScanStatus}</span>
                 {/if}
               </div>
             {/if}
             <div>
-              <div class="text-sm text-gray-400 mb-2">Trailer {content.trailerUrl ? '(current)' : '(none)'}</div>
+              <div class="text-sm text-muted-foreground mb-2">Trailer {content.trailerUrl ? '(current)' : '(none)'}</div>
               {#if content.trailerUrl}
                 <!-- svelte-ignore a11y_media_has_caption -->
                 <video src={content.trailerUrl} controls class="w-full rounded-lg bg-black mb-2"></video>
@@ -1259,8 +1355,8 @@
                 </span>
               </label>
             </div>
-            <div class="border-t border-white/10 pt-4">
-              <p class="text-xs text-gray-400 mb-2">
+            <div class="border-t border-border/40 pt-4">
+              <p class="text-xs text-muted-foreground mb-2">
                 Replacing the main video re-runs the entire encoder pipeline. Use the upload wizard to swap the main file:
               </p>
               <a href={`/creator/upload?edit=${content.id}`} class="text-purple-300 hover:text-purple-200 text-sm underline">
@@ -1271,19 +1367,19 @@
         {:else if activeTab === 'subtitles'}
           <div class="space-y-4">
             {#if subtitles.length === 0}
-              <p class="text-sm text-gray-400">No subtitle tracks yet.</p>
+              <p class="text-sm text-muted-foreground">No subtitle tracks yet.</p>
             {:else}
               <ul class="space-y-2">
                 {#each subtitles as track (track.id)}
-                  <li class="flex items-center justify-between bg-white/5 border border-white/10 rounded p-3">
+                  <li class="flex items-center justify-between surface-1 border border-border/40 rounded p-3">
                     <div>
-                      <span class="text-white text-sm">{track.label}</span>
-                      <span class="text-xs text-gray-400 ml-2">({track.language})</span>
+                      <span class="text-foreground text-sm">{track.label}</span>
+                      <span class="text-xs text-muted-foreground ml-2">({track.language})</span>
                       <span class="text-xs px-2 py-0.5 rounded bg-purple-700/30 text-purple-200 ml-2">{track.kind}</span>
                       {#if track.isDefault}<span class="text-xs text-yellow-300 ml-2">★ default</span>{/if}
                     </div>
                     <div class="flex items-center gap-2">
-                      <a href={track.fileUrl} target="_blank" rel="noopener" class="text-xs text-gray-300 hover:text-white">view VTT</a>
+                      <a href={track.fileUrl} target="_blank" rel="noopener" class="text-xs text-foreground/80 hover:text-foreground">view VTT</a>
                       <button type="button" onclick={() => removeSubtitle(track.id)} class="text-red-300 hover:text-red-100 text-xs">Remove</button>
                     </div>
                   </li>
@@ -1291,12 +1387,12 @@
               </ul>
             {/if}
 
-            <div class="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
-              <div class="text-sm font-medium text-white">Add a track</div>
+            <div class="surface-1 border border-border/40 rounded-lg p-3 space-y-2">
+              <div class="text-sm font-medium text-foreground">Add a track</div>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input bind:value={newSubLang} placeholder="lang (e.g. en)" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm" />
-                <input bind:value={newSubLabel} placeholder="Label (e.g. English)" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm" />
-                <select bind:value={newSubKind} class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm">
+                <input bind:value={newSubLang} placeholder="lang (e.g. en)" class="px-3 py-2 surface-2 border border-border rounded text-foreground text-sm" />
+                <input bind:value={newSubLabel} placeholder="Label (e.g. English)" class="px-3 py-2 surface-2 border border-border rounded text-foreground text-sm" />
+                <select bind:value={newSubKind} class="px-3 py-2 surface-2 border border-border rounded text-foreground text-sm">
                   <option value="subtitles">Subtitles</option>
                   <option value="captions">Captions (with sounds)</option>
                   <option value="descriptions">Audio descriptions</option>
@@ -1308,12 +1404,12 @@
                   {subUploading ? 'Uploading…' : 'Upload VTT file'}
                 </span>
               </label>
-              <p class="text-xs text-gray-400">VTT format only. The track will appear in the player's CC menu.</p>
+              <p class="text-xs text-muted-foreground">VTT format only. The track will appear in the player's CC menu.</p>
             </div>
           </div>
         {:else if activeTab === 'episodes' && isShow}
           <div class="space-y-3">
-            <p class="text-sm text-gray-400">
+            <p class="text-sm text-muted-foreground">
               Manage seasons + episodes for this show. Each episode has its own video file and metadata.
             </p>
             <a href={`/creator/content/${content.id}/episodes`} class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">
@@ -1323,51 +1419,51 @@
         {:else if activeTab === 'analytics'}
           {#if analytics}
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div class="bg-white/5 border border-white/10 rounded p-3 text-center">
+              <div class="surface-1 border border-border/40 rounded p-3 text-center">
                 <div class="text-2xl font-bold text-purple-400">{analytics.views.toLocaleString()}</div>
-                <div class="text-xs text-gray-400">Views</div>
+                <div class="text-xs text-muted-foreground">Views</div>
               </div>
-              <div class="bg-white/5 border border-white/10 rounded p-3 text-center">
+              <div class="surface-1 border border-border/40 rounded p-3 text-center">
                 <div class="text-2xl font-bold text-blue-400">{analytics.watchTimeMinutes}</div>
-                <div class="text-xs text-gray-400">Watch time (min)</div>
+                <div class="text-xs text-muted-foreground">Watch time (min)</div>
               </div>
-              <div class="bg-white/5 border border-white/10 rounded p-3 text-center">
+              <div class="surface-1 border border-border/40 rounded p-3 text-center">
                 <div class="text-2xl font-bold text-green-400">{analytics.completionRate}%</div>
-                <div class="text-xs text-gray-400">Completion</div>
+                <div class="text-xs text-muted-foreground">Completion</div>
               </div>
-              <div class="bg-white/5 border border-white/10 rounded p-3 text-center">
+              <div class="surface-1 border border-border/40 rounded p-3 text-center">
                 <div class="text-2xl font-bold text-pink-400">{analytics.totalShares}</div>
-                <div class="text-xs text-gray-400">Shares</div>
+                <div class="text-xs text-muted-foreground">Shares</div>
               </div>
             </div>
             {#if analytics.viewsByDevice.length > 0}
               <div class="mt-4">
-                <div class="text-sm font-medium text-white mb-2">By device</div>
+                <div class="text-sm font-medium text-foreground mb-2">By device</div>
                 <div class="flex flex-wrap gap-2 text-xs">
                   {#each analytics.viewsByDevice as d}
-                    <span class="px-2 py-1 rounded bg-white/10 text-gray-200">{d.device}: {d.count}</span>
+                    <span class="px-2 py-1 rounded surface-2 text-foreground/90">{d.device}: {d.count}</span>
                   {/each}
                 </div>
               </div>
             {/if}
             {#if analytics.topCountries.length > 0}
               <div class="mt-4">
-                <div class="text-sm font-medium text-white mb-2">Top countries</div>
+                <div class="text-sm font-medium text-foreground mb-2">Top countries</div>
                 <div class="flex flex-wrap gap-2 text-xs">
                   {#each analytics.topCountries as c}
-                    <span class="px-2 py-1 rounded bg-white/10 text-gray-200">{c.country}: {c.count}</span>
+                    <span class="px-2 py-1 rounded surface-2 text-foreground/90">{c.country}: {c.count}</span>
                   {/each}
                 </div>
               </div>
             {/if}
           {:else}
-            <p class="text-sm text-gray-400">No analytics yet.</p>
+            <p class="text-sm text-muted-foreground">No analytics yet.</p>
           {/if}
         {:else if activeTab === 'chapters'}
           <div class="space-y-4">
             <div class="flex items-start justify-between gap-3 flex-wrap">
-              <p class="text-sm text-gray-400 flex-1 min-w-60">
-                Add time-coded chapter markers. Viewers see tick marks above the seek bar and can jump with the <kbd class="px-1 bg-white/10 rounded">&gt;</kbd> / <kbd class="px-1 bg-white/10 rounded">&lt;</kbd> keys.
+              <p class="text-sm text-muted-foreground flex-1 min-w-60">
+                Add time-coded chapter markers. Viewers see tick marks above the seek bar and can jump with the <kbd class="px-1 surface-2 rounded">&gt;</kbd> / <kbd class="px-1 surface-2 rounded">&lt;</kbd> keys.
               </p>
               <button
                 type="button"
@@ -1383,38 +1479,38 @@
             {#if chapterAi.mode === 'review'}
               <div class="surface-1 rounded-lg p-4 border border-purple-500/40">
                 <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-sm font-semibold text-white">AI suggested {chapterAi.suggestions.length} chapters</h4>
-                  <button type="button" onclick={dismissAiChapters} class="text-xs text-gray-400 hover:text-white">Dismiss</button>
+                  <h4 class="text-sm font-semibold text-foreground">AI suggested {chapterAi.suggestions.length} chapters</h4>
+                  <button type="button" onclick={dismissAiChapters} class="text-xs text-muted-foreground hover:text-foreground">Dismiss</button>
                 </div>
                 <ul class="space-y-1 max-h-64 overflow-y-auto mb-3">
                   {#each chapterAi.suggestions as s (s.start)}
                     <li class="flex items-center gap-3 text-sm">
                       <span class="text-xs font-mono text-purple-300 w-16">{formatTime(s.start)}</span>
-                      <span class="flex-1 text-white">{s.title}</span>
+                      <span class="flex-1 text-foreground">{s.title}</span>
                     </li>
                   {/each}
                 </ul>
                 <div class="flex flex-wrap gap-2 justify-end">
-                  <button type="button" onclick={acceptAiChaptersMerge} class="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white">Merge with existing</button>
+                  <button type="button" onclick={acceptAiChaptersMerge} class="text-xs px-3 py-1.5 rounded surface-2 hover:surface-3 text-foreground">Merge with existing</button>
                   <button type="button" onclick={acceptAiChaptersReplace} class="text-xs px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white">Replace existing</button>
                 </div>
               </div>
             {/if}
 
             <div class="surface-1 rounded-lg p-4">
-              <div class="text-sm font-medium text-white mb-3">Add chapter</div>
+              <div class="text-sm font-medium text-foreground mb-3">Add chapter</div>
               <div class="flex flex-wrap gap-2">
                 <input
                   type="text"
                   bind:value={newChapterStart}
                   placeholder="0:00 or 90"
-                  class="w-24 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+                  class="w-24 px-3 py-2 surface-2 border border-border rounded text-foreground text-sm placeholder-gray-500"
                 />
                 <input
                   type="text"
                   bind:value={newChapterTitle}
                   placeholder="Chapter title"
-                  class="flex-1 min-w-37.5 px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+                  class="flex-1 min-w-37.5 px-3 py-2 surface-2 border border-border rounded text-foreground text-sm placeholder-gray-500"
                 />
                 <button
                   type="button"
@@ -1424,13 +1520,13 @@
               </div>
             </div>
             {#if editChapters.length === 0}
-              <div class="text-center text-gray-400 text-sm py-6">No chapters yet.</div>
+              <div class="text-center text-muted-foreground text-sm py-6">No chapters yet.</div>
             {:else}
               <ul class="space-y-2">
                 {#each editChapters as c, idx (c.start)}
                   <li class="flex items-center gap-3 surface-1 rounded-lg px-3 py-2">
                     <span class="text-xs font-mono text-purple-300 w-16">{formatTime(c.start)}</span>
-                    <span class="flex-1 text-sm text-white">{c.title}</span>
+                    <span class="flex-1 text-sm text-foreground">{c.title}</span>
                     <button
                       type="button"
                       onclick={() => removeChapter(idx)}
@@ -1455,16 +1551,16 @@
       </div>
 
       <!-- Sidebar -->
-      <div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-5 lg:sticky lg:top-4 self-start">
+      <div class="surface-1 border border-border/40 rounded-xl p-6 space-y-5 lg:sticky lg:top-4 self-start">
         <div>
-          <div class="text-sm font-medium text-white mb-2">Visibility</div>
+          <div class="text-sm font-medium text-foreground mb-2">Visibility</div>
           <div class="space-y-2">
             {#each (['public', 'unlisted', 'private'] as const) as v (v)}
               <label class="flex items-start gap-2 text-sm cursor-pointer">
                 <input type="radio" bind:group={editVisibility} value={v} class="mt-0.5 accent-purple-600" />
                 <div>
-                  <div class="text-white capitalize">{v}</div>
-                  <div class="text-xs text-gray-400">
+                  <div class="text-foreground capitalize">{v}</div>
+                  <div class="text-xs text-muted-foreground">
                     {v === 'public' ? 'Listed in browse and search.' :
                      v === 'unlisted' ? 'Only accessible via direct link.' :
                      'Only you can see.'}
@@ -1476,14 +1572,14 @@
         </div>
 
         <div>
-          <label for="schedule" class="block text-sm font-medium text-white mb-1">Schedule publish</label>
+          <label for="schedule" class="block text-sm font-medium text-foreground mb-1">Schedule publish</label>
           <input
             id="schedule"
             type="datetime-local"
             bind:value={editScheduledPublishAt}
-            class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm"
+            class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground text-sm"
           />
-          <p class="text-xs text-gray-400 mt-1">Only fires once admin has approved.</p>
+          <p class="text-xs text-muted-foreground mt-1">Only fires once admin has approved.</p>
         </div>
 
         <button type="button" onclick={saveVisibility} disabled={saving} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
@@ -1491,14 +1587,14 @@
         </button>
 
         <!-- Region availability -->
-        <div class="border-t border-white/10 pt-4 space-y-3">
-          <div class="text-sm font-medium text-white">Region availability</div>
+        <div class="border-t border-border/40 pt-4 space-y-3">
+          <div class="text-sm font-medium text-foreground">Region availability</div>
           <div class="space-y-2">
             {#each (['all', 'allow', 'block'] as const) as m (m)}
               <label class="flex items-start gap-2 text-sm cursor-pointer">
                 <input type="radio" bind:group={editGeoMode} value={m} class="mt-0.5 accent-purple-600" />
                 <div>
-                  <div class="text-white">
+                  <div class="text-foreground">
                     {m === 'all' ? 'All countries' : m === 'allow' ? 'Only these countries' : 'All except these'}
                   </div>
                 </div>
@@ -1506,17 +1602,45 @@
             {/each}
           </div>
           {#if editGeoMode !== 'all'}
+            <!-- Chip-style multi-select: each picked country becomes a removable
+                 chip and the dropdown only shows countries not yet selected.
+                 Avoids the Ctrl/Cmd-click discoverability landmine of <select multiple>. -->
+            {#if editGeoRegions.length > 0}
+              <div class="flex flex-wrap gap-1.5">
+                {#each editGeoRegions as code (code)}
+                  {@const country = COUNTRIES.find((c) => c.code === code)}
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded surface-2 text-xs text-foreground">
+                    {country ? `${country.name} (${code})` : code}
+                    <button
+                      type="button"
+                      onclick={() => (editGeoRegions = editGeoRegions.filter((c) => c !== code))}
+                      class="text-muted-foreground hover:text-foreground"
+                      aria-label={`Remove ${country?.name ?? code}`}
+                    >×</button>
+                  </span>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-xs text-muted-foreground italic">
+                {editGeoMode === 'allow' ? 'No countries selected — content will be unavailable everywhere.' : 'No countries blocked — content will be available everywhere.'}
+              </p>
+            {/if}
             <select
-              multiple
-              bind:value={editGeoRegions}
-              size="6"
-              class="w-full px-2 py-2 bg-white/10 border border-white/20 rounded text-white text-sm"
+              value=""
+              onchange={(e) => {
+                const code = (e.currentTarget as HTMLSelectElement).value;
+                if (code && !editGeoRegions.includes(code)) {
+                  editGeoRegions = [...editGeoRegions, code];
+                }
+                (e.currentTarget as HTMLSelectElement).value = '';
+              }}
+              class="w-full px-2 py-2 surface-2 border border-border rounded text-foreground text-sm"
             >
-              {#each COUNTRIES as c (c.code)}
+              <option value="" disabled>Add a country…</option>
+              {#each COUNTRIES.filter((c) => !editGeoRegions.includes(c.code)) as c (c.code)}
                 <option value={c.code}>{c.name} ({c.code})</option>
               {/each}
             </select>
-            <p class="text-xs text-gray-400">Hold Ctrl/Cmd to multi-select.</p>
           {/if}
           <button type="button" onclick={saveRegion} disabled={saving} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
             {saving ? 'Saving…' : 'Save region'}
@@ -1524,22 +1648,22 @@
         </div>
 
         <!-- End-screen next-up picks -->
-        <div class="border-t border-white/10 pt-4 space-y-3">
+        <div class="border-t border-border/40 pt-4 space-y-3">
           <div>
-            <div class="text-sm font-medium text-white">End-screen next-up</div>
-            <p class="text-xs text-gray-400 mt-0.5">Pick up to 3 videos to feature in the end-screen overlay. Leave empty for auto-recommendations.</p>
+            <div class="text-sm font-medium text-foreground">End-screen next-up</div>
+            <p class="text-xs text-muted-foreground mt-0.5">Pick up to 3 videos to feature in the end-screen overlay. Leave empty for auto-recommendations.</p>
           </div>
 
           {#if editNextUpIds.length > 0}
             <ul class="space-y-1.5">
               {#each editNextUpIds as id, idx (id)}
                 <li class="flex items-center gap-2 surface-1 rounded px-2 py-1.5">
-                  <span class="text-[10px] text-gray-500 w-4">{idx + 1}</span>
-                  <span class="flex-1 text-sm text-white truncate" title={editNextUpTitles[id] ?? id}>
+                  <span class="text-[10px] text-muted-foreground w-4">{idx + 1}</span>
+                  <span class="flex-1 text-sm text-foreground truncate" title={editNextUpTitles[id] ?? id}>
                     {editNextUpTitles[id] ?? '(loading…)'}
                   </span>
-                  <button type="button" onclick={() => moveNextUp(id, -1)} disabled={idx === 0} class="text-xs text-gray-400 hover:text-white disabled:opacity-30" aria-label="Move up">↑</button>
-                  <button type="button" onclick={() => moveNextUp(id, 1)} disabled={idx === editNextUpIds.length - 1} class="text-xs text-gray-400 hover:text-white disabled:opacity-30" aria-label="Move down">↓</button>
+                  <button type="button" onclick={() => moveNextUp(id, -1)} disabled={idx === 0} class="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30" aria-label="Move up">↑</button>
+                  <button type="button" onclick={() => moveNextUp(id, 1)} disabled={idx === editNextUpIds.length - 1} class="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30" aria-label="Move down">↓</button>
                   <button type="button" onclick={() => removeNextUp(id)} class="text-xs text-red-300 hover:text-red-100">Remove</button>
                 </li>
               {/each}
@@ -1553,16 +1677,16 @@
                 bind:value={nextUpQuery}
                 oninput={onNextUpQueryChange}
                 placeholder="Search your videos…"
-                class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-gray-500"
+                class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground text-sm placeholder-gray-500"
               />
               {#if nextUpSearchResults.length > 0}
-                <ul class="absolute z-10 mt-1 w-full surface-2 border border-white/10 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                <ul class="absolute z-10 mt-1 w-full surface-2 border border-border/40 rounded-lg shadow-lg max-h-56 overflow-y-auto">
                   {#each nextUpSearchResults as r (r.id)}
                     <li>
                       <button
                         type="button"
                         onclick={() => addNextUp(r)}
-                        class="w-full text-left px-3 py-2 hover:bg-white/10 text-sm text-white flex items-center gap-2"
+                        class="w-full text-left px-3 py-2 hover:surface-2 text-sm text-foreground flex items-center gap-2"
                       >
                         {#if r.thumbnail}
                           <img src={r.thumbnail} alt="" class="w-10 h-6 object-cover rounded" />
@@ -1573,11 +1697,11 @@
                   {/each}
                 </ul>
               {:else if nextUpQuery && !nextUpSearching}
-                <p class="text-xs text-gray-500 mt-1">No matches in your catalog.</p>
+                <p class="text-xs text-muted-foreground mt-1">No matches in your catalog.</p>
               {/if}
             </div>
           {:else}
-            <p class="text-xs text-gray-500">Maximum 3 picks. Remove one to add another.</p>
+            <p class="text-xs text-muted-foreground">Maximum 3 picks. Remove one to add another.</p>
           {/if}
 
           <button type="button" onclick={saveNextUp} disabled={nextUpSavingFlag} class="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm">
@@ -1585,7 +1709,7 @@
           </button>
         </div>
 
-        <div class="border-t border-white/10 pt-4 text-xs text-gray-400 space-y-1">
+        <div class="border-t border-border/40 pt-4 text-xs text-muted-foreground space-y-1">
           <div>Created {new Date(content.createdAt).toLocaleDateString()}</div>
           <div>Updated {new Date(content.updatedAt).toLocaleString()}</div>
           <div>{content.viewCount?.toLocaleString() ?? 0} total views</div>

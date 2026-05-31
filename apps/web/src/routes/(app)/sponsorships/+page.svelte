@@ -1,29 +1,22 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import Notifications from '$lib/components/Notifications.svelte';
+  import { toast } from 'svelte-sonner';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
-  import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '$lib/components/ui/command';
-  import { ChevronDown } from '@lucide/svelte';
-  import FileUpload from '$lib/components/FileUpload.svelte';
+  import * as Command from '$lib/components/ui/command';
+  import { ChevronDown, Upload, X } from '@lucide/svelte';
 
-  export let data;
-  export let form;
+  let { data, form } = $props();
 
-  let isSubmitting = false;
-  let files: {
-  script: File | null;
-  budget_breakdown: File | null;
-  storyboard: File | null;
-} = {
-  script: null,
-  budget_breakdown: null,
-  storyboard: null
-};
+  let isSubmitting = $state(false);
+  let scriptFile = $state<File | null>(null);
+  let budgetFile = $state<File | null>(null);
+  let storyboardFile = $state<File | null>(null);
+  let selectedGenre = $state('');
+  let genrePopoverOpen = $state(false);
 
-  let selectedGenre: string = "";
   const genres = [
     'Drama',
     'Documentary',
@@ -34,10 +27,38 @@
     'Inspirational'
   ];
 
+  // The legacy <Notifications> component used `export let` + global
+  // dispatchEvent that didn't survive the Svelte 5 migration and was
+  // 500ing this page on SSR. svelte-sonner toasts (used everywhere else
+  // in the app) replace it cleanly.
+  $effect(() => {
+    if (!form) return;
+    if (form.success) toast.success(form.message);
+    else if (form.message) toast.error(form.message);
+  });
+
   function selectGenre(genre: string) {
     selectedGenre = genre;
+    genrePopoverOpen = false;
+  }
+
+  function pickFile(setter: (f: File | null) => void) {
+    return (e: Event) => {
+      const input = e.currentTarget as HTMLInputElement;
+      setter(input.files?.[0] ?? null);
+    };
+  }
+
+  function clearFile(setter: (f: File | null) => void, inputId: string) {
+    setter(null);
+    const el = document.getElementById(inputId) as HTMLInputElement | null;
+    if (el) el.value = '';
   }
 </script>
+
+<svelte:head>
+  <title>Movie Production Sponsorship — Sephar Studios</title>
+</svelte:head>
 
 <div class="container mx-auto py-12 px-4">
   <div class="max-w-4xl mx-auto space-y-8">
@@ -46,11 +67,19 @@
       <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p>
     </div>
 
-    {#if form}
-      <Notifications type={form.success ? 'success' : 'error'} message={form.message} />
-    {/if}
-
-    <form method="POST" action="?/submit" class="space-y-8" use:enhance={() => { isSubmitting = true; return async ({ result, update }) => { isSubmitting = false; await update(); }; }} enctype="multipart/form-data">
+    <form
+      method="POST"
+      action="?/submit"
+      class="space-y-8"
+      enctype="multipart/form-data"
+      use:enhance={() => {
+        isSubmitting = true;
+        return async ({ update }) => {
+          isSubmitting = false;
+          await update();
+        };
+      }}
+    >
       <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Contact Information</h2>
 
@@ -80,24 +109,22 @@
 
           <div class="space-y-2">
             <label for="genre" class="text-sm font-medium">Genre</label>
-            <Popover>
+            <Popover bind:open={genrePopoverOpen}>
               <PopoverTrigger>
-                <Button class="w-full justify-between">
-                  {selectedGenre || "Select genre"} <ChevronDown size={16} />
+                <Button class="w-full justify-between" type="button">
+                  {selectedGenre || 'Select genre'} <ChevronDown class="w-4 h-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent class="w-50 p-2">
-                <Command>
-                  <CommandInput placeholder="Search genre..." />
-                  <CommandList>
-                    <CommandEmpty>No genres found.</CommandEmpty>
-                    {#each genres as genre}
-                      <CommandItem onclick={() => selectGenre(genre)}>
-                        {genre}
-                      </CommandItem>
+                <Command.Root>
+                  <Command.Input placeholder="Search genre..." />
+                  <Command.List>
+                    <Command.Empty>No genres found.</Command.Empty>
+                    {#each genres as g (g)}
+                      <Command.Item onSelect={() => selectGenre(g)}>{g}</Command.Item>
                     {/each}
-                  </CommandList>
-                </Command>
+                  </Command.List>
+                </Command.Root>
               </PopoverContent>
             </Popover>
             <input type="hidden" name="genre" value={selectedGenre} required />
@@ -106,7 +133,13 @@
 
         <div class="space-y-2">
           <label for="synopsis" class="text-sm font-medium">Project Synopsis</label>
-          <Textarea id="synopsis" name="synopsis" rows={4} required placeholder="Provide a brief overview of your project..." />
+          <Textarea
+            id="synopsis"
+            name="synopsis"
+            rows={4}
+            required
+            placeholder="Provide a brief overview of your project (40+ characters)..."
+          />
         </div>
       </div>
 
@@ -114,20 +147,61 @@
         <h2 class="text-2xl font-semibold">Supporting Documents</h2>
 
         <div class="grid gap-6">
-          <FileUpload label="Script or Treatment" name="script" accept=".pdf,.doc,.docx"
-           bind:file={files.script} on:change={(e: CustomEvent<{ file: File | null }>) => files.script = e.detail.file} required />
+          <div class="space-y-2">
+            <label for="script-input" class="text-sm font-medium">Script or Treatment</label>
+            <div class="flex items-center gap-2">
+              <Input id="script-input" type="file" name="script" accept=".pdf,.doc,.docx" required onchange={pickFile((f) => (scriptFile = f))} />
+              {#if scriptFile}
+                <div class="flex items-center gap-2 text-sm border rounded-md p-2">
+                  <Upload class="w-4 h-4" />
+                  <span class="truncate max-w-40">{scriptFile.name}</span>
+                  <Button type="button" size="icon" variant="ghost" onclick={() => clearFile((f) => (scriptFile = f), 'script-input')}>
+                    <X class="w-4 h-4" />
+                  </Button>
+                </div>
+              {/if}
+            </div>
+          </div>
 
-          <FileUpload label="Budget Breakdown" name="budget_breakdown" accept=".pdf,.xls,.xlsx"
-           bind:file={files.budget_breakdown} on:change={(e: CustomEvent<{ file: File | null }>) => files.budget_breakdown = e.detail.file} required />
+          <div class="space-y-2">
+            <label for="budget-input" class="text-sm font-medium">Budget Breakdown</label>
+            <div class="flex items-center gap-2">
+              <Input id="budget-input" type="file" name="budget_breakdown" accept=".pdf,.xls,.xlsx" required onchange={pickFile((f) => (budgetFile = f))} />
+              {#if budgetFile}
+                <div class="flex items-center gap-2 text-sm border rounded-md p-2">
+                  <Upload class="w-4 h-4" />
+                  <span class="truncate max-w-40">{budgetFile.name}</span>
+                  <Button type="button" size="icon" variant="ghost" onclick={() => clearFile((f) => (budgetFile = f), 'budget-input')}>
+                    <X class="w-4 h-4" />
+                  </Button>
+                </div>
+              {/if}
+            </div>
+          </div>
 
-          <FileUpload label="Storyboard/Visual References" name="storyboard" accept=".pdf,.zip,.jpg,.png"
-           bind:file={files.storyboard} on:change={(e: CustomEvent<{ file: File | null }>) => files.storyboard = e.detail.file} />
+          <div class="space-y-2">
+            <label for="storyboard-input" class="text-sm font-medium">Storyboard / Visual References</label>
+            <div class="flex items-center gap-2">
+              <Input id="storyboard-input" type="file" name="storyboard" accept=".pdf,.zip,.jpg,.png" onchange={pickFile((f) => (storyboardFile = f))} />
+              {#if storyboardFile}
+                <div class="flex items-center gap-2 text-sm border rounded-md p-2">
+                  <Upload class="w-4 h-4" />
+                  <span class="truncate max-w-40">{storyboardFile.name}</span>
+                  <Button type="button" size="icon" variant="ghost" onclick={() => clearFile((f) => (storyboardFile = f), 'storyboard-input')}>
+                    <X class="w-4 h-4" />
+                  </Button>
+                </div>
+              {/if}
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="flex justify-end gap-4">
         <Button type="reset" variant="outline">Reset</Button>
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Submitting...' : 'Submit Request'}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting…' : 'Submit Request'}
+        </Button>
       </div>
     </form>
   </div>

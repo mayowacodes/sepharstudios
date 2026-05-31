@@ -60,14 +60,14 @@
 
 {#snippet body()}
   <div
-    class="surface-2 relative overflow-hidden rounded-xl {compact ? 'p-4' : 'p-5'} transition-colors hover:bg-white/[0.09]"
+    class="surface-2 relative overflow-hidden rounded-xl {compact ? 'p-4' : 'p-5'} transition-colors hover:bg-foreground/5"
     in:fly={{ y: 12, duration: 280, delay: index * 50, easing: quintOut }}
   >
     <!-- Accent edge -->
     <span class="absolute inset-y-0 left-0 w-1 {a.bar}"></span>
 
     <div class="flex items-start justify-between gap-2">
-      <div class="text-xs uppercase tracking-wide text-gray-400">{label}</div>
+      <div class="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       {#if Icon}
         <Icon class="w-4 h-4 {a.text}" />
       {/if}
@@ -77,7 +77,7 @@
       {#if loading}
         <Skeleton class={compact ? 'h-6 w-20' : 'h-8 w-28'} />
       {:else}
-        <div class="{compact ? 'text-xl' : 'text-2xl'} font-semibold text-white tabular-nums">
+        <div class="{compact ? 'text-xl' : 'text-2xl'} font-semibold text-foreground tabular-nums">
           {value}
         </div>
       {/if}
@@ -87,7 +87,7 @@
       <div class="mt-3 flex items-end justify-between gap-3">
         <div class="flex items-center gap-1 text-xs {deltaClass(delta)}">
           {#if delta === null || delta === undefined}
-            <span class="text-gray-500">—</span>
+            <span class="text-muted-foreground">—</span>
           {:else if delta > 0}
             <ArrowUpRight class="w-3.5 h-3.5" />
             <span class="font-medium">+{delta.toFixed(1)}%</span>
@@ -99,7 +99,7 @@
             <span class="font-medium">0%</span>
           {/if}
           {#if deltaLabel}
-            <span class="text-gray-500 ml-1">{deltaLabel}</span>
+            <span class="text-muted-foreground ml-1">{deltaLabel}</span>
           {/if}
         </div>
         {#if sparkline && sparkline.length > 0}

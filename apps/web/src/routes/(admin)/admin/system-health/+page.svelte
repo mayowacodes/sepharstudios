@@ -141,7 +141,7 @@
   }
 
   function checkCardClass(result: CheckResult): string {
-    if (result.error === 'not_configured') return 'bg-white/5 border-white/10';
+    if (result.error === 'not_configured') return 'surface-1 border-border/40';
     if (result.ok) return 'bg-green-600/15 border-green-600/30';
     return 'bg-red-600/20 border-red-600/40';
   }
@@ -149,7 +149,7 @@
   function statusBadge(s: string | null): string {
     if (s === 'ready') return 'bg-green-600/30 text-green-200';
     if (s === 'failed') return 'bg-red-600/30 text-red-200';
-    if (s === 'cancelled') return 'bg-gray-600/30 text-gray-300';
+    if (s === 'cancelled') return 'bg-gray-600/30 text-foreground/80';
     return 'bg-yellow-600/30 text-yellow-200';
   }
 
@@ -171,7 +171,7 @@
       <button
         type="button"
         onclick={() => { void loadHealth(); void loadJobs(); }}
-        class="px-3 py-1.5 rounded surface-2 text-white text-xs inline-flex items-center gap-1"
+        class="px-3 py-1.5 rounded surface-2 text-foreground text-xs inline-flex items-center gap-1"
       >
         <RefreshCw class="w-3.5 h-3.5" />
         Refresh now
@@ -180,15 +180,15 @@
   </PageHeader>
 
   {#if loadingHealth && !health}
-    <div class="text-center text-gray-400 py-12">Checking…</div>
+    <div class="text-center text-muted-foreground py-12">Checking…</div>
   {:else if health}
     <div>
       <div class="flex items-center gap-3 mb-3">
-        <h2 class="text-lg font-semibold text-white">Infrastructure</h2>
+        <h2 class="text-lg font-semibold text-foreground">Infrastructure</h2>
         <span class="px-2 py-0.5 rounded text-xs uppercase tracking-wide {health.status === 'ok' ? 'bg-green-600/30 text-green-200' : 'bg-red-600/30 text-red-200'}">
           {health.status}
         </span>
-        <span class="text-xs text-gray-400">uptime {formatUptime(health.uptimeSec)}</span>
+        <span class="text-xs text-muted-foreground">uptime {formatUptime(health.uptimeSec)}</span>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -201,16 +201,16 @@
         ] as card (card.key)}
           <div class="border rounded-xl p-4 {checkCardClass(card.result)}">
             <div class="flex items-start justify-between">
-              <span class="text-sm font-medium text-white">{card.label}</span>
+              <span class="text-sm font-medium text-foreground">{card.label}</span>
               {#if card.result.error === 'not_configured'}
-                <span class="text-xs text-gray-400">—</span>
+                <span class="text-xs text-muted-foreground">—</span>
               {:else if card.result.ok}
                 <CheckCircle2 class="w-4 h-4 text-green-400" />
               {:else}
                 <AlertTriangle class="w-4 h-4 text-red-400" />
               {/if}
             </div>
-            <div class="mt-2 text-xs text-gray-300">
+            <div class="mt-2 text-xs text-foreground/80">
               {#if card.result.error === 'not_configured'}
                 not configured
               {:else if card.result.ok}
@@ -227,31 +227,31 @@
 
   <div>
     <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
-      <h2 class="text-lg font-semibold text-white">Encoder jobs</h2>
+      <h2 class="text-lg font-semibold text-foreground">Encoder jobs</h2>
       <div class="flex gap-1.5">
         {#each ['all', 'failed', 'created', 'ready', 'cancelled'] as s (s)}
           <button
             type="button"
             onclick={() => (jobStatus = s)}
-            class="px-3 py-1 rounded text-xs capitalize {jobStatus === s ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-300 hover:bg-white/10'}"
+            class="px-3 py-1 rounded text-xs capitalize {jobStatus === s ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
           >{s}</button>
         {/each}
       </div>
     </div>
 
     {#if loadingJobs && jobs.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-gray-400">
+      <div class="surface-1 border border-border/40 rounded-xl p-8 text-center text-muted-foreground">
         Loading…
       </div>
     {:else if jobs.length === 0}
-      <div class="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-gray-400">
+      <div class="surface-1 border border-border/40 rounded-xl p-8 text-center text-muted-foreground">
         No jobs match this filter.
       </div>
     {:else}
-      <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      <div class="surface-1 border border-border/40 rounded-xl overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-white/5">
-            <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+          <thead class="surface-1">
+            <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th class="px-4 py-3">Content</th>
               <th class="px-4 py-3">Creator</th>
               <th class="px-4 py-3">Job ID</th>
@@ -263,30 +263,30 @@
           </thead>
           <tbody>
             {#each jobs as j (j.id)}
-              <tr class="border-t border-white/5 hover:bg-white/5">
-                <td class="px-4 py-3 text-white">
+              <tr class="border-t border-white/5 hover:surface-1">
+                <td class="px-4 py-3 text-foreground">
                   <a href={`/admin/content`} class="hover:text-purple-300">{j.title}</a>
                   {#if j.processingError}<div class="text-xs text-red-300 mt-0.5 max-w-md truncate">{j.processingError}</div>{/if}
                 </td>
-                <td class="px-4 py-3 text-gray-300">{j.creatorDisplayName ?? j.creatorName ?? '—'}</td>
-                <td class="px-4 py-3 font-mono text-xs text-gray-400">{j.encoderJobId?.slice(0, 12) ?? '—'}</td>
+                <td class="px-4 py-3 text-foreground/80">{j.creatorDisplayName ?? j.creatorName ?? '—'}</td>
+                <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{j.encoderJobId?.slice(0, 12) ?? '—'}</td>
                 <td class="px-4 py-3">
                   <span class="px-2 py-0.5 rounded text-xs {statusBadge(j.processingStatus)}">{j.processingStatus ?? 'unknown'}</span>
                   {#if j.processingStage}
-                    <div class="text-[10px] text-gray-500 mt-0.5">{j.processingStage}</div>
+                    <div class="text-[10px] text-muted-foreground mt-0.5">{j.processingStage}</div>
                   {/if}
                 </td>
                 <td class="px-4 py-3 min-w-32">
                   {#if j.processingProgress !== null && j.processingProgress !== undefined}
-                    <div class="h-1.5 bg-white/10 rounded overflow-hidden">
+                    <div class="h-1.5 surface-2 rounded overflow-hidden">
                       <div class="h-full bg-purple-500 transition-all duration-500" style="width: {Math.max(0, Math.min(100, j.processingProgress))}%"></div>
                     </div>
-                    <div class="text-[10px] text-gray-400 mt-0.5">{j.processingProgress}%</div>
+                    <div class="text-[10px] text-muted-foreground mt-0.5">{j.processingProgress}%</div>
                   {:else}
-                    <span class="text-xs text-gray-500">—</span>
+                    <span class="text-xs text-muted-foreground">—</span>
                   {/if}
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-400">{new Date(j.updatedAt).toLocaleString()}</td>
+                <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(j.updatedAt).toLocaleString()}</td>
                 <td class="px-4 py-3 text-right">
                   <div class="inline-flex gap-2">
                     {#if j.processingStatus === 'failed' || j.processingStatus === 'cancelled'}

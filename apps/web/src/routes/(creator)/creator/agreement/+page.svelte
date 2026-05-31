@@ -1,5 +1,8 @@
 <!-- Creator Agreement -->
 <script lang="ts">
+  import { FileText } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
   let activeSection = 'overview';
   let hasAccepted = false;
   let showFullAgreement = false;
@@ -18,12 +21,8 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-white mb-2">Creator Agreement</h1>
-    <p class="text-gray-300">Terms and conditions for content creators on Sephar Studios</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={FileText} title="Creator Agreement" subtitle="Terms and conditions for content creators on Sephar Studios." />
 
   <!-- Agreement Status -->
   {#if hasAccepted}
@@ -31,7 +30,7 @@
       <div class="flex items-center">
         <span class="text-2xl mr-3">✅</span>
         <div>
-          <h3 class="text-lg font-bold text-white">Agreement Accepted</h3>
+          <h3 class="text-lg font-bold text-foreground">Agreement Accepted</h3>
           <p class="text-green-200">You have accepted the Creator Agreement. Thank you for being part of our community!</p>
         </div>
       </div>
@@ -41,7 +40,7 @@
       <div class="flex items-center">
         <span class="text-2xl mr-3">⚠️</span>
         <div>
-          <h3 class="text-lg font-bold text-white">Agreement Required</h3>
+          <h3 class="text-lg font-bold text-foreground">Agreement Required</h3>
           <p class="text-yellow-200">Please review and accept our Creator Agreement to continue using creator features.</p>
         </div>
       </div>
@@ -49,19 +48,19 @@
   {/if}
 
   <!-- Last Updated -->
-  <div class="text-center text-gray-400 text-sm">
+  <div class="text-center text-muted-foreground text-sm">
     Last updated: January 15, 2024 | Version 2.1
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Navigation Sidebar -->
     <div class="lg:col-span-1">
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 sticky top-6">
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-4 sticky top-6">
         <nav class="space-y-2">
           {#each sections as section}
             <button
               onclick={() => activeSection = section.id}
-              class="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 {activeSection === section.id ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'}"
+              class="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 {activeSection === section.id ? 'bg-purple-600 text-foreground' : 'text-foreground/80 hover:text-white hover:surface-2'}"
             >
               <span>{section.icon}</span>
               <span class="text-sm font-medium">{section.title}</span>
@@ -70,7 +69,7 @@
         </nav>
 
         {#if !hasAccepted}
-          <div class="mt-6 pt-6 border-t border-white/20">
+          <div class="mt-6 pt-6 border-t border-border">
             <button
               onclick={() => showFullAgreement = !showFullAgreement}
               class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm mb-3"
@@ -90,19 +89,19 @@
 
     <!-- Content Area -->
     <div class="lg:col-span-3">
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
         {#if activeSection === 'overview'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Creator Agreement Overview</h2>
-              <p class="text-gray-300 mb-4">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Creator Agreement Overview</h2>
+              <p class="text-foreground/80 mb-4">
                 Welcome to Sephar Studios! This Creator Agreement outlines the terms and conditions for content creators
                 using our faith-based streaming platform. By creating and uploading content, you agree to these terms.
               </p>
             </div>
 
             <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">🎯</span> Our Mission
               </h3>
               <p class="text-blue-200">
@@ -112,11 +111,11 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="bg-white/5 rounded-lg p-4">
-                <h4 class="font-medium text-white mb-2 flex items-center">
+              <div class="surface-1 rounded-lg p-4">
+                <h4 class="font-medium text-foreground mb-2 flex items-center">
                   <span class="mr-2">✅</span> What We Provide
                 </h4>
-                <ul class="text-gray-300 text-sm space-y-1">
+                <ul class="text-foreground/80 text-sm space-y-1">
                   <li>• Global streaming platform</li>
                   <li>• Content hosting and delivery</li>
                   <li>• Analytics and insights</li>
@@ -126,11 +125,11 @@
                 </ul>
               </div>
 
-              <div class="bg-white/5 rounded-lg p-4">
-                <h4 class="font-medium text-white mb-2 flex items-center">
+              <div class="surface-1 rounded-lg p-4">
+                <h4 class="font-medium text-foreground mb-2 flex items-center">
                   <span class="mr-2">🤝</span> What We Expect
                 </h4>
-                <ul class="text-gray-300 text-sm space-y-1">
+                <ul class="text-foreground/80 text-sm space-y-1">
                   <li>• Faith-based, family-friendly content</li>
                   <li>• Adherence to community guidelines</li>
                   <li>• Original or properly licensed material</li>
@@ -142,7 +141,7 @@
             </div>
 
             <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">⭐</span> Creator Benefits
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -177,7 +176,7 @@
             </div>
 
             <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2">📜 Key Agreement Points</h3>
+              <h3 class="text-lg font-bold text-foreground mb-2">📜 Key Agreement Points</h3>
               <ul class="text-purple-200 text-sm space-y-2">
                 <li>• You retain ownership of your original content</li>
                 <li>• We reserve the right to review and moderate content</li>
@@ -192,20 +191,20 @@
         {:else if activeSection === 'content-standards'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Content Standards</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Content Standards</h2>
+              <p class="text-foreground/80 mb-6">
                 All content on Sephar Studios must align with Christian values and our community standards.
               </p>
             </div>
 
             <div class="space-y-6">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+                <h3 class="text-lg font-bold text-foreground mb-3 flex items-center">
                   <span class="mr-2">✅</span> Required Content Standards
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Faith-Based Requirements</h4>
+                    <h4 class="font-medium text-foreground mb-2">Faith-Based Requirements</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Aligns with core Christian beliefs</li>
                       <li>• Promotes Biblical values and morals</li>
@@ -215,7 +214,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Quality Standards</h4>
+                    <h4 class="font-medium text-foreground mb-2">Quality Standards</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Original content or proper licensing</li>
                       <li>• Meets technical specifications</li>
@@ -228,12 +227,12 @@
               </div>
 
               <div class="bg-red-600/20 border border-red-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+                <h3 class="text-lg font-bold text-foreground mb-3 flex items-center">
                   <span class="mr-2">❌</span> Prohibited Content
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Content Violations</h4>
+                    <h4 class="font-medium text-foreground mb-2">Content Violations</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• Profanity or vulgar language</li>
                       <li>• Sexual content or nudity</li>
@@ -243,7 +242,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Platform Violations</h4>
+                    <h4 class="font-medium text-foreground mb-2">Platform Violations</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• Copyright infringement</li>
                       <li>• Spam or misleading content</li>
@@ -256,33 +255,33 @@
               </div>
 
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">📝 Content Review Process</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">📝 Content Review Process</h3>
                 <div class="space-y-3">
                   <div class="flex items-start space-x-3">
                     <span class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm">1</span>
                     <div>
-                      <div class="text-white font-medium">Initial Upload</div>
+                      <div class="text-foreground font-medium">Initial Upload</div>
                       <div class="text-blue-200 text-sm">Content is submitted and enters review queue</div>
                     </div>
                   </div>
                   <div class="flex items-start space-x-3">
                     <span class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm">2</span>
                     <div>
-                      <div class="text-white font-medium">Theological Review</div>
+                      <div class="text-foreground font-medium">Theological Review</div>
                       <div class="text-blue-200 text-sm">Content reviewed for biblical accuracy and alignment</div>
                     </div>
                   </div>
                   <div class="flex items-start space-x-3">
                     <span class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm">3</span>
                     <div>
-                      <div class="text-white font-medium">Technical Quality Check</div>
+                      <div class="text-foreground font-medium">Technical Quality Check</div>
                       <div class="text-blue-200 text-sm">Video/audio quality and technical standards verified</div>
                     </div>
                   </div>
                   <div class="flex items-start space-x-3">
                     <span class="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm">4</span>
                     <div>
-                      <div class="text-white font-medium">Final Approval</div>
+                      <div class="text-foreground font-medium">Final Approval</div>
                       <div class="text-blue-200 text-sm">Content approved and published to platform</div>
                     </div>
                   </div>
@@ -294,15 +293,15 @@
         {:else if activeSection === 'rights-responsibilities'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Rights & Responsibilities</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Rights & Responsibilities</h2>
+              <p class="text-foreground/80 mb-6">
                 Understanding the rights and responsibilities of both creators and Sephar Studios.
               </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">👤 Creator Rights</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">👤 Creator Rights</h3>
                 <ul class="text-green-200 text-sm space-y-2">
                   <li>• Retain ownership of original content</li>
                   <li>• Receive credit and attribution</li>
@@ -315,7 +314,7 @@
               </div>
 
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🏢 Platform Rights</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🏢 Platform Rights</h3>
                 <ul class="text-blue-200 text-sm space-y-2">
                   <li>• Host and distribute content globally</li>
                   <li>• Moderate content for compliance</li>
@@ -328,7 +327,7 @@
               </div>
 
               <div class="bg-orange-600/20 border border-orange-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">📋 Creator Responsibilities</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">📋 Creator Responsibilities</h3>
                 <ul class="text-orange-200 text-sm space-y-2">
                   <li>• Create original or properly licensed content</li>
                   <li>• Follow community guidelines and standards</li>
@@ -341,7 +340,7 @@
               </div>
 
               <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🛡️ Platform Responsibilities</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🛡️ Platform Responsibilities</h3>
                 <ul class="text-purple-200 text-sm space-y-2">
                   <li>• Provide reliable hosting and streaming</li>
                   <li>• Maintain platform security and privacy</li>
@@ -355,7 +354,7 @@
             </div>
 
             <div class="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-3">⚖️ Dispute Resolution</h3>
+              <h3 class="text-lg font-bold text-foreground mb-3">⚖️ Dispute Resolution</h3>
               <p class="text-yellow-200 mb-3">
                 In keeping with Christian principles, we encourage resolving disputes through:
               </p>
@@ -371,18 +370,18 @@
         {:else if activeSection === 'monetization'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Monetization Terms</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Monetization Terms</h2>
+              <p class="text-foreground/80 mb-6">
                 Guidelines for earning revenue through your content on Sephar Studios.
               </p>
             </div>
 
             <div class="space-y-6">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">💰 Revenue Sharing</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">💰 Revenue Sharing</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Creator Share: 70%</h4>
+                    <h4 class="font-medium text-foreground mb-2">Creator Share: 70%</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Direct donations and tips</li>
                       <li>• Subscription revenue</li>
@@ -391,7 +390,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Platform Share: 30%</h4>
+                    <h4 class="font-medium text-foreground mb-2">Platform Share: 30%</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Platform maintenance and hosting</li>
                       <li>• Payment processing fees</li>
@@ -404,7 +403,7 @@
 
               <!-- STC Token Revenue Split Disclosure (Fix 3 — Required) -->
               <div class="bg-yellow-600/20 border border-yellow-500 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🪙 STC Token Payments — Important Notice</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🪙 STC Token Payments — Important Notice</h3>
                 <p class="text-yellow-200 text-sm mb-3">
                   Sephar Studios offers viewers two ways to pay for subscriptions: <strong>cash payments</strong> (card/USDC)
                   and <strong>STC token redemptions</strong>. These work differently for creator revenue:
@@ -438,10 +437,10 @@
               </div>
 
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">💳 Payment Terms</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">💳 Payment Terms</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Payment Schedule</h4>
+                    <h4 class="font-medium text-foreground mb-2">Payment Schedule</h4>
                     <ul class="text-blue-200 text-sm space-y-1">
                       <li>• Monthly payments on the 15th</li>
                       <li>• Minimum threshold: $50</li>
@@ -450,7 +449,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Tax Requirements</h4>
+                    <h4 class="font-medium text-foreground mb-2">Tax Requirements</h4>
                     <ul class="text-blue-200 text-sm space-y-1">
                       <li>• 1099 forms for US creators (>$600)</li>
                       <li>• International tax compliance</li>
@@ -462,10 +461,10 @@
               </div>
 
               <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🎯 Monetization Requirements</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🎯 Monetization Requirements</h3>
                 <div class="space-y-3">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Eligibility Criteria</h4>
+                    <h4 class="font-medium text-foreground mb-2">Eligibility Criteria</h4>
                     <ul class="text-purple-200 text-sm space-y-1">
                       <li>• Minimum 1,000 subscribers</li>
                       <li>• 4,000+ hours of watch time (past 12 months)</li>
@@ -475,7 +474,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Ongoing Requirements</h4>
+                    <h4 class="font-medium text-foreground mb-2">Ongoing Requirements</h4>
                     <ul class="text-purple-200 text-sm space-y-1">
                       <li>• Maintain content quality standards</li>
                       <li>• Regular community engagement</li>
@@ -488,7 +487,7 @@
               </div>
 
               <div class="bg-orange-600/20 border border-orange-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🤝 Sponsorship Guidelines</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🤝 Sponsorship Guidelines</h3>
                 <div class="space-y-2">
                   <div class="text-orange-200 text-sm">
                     <strong>Allowed Sponsorships:</strong> Christian organizations, family-friendly brands, ministry-supporting businesses
@@ -510,15 +509,15 @@
         {:else if activeSection === 'intellectual-property'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Intellectual Property</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Intellectual Property</h2>
+              <p class="text-foreground/80 mb-6">
                 Protection of intellectual property rights for creators and content users.
               </p>
             </div>
 
             <div class="space-y-6">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">©️ Creator Ownership Rights</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">©️ Creator Ownership Rights</h3>
                 <ul class="text-green-200 text-sm space-y-2">
                   <li>• You retain full ownership of your original content</li>
                   <li>• Platform receives limited license to host and distribute</li>
@@ -530,7 +529,7 @@
               </div>
 
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">📋 Platform License</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">📋 Platform License</h3>
                 <p class="text-blue-200 mb-3">
                   By uploading content, you grant Sephar Studios a limited, non-exclusive license to:
                 </p>
@@ -545,10 +544,10 @@
               </div>
 
               <div class="bg-red-600/20 border border-red-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">⚠️ Copyright Compliance</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">⚠️ Copyright Compliance</h3>
                 <div class="space-y-3">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Your Responsibilities</h4>
+                    <h4 class="font-medium text-foreground mb-2">Your Responsibilities</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• Ensure all content is original or properly licensed</li>
                       <li>• Obtain necessary permissions for music, images, footage</li>
@@ -557,7 +556,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">DMCA Process</h4>
+                    <h4 class="font-medium text-foreground mb-2">DMCA Process</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• We respond to valid DMCA takedown notices</li>
                       <li>• Creators can file counter-notifications</li>
@@ -569,10 +568,10 @@
               </div>
 
               <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🎵 Music and Media Usage</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🎵 Music and Media Usage</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Approved Sources</h4>
+                    <h4 class="font-medium text-foreground mb-2">Approved Sources</h4>
                     <ul class="text-purple-200 text-sm space-y-1">
                       <li>• Original compositions</li>
                       <li>• Royalty-free music libraries</li>
@@ -582,7 +581,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Licensing Required</h4>
+                    <h4 class="font-medium text-foreground mb-2">Licensing Required</h4>
                     <ul class="text-purple-200 text-sm space-y-1">
                       <li>• Commercial music recordings</li>
                       <li>• Popular songs and hymns</li>
@@ -599,18 +598,18 @@
         {:else if activeSection === 'community-guidelines'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Community Guidelines</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Community Guidelines</h2>
+              <p class="text-foreground/80 mb-6">
                 Building a positive, supportive community centered on Christian values.
               </p>
             </div>
 
             <div class="space-y-6">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">❤️ Community Values</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">❤️ Community Values</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Love and Grace</h4>
+                    <h4 class="font-medium text-foreground mb-2">Love and Grace</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Treat others with kindness and respect</li>
                       <li>• Show grace in disagreements</li>
@@ -619,7 +618,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Truth and Authenticity</h4>
+                    <h4 class="font-medium text-foreground mb-2">Truth and Authenticity</h4>
                     <ul class="text-green-200 text-sm space-y-1">
                       <li>• Be honest and transparent</li>
                       <li>• Share genuine experiences and testimony</li>
@@ -631,10 +630,10 @@
               </div>
 
               <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🤝 Interaction Guidelines</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🤝 Interaction Guidelines</h3>
                 <div class="space-y-3">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Positive Engagement</h4>
+                    <h4 class="font-medium text-foreground mb-2">Positive Engagement</h4>
                     <ul class="text-blue-200 text-sm space-y-1">
                       <li>• Respond to comments and messages thoughtfully</li>
                       <li>• Support other creators through likes, shares, and comments</li>
@@ -643,7 +642,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Conflict Resolution</h4>
+                    <h4 class="font-medium text-foreground mb-2">Conflict Resolution</h4>
                     <ul class="text-blue-200 text-sm space-y-1">
                       <li>• Address disagreements privately when possible</li>
                       <li>• Focus on issues, not personal attacks</li>
@@ -655,10 +654,10 @@
               </div>
 
               <div class="bg-red-600/20 border border-red-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">🚫 Prohibited Behaviors</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">🚫 Prohibited Behaviors</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 class="font-medium text-white mb-2">Harassment and Abuse</h4>
+                    <h4 class="font-medium text-foreground mb-2">Harassment and Abuse</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• Personal attacks or bullying</li>
                       <li>• Discriminatory language or behavior</li>
@@ -667,7 +666,7 @@
                     </ul>
                   </div>
                   <div>
-                    <h4 class="font-medium text-white mb-2">Platform Abuse</h4>
+                    <h4 class="font-medium text-foreground mb-2">Platform Abuse</h4>
                     <ul class="text-red-200 text-sm space-y-1">
                       <li>• Spam or excessive self-promotion</li>
                       <li>• Fake accounts or impersonation</li>
@@ -679,7 +678,7 @@
               </div>
 
               <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3">📞 Reporting and Support</h3>
+                <h3 class="text-lg font-bold text-foreground mb-3">📞 Reporting and Support</h3>
                 <div class="space-y-2">
                   <div class="text-purple-200 text-sm">
                     <strong>Report Issues:</strong> Use the report button or contact support@sepharstudios.com
@@ -704,9 +703,9 @@
 
   <!-- Agreement Actions -->
   {#if !hasAccepted}
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-      <h3 class="text-xl font-bold text-white mb-4">Ready to Join Our Creator Community?</h3>
-      <p class="text-gray-300 mb-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6 text-center">
+      <h3 class="text-xl font-bold text-foreground mb-4">Ready to Join Our Creator Community?</h3>
+      <p class="text-foreground/80 mb-6">
         By accepting this agreement, you're committing to help us build a platform that honors God
         and serves the global Christian community.
       </p>
@@ -724,13 +723,13 @@
           ✅ I Accept the Creator Agreement
         </button>
       </div>
-      <p class="text-xs text-gray-400 mt-4">
+      <p class="text-xs text-muted-foreground mt-4">
         By clicking "I Accept", you agree to abide by all terms and conditions outlined in this agreement.
       </p>
     </div>
   {:else}
     <div class="bg-green-600/20 border border-green-600 rounded-xl p-6 text-center">
-      <h3 class="text-xl font-bold text-white mb-4">Welcome to the Sephar Studios Creator Community! 🎉</h3>
+      <h3 class="text-xl font-bold text-foreground mb-4">Welcome to the Sephar Studios Creator Community! 🎉</h3>
       <p class="text-green-200 mb-6">
         Thank you for joining our mission to spread the Gospel through digital media.
         You now have access to all creator features and monetization opportunities.

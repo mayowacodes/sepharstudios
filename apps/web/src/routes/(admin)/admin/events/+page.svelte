@@ -6,6 +6,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Calendar, Plus, Edit, Trash2, Users, ExternalLink } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   interface EventRow {
     id: string;
@@ -191,7 +192,7 @@
   function statusColor(s: string): string {
     if (s === 'scheduled') return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
     if (s === 'live') return 'bg-green-500/15 text-green-300 border-green-500/30';
-    if (s === 'completed') return 'bg-gray-500/15 text-gray-300 border-gray-500/30';
+    if (s === 'completed') return 'bg-gray-500/15 text-foreground/80 border-gray-500/30';
     return 'bg-red-500/15 text-red-300 border-red-500/30'; // cancelled
   }
 </script>
@@ -200,16 +201,14 @@
   <title>Events · Admin</title>
 </svelte:head>
 
-<div class="space-y-6">
-  <div class="flex items-center justify-between flex-wrap gap-3">
-    <div>
-      <h1 class="text-3xl font-bold flex items-center gap-2"><Calendar class="w-7 h-7" /> Events</h1>
-      <p class="text-sm text-muted-foreground">Create + manage webinars, workshops, conferences. Powers /webinars and /creator/events.</p>
-    </div>
-    <Button onclick={openCreate}>
-      <Plus class="w-4 h-4 mr-2" /> New event
-    </Button>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Calendar} title="Events" subtitle="Webinars, workshops, conferences. Powers /webinars and /creator/events.">
+    {#snippet actions()}
+      <Button onclick={openCreate} size="sm" class="rounded-full">
+        <Plus class="w-3.5 h-3.5 mr-1" /> New event
+      </Button>
+    {/snippet}
+  </PageHeader>
 
   {#if message}
     <div class="rounded-md border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-200">{message}</div>

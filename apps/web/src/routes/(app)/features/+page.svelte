@@ -57,7 +57,7 @@
           <h3 class="text-xl font-bold text-[#FF5E0E] mb-4">Scripture Reference</h3>
           <p class="text-white mb-6">{activeScripture}</p>
           <button 
-            on:click={() => activeScripture = null}
+            onclick={() => activeScripture = null}
             class="w-full py-2 bg-[#FF5E0E] text-white rounded hover:bg-[#FFBF00] transition"
           >
             Close

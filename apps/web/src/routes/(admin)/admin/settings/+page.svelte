@@ -1,6 +1,8 @@
 <!-- Admin Settings Panel -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { Settings as SettingsIcon, RotateCcw, Save } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   // ── Types ──────────────────────────────────────────────────────────────────
   interface OpenRouterModel {
@@ -183,6 +185,16 @@
   }
 
   async function saveAIConfig() {
+    // Guard against deploying a half-configured AI surface — an empty
+    // model id would break every Copilot + agent on the platform.
+    if (!aiConfig.chatModel?.trim()) {
+      alert('Chat model is required before saving AI config.');
+      return;
+    }
+    if (!aiConfig.agentModel?.trim()) {
+      alert('Agent model is required before saving AI config.');
+      return;
+    }
     aiSaving = true;
     try {
       const res = await fetch('/api/admin/ai/config', {
@@ -193,7 +205,12 @@
       if (res.ok) {
         aiSaveSuccess = true;
         setTimeout(() => (aiSaveSuccess = false), 3000);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        alert(`Failed to save AI config: ${body.error ?? `HTTP ${res.status}`}`);
       }
+    } catch (err) {
+      alert(`Failed to save AI config: ${err instanceof Error ? err.message : 'unknown'}`);
     } finally {
       aiSaving = false;
     }
@@ -254,7 +271,7 @@
     if (tag === 'fast') return 'bg-yellow-600/30 text-yellow-300 border-yellow-600/40';
     if (tag === 'reasoning') return 'bg-orange-600/30 text-orange-300 border-orange-600/40';
     if (tag === 'premium') return 'bg-red-600/30 text-red-300 border-red-600/40';
-    return 'bg-gray-600/30 text-gray-300 border-gray-600/40';
+    return 'bg-gray-600/30 text-foreground/80 border-gray-600/40';
   }
 
   // Load AI config + models when tab is activated
@@ -335,30 +352,17 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white">Platform Settings</h1>
-      <p class="text-gray-300">Configure platform behavior and integrations</p>
-    </div>
-    
-    <div class="flex items-center space-x-4">
-      <button 
-        onclick={resetSettings}
-        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-      >
-        🔄 Reset to Default
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={SettingsIcon} title="Platform Settings" subtitle="Configure platform behavior and integrations.">
+    {#snippet actions()}
+      <button onclick={resetSettings} class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors">
+        <RotateCcw class="w-3 h-3" /> Reset
       </button>
-      <button 
-        onclick={saveSettings}
-        disabled={loading}
-        class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? 'Saving...' : '💾 Save Changes'}
+      <button onclick={saveSettings} disabled={loading} class="text-xs bg-primary hover:opacity-90 disabled:opacity-50 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
+        <Save class="w-3 h-3" /> {loading ? 'Saving…' : 'Save'}
       </button>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
   <!-- Success Message -->
   {#if saveSuccess}
@@ -371,12 +375,12 @@
   {/if}
 
   <!-- Tab Navigation -->
-  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-2">
+  <div class="surface-1 backdrop-blur-sm rounded-xl p-2">
     <nav class="flex space-x-2">
       {#each tabs as tab}
         <button
           onclick={() => activeTab = tab.id}
-          class="flex items-center space-x-2 px-4 py-3 rounded-lg transition-all {activeTab === tab.id ? 'bg-red-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'}"
+          class="flex items-center space-x-2 px-4 py-3 rounded-lg transition-all {activeTab === tab.id ? 'bg-red-600 text-foreground' : 'text-foreground/80 hover:text-white hover:surface-2'}"
         >
           <span>{tab.icon}</span>
           <span>{tab.label}</span>
@@ -387,51 +391,51 @@
 
   <!-- Platform Settings -->
   {#if activeTab === 'platform'}
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
-      <h2 class="text-xl font-bold text-white">Platform Configuration</h2>
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6 space-y-6">
+      <h2 class="text-xl font-bold text-foreground">Platform Configuration</h2>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Basic Settings -->
         <div class="space-y-4">
           <div>
-            <label for="siteName" class="block text-gray-300 text-sm font-medium mb-2">Site Name</label>
+            <label for="siteName" class="block text-foreground/80 text-sm font-medium mb-2">Site Name</label>
             <input
               id="siteName"
               type="text"
               bind:value={platformSettings.siteName}
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
           </div>
           
           <div>
-            <label for="siteDescription" class="block text-gray-300 text-sm font-medium mb-2">Site Description</label>
+            <label for="siteDescription" class="block text-foreground/80 text-sm font-medium mb-2">Site Description</label>
             <textarea
               id="siteDescription"
               bind:value={platformSettings.siteDescription}
               rows="3"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             ></textarea>
           </div>
           
           <div>
-            <label for="maxUploadSize" class="block text-gray-300 text-sm font-medium mb-2">Max Upload Size (MB)</label>
+            <label for="maxUploadSize" class="block text-foreground/80 text-sm font-medium mb-2">Max Upload Size (MB)</label>
             <input
               id="maxUploadSize"
               type="number"
               bind:value={platformSettings.maxUploadSize}
               min="100"
               max="10000"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
           </div>
         </div>
 
         <!-- Toggle Settings -->
         <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Maintenance Mode</div>
-              <div class="text-gray-400 text-sm">Disable public access to the platform</div>
+              <div class="text-foreground font-medium">Maintenance Mode</div>
+              <div class="text-muted-foreground text-sm">Disable public access to the platform</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={platformSettings.maintenanceMode} class="sr-only peer">
@@ -439,10 +443,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">User Registration</div>
-              <div class="text-gray-400 text-sm">Allow new users to register</div>
+              <div class="text-foreground font-medium">User Registration</div>
+              <div class="text-muted-foreground text-sm">Allow new users to register</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={platformSettings.registrationOpen} class="sr-only peer">
@@ -450,10 +454,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Creator Applications</div>
-              <div class="text-gray-400 text-sm">Allow new creator applications</div>
+              <div class="text-foreground font-medium">Creator Applications</div>
+              <div class="text-muted-foreground text-sm">Allow new creator applications</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={platformSettings.creatorApplicationsOpen} class="sr-only peer">
@@ -465,16 +469,16 @@
 
       <!-- Content Settings -->
       <div class="space-y-4">
-        <h3 class="text-lg font-bold text-white">Content Settings</h3>
+        <h3 class="text-lg font-bold text-foreground">Content Settings</h3>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="space-y-4">
             <div>
-              <label for="moderationMode" class="block text-gray-300 text-sm font-medium mb-2">Moderation Mode</label>
+              <label for="moderationMode" class="block text-foreground/80 text-sm font-medium mb-2">Moderation Mode</label>
               <select
                 id="moderationMode"
                 bind:value={platformSettings.moderationMode}
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
                 <option value="auto">Automatic</option>
                 <option value="manual">Manual Review</option>
@@ -483,40 +487,40 @@
             </div>
 
             <div>
-              <label for="minResolution" class="block text-gray-300 text-sm font-medium mb-2">Minimum upload resolution</label>
+              <label for="minResolution" class="block text-foreground/80 text-sm font-medium mb-2">Minimum upload resolution</label>
               <select
                 id="minResolution"
                 bind:value={platformSettings.minVideoHeight}
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
                 <option value={720}>720p — HD (legacy, not recommended)</option>
                 <option value={1080}>1080p — Full HD (recommended)</option>
                 <option value={1440}>1440p — 2K</option>
                 <option value={2160}>2160p — 4K (premium)</option>
               </select>
-              <p class="text-xs text-gray-500 mt-1">Creators are blocked from uploading below this threshold.</p>
+              <p class="text-xs text-muted-foreground mt-1">Creators are blocked from uploading below this threshold.</p>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="minDuration" class="block text-gray-300 text-sm font-medium mb-2">Min Duration (seconds)</label>
+              <label for="minDuration" class="block text-foreground/80 text-sm font-medium mb-2">Min Duration (seconds)</label>
               <input
                 id="minDuration"
                 type="number"
                 bind:value={platformSettings.minContentDuration}
                 min="30"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
             </div>
             <div>
-              <label for="maxDuration" class="block text-gray-300 text-sm font-medium mb-2">Max Duration (seconds)</label>
+              <label for="maxDuration" class="block text-foreground/80 text-sm font-medium mb-2">Max Duration (seconds)</label>
               <input
                 id="maxDuration"
                 type="number"
                 bind:value={platformSettings.maxContentDuration}
                 min="300"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
             </div>
           </div>
@@ -524,12 +528,12 @@
 
         <!-- Supported Formats -->
         <div>
-          <label for="newFormat" class="block text-gray-300 text-sm font-medium mb-2">Supported Video Formats</label>
+          <label for="newFormat" class="block text-foreground/80 text-sm font-medium mb-2">Supported Video Formats</label>
           <div class="flex flex-wrap gap-2 mb-3">
             {#each platformSettings.supportedFormats as format}
               <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
                 <span>.{format}</span>
-                <button onclick={() => removeSupportedFormat(format)} class="text-red-200 hover:text-white">×</button>
+                <button onclick={() => removeSupportedFormat(format)} class="text-red-200 hover:text-foreground">×</button>
               </span>
             {/each}
           </div>
@@ -539,7 +543,7 @@
               type="text"
               bind:value={newFormat}
               placeholder="Add format (e.g., webm)"
-              class="flex-1 bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="flex-1 surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
             <button
               onclick={addSupportedFormat}
@@ -555,46 +559,46 @@
 
   <!-- Payment Settings -->
   {#if activeTab === 'payment'}
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
-      <h2 class="text-xl font-bold text-white">Payment Configuration</h2>
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6 space-y-6">
+      <h2 class="text-xl font-bold text-foreground">Payment Configuration</h2>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Stripe Settings -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">Stripe Integration</h3>
+          <h3 class="text-lg font-bold text-foreground">Stripe Integration</h3>
           <div>
-            <label for="stripePublishableKey" class="block text-gray-300 text-sm font-medium mb-2">Publishable Key</label>
+            <label for="stripePublishableKey" class="block text-foreground/80 text-sm font-medium mb-2">Publishable Key</label>
             <input
               id="stripePublishableKey"
               type="text"
               bind:value={paymentSettings.stripePublishableKey}
               placeholder="pk_live_..."
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
           </div>
           <div>
-            <label for="stripeWebhookSecret" class="block text-gray-300 text-sm font-medium mb-2">Webhook Secret</label>
+            <label for="stripeWebhookSecret" class="block text-foreground/80 text-sm font-medium mb-2">Webhook Secret</label>
             <input
               id="stripeWebhookSecret"
               type="password"
               bind:value={paymentSettings.stripeWebhookSecret}
               placeholder="whsec_..."
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
           </div>
         </div>
 
         <!-- PayPal Settings -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">PayPal Integration</h3>
+          <h3 class="text-lg font-bold text-foreground">PayPal Integration</h3>
           <div>
-            <label for="paypalClientId" class="block text-gray-300 text-sm font-medium mb-2">Client ID</label>
+            <label for="paypalClientId" class="block text-foreground/80 text-sm font-medium mb-2">Client ID</label>
             <input
               id="paypalClientId"
               type="text"
               bind:value={paymentSettings.paypalClientId}
               placeholder="PayPal Client ID"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
             >
           </div>
         </div>
@@ -602,27 +606,27 @@
 
       <!-- Payout Settings -->
       <div class="space-y-4">
-        <h3 class="text-lg font-bold text-white">Payout Configuration</h3>
+        <h3 class="text-lg font-bold text-foreground">Payout Configuration</h3>
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div>
-            <label for="minimumPayout" class="block text-gray-300 text-sm font-medium mb-2">Minimum Payout ($)</label>
+            <label for="minimumPayout" class="block text-foreground/80 text-sm font-medium mb-2">Minimum Payout ($)</label>
             <input
               id="minimumPayout"
               type="number"
               bind:value={paymentSettings.minimumPayout}
               min="10"
               step="5"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
             >
           </div>
           
           <div>
-            <label for="payoutSchedule" class="block text-gray-300 text-sm font-medium mb-2">Payout Schedule</label>
+            <label for="payoutSchedule" class="block text-foreground/80 text-sm font-medium mb-2">Payout Schedule</label>
             <select
               id="payoutSchedule"
               bind:value={paymentSettings.payoutSchedule}
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
             >
               <option value="weekly">Weekly</option>
               <option value="biweekly">Bi-weekly</option>
@@ -631,7 +635,7 @@
           </div>
           
           <div>
-            <label for="platformFee" class="block text-gray-300 text-sm font-medium mb-2">Platform Fee (%)</label>
+            <label for="platformFee" class="block text-foreground/80 text-sm font-medium mb-2">Platform Fee (%)</label>
             <input
               id="platformFee"
               type="number"
@@ -639,7 +643,7 @@
               min="5"
               max="30"
               step="0.5"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
             >
           </div>
         </div>
@@ -649,9 +653,9 @@
 
   <!-- Notification Settings -->
   {#if activeTab === 'notifications'}
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6 space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold text-white">Notification Settings</h2>
+        <h2 class="text-xl font-bold text-foreground">Notification Settings</h2>
         <button 
           onclick={testEmailSettings}
           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -663,12 +667,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- General Notifications -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">General Notifications</h3>
+          <h3 class="text-lg font-bold text-foreground">General Notifications</h3>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Email Notifications</div>
-              <div class="text-gray-400 text-sm">Send notifications via email</div>
+              <div class="text-foreground font-medium">Email Notifications</div>
+              <div class="text-muted-foreground text-sm">Send notifications via email</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.emailNotifications} class="sr-only peer">
@@ -676,10 +680,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Push Notifications</div>
-              <div class="text-gray-400 text-sm">Send browser push notifications</div>
+              <div class="text-foreground font-medium">Push Notifications</div>
+              <div class="text-muted-foreground text-sm">Send browser push notifications</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.pushNotifications} class="sr-only peer">
@@ -687,10 +691,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">SMS Notifications</div>
-              <div class="text-gray-400 text-sm">Send notifications via SMS</div>
+              <div class="text-foreground font-medium">SMS Notifications</div>
+              <div class="text-muted-foreground text-sm">Send notifications via SMS</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.smsNotifications} class="sr-only peer">
@@ -701,12 +705,12 @@
 
         <!-- Alert Types -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">Alert Types</h3>
+          <h3 class="text-lg font-bold text-foreground">Alert Types</h3>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Admin Alerts</div>
-              <div class="text-gray-400 text-sm">System and security alerts</div>
+              <div class="text-foreground font-medium">Admin Alerts</div>
+              <div class="text-muted-foreground text-sm">System and security alerts</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.adminAlerts} class="sr-only peer">
@@ -714,10 +718,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Creator Alerts</div>
-              <div class="text-gray-400 text-sm">Creator activity and content alerts</div>
+              <div class="text-foreground font-medium">Creator Alerts</div>
+              <div class="text-muted-foreground text-sm">Creator activity and content alerts</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.creatorAlerts} class="sr-only peer">
@@ -725,10 +729,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">User Alerts</div>
-              <div class="text-gray-400 text-sm">User activity and engagement alerts</div>
+              <div class="text-foreground font-medium">User Alerts</div>
+              <div class="text-muted-foreground text-sm">User activity and engagement alerts</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.userAlerts} class="sr-only peer">
@@ -736,10 +740,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Moderation Alerts</div>
-              <div class="text-gray-400 text-sm">Content moderation alerts</div>
+              <div class="text-foreground font-medium">Moderation Alerts</div>
+              <div class="text-muted-foreground text-sm">Content moderation alerts</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={notificationSettings.moderationAlerts} class="sr-only peer">
@@ -753,11 +757,11 @@
 
   <!-- AI Models Settings -->
   {#if activeTab === 'ai'}
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6 space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-xl font-bold text-white">AI Model Configuration</h2>
-          <p class="text-gray-400 text-sm mt-1">
+          <h2 class="text-xl font-bold text-foreground">AI Model Configuration</h2>
+          <p class="text-muted-foreground text-sm mt-1">
             Select which models power each AI feature. API key stays in Dokploy — only model selection is stored here.
           </p>
         </div>
@@ -782,7 +786,7 @@
           <span class="text-yellow-400 text-lg">⚠️</span>
           <div>
             <p class="text-yellow-300 font-medium text-sm">OpenRouter API key not configured</p>
-            <p class="text-yellow-400/70 text-xs mt-1">Add <code class="bg-white/10 px-1 rounded">OPENROUTER_API_KEY</code> to your Dokploy environment variables to enable cloud AI models. The list below shows a curated selection.</p>
+            <p class="text-yellow-400/70 text-xs mt-1">Add <code class="surface-2 px-1 rounded">OPENROUTER_API_KEY</code> to your Dokploy environment variables to enable cloud AI models. The list below shows a curated selection.</p>
           </div>
         </div>
       {/if}
@@ -795,9 +799,9 @@
       {/if}
 
       <!-- Provider Preference -->
-      <div class="bg-white/5 rounded-xl p-5 space-y-3">
-        <h3 class="text-white font-semibold">Provider Preference</h3>
-        <p class="text-gray-400 text-sm">Controls whether to use Ollama (local) or OpenRouter (cloud) first.</p>
+      <div class="surface-1 rounded-xl p-5 space-y-3">
+        <h3 class="text-foreground font-semibold">Provider Preference</h3>
+        <p class="text-muted-foreground text-sm">Controls whether to use Ollama (local) or OpenRouter (cloud) first.</p>
         <div class="flex gap-3 flex-wrap">
           {#each [
             { value: 'auto', label: '🔄 Auto (Ollama → OpenRouter fallback)', desc: 'Try local first, cloud fallback' },
@@ -806,7 +810,7 @@
           ] as opt}
             <button
               onclick={() => aiConfig.providerPreference = opt.value as AIConfig['providerPreference']}
-              class="flex-1 min-w-[180px] text-left p-4 rounded-lg border transition-all {aiConfig.providerPreference === opt.value ? 'bg-purple-600/20 border-purple-500/60 text-white' : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20'}"
+              class="flex-1 min-w-[180px] text-left p-4 rounded-lg border transition-all {aiConfig.providerPreference === opt.value ? 'bg-purple-600/20 border-purple-500/60 text-foreground' : 'surface-1 border-border/40 text-white/80 hover:border-border'}"
             >
               <div class="font-medium text-sm">{opt.label}</div>
               <div class="text-xs mt-1 opacity-60">{opt.desc}</div>
@@ -816,11 +820,11 @@
       </div>
 
       <!-- Chat Model (Copilot) -->
-      <div class="bg-white/5 rounded-xl p-5 space-y-4">
+      <div class="surface-1 rounded-xl p-5 space-y-4">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h3 class="text-white font-semibold flex items-center gap-2">💬 Chat Model <span class="text-xs bg-purple-600/30 text-purple-300 border border-purple-600/40 px-2 py-0.5 rounded-full">Copilot · Scene Insights</span></h3>
-            <p class="text-gray-400 text-sm mt-1">Used for: AI Watch Companion, scene faith insights, portfolio narration.</p>
+            <h3 class="text-foreground font-semibold flex items-center gap-2">💬 Chat Model <span class="text-xs bg-purple-600/30 text-purple-300 border border-purple-600/40 px-2 py-0.5 rounded-full">Copilot · Scene Insights</span></h3>
+            <p class="text-muted-foreground text-sm mt-1">Used for: AI Watch Companion, scene faith insights, portfolio narration.</p>
           </div>
           <button
             onclick={() => testModel('chat')}
@@ -832,15 +836,15 @@
         </div>
 
         <!-- Current selection display -->
-        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+        <div class="flex items-center gap-3 p-3 surface-1 rounded-lg border border-border/40">
           <div class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></div>
           <div class="flex-1 min-w-0">
-            <p class="text-white text-sm font-medium truncate">{modelName(aiConfig.chatModel)}</p>
-            <p class="text-gray-400 text-xs truncate">{aiConfig.chatModel}</p>
+            <p class="text-foreground text-sm font-medium truncate">{modelName(aiConfig.chatModel)}</p>
+            <p class="text-muted-foreground text-xs truncate">{aiConfig.chatModel}</p>
           </div>
           <button
             onclick={() => { showChatDropdown = !showChatDropdown; if (showChatDropdown) showAgentDropdown = false; }}
-            class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-1.5 rounded-lg transition-all"
+            class="text-xs surface-2 hover:surface-3 text-foreground/80 px-3 py-1.5 rounded-lg transition-all"
           >
             {showChatDropdown ? 'Close' : 'Change'}
           </button>
@@ -848,35 +852,35 @@
 
         <!-- Chat Model Dropdown -->
         {#if showChatDropdown}
-          <div class="border border-white/10 rounded-xl overflow-hidden">
-            <div class="p-3 border-b border-white/10 bg-white/5">
+          <div class="border border-border/40 rounded-xl overflow-hidden">
+            <div class="p-3 border-b border-border/40 surface-1">
               <input
                 type="text"
                 bind:value={chatSearch}
                 placeholder="Search models (e.g. gemini, free, fast)…"
-                class="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                class="w-full surface-2 border border-border/40 rounded-lg px-3 py-2 text-foreground text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
               />
             </div>
             <div class="max-h-72 overflow-y-auto">
               {#if modelsLoading}
-                <div class="p-4 text-center text-gray-400 text-sm">Loading models…</div>
+                <div class="p-4 text-center text-muted-foreground text-sm">Loading models…</div>
               {:else}
                 {#each filteredModels(chatSearch, 'chat') as m (m.id)}
                   <button
                     onclick={() => selectModel('chat', m.id)}
-                    class="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 {aiConfig.chatModel === m.id ? 'bg-purple-600/10' : ''}"
+                    class="w-full text-left px-4 py-3 hover:surface-1 transition-colors border-b border-white/5 last:border-0 {aiConfig.chatModel === m.id ? 'bg-purple-600/10' : ''}"
                   >
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                          <span class="text-white text-sm font-medium">{m.name}</span>
+                          <span class="text-foreground text-sm font-medium">{m.name}</span>
                           {#if aiConfig.chatModel === m.id}
                             <span class="text-xs text-purple-400">✓ Active</span>
                           {/if}
                         </div>
-                        <p class="text-gray-400 text-xs mt-0.5 truncate">{m.id}</p>
+                        <p class="text-muted-foreground text-xs mt-0.5 truncate">{m.id}</p>
                         {#if m.description}
-                          <p class="text-gray-500 text-xs mt-1 line-clamp-2">{m.description}</p>
+                          <p class="text-muted-foreground text-xs mt-1 line-clamp-2">{m.description}</p>
                         {/if}
                         <div class="flex gap-1 flex-wrap mt-1.5">
                           {#each m.tags as tag}
@@ -885,14 +889,14 @@
                         </div>
                       </div>
                       <div class="text-right shrink-0">
-                        <div class="text-xs text-gray-300">{m.promptPrice}</div>
-                        <div class="text-gray-500 text-xs">per 1M in</div>
-                        <div class="text-xs text-gray-300 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
+                        <div class="text-xs text-foreground/80">{m.promptPrice}</div>
+                        <div class="text-muted-foreground text-xs">per 1M in</div>
+                        <div class="text-xs text-foreground/80 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
                       </div>
                     </div>
                   </button>
                 {:else}
-                  <div class="p-4 text-center text-gray-400 text-sm">No chat models match your search</div>
+                  <div class="p-4 text-center text-muted-foreground text-sm">No chat models match your search</div>
                 {/each}
               {/if}
             </div>
@@ -914,18 +918,18 @@
             {#if chatTestResult.error}
               <p class="text-red-300 text-xs">{chatTestResult.error}</p>
             {:else}
-              <p class="text-gray-300 text-xs italic">"{chatTestResult.response}"</p>
+              <p class="text-foreground/80 text-xs italic">"{chatTestResult.response}"</p>
             {/if}
           </div>
         {/if}
       </div>
 
       <!-- Agent Model (Structured) -->
-      <div class="bg-white/5 rounded-xl p-5 space-y-4">
+      <div class="surface-1 rounded-xl p-5 space-y-4">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h3 class="text-white font-semibold flex items-center gap-2">🤖 Agent Model <span class="text-xs bg-orange-600/30 text-orange-300 border border-orange-600/40 px-2 py-0.5 rounded-full">Tagging · Moderation · Scoring</span></h3>
-            <p class="text-gray-400 text-sm mt-1">Used for: Content tagging, moderation, token scoring, NFT metadata, creator insights.</p>
+            <h3 class="text-foreground font-semibold flex items-center gap-2">🤖 Agent Model <span class="text-xs bg-orange-600/30 text-orange-300 border border-orange-600/40 px-2 py-0.5 rounded-full">Tagging · Moderation · Scoring</span></h3>
+            <p class="text-muted-foreground text-sm mt-1">Used for: Content tagging, moderation, token scoring, NFT metadata, creator insights.</p>
           </div>
           <button
             onclick={() => testModel('agent')}
@@ -937,15 +941,15 @@
         </div>
 
         <!-- Current selection display -->
-        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+        <div class="flex items-center gap-3 p-3 surface-1 rounded-lg border border-border/40">
           <div class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></div>
           <div class="flex-1 min-w-0">
-            <p class="text-white text-sm font-medium truncate">{modelName(aiConfig.agentModel)}</p>
-            <p class="text-gray-400 text-xs truncate">{aiConfig.agentModel}</p>
+            <p class="text-foreground text-sm font-medium truncate">{modelName(aiConfig.agentModel)}</p>
+            <p class="text-muted-foreground text-xs truncate">{aiConfig.agentModel}</p>
           </div>
           <button
             onclick={() => { showAgentDropdown = !showAgentDropdown; if (showAgentDropdown) showChatDropdown = false; }}
-            class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-1.5 rounded-lg transition-all"
+            class="text-xs surface-2 hover:surface-3 text-foreground/80 px-3 py-1.5 rounded-lg transition-all"
           >
             {showAgentDropdown ? 'Close' : 'Change'}
           </button>
@@ -953,35 +957,35 @@
 
         <!-- Agent Model Dropdown -->
         {#if showAgentDropdown}
-          <div class="border border-white/10 rounded-xl overflow-hidden">
-            <div class="p-3 border-b border-white/10 bg-white/5">
+          <div class="border border-border/40 rounded-xl overflow-hidden">
+            <div class="p-3 border-b border-border/40 surface-1">
               <input
                 type="text"
                 bind:value={agentSearch}
                 placeholder="Search models (e.g. deepseek, reasoning, free)…"
-                class="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
+                class="w-full surface-2 border border-border/40 rounded-lg px-3 py-2 text-foreground text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
               />
             </div>
             <div class="max-h-72 overflow-y-auto">
               {#if modelsLoading}
-                <div class="p-4 text-center text-gray-400 text-sm">Loading models…</div>
+                <div class="p-4 text-center text-muted-foreground text-sm">Loading models…</div>
               {:else}
                 {#each filteredModels(agentSearch, 'agent') as m (m.id)}
                   <button
                     onclick={() => selectModel('agent', m.id)}
-                    class="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 {aiConfig.agentModel === m.id ? 'bg-orange-600/10' : ''}"
+                    class="w-full text-left px-4 py-3 hover:surface-1 transition-colors border-b border-white/5 last:border-0 {aiConfig.agentModel === m.id ? 'bg-orange-600/10' : ''}"
                   >
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                          <span class="text-white text-sm font-medium">{m.name}</span>
+                          <span class="text-foreground text-sm font-medium">{m.name}</span>
                           {#if aiConfig.agentModel === m.id}
                             <span class="text-xs text-orange-400">✓ Active</span>
                           {/if}
                         </div>
-                        <p class="text-gray-400 text-xs mt-0.5 truncate">{m.id}</p>
+                        <p class="text-muted-foreground text-xs mt-0.5 truncate">{m.id}</p>
                         {#if m.description}
-                          <p class="text-gray-500 text-xs mt-1 line-clamp-2">{m.description}</p>
+                          <p class="text-muted-foreground text-xs mt-1 line-clamp-2">{m.description}</p>
                         {/if}
                         <div class="flex gap-1 flex-wrap mt-1.5">
                           {#each m.tags as tag}
@@ -990,14 +994,14 @@
                         </div>
                       </div>
                       <div class="text-right shrink-0">
-                        <div class="text-xs text-gray-300">{m.promptPrice}</div>
-                        <div class="text-gray-500 text-xs">per 1M in</div>
-                        <div class="text-xs text-gray-300 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
+                        <div class="text-xs text-foreground/80">{m.promptPrice}</div>
+                        <div class="text-muted-foreground text-xs">per 1M in</div>
+                        <div class="text-xs text-foreground/80 mt-1">{(m.contextLength / 1000).toFixed(0)}k ctx</div>
                       </div>
                     </div>
                   </button>
                 {:else}
-                  <div class="p-4 text-center text-gray-400 text-sm">No agent models match your search</div>
+                  <div class="p-4 text-center text-muted-foreground text-sm">No agent models match your search</div>
                 {/each}
               {/if}
             </div>
@@ -1019,7 +1023,7 @@
             {#if agentTestResult.error}
               <p class="text-red-300 text-xs">{agentTestResult.error}</p>
             {:else}
-              <p class="text-gray-300 text-xs font-mono">{agentTestResult.response}</p>
+              <p class="text-foreground/80 text-xs font-mono">{agentTestResult.response}</p>
             {/if}
           </div>
         {/if}
@@ -1027,28 +1031,28 @@
 
       <!-- Ollama Local Model Names -->
       {#if aiConfig.providerPreference !== 'openrouter'}
-        <div class="bg-white/5 rounded-xl p-5 space-y-4">
-          <h3 class="text-white font-semibold">💻 Local Ollama Model Names</h3>
-          <p class="text-gray-400 text-sm">Override which pulled Ollama models to use. Must match the model names you have pulled (<code class="bg-white/10 px-1 rounded text-xs">ollama list</code>).</p>
+        <div class="surface-1 rounded-xl p-5 space-y-4">
+          <h3 class="text-foreground font-semibold">💻 Local Ollama Model Names</h3>
+          <p class="text-muted-foreground text-sm">Override which pulled Ollama models to use. Must match the model names you have pulled (<code class="surface-2 px-1 rounded text-xs">ollama list</code>).</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label for="ollama-chat-model" class="block text-gray-300 text-sm font-medium mb-2">Chat model (e.g. gemma4)</label>
+              <label for="ollama-chat-model" class="block text-foreground/80 text-sm font-medium mb-2">Chat model (e.g. gemma4)</label>
               <input
                 id="ollama-chat-model"
                 type="text"
                 bind:value={aiConfig.ollamaChatModel}
                 placeholder="gemma4"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground text-sm placeholder-gray-400 focus:outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label for="ollama-agent-model" class="block text-gray-300 text-sm font-medium mb-2">Agent model (e.g. hermes3)</label>
+              <label for="ollama-agent-model" class="block text-foreground/80 text-sm font-medium mb-2">Agent model (e.g. hermes3)</label>
               <input
                 id="ollama-agent-model"
                 type="text"
                 bind:value={aiConfig.ollamaAgentModel}
                 placeholder="hermes3"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground text-sm placeholder-gray-400 focus:outline-none focus:border-orange-500"
               />
             </div>
           </div>
@@ -1059,7 +1063,7 @@
       <div class="bg-blue-900/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
         <span class="text-blue-400 text-lg mt-0.5">ℹ️</span>
         <div class="text-blue-300/80 text-xs space-y-1">
-          <p><strong class="text-blue-300">API key security:</strong> Your <code class="bg-white/10 px-1 rounded">OPENROUTER_API_KEY</code> is stored securely in Dokploy environment variables — never in the database.</p>
+          <p><strong class="text-blue-300">API key security:</strong> Your <code class="surface-2 px-1 rounded">OPENROUTER_API_KEY</code> is stored securely in Dokploy environment variables — never in the database.</p>
           <p><strong class="text-blue-300">Live changes:</strong> Model selections are stored in the database. Changes take effect within 60 seconds without redeployment.</p>
           <p><strong class="text-blue-300">Free models:</strong> Models marked "Free" have zero token cost on OpenRouter but may have rate limits.</p>
         </div>
@@ -1069,18 +1073,18 @@
 
   <!-- Security Settings -->
   {#if activeTab === 'security'}
-    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 space-y-6">
-      <h2 class="text-xl font-bold text-white">Security Configuration</h2>
+    <div class="surface-1 backdrop-blur-sm rounded-xl p-6 space-y-6">
+      <h2 class="text-xl font-bold text-foreground">Security Configuration</h2>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Authentication Settings -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">Authentication</h3>
+          <h3 class="text-lg font-bold text-foreground">Authentication</h3>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Two-Factor Authentication</div>
-              <div class="text-gray-400 text-sm">Require 2FA for all admin accounts</div>
+              <div class="text-foreground font-medium">Two-Factor Authentication</div>
+              <div class="text-muted-foreground text-sm">Require 2FA for all admin accounts</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={securitySettings.twoFactorRequired} class="sr-only peer">
@@ -1088,10 +1092,10 @@
             </label>
           </div>
           
-          <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div class="flex items-center justify-between p-4 surface-1 rounded-lg">
             <div>
-              <div class="text-white font-medium">Content Encryption</div>
-              <div class="text-gray-400 text-sm">Encrypt stored video content</div>
+              <div class="text-foreground font-medium">Content Encryption</div>
+              <div class="text-muted-foreground text-sm">Encrypt stored video content</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={securitySettings.contentEncryption} class="sr-only peer">
@@ -1101,25 +1105,25 @@
           
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="sessionTimeout" class="block text-gray-300 text-sm font-medium mb-2">Session Timeout (seconds)</label>
+              <label for="sessionTimeout" class="block text-foreground/80 text-sm font-medium mb-2">Session Timeout (seconds)</label>
               <input
                 id="sessionTimeout"
                 type="number"
                 bind:value={securitySettings.sessionTimeout}
                 min="300"
                 max="86400"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
             </div>
             <div>
-              <label for="maxLoginAttempts" class="block text-gray-300 text-sm font-medium mb-2">Max Login Attempts</label>
+              <label for="maxLoginAttempts" class="block text-foreground/80 text-sm font-medium mb-2">Max Login Attempts</label>
               <input
                 id="maxLoginAttempts"
                 type="number"
                 bind:value={securitySettings.maxLoginAttempts}
                 min="3"
                 max="10"
-                class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+                class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
             </div>
           </div>
@@ -1127,29 +1131,29 @@
 
         <!-- API and Rate Limiting -->
         <div class="space-y-4">
-          <h3 class="text-lg font-bold text-white">API Security</h3>
+          <h3 class="text-lg font-bold text-foreground">API Security</h3>
           
           <div>
-            <label for="apiRateLimit" class="block text-gray-300 text-sm font-medium mb-2">API Rate Limit (requests/hour)</label>
+            <label for="apiRateLimit" class="block text-foreground/80 text-sm font-medium mb-2">API Rate Limit (requests/hour)</label>
             <input
               id="apiRateLimit"
               type="number"
               bind:value={securitySettings.apiRateLimit}
               min="100"
               max="10000"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
             >
           </div>
           
           <div>
-            <label for="passwordMinLength" class="block text-gray-300 text-sm font-medium mb-2">Password Min Length</label>
+            <label for="passwordMinLength" class="block text-foreground/80 text-sm font-medium mb-2">Password Min Length</label>
             <input
               id="passwordMinLength"
               type="number"
               bind:value={securitySettings.passwordMinLength}
               min="8"
               max="20"
-              class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+              class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
             >
           </div>
         </div>
@@ -1157,17 +1161,17 @@
 
       <!-- IP Whitelist -->
       <div class="space-y-4">
-        <h3 class="text-lg font-bold text-white">IP Whitelist</h3>
+        <h3 class="text-lg font-bold text-foreground">IP Whitelist</h3>
         
         <div class="flex flex-wrap gap-2 mb-3">
           {#each securitySettings.ipWhitelist as ip}
             <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
               <span>{ip}</span>
-              <button onclick={() => removeIpFromWhitelist(ip)} class="text-blue-200 hover:text-white">×</button>
+              <button onclick={() => removeIpFromWhitelist(ip)} class="text-blue-200 hover:text-foreground">×</button>
             </span>
           {/each}
           {#if securitySettings.ipWhitelist.length === 0}
-            <span class="text-gray-400 text-sm">No IP restrictions configured</span>
+            <span class="text-muted-foreground text-sm">No IP restrictions configured</span>
           {/if}
         </div>
         
@@ -1177,7 +1181,7 @@
             type="text"
             bind:value={newIp}
             placeholder="Add IP address (e.g., 192.168.1.1)"
-            class="flex-1 bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+            class="flex-1 surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"
           >
           <button
             onclick={addIpToWhitelist}

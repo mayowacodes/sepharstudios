@@ -70,21 +70,33 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		).catch((err) => console.error('publish in-app notification batch failed:', err));
 	}
 
-	// Send emails in the background — don't block the response
-	const emailPromises = recipients.map(async (r) => {
+	// Send the email batch and await it before returning so the response
+	// reports actual delivery outcomes — admins were previously told
+	// "notifying: N" even when 0 emails went through. Long-tail of failed
+	// addresses is logged but the per-email try/catch keeps one bad
+	// recipient from short-circuiting the rest.
+	const emailResults = await Promise.allSettled(recipients.map(async (r) => {
 		try {
 			await sendNewReleaseNotification(r.email, r.name, content.title, content.mediaType ?? 'content', contentId);
-		} catch {
-			// Non-critical — log and continue
-			console.error(`Failed to notify ${r.email} for content ${contentId}`);
+			return { email: r.email, ok: true as const };
+		} catch (err) {
+			console.error(`Failed to notify ${r.email} for content ${contentId}:`, err);
+			return { email: r.email, ok: false as const, error: err instanceof Error ? err.message : 'unknown' };
 		}
-	});
+	}));
 
-	// Fire-and-forget — respond immediately, emails send async. Each promise
-	// already catches its own failure; this outer catch is just defensive.
-	Promise.all(emailPromises).catch((err) => {
-		console.error('publish notification batch failed unexpectedly:', err);
-	});
+	let delivered = 0;
+	let failed = 0;
+	for (const r of emailResults) {
+		if (r.status === 'fulfilled' && r.value.ok) delivered++;
+		else failed++;
+	}
 
-	return json({ success: true, contentId, notifying: recipients.length });
+	return json({
+		success: true,
+		contentId,
+		recipients: recipients.length,
+		delivered,
+		failed
+	});
 };

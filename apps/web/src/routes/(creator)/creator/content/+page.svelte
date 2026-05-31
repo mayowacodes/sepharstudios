@@ -1,13 +1,25 @@
 <!-- Creator Content Library Management -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { untrack } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+  import { browser } from '$app/environment';
   import { ContentStatus, ContentType } from '$lib/types/creator';
-  
+  import { Video, Upload, ChevronLeft, ChevronRight } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
+  const PAGE_SIZE = 25;
+
+  // Initial values from the URL — selecting a filter writes back to the URL
+  // so the page can be refreshed / shared and land on the same view.
+  const initial = browser ? page.url.searchParams : new URLSearchParams();
   let contentLibrary = $state<any[]>([]);
-  let selectedFilter = $state('all');
-  let searchTerm = $state('');
-  let selectedType = $state('all');
+  let selectedFilter = $state(initial.get('status') ?? 'all');
+  let searchTerm = $state(initial.get('q') ?? '');
+  let selectedType = $state(initial.get('type') ?? 'all');
+  let currentPage = $state(parseInt(initial.get('page') ?? '1', 10) || 1);
+  let totalPages = $state(1);
+  let totalItems = $state(0);
   let isLoading = $state(true);
 
   // Bulk-action state (Item 5B)
@@ -38,76 +50,105 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Bulk action failed');
       selected = {};
-      // Reload list so visibility / status reflects the bulk change.
-      const r = await fetch('/api/creator/content');
-      if (r.ok) {
-        const items = await r.json();
-        contentLibrary = items.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          description: item.description || '',
-          contentType: item.mediaType ?? ContentType.MOVIE,
-          status: item.status ?? ContentStatus.SUBMITTED,
-          submittedAt: item.createdAt ? new Date(item.createdAt) : null,
-          lastUpdated: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-          thumbnailUrl: item.thumbnail || item.posterUrl || item.backdropUrl || '',
-          duration: item.duration ? Number(item.duration) : 0,
-          tags: item.genres ?? item.keywords ?? [],
-          reviewNotes: item.reviewNotes || undefined,
-          rejectionReason: item.rejectionReason || undefined,
-          views: item.viewCount || 0
-        }));
-      }
+      await loadContent();
     } catch (err: any) {
       alert(err.message ?? 'Failed');
     } finally {
       bulkBusy = false;
     }
   }
-  
-  // Filter content based on status and search
-  const filteredContent = $derived(
-    contentLibrary.filter(content => {
-      const statusMatch = selectedFilter === 'all' || content.status === selectedFilter;
-      const typeMatch = selectedType === 'all' || content.contentType === selectedType;
-      const searchMatch = searchTerm === '' ||
-        content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        content.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return statusMatch && typeMatch && searchMatch;
-    })
-  );
-  
-  onMount(async () => {
+  function mapItem(item: any) {
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description || '',
+      contentType: item.mediaType ?? ContentType.MOVIE,
+      status: item.status ?? ContentStatus.SUBMITTED,
+      submittedAt: item.createdAt ? new Date(item.createdAt) : null,
+      lastUpdated: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+      thumbnailUrl: item.thumbnail || item.posterUrl || item.backdropUrl || '',
+      duration: item.duration ? Number(item.duration) : 0,
+      tags: item.genres ?? item.keywords ?? [],
+      reviewNotes: item.reviewNotes || undefined,
+      rejectionReason: item.rejectionReason || undefined,
+      views: item.viewCount || 0
+    };
+  }
+
+  async function loadContent() {
     isLoading = true;
     try {
-      const res = await fetch('/api/creator/content');
-      if (res.ok) {
-        const data = await res.json();
-        contentLibrary = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          description: item.description || '',
-          contentType: item.mediaType ?? ContentType.MOVIE,
-          status: item.status ?? ContentStatus.SUBMITTED,
-          submittedAt: item.createdAt ? new Date(item.createdAt) : null,
-          lastUpdated: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-          thumbnailUrl: item.thumbnail || item.posterUrl || item.backdropUrl || '',
-          duration: item.duration ? Number(item.duration) : 0,
-          tags: item.genres ?? item.keywords ?? [],
-          reviewNotes: item.reviewNotes || undefined,
-          rejectionReason: item.rejectionReason || undefined,
-          views: item.viewCount || 0
-        }));
+      const params = new URLSearchParams();
+      if (selectedFilter !== 'all') params.set('status', selectedFilter);
+      if (selectedType !== 'all') params.set('type', selectedType);
+      if (searchTerm.trim()) params.set('q', searchTerm.trim());
+      params.set('page', String(currentPage));
+      params.set('pageSize', String(PAGE_SIZE));
+      const res = await fetch(`/api/creator/content?${params}`);
+      if (!res.ok) return;
+      const body = await res.json();
+      const items = Array.isArray(body) ? body : (body.items ?? []);
+      contentLibrary = items.map(mapItem);
+      if (!Array.isArray(body) && body.pagination) {
+        totalPages = body.pagination.totalPages ?? 1;
+        totalItems = body.pagination.total ?? items.length;
+      } else {
+        totalPages = 1;
+        totalItems = items.length;
       }
     } finally {
       isLoading = false;
     }
+  }
+
+  // Filtered view = server-paginated rows; no further client-side filter needed.
+  const filteredContent = $derived(contentLibrary);
+
+  function syncUrl() {
+    if (!browser) return;
+    const params = new URLSearchParams();
+    if (selectedFilter !== 'all') params.set('status', selectedFilter);
+    if (selectedType !== 'all') params.set('type', selectedType);
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (currentPage > 1) params.set('page', String(currentPage));
+    const qs = params.toString();
+    const next = qs ? `${page.url.pathname}?${qs}` : page.url.pathname;
+    if (next !== page.url.pathname + page.url.search) {
+      goto(next, { replaceState: true, keepFocus: true, noScroll: true });
+    }
+  }
+
+  // Debounce search so we don't fetch on every keystroke.
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+  function onSearchInput() {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      currentPage = 1;
+      void loadContent();
+      syncUrl();
+    }, 300);
+  }
+
+  // Filter changes reset to page 1; page changes just refetch. Both flow
+  // through `loadContent` after URL sync. untrack() prevents the
+  // filter-change branch from re-running when `currentPage` is set inside it.
+  let prevFilter = untrack(() => selectedFilter);
+  let prevType = untrack(() => selectedType);
+  $effect(() => {
+    if (selectedFilter !== prevFilter || selectedType !== prevType) {
+      prevFilter = selectedFilter;
+      prevType = selectedType;
+      untrack(() => { currentPage = 1; });
+    }
+    selectedFilter; selectedType; currentPage;
+    void loadContent();
+    syncUrl();
   });
   
   function getStatusColor(status: ContentStatus) {
     switch (status) {
-      case ContentStatus.DRAFT: return 'bg-gray-600 text-white';
+      case ContentStatus.DRAFT: return 'bg-gray-600 text-foreground';
       case ContentStatus.SUBMITTED: return 'bg-blue-600 text-white';
       case ContentStatus.THEOLOGICAL_REVIEW: return 'bg-purple-600 text-white';
       case ContentStatus.CONTENT_REVIEW: return 'bg-yellow-600 text-black';
@@ -115,7 +156,7 @@
       case ContentStatus.APPROVED: return 'bg-green-600 text-white';
       case ContentStatus.PUBLISHED: return 'bg-emerald-600 text-white';
       case ContentStatus.REJECTED: return 'bg-red-600 text-white';
-      default: return 'bg-gray-500 text-white';
+      default: return 'bg-gray-500 text-foreground';
     }
   }
   
@@ -178,52 +219,61 @@
     }
   }
   
-  function deleteContent(id: string) {
-    if (confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
-      contentLibrary = contentLibrary.filter(c => c.id !== id);
+  async function deleteContent(id: string) {
+    if (!confirm('Are you sure you want to delete this content? This action cannot be undone.')) return;
+    // Optimistic removal + server delete; reload to pick up the canonical
+    // archived state in case the server applies a status change beyond
+    // simple removal (the API soft-archives drafts).
+    const snapshot = contentLibrary;
+    contentLibrary = contentLibrary.filter((c) => c.id !== id);
+    try {
+      const res = await fetch(`/api/creator/content/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        contentLibrary = snapshot;
+        const body = await res.json().catch(() => ({}));
+        alert(`Delete failed: ${body.error ?? `HTTP ${res.status}`}`);
+        return;
+      }
+      await loadContent();
+    } catch (err) {
+      contentLibrary = snapshot;
+      alert(`Delete failed: ${err instanceof Error ? err.message : 'unknown'}`);
     }
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">Content Library</h1>
-      <p class="text-gray-300">Manage your submitted content and track review progress</p>
-    </div>
-    <div class="mt-4 sm:mt-0">
-      <a 
-        href="/creator/upload" 
-        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center"
-      >
-        <span class="mr-2">+</span> Upload New Content
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Video} title="Content Library" subtitle="Manage your submitted content and track review progress.">
+    {#snippet actions()}
+      <a href="/creator/upload" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
+        <Upload class="w-3 h-3" /> Upload
       </a>
-    </div>
-  </div>
+    {/snippet}
+  </PageHeader>
 
   <!-- Filters and Search -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <!-- Search -->
       <div>
-        <label for="search" class="block text-sm font-medium text-white mb-2">Search Content</label>
-        <input 
-          type="text" 
+        <label for="search" class="block text-sm font-medium text-foreground mb-2">Search Content</label>
+        <input
+          type="text"
           id="search"
           bind:value={searchTerm}
+          oninput={onSearchInput}
           placeholder="Search by title or description..."
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"
         />
       </div>
       
       <!-- Status Filter -->
       <div>
-        <label for="status-filter" class="block text-sm font-medium text-white mb-2">Filter by Status</label>
+        <label for="status-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Status</label>
         <select 
           id="status-filter"
           bind:value={selectedFilter}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
         >
           <option value="all">All Statuses</option>
           <option value={ContentStatus.DRAFT}>Draft</option>
@@ -239,11 +289,11 @@
       
       <!-- Type Filter -->
       <div>
-        <label for="type-filter" class="block text-sm font-medium text-white mb-2">Filter by Type</label>
+        <label for="type-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Type</label>
         <select 
           id="type-filter"
           bind:value={selectedType}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
         >
           <option value="all">All Types</option>
           <option value={ContentType.MOVIE}>Movies</option>
@@ -258,9 +308,9 @@
       
       <!-- Quick Stats -->
       <div>
-        <div class="text-sm font-medium text-white mb-2">Quick Stats</div>
-        <div class="text-2xl font-bold text-purple-400">{contentLibrary.length}</div>
-        <div class="text-xs text-gray-400">Total Submissions</div>
+        <div class="text-sm font-medium text-foreground mb-2">Quick Stats</div>
+        <div class="text-2xl font-bold text-purple-400">{totalItems}</div>
+        <div class="text-xs text-muted-foreground">Matching submissions</div>
       </div>
     </div>
   </div>
@@ -269,20 +319,26 @@
   {#if isLoading}
     <div class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      <p class="text-white ml-4">Loading your content...</p>
+      <p class="text-foreground ml-4">Loading your content...</p>
     </div>
   {:else}
-    <!-- Bulk action bar -->
+    <!-- Bulk action bar. On mobile, pinning to top-0 keeps the bar flush
+         with the viewport edge (top-4 left a transparent strip showing
+         the content underneath) and the buttons drop below the count on
+         narrow widths instead of wrapping into a tall block that
+         overlaps the cards below. -->
     {#if selectedIds.length > 0}
-      <div class="sticky top-4 z-20 bg-purple-900/90 backdrop-blur border border-purple-500/40 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3 shadow-lg">
-        <span class="text-sm text-white font-medium">{selectedIds.length} selected</span>
-        <button type="button" onclick={toggleAll} class="text-xs text-purple-200 hover:text-white underline">
-          {filteredContent.every((c: any) => selected[c.id]) ? 'Clear' : 'Select all visible'}
-        </button>
-        <div class="flex flex-wrap gap-2 ml-auto">
+      <div class="sticky top-0 sm:top-4 z-20 bg-purple-900/95 sm:bg-purple-900/90 backdrop-blur border border-purple-500/40 rounded-none sm:rounded-xl -mx-4 sm:mx-0 px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 shadow-lg">
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-foreground font-medium">{selectedIds.length} selected</span>
+          <button type="button" onclick={toggleAll} class="text-xs text-purple-200 hover:text-foreground underline">
+            {filteredContent.every((c: any) => selected[c.id]) ? 'Clear' : 'Select all visible'}
+          </button>
+        </div>
+        <div class="flex flex-wrap gap-2 sm:ml-auto">
           <button type="button" onclick={() => bulkAction('publish')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white">Make public</button>
           <button type="button" onclick={() => bulkAction('unlist')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white">Unlist</button>
-          <button type="button" onclick={() => bulkAction('private')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white">Make private</button>
+          <button type="button" onclick={() => bulkAction('private')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-foreground">Make private</button>
           <button type="button" onclick={() => bulkAction('archive')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white">Archive</button>
           <button type="button" onclick={() => bulkAction('delete')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white">Delete</button>
         </div>
@@ -292,7 +348,7 @@
     <!-- Content Grid -->
     <div class="space-y-4">
       {#each filteredContent as content}
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/15 transition-all {selected[content.id] ? 'ring-2 ring-purple-500' : ''}">
+        <div class="surface-2 backdrop-blur-sm rounded-xl p-6 hover:surface-3 transition-all {selected[content.id] ? 'ring-2 ring-purple-500' : ''}">
           <div class="flex flex-col lg:flex-row lg:items-start gap-4">
             <!-- Selection checkbox -->
             <div class="flex-shrink-0 pt-2">
@@ -319,9 +375,9 @@
                 <div>
                   <div class="flex items-center mb-2">
                     <span class="text-2xl mr-2">{getContentTypeIcon(content.contentType)}</span>
-                    <h3 class="text-xl font-bold text-white">{content.title}</h3>
+                    <h3 class="text-xl font-bold text-foreground">{content.title}</h3>
                   </div>
-                  <p class="text-gray-300 mb-3">{content.description}</p>
+                  <p class="text-foreground/80 mb-3">{content.description}</p>
                   
                   <!-- Tags -->
                   <div class="flex flex-wrap gap-2 mb-3">
@@ -345,21 +401,21 @@
               <!-- Metadata -->
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <div class="text-gray-400">Duration</div>
-                  <div class="text-white font-medium">{content.duration} min</div>
+                  <div class="text-muted-foreground">Duration</div>
+                  <div class="text-foreground font-medium">{content.duration} min</div>
                 </div>
                 <div>
-                  <div class="text-gray-400">Submitted</div>
-                  <div class="text-white font-medium">{formatDate(content.submittedAt)}</div>
+                  <div class="text-muted-foreground">Submitted</div>
+                  <div class="text-foreground font-medium">{formatDate(content.submittedAt)}</div>
                 </div>
                 <div>
-                  <div class="text-gray-400">Last Updated</div>
-                  <div class="text-white font-medium">{formatDate(content.lastUpdated)}</div>
+                  <div class="text-muted-foreground">Last Updated</div>
+                  <div class="text-foreground font-medium">{formatDate(content.lastUpdated)}</div>
                 </div>
                 {#if content.views}
                   <div>
-                    <div class="text-gray-400">Views</div>
-                    <div class="text-white font-medium">{content.views.toLocaleString()}</div>
+                    <div class="text-muted-foreground">Views</div>
+                    <div class="text-foreground font-medium">{content.views.toLocaleString()}</div>
                   </div>
                 {/if}
               </div>
@@ -399,7 +455,7 @@
                   </button>
                   <button
                     onclick={() => manageContent(content.id)}
-                    class="bg-white/10 hover:bg-white/15 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    class="surface-2 hover:surface-3 text-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Edit details
                   </button>
@@ -443,8 +499,8 @@
       {:else}
         <div class="text-center py-12">
           <div class="text-6xl mb-4">📚</div>
-          <h3 class="text-xl font-bold text-white mb-2">No Content Found</h3>
-          <p class="text-gray-400 mb-6">
+          <h3 class="text-xl font-bold text-foreground mb-2">No Content Found</h3>
+          <p class="text-muted-foreground mb-6">
             {searchTerm || selectedFilter !== 'all' || selectedType !== 'all' 
               ? 'Try adjusting your filters or search terms.' 
               : 'Start by uploading your first piece of content.'}
@@ -460,5 +516,31 @@
         </div>
       {/each}
     </div>
+
+    {#if totalPages > 1}
+      <div class="flex items-center justify-between text-sm text-muted-foreground mt-4">
+        <div>
+          Page {currentPage} of {totalPages} — {totalItems} total
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={currentPage <= 1 || isLoading}
+            onclick={() => (currentPage = Math.max(1, currentPage - 1))}
+            class="px-3 py-1.5 rounded-lg surface-2 hover:surface-3 disabled:opacity-40 inline-flex items-center gap-1"
+          >
+            <ChevronLeft class="w-4 h-4" /> Prev
+          </button>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages || isLoading}
+            onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
+            class="px-3 py-1.5 rounded-lg surface-2 hover:surface-3 disabled:opacity-40 inline-flex items-center gap-1"
+          >
+            Next <ChevronRight class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    {/if}
   {/if}
 </div>

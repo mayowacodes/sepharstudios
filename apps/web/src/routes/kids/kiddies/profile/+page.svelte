@@ -21,7 +21,7 @@
       {#each avatars as avatar}
         <button
           type="button"
-          on:click={() => selectAvatar(avatar)}
+          onclick={() => selectAvatar(avatar)}
           aria-label="Choose avatar"
           aria-pressed={selectedAvatar === avatar}
           class="rounded-full focus:outline-none focus:ring-4 focus:ring-purple-300"

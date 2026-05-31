@@ -1,19 +1,11 @@
-<!-- Admin Dashboard Home -->
+<!-- Admin Dashboard Home — bento landing page -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  // contracts.ts pulls all ABIs + viem helpers — deferred to onMount so the
-  // admin shell loads without paying for the contract chunk eagerly.
-  import type {
-    stcToken as StcToken,
-    tokenAMM as TokenAmm,
-    subscriptionContract as SubContract
-  } from '$lib/web3/contracts';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
   import {
-    Coins, Crown, TrendingUp, Users, DollarSign, Activity,
-    Home, Clock, CheckCircle2, XCircle, Eye, FileCheck, Timer
+    Clock, CheckCircle2, XCircle, Eye, FileCheck, Timer,
+    Users, ArrowUpRight, AlertTriangle,
+    ShieldCheck, Video, Banknote, MessageSquare, Coins,
+    Sparkles
   } from '@lucide/svelte';
   import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
   import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
@@ -30,120 +22,54 @@
     avgApprovalHours: 0
   });
 
-  // Web3 platform metrics
-  let tokenomicsStats = $state({
-    stcPrice: '0',
-    totalStaked: '0',
-    activeNFTs: 0,
-    monthlyRevenue: '0',
-    revenuePool: '0',
-    buybackAmount: '0'
-  });
-
-  // Admin Web3 status
-  let adminWeb3Status = $state({
-    stcBalance: '0',
-    subscriptionCount: 0,
-    isConnected: false,
-    hasSubscription: false,
-    subscriptionTier: 0,
-    subscriptionTokenId: 0
-  });
-
   let urgentReviews = $state<{ id: string; title: string; mediaType: string; createdAt: string }[]>([]);
-  
-  let stcToken: typeof StcToken | null = null;
-  let tokenAMM: typeof TokenAmm | null = null;
-  let subscriptionContract: typeof SubContract | null = null;
+  let loading = $state(true);
 
   onMount(async () => {
-    const [statsRes, pendingRes] = await Promise.all([
-      fetch('/api/admin/stats'),
-      fetch('/api/admin/content?pending=true&limit=3')
-    ]);
-    if (statsRes.ok) adminStats = await statsRes.json();
-    if (pendingRes.ok) urgentReviews = await pendingRes.json();
-
-    // Load Web3 metrics
     try {
-      const mod = await import('$lib/web3/contracts');
-      stcToken = mod.stcToken;
-      tokenAMM = mod.tokenAMM;
-      subscriptionContract = mod.subscriptionContract;
-
-      const [price, poolInfo, totalSupply] = await Promise.all([
-        tokenAMM.getSTCPrice(),
-        tokenAMM.getPoolInfo(),
-        stcToken.totalSupply()
+      const [statsRes, pendingRes] = await Promise.all([
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/content?pending=true&limit=4')
       ]);
-
-      // Get admin wallet info if connected
-      const account = { address: '0x1234567890123456789012345678901234567890' }; // Mock admin address
-      let adminBalance = '0';
-      try {
-        adminBalance = await stcToken.balanceOf(account.address);
-        adminWeb3Status.isConnected = true;
-        adminWeb3Status.stcBalance = adminBalance;
-      } catch (err) {
-        console.warn('Could not fetch admin balance:', err);
+      if (statsRes.ok) adminStats = await statsRes.json();
+      if (pendingRes.ok) {
+        const body = await pendingRes.json();
+        urgentReviews = Array.isArray(body) ? body : (body.items ?? body.content ?? []);
       }
-
-      // Get subscription stats using subscriptionContract
-      try {
-        // Get admin's subscription status
-        const adminSubscription = await subscriptionContract.hasActiveSubscription(account.address);
-        const adminSubscriptionDetails = adminSubscription.hasAccess ?
-          await subscriptionContract.getSubscriptionStatus(account.address) : null;
-
-        // Mock getting total active subscriptions - in real app would query contract events or have admin getter
-        adminWeb3Status.subscriptionCount = 1245;
-
-        // Store admin subscription info
-        adminWeb3Status.hasSubscription = adminSubscription.hasAccess;
-        adminWeb3Status.subscriptionTier = adminSubscription.tier;
-        adminWeb3Status.subscriptionTokenId = adminSubscriptionDetails?.tokenId || 0;
-      } catch (err) {
-        console.warn('Could not fetch subscription stats:', err);
-        adminWeb3Status.subscriptionCount = 0;
-      }
-
-      tokenomicsStats = {
-        stcPrice: price,
-        totalStaked: poolInfo.stcBalance,
-        activeNFTs: adminWeb3Status.subscriptionCount,
-        monthlyRevenue: poolInfo.monthlyRevenue,
-        revenuePool: poolInfo.usdcBalance,
-        buybackAmount: (parseFloat(poolInfo.monthlyRevenue) * 0.08).toFixed(2)
-      };
-    } catch (error) {
-      console.error('Error loading Web3 metrics:', error);
+    } finally {
+      loading = false;
     }
   });
+
+  const quickActions = [
+    { href: '/admin/review', label: 'Review Queue', icon: ShieldCheck, accent: 'yellow' },
+    { href: '/admin/content', label: 'Content', icon: Video, accent: 'blue' },
+    { href: '/admin/creators', label: 'Creators', icon: Users, accent: 'green' },
+    { href: '/admin/payouts', label: 'Payouts', icon: Banknote, accent: 'orange' },
+    { href: '/admin/tokenomics', label: 'Tokenomics', icon: Coins, accent: 'amber' },
+    { href: '/admin/communications', label: 'Messages', icon: MessageSquare, accent: 'cyan' }
+  ];
 </script>
 
-<div class="space-y-8 container mx-auto px-4 py-4">
+<div class="container mx-auto px-4 py-6 space-y-6">
   <PageHeader
-    icon={Home}
-    title="Admin Dashboard"
-    subtitle="Manage platform content and the creator community."
+    icon={ShieldCheck}
+    title="Admin"
+    subtitle="Platform overview, content review, creator community."
   >
     {#snippet actions()}
-      <Badge variant="outline" class="bg-green-500/20 text-green-400 border-green-400">
-        {adminWeb3Status.isConnected ? 'Web3 Connected' : 'Web3 Disconnected'}
-      </Badge>
-      {#if parseFloat(adminWeb3Status.stcBalance) > 1000}
-        <Badge variant="outline" class="bg-yellow-500/20 text-yellow-400 border-yellow-400">Super Admin</Badge>
-      {/if}
-      {#if adminWeb3Status.hasSubscription}
-        <Badge variant="outline" class="bg-purple-500/20 text-purple-400 border-purple-400">
-          NFT Tier {adminWeb3Status.subscriptionTier} #{adminWeb3Status.subscriptionTokenId}
-        </Badge>
-      {/if}
+      <a
+        href="/admin/ai-runs"
+        class="hidden md:inline-flex items-center gap-1.5 text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors"
+      >
+        <Sparkles class="w-3.5 h-3.5" />
+        AI Runs
+      </a>
     {/snippet}
   </PageHeader>
 
-  <!-- Platform stats -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+  <!-- Primary KPIs (5-up on desktop, 2-up on mobile) -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
     <KpiCard label="Pending Reviews" value={adminStats.pendingReviews} icon={Clock} accent="yellow" href="/admin/review" index={0} />
     <KpiCard label="Active Creators" value={adminStats.totalCreators} icon={Users} accent="blue" href="/admin/creators" index={1} />
     <KpiCard label="Published" value={adminStats.publishedContent} icon={CheckCircle2} accent="green" href="/admin/content?status=approved" index={2} />
@@ -151,135 +77,103 @@
     <KpiCard label="Platform Views" value={adminStats.totalViews.toLocaleString()} icon={Eye} accent="purple" href="/admin/analytics" index={4} />
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <KpiCard label="Pending Creator Apps" value={adminStats.pendingApplications} icon={FileCheck} accent="yellow" href="/admin/creator-applications" index={0} />
-    <KpiCard label="Approved (7 days)" value={adminStats.approvedApplications7d} icon={CheckCircle2} accent="green" href="/admin/creator-applications?status=approved&period=7d" index={1} />
-    <KpiCard
-      label="Avg Approval (hrs)"
-      value={Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}
-      icon={Timer}
-      accent="blue"
-      href="/admin/creator-applications"
-      index={2}
-    />
-  </div>
-
-  <!-- Tokenomics Overview -->
-  <Card class="bg-linear-to-r from-primary/20 to-secondary/20">
-    <CardHeader>
-      <CardTitle class="flex items-center space-x-2 text-white">
-        <Coins class="h-6 w-6" />
-        <span>Platform Tokenomics Overview</span>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <DollarSign class="h-6 w-6 mx-auto mb-2 text-green-400" />
-          <div class="text-lg font-bold text-white">${tokenomicsStats.stcPrice.slice(0,8)}</div>
-          <div class="text-xs text-gray-300">STC Price</div>
+  <!-- Bento body: urgent reviews (2 cols) + secondary KPIs (1 col) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <!-- Urgent reviews — bento hero -->
+    <section class="lg:col-span-2 surface-1 rounded-xl p-5">
+      <header class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <AlertTriangle class="w-4 h-4 text-yellow-500" />
+          <h2 class="text-sm font-semibold text-foreground">Urgent reviews</h2>
         </div>
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <Crown class="h-6 w-6 mx-auto mb-2 text-yellow-400" />
-          <div class="text-lg font-bold text-white">{tokenomicsStats.activeNFTs.toLocaleString()}</div>
-          <div class="text-xs text-gray-300">Active NFTs</div>
+        <a href="/admin/review" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">
+          Open queue <ArrowUpRight class="w-3 h-3" />
+        </a>
+      </header>
+
+      {#if loading}
+        <div class="space-y-2">
+          {#each Array(3) as _, i (i)}
+            <div class="surface-2 rounded h-12 animate-pulse"></div>
+          {/each}
         </div>
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <TrendingUp class="h-6 w-6 mx-auto mb-2 text-blue-400" />
-          <div class="text-lg font-bold text-white">${parseFloat(tokenomicsStats.monthlyRevenue).toLocaleString()}</div>
-          <div class="text-xs text-gray-300">Monthly Revenue</div>
+      {:else if urgentReviews.length === 0}
+        <div class="text-center py-8 text-muted-foreground text-sm">
+          <CheckCircle2 class="w-8 h-8 mx-auto mb-2 text-green-500/70" />
+          <p>Review queue is empty.</p>
+          <p class="text-xs mt-1">Nothing to review right now — nice work.</p>
         </div>
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <Coins class="h-6 w-6 mx-auto mb-2 text-orange-400" />
-          <div class="text-lg font-bold text-white">{parseFloat(tokenomicsStats.totalStaked).toLocaleString()}</div>
-          <div class="text-xs text-gray-300">STC Staked</div>
-        </div>
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <Activity class="h-6 w-6 mx-auto mb-2 text-purple-400" />
-          <div class="text-lg font-bold text-white">${parseFloat(tokenomicsStats.buybackAmount).toLocaleString()}</div>
-          <div class="text-xs text-gray-300">Monthly Buyback</div>
-        </div>
-        <div class="text-center p-3 bg-white/10 rounded-lg">
-          <Users class="h-6 w-6 mx-auto mb-2 text-cyan-400" />
-          <div class="text-lg font-bold text-white">${parseFloat(tokenomicsStats.revenuePool).toLocaleString()}</div>
-          <div class="text-xs text-gray-300">Creator Pool</div>
-        </div>
-      </div>
-      <div class="mt-4 flex space-x-3">
-        <Button href="/admin/tokenomics" class="bg-primary hover:bg-primary/90">
-          <Coins class="mr-2 h-4 w-4" />
-          Manage Tokenomics
-        </Button>
-        <Button href="/admin/creators" variant="outline">
-          <Users class="mr-2 h-4 w-4" />
-          Creator Payments
-        </Button>
-      </div>
-    </CardContent>
-  </Card>
-
-  <!-- Quick Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-    <a href="/admin/review" class="bg-linear-to-r from-yellow-600 to-orange-600 rounded-xl p-6 text-center hover:from-yellow-700 hover:to-orange-700 transition-all">
-      <div class="text-3xl mb-3">👁️</div>
-      <h3 class="text-lg font-bold text-white mb-1">Review Queue</h3>
-      <p class="text-gray-200 text-sm">Review pending content</p>
-    </a>
-
-    <a href="/admin/content" class="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center hover:from-blue-700 hover:to-indigo-700 transition-all">
-      <div class="text-3xl mb-3">🎬</div>
-      <h3 class="text-lg font-bold text-white mb-1">Content Library</h3>
-      <p class="text-gray-200 text-sm">Manage all content</p>
-    </a>
-
-    <a href="/admin/creators" class="bg-linear-to-r from-green-600 to-teal-600 rounded-xl p-6 text-center hover:from-green-700 hover:to-teal-700 transition-all">
-      <div class="text-3xl mb-3">👥</div>
-      <h3 class="text-lg font-bold text-white mb-1">Creators</h3>
-      <p class="text-gray-200 text-sm">Manage creator accounts</p>
-    </a>
-
-    <a href="/admin/tokenomics" class="bg-linear-to-r from-orange-600 to-amber-600 rounded-xl p-6 text-center hover:from-orange-700 hover:to-amber-700 transition-all">
-      <div class="text-3xl mb-3">💰</div>
-      <h3 class="text-lg font-bold text-white mb-1">Tokenomics</h3>
-      <p class="text-gray-200 text-sm">STC & Revenue Control</p>
-    </a>
-
-    <a href="/admin/policies" class="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-center hover:from-purple-700 hover:to-indigo-700 transition-all">
-      <div class="text-3xl mb-3">📋</div>
-      <h3 class="text-lg font-bold text-white mb-1">Policies</h3>
-      <p class="text-gray-200 text-sm">Content guidelines</p>
-    </a>
-
-    <a href="/admin/communications" class="bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl p-6 text-center hover:from-cyan-700 hover:to-blue-700 transition-all">
-      <div class="text-3xl mb-3">💬</div>
-      <h3 class="text-lg font-bold text-white mb-1">Messages</h3>
-      <p class="text-gray-200 text-sm">Creator communication</p>
-    </a>
-  </div>
-
-  <!-- Urgent Reviews -->
-  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-    <h2 class="text-2xl font-bold text-white mb-4">Urgent Reviews Required</h2>
-    <div class="space-y-4">
-      {#if urgentReviews.length === 0}
-        <div class="text-gray-400 text-sm">No pending content reviews.</div>
       {:else}
-        {#each urgentReviews as item, index (item.id)}
-          <div class={`flex items-center justify-between py-3 ${index < urgentReviews.length - 1 ? 'border-b border-gray-700' : ''}`}>
-            <div>
-              <div class="text-white font-medium">"{item.title}" - {item.mediaType}</div>
-              <div class="text-gray-400 text-sm">Submitted {new Date(item.createdAt).toLocaleDateString()}</div>
-            </div>
-            <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">Pending</span>
-          </div>
-        {/each}
+        <ul class="divide-y divide-border/40">
+          {#each urgentReviews as item (item.id)}
+            <li>
+              <a
+                href={`/admin/review/${item.id}`}
+                class="flex items-center justify-between py-2.5 px-1 -mx-1 rounded hover:surface-2 transition-colors"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm text-foreground truncate">{item.title}</div>
+                  <div class="text-xs text-muted-foreground">
+                    {item.mediaType} · submitted {new Date(item.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <span class="ml-3 shrink-0 text-[10px] uppercase tracking-wide bg-yellow-500/15 text-yellow-600 dark:text-yellow-300 rounded-full px-2 py-0.5">
+                  Pending
+                </span>
+              </a>
+            </li>
+          {/each}
+        </ul>
       {/if}
-</div>
-    
-    <div class="mt-6">
-      <a href="/admin/review" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg inline-block transition-colors">
-        Review All Pending Content
-      </a>
-    </div>
+    </section>
+
+    <!-- Creator applications stat tile -->
+    <section class="surface-1 rounded-xl p-5 space-y-4">
+      <header class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <FileCheck class="w-4 h-4 text-blue-500" />
+          <h2 class="text-sm font-semibold text-foreground">Creator applications</h2>
+        </div>
+        <a href="/admin/creator-applications" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">
+          Review <ArrowUpRight class="w-3 h-3" />
+        </a>
+      </header>
+
+      <div class="space-y-3">
+        <div>
+          <div class="text-3xl font-semibold text-foreground tabular-nums">{adminStats.pendingApplications}</div>
+          <div class="text-xs text-muted-foreground">pending</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="surface-2 rounded-md px-2 py-1.5">
+            <div class="text-foreground font-medium tabular-nums">{adminStats.approvedApplications7d}</div>
+            <div class="text-muted-foreground">approved · 7d</div>
+          </div>
+          <div class="surface-2 rounded-md px-2 py-1.5">
+            <div class="text-foreground font-medium tabular-nums">
+              {Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : '0.0'}h
+            </div>
+            <div class="text-muted-foreground">avg approval</div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <!-- Quick actions strip -->
+  <section>
+    <h2 class="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Quick actions</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+      {#each quickActions as a (a.href)}
+        {@const Icon = a.icon}
+        <a
+          href={a.href}
+          class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex flex-col items-start gap-2 group"
+        >
+          <Icon class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <span class="text-sm font-medium text-foreground">{a.label}</span>
+        </a>
+      {/each}
+    </div>
+  </section>
 </div>

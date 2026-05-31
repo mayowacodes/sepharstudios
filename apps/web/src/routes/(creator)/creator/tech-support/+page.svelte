@@ -1,5 +1,8 @@
 <!-- Technical Support -->
 <script lang="ts">
+  import { Wrench } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
   interface TicketForm {
     subject: string;
     category: string;
@@ -99,38 +102,34 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-white mb-2">Technical Support</h1>
-    <p class="text-gray-300">Get personalized help from our technical support team</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Wrench} title="Technical Support" subtitle="Get personalized help from our technical support team." />
 
   {#if !isSubmitted}
     <!-- Quick Help Section -->
     <div class="bg-blue-600/20 border border-blue-600 rounded-xl p-6">
-      <h2 class="text-xl font-bold text-white mb-4">🔍 Quick Solutions</h2>
+      <h2 class="text-xl font-bold text-foreground mb-4">🔍 Quick Solutions</h2>
       <p class="text-blue-200 mb-4">
         Before submitting a ticket, try these common solutions that resolve 80% of technical issues:
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white/5 rounded-lg p-4">
-          <h3 class="text-white font-medium mb-2">🔄 Clear Browser Cache</h3>
+        <div class="surface-1 rounded-lg p-4">
+          <h3 class="text-foreground font-medium mb-2">🔄 Clear Browser Cache</h3>
           <p class="text-blue-200 text-sm mb-2">Fixes most dashboard and upload issues</p>
           <button class="text-blue-300 hover:text-blue-100 text-sm">How to clear cache →</button>
         </div>
-        <div class="bg-white/5 rounded-lg p-4">
-          <h3 class="text-white font-medium mb-2">📱 Try Different Browser</h3>
+        <div class="surface-1 rounded-lg p-4">
+          <h3 class="text-foreground font-medium mb-2">📱 Try Different Browser</h3>
           <p class="text-blue-200 text-sm mb-2">Switch to Chrome, Firefox, or Safari</p>
           <button class="text-blue-300 hover:text-blue-100 text-sm">Supported browsers →</button>
         </div>
-        <div class="bg-white/5 rounded-lg p-4">
-          <h3 class="text-white font-medium mb-2">🔌 Check Internet Connection</h3>
+        <div class="surface-1 rounded-lg p-4">
+          <h3 class="text-foreground font-medium mb-2">🔌 Check Internet Connection</h3>
           <p class="text-blue-200 text-sm mb-2">Ensure stable connection for uploads</p>
           <button class="text-blue-300 hover:text-blue-100 text-sm">Connection test →</button>
         </div>
-        <div class="bg-white/5 rounded-lg p-4">
-          <h3 class="text-white font-medium mb-2">📚 Browse Help Articles</h3>
+        <div class="surface-1 rounded-lg p-4">
+          <h3 class="text-foreground font-medium mb-2">📚 Browse Help Articles</h3>
           <p class="text-blue-200 text-sm mb-2">Step-by-step guides for common issues</p>
           <a href="/creator/support" class="text-blue-300 hover:text-blue-100 text-sm">View help center →</a>
         </div>
@@ -138,29 +137,29 @@
     </div>
 
     <!-- Support Ticket Form -->
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-      <h2 class="text-xl font-bold text-white mb-6">🎫 Submit Support Ticket</h2>
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+      <h2 class="text-xl font-bold text-foreground mb-6">🎫 Submit Support Ticket</h2>
 
       <form class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="email-input" class="block text-white font-medium mb-2">Email Address *</label>
+            <label for="email-input" class="block text-foreground font-medium mb-2">Email Address *</label>
             <input
               id="email-input"
               type="email"
               bind:value={ticketForm.email}
               placeholder="your.email@example.com"
-              class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+              class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-purple-500"
               required
             />
           </div>
 
           <div>
-            <label for="priority-select" class="block text-white font-medium mb-2">Priority Level</label>
+            <label for="priority-select" class="block text-foreground font-medium mb-2">Priority Level</label>
             <select
               id="priority-select"
               bind:value={ticketForm.priority}
-              class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
+              class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"
             >
               <option value="low">🟢 Low - General question</option>
               <option value="normal">🟡 Normal - Issue affecting workflow</option>
@@ -171,11 +170,11 @@
         </div>
 
         <div>
-          <label for="category-select" class="block text-white font-medium mb-2">Issue Category *</label>
+          <label for="category-select" class="block text-foreground font-medium mb-2">Issue Category *</label>
           <select
             id="category-select"
             bind:value={ticketForm.category}
-            class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500"
+            class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"
             required
           >
             <option value="">Select a category...</option>
@@ -186,19 +185,19 @@
         </div>
 
         <div>
-          <label for="subject-input" class="block text-white font-medium mb-2">Subject *</label>
+          <label for="subject-input" class="block text-foreground font-medium mb-2">Subject *</label>
           <input
             id="subject-input"
             type="text"
             bind:value={ticketForm.subject}
             placeholder="Brief description of your issue"
-            class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+            class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-purple-500"
             required
           />
         </div>
 
         <div>
-          <label for="description-textarea" class="block text-white font-medium mb-2">Detailed Description *</label>
+          <label for="description-textarea" class="block text-foreground font-medium mb-2">Detailed Description *</label>
           <textarea
             id="description-textarea"
             bind:value={ticketForm.description}
@@ -209,15 +208,15 @@
 - What did you expect to happen?
 - When did this issue start?
 - Are there any error messages?"
-            class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+            class="w-full px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-purple-500"
             required
           ></textarea>
         </div>
 
         <!-- File Attachments -->
         <div>
-          <label for="file-upload" class="block text-white font-medium mb-2">Attachments (Optional)</label>
-          <div class="border-2 border-dashed border-white/20 rounded-lg p-6 text-center">
+          <label for="file-upload" class="block text-foreground font-medium mb-2">Attachments (Optional)</label>
+          <div class="border-2 border-dashed border-border rounded-lg p-6 text-center">
             <input
               type="file"
               multiple
@@ -228,16 +227,16 @@
             />
             <label for="file-upload" class="cursor-pointer">
               <div class="text-4xl mb-2">📎</div>
-              <p class="text-gray-300 mb-2">Click to attach files</p>
-              <p class="text-gray-400 text-sm">Screenshots, error logs, or other relevant files (Max 10MB each)</p>
+              <p class="text-foreground/80 mb-2">Click to attach files</p>
+              <p class="text-muted-foreground text-sm">Screenshots, error logs, or other relevant files (Max 10MB each)</p>
             </label>
           </div>
 
           {#if ticketForm.attachments.length > 0}
             <div class="mt-4 space-y-2">
               {#each ticketForm.attachments as file, index}
-                <div class="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                  <span class="text-white text-sm">{file.name}</span>
+                <div class="flex items-center justify-between surface-1 rounded-lg p-3">
+                  <span class="text-foreground text-sm">{file.name}</span>
                   <button
                     type="button"
                     onclick={() => removeAttachment(index)}
@@ -253,18 +252,18 @@
 
         <!-- System Information -->
         <div class="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4">
-          <h3 class="text-white font-medium mb-2">📋 System Information</h3>
+          <h3 class="text-foreground font-medium mb-2">📋 System Information</h3>
           <p class="text-yellow-200 text-sm mb-3">
             This information helps us diagnose your issue faster:
           </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div class="space-y-1">
-              <div class="text-yellow-200">Browser: <span class="text-white">Chrome 120.0</span></div>
-              <div class="text-yellow-200">OS: <span class="text-white">Windows 11</span></div>
+              <div class="text-yellow-200">Browser: <span class="text-foreground">Chrome 120.0</span></div>
+              <div class="text-yellow-200">OS: <span class="text-foreground">Windows 11</span></div>
             </div>
             <div class="space-y-1">
-              <div class="text-yellow-200">Screen: <span class="text-white">1920x1080</span></div>
-              <div class="text-yellow-200">Connection: <span class="text-white">Broadband</span></div>
+              <div class="text-yellow-200">Screen: <span class="text-foreground">1920x1080</span></div>
+              <div class="text-yellow-200">Connection: <span class="text-foreground">Broadband</span></div>
             </div>
           </div>
         </div>
@@ -276,7 +275,7 @@
           </div>
         {/if}
         <div class="flex items-center justify-between">
-          <div class="text-gray-400 text-sm">
+          <div class="text-muted-foreground text-sm">
             * Required fields
           </div>
           <button
@@ -301,16 +300,16 @@
     <!-- Success Message -->
     <div class="bg-green-600/20 border border-green-600 rounded-xl p-8 text-center">
       <div class="text-6xl mb-4">✅</div>
-      <h2 class="text-2xl font-bold text-white mb-4">Ticket Submitted Successfully!</h2>
+      <h2 class="text-2xl font-bold text-foreground mb-4">Ticket Submitted Successfully!</h2>
       <p class="text-green-200 mb-6">
         Thank you for contacting our support team. We've received your ticket and will respond within 2-4 hours
         during business hours (Monday-Friday, 9 AM - 6 PM EST).
       </p>
 
-      <div class="bg-white/5 rounded-lg p-4 mb-6 max-w-md mx-auto">
-        <div class="text-sm text-gray-300">Your ticket number:</div>
-        <div class="text-xl font-bold text-white">#TS-2024-{Math.floor(Math.random() * 10000)}</div>
-        <div class="text-xs text-gray-400 mt-1">Save this number for your records</div>
+      <div class="surface-1 rounded-lg p-4 mb-6 max-w-md mx-auto">
+        <div class="text-sm text-foreground/80">Your ticket number:</div>
+        <div class="text-xl font-bold text-foreground">#TS-2024-{Math.floor(Math.random() * 10000)}</div>
+        <div class="text-xs text-muted-foreground mt-1">Save this number for your records</div>
       </div>
 
       <div class="space-y-2">
@@ -328,7 +327,7 @@
             isSubmitted = false;
             ticketForm = { subject: '', category: '', priority: 'medium', description: '', email: '', attachments: [] };
           }}
-          class="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-lg font-medium"
+          class="surface-2 hover:surface-3 text-foreground px-6 py-2 rounded-lg font-medium"
         >
           Submit Another Ticket
         </button>
@@ -341,10 +340,10 @@
 
   <!-- Contact Alternatives -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">💬</div>
-      <h3 class="text-lg font-bold text-white mb-2">Live Chat</h3>
-      <p class="text-gray-300 text-sm mb-4">
+      <h3 class="text-lg font-bold text-foreground mb-2">Live Chat</h3>
+      <p class="text-foreground/80 text-sm mb-4">
         Get instant help during business hours. Perfect for quick questions and urgent issues.
       </p>
       <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
@@ -352,10 +351,10 @@
       </button>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">📧</div>
-      <h3 class="text-lg font-bold text-white mb-2">Email Support</h3>
-      <p class="text-gray-300 text-sm mb-4">
+      <h3 class="text-lg font-bold text-foreground mb-2">Email Support</h3>
+      <p class="text-foreground/80 text-sm mb-4">
         Send detailed questions or issues directly to our support team via email.
       </p>
       <a
@@ -366,10 +365,10 @@
       </a>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">👥</div>
-      <h3 class="text-lg font-bold text-white mb-2">Community Forum</h3>
-      <p class="text-gray-300 text-sm mb-4">
+      <h3 class="text-lg font-bold text-foreground mb-2">Community Forum</h3>
+      <p class="text-foreground/80 text-sm mb-4">
         Get help from other creators who may have faced similar issues.
       </p>
       <a
@@ -383,7 +382,7 @@
 
   <!-- Emergency Contact -->
   <div class="bg-red-600/20 border border-red-600 rounded-xl p-4">
-    <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+    <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
       <span class="mr-2">🚨</span> Emergency Support
     </h3>
     <p class="text-red-200 text-sm">
@@ -394,20 +393,20 @@
   </div>
 
   <!-- Support Hours -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-    <h3 class="text-lg font-bold text-white mb-4">🕒 Support Hours & Response Times</h3>
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+    <h3 class="text-lg font-bold text-foreground mb-4">🕒 Support Hours & Response Times</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <h4 class="text-white font-medium mb-3">Business Hours</h4>
-        <div class="space-y-1 text-sm text-gray-300">
+        <h4 class="text-foreground font-medium mb-3">Business Hours</h4>
+        <div class="space-y-1 text-sm text-foreground/80">
           <div>Monday - Friday: 9:00 AM - 6:00 PM EST</div>
           <div>Saturday: 10:00 AM - 4:00 PM EST</div>
           <div>Sunday: Closed (Emergency support only)</div>
         </div>
       </div>
       <div>
-        <h4 class="text-white font-medium mb-3">Response Times</h4>
-        <div class="space-y-1 text-sm text-gray-300">
+        <h4 class="text-foreground font-medium mb-3">Response Times</h4>
+        <div class="space-y-1 text-sm text-foreground/80">
           <div>🔴 Urgent: Within 1 hour</div>
           <div>🟠 High: Within 2-4 hours</div>
           <div>🟡 Medium: Within 4-8 hours</div>

@@ -1,6 +1,10 @@
 <!-- Admin Communications Center -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { MessageSquare } from '@lucide/svelte';
+  import { toast } from 'svelte-sonner';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import StatChip from '$lib/components/dashboard/StatChip.svelte';
   
   interface Message {
     id: string;
@@ -39,24 +43,40 @@
   let searchTerm = $state('');
   
   onMount(async () => {
-    const [messagesRes, templatesRes, creatorsRes] = await Promise.all([
+    // Each fetch is fault-tolerant — a single 404 on templates or
+    // creators shouldn't leave the page in a half-broken state. We log
+    // + toast for the user instead of silently leaving dropdowns empty.
+    const [messagesRes, templatesRes, creatorsRes] = await Promise.allSettled([
       fetch('/api/admin/communications'),
       fetch('/api/admin/communications/templates'),
       fetch('/api/admin/creators')
     ]);
 
-    if (messagesRes.ok) {
-      const data = await messagesRes.json();
+    if (messagesRes.status === 'fulfilled' && messagesRes.value.ok) {
+      const data = await messagesRes.value.json();
       messages = data.map((row: any) => ({
         ...row,
         creatorName: row.creatorName || row.creatorEmail || 'Creator',
         createdAt: new Date(row.createdAt)
       }));
+    } else {
+      console.warn('[communications] failed to load messages');
+      toast.error('Failed to load message history');
     }
-    if (templatesRes.ok) templates = await templatesRes.json();
-    if (creatorsRes.ok) {
-      const creators = await creatorsRes.json();
+
+    if (templatesRes.status === 'fulfilled' && templatesRes.value.ok) {
+      templates = await templatesRes.value.json();
+    } else {
+      console.warn('[communications] failed to load templates');
+      // No toast on templates — they're optional. Dropdown stays empty.
+    }
+
+    if (creatorsRes.status === 'fulfilled' && creatorsRes.value.ok) {
+      const creators = await creatorsRes.value.json();
       creatorOptions = creators.map((c: any) => ({ id: c.id, name: c.name }));
+    } else {
+      console.warn('[communications] failed to load creator list');
+      toast.error('Failed to load creator picker');
     }
   });
   
@@ -79,8 +99,8 @@
       case 'rejection': return 'bg-red-600 text-white';
       case 'feedback': return 'bg-blue-600 text-white';
       case 'clarification': return 'bg-yellow-600 text-black';
-      case 'general': return 'bg-gray-600 text-white';
-      default: return 'bg-gray-600 text-white';
+      case 'general': return 'bg-gray-600 text-foreground';
+      default: return 'bg-gray-600 text-foreground';
     }
   }
   
@@ -89,8 +109,8 @@
       case 'sent': return 'text-blue-400';
       case 'read': return 'text-yellow-400';
       case 'replied': return 'text-green-400';
-      case 'archived': return 'text-gray-400';
-      default: return 'text-gray-400';
+      case 'archived': return 'text-muted-foreground';
+      default: return 'text-muted-foreground';
     }
   }
   
@@ -221,70 +241,41 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-4xl font-bold text-white mb-2">Communications Center</h1>
-      <p class="text-xl text-gray-300">Manage creator communications and feedback</p>
-    </div>
-    
-    <div class="flex space-x-3">
-      <button 
-        onclick={() => showTemplateModal = true}
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-      >
-        Message Templates
-      </button>
-      <button 
-        onclick={composeMessage}
-        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-      >
-        Compose Message
-      </button>
-    </div>
-  </div>
-  
-  <!-- Communication Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <div class="bg-blue-600/20 rounded-xl p-6 text-center">
-      <div class="text-3xl font-bold text-blue-400 mb-2">{messages.filter(m => m.status === 'sent').length}</div>
-      <div class="text-sm text-blue-200">Sent Messages</div>
-    </div>
-    <div class="bg-yellow-600/20 rounded-xl p-6 text-center">
-      <div class="text-3xl font-bold text-yellow-400 mb-2">{messages.filter(m => !m.isFromAdmin && m.status === 'sent').length}</div>
-      <div class="text-sm text-yellow-200">Pending Responses</div>
-    </div>
-    <div class="bg-green-600/20 rounded-xl p-6 text-center">
-      <div class="text-3xl font-bold text-green-400 mb-2">{messages.filter(m => m.type === 'approval').length}</div>
-      <div class="text-sm text-green-200">Approvals Sent</div>
-    </div>
-    <div class="bg-red-600/20 rounded-xl p-6 text-center">
-      <div class="text-3xl font-bold text-red-400 mb-2">{messages.filter(m => m.type === 'rejection').length}</div>
-      <div class="text-sm text-red-200">Rejections Sent</div>
-    </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={MessageSquare} title="Communications" subtitle="Manage creator messages and templates.">
+    {#snippet actions()}
+      <button onclick={() => showTemplateModal = true} class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors">Templates</button>
+      <button onclick={composeMessage} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">Compose</button>
+    {/snippet}
+  </PageHeader>
+
+  <div class="flex flex-wrap gap-2">
+    <StatChip label="sent" value={messages.filter(m => m.status === 'sent').length} tone="blue" />
+    <StatChip label="awaiting reply" value={messages.filter(m => !m.isFromAdmin && m.status === 'sent').length} tone="yellow" />
+    <StatChip label="approvals" value={messages.filter(m => m.type === 'approval').length} tone="green" />
+    <StatChip label="rejections" value={messages.filter(m => m.type === 'rejection').length} tone="red" />
   </div>
   
   <!-- Filters and Search -->
-  <div class="bg-white/10 rounded-xl p-6">
+  <div class="surface-2 rounded-xl p-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div>
-        <label for="search" class="block text-sm font-medium text-white mb-2">Search</label>
+        <label for="search" class="block text-sm font-medium text-foreground mb-2">Search</label>
         <input 
           id="search"
           type="text" 
           bind:value={searchTerm}
           placeholder="Search messages..."
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400"
         />
       </div>
       
       <div>
-        <label for="status" class="block text-sm font-medium text-white mb-2">Status</label>
+        <label for="status" class="block text-sm font-medium text-foreground mb-2">Status</label>
         <select 
           id="status"
           bind:value={selectedFilter}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
         >
           <option value="all">All Status</option>
           <option value="sent">Sent</option>
@@ -295,11 +286,11 @@
       </div>
       
       <div>
-        <label for="type" class="block text-sm font-medium text-white mb-2">Type</label>
+        <label for="type" class="block text-sm font-medium text-foreground mb-2">Type</label>
         <select 
           id="type"
           bind:value={selectedType}
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
         >
           <option value="all">All Types</option>
           <option value="approval">Approvals</option>
@@ -315,15 +306,15 @@
   <!-- Messages List -->
   <div class="space-y-4">
     {#each filteredMessages as message}
-      <div class="bg-white/10 rounded-xl p-6 hover:bg-white/15 transition-colors">
+      <div class="surface-2 rounded-xl p-6 hover:surface-3 transition-colors">
         <div class="flex justify-between items-start mb-3">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-linear-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div class="w-10 h-10 bg-linear-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-foreground font-bold">
               {message.isFromAdmin ? 'A' : message.creatorName.charAt(0)}
             </div>
             <div>
-              <div class="font-medium text-white">{message.creatorName}</div>
-              <div class="text-sm text-gray-400">
+              <div class="font-medium text-foreground">{message.creatorName}</div>
+              <div class="text-sm text-muted-foreground">
                 {message.isFromAdmin ? 'Admin' : 'Creator'} • {message.createdAt.toLocaleDateString()}
               </div>
             </div>
@@ -340,18 +331,18 @@
         </div>
         
         <div class="mb-3">
-          <h3 class="text-lg font-medium text-white mb-1">{message.subject}</h3>
+          <h3 class="text-lg font-medium text-foreground mb-1">{message.subject}</h3>
           {#if message.contentTitle}
             <div class="text-sm text-purple-300 mb-2">
               Re: {message.contentTitle}
             </div>
           {/if}
-          <p class="text-gray-300 text-sm line-clamp-3">{message.message}</p>
+          <p class="text-foreground/80 text-sm line-clamp-3">{message.message}</p>
         </div>
         
         {#if message.attachments && message.attachments.length > 0}
           <div class="mb-3">
-            <div class="text-sm text-gray-400 mb-1">Attachments:</div>
+            <div class="text-sm text-muted-foreground mb-1">Attachments:</div>
             <div class="flex flex-wrap gap-2">
               {#each message.attachments as attachment}
                 <span class="bg-blue-600 text-white px-2 py-1 text-xs rounded">
@@ -363,7 +354,7 @@
         {/if}
         
         <div class="flex justify-between items-center pt-3 border-t border-gray-600">
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-muted-foreground">
             {message.isFromAdmin ? `Sent by ${message.adminName || 'Admin'}` : 'From Creator'}
           </div>
           
@@ -384,7 +375,7 @@
             </button>
             <button 
               onclick={() => archiveMessage(message.id)}
-              class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
+              class="bg-gray-600 hover:bg-gray-700 text-foreground px-3 py-1 rounded text-sm"
             >
               Archive
             </button>
@@ -396,8 +387,8 @@
     {#if filteredMessages.length === 0}
       <div class="text-center py-12">
         <div class="text-4xl mb-4">💬</div>
-        <div class="text-xl text-white mb-2">No messages found</div>
-        <div class="text-gray-400">Try adjusting your filters or search terms</div>
+        <div class="text-xl text-foreground mb-2">No messages found</div>
+        <div class="text-muted-foreground">Try adjusting your filters or search terms</div>
       </div>
     {/if}
   </div>
@@ -409,8 +400,8 @@
     <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-white">Compose Message</h2>
-          <button onclick={() => showComposeModal = false} class="text-gray-400 hover:text-white" aria-label="Close compose message modal">
+          <h2 class="text-2xl font-bold text-foreground">Compose Message</h2>
+          <button onclick={() => showComposeModal = false} class="text-muted-foreground hover:text-foreground" aria-label="Close compose message modal">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -420,14 +411,14 @@
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="creator" class="block text-sm font-medium text-white mb-2">Creator</label>
+              <label for="creator" class="block text-sm font-medium text-foreground mb-2">Creator</label>
               <input 
                 id="creator"
                 type="text" 
                 list="creatorOptions"
                 bind:value={newMessage.creatorName}
                 placeholder="Enter creator name..."
-                class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
+                class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
               />
               <datalist id="creatorOptions">
                 {#each creatorOptions as creator}
@@ -437,11 +428,11 @@
             </div>
             
             <div>
-              <label for="messageType" class="block text-sm font-medium text-white mb-2">Message Type</label>
+              <label for="messageType" class="block text-sm font-medium text-foreground mb-2">Message Type</label>
               <select 
                 id="messageType"
                 bind:value={newMessage.type}
-                class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
+                class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
               >
                 <option value="general">General</option>
                 <option value="approval">Approval</option>
@@ -467,29 +458,29 @@
               type="text"
               bind:value={aiIntent}
               placeholder="What is this message about? e.g. 'Thank Sarah for her sermon series and ask about Q3 plans'"
-              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white placeholder-gray-500"
+              class="w-full px-3 py-2 surface-1 border border-border/40 rounded text-sm text-foreground placeholder-gray-500"
             />
           </div>
 
           <div>
-            <label for="subject" class="block text-sm font-medium text-white mb-2">Subject</label>
+            <label for="subject" class="block text-sm font-medium text-foreground mb-2">Subject</label>
             <input
               id="subject"
               type="text"
               bind:value={newMessage.subject}
               placeholder="Enter subject..."
-              class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white"
+              class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
             />
           </div>
 
           <div>
-            <label for="message" class="block text-sm font-medium text-white mb-2">Message</label>
+            <label for="message" class="block text-sm font-medium text-foreground mb-2">Message</label>
             <textarea
               id="message"
               bind:value={newMessage.message}
               rows="8"
               placeholder="Type your message..."
-              class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white resize-none"
+              class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground resize-none"
             ></textarea>
           </div>
         </div>
@@ -505,7 +496,7 @@
           <div class="flex space-x-3">
             <button 
               onclick={() => showComposeModal = false}
-              class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg"
+              class="bg-gray-600 hover:bg-gray-700 text-foreground px-6 py-2 rounded-lg"
             >
               Cancel
             </button>
@@ -528,8 +519,8 @@
     <div class="bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-white">Message Templates</h2>
-          <button onclick={() => showTemplateModal = false} class="text-gray-400 hover:text-white" aria-label="Close templates modal">
+          <h2 class="text-2xl font-bold text-foreground">Message Templates</h2>
+          <button onclick={() => showTemplateModal = false} class="text-muted-foreground hover:text-foreground" aria-label="Close templates modal">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -538,19 +529,19 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           {#each templates as template}
-            <div class="bg-white/10 rounded-lg p-4">
+            <div class="surface-2 rounded-lg p-4">
               <div class="flex justify-between items-center mb-3">
-                <h3 class="font-medium text-white">{template.name}</h3>
+                <h3 class="font-medium text-foreground">{template.name}</h3>
                 <span class="px-2 py-1 text-xs rounded-full {getTypeColor(template.type)}">
                   {template.type}
                 </span>
               </div>
               
-              <div class="text-sm text-gray-300 mb-3">
+              <div class="text-sm text-foreground/80 mb-3">
                 <strong>Subject:</strong> {template.subject}
               </div>
               
-              <div class="text-sm text-gray-400 mb-4 line-clamp-4">
+              <div class="text-sm text-muted-foreground mb-4 line-clamp-4">
                 {template.content}
               </div>
               

@@ -1,5 +1,8 @@
 <!-- Creator Newsletter -->
 <script lang="ts">
+  import { Mail } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
   let email = $state('');
   let isSubscribed = $state(false);
   let isSubmitting = $state(false);
@@ -62,19 +65,15 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-white mb-2">Creator Newsletter</h1>
-    <p class="text-gray-300">Stay informed with the latest updates, tips, and opportunities</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Mail} title="Creator Newsletter" subtitle="Stay informed with the latest updates, tips, and opportunities." />
 
   {#if !isSubscribed}
     <!-- Newsletter Signup -->
     <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-8">
       <div class="text-center">
         <div class="text-6xl mb-4">📧</div>
-        <h2 class="text-2xl font-bold text-white mb-4">Join Our Creator Community</h2>
+        <h2 class="text-2xl font-bold text-foreground mb-4">Join Our Creator Community</h2>
         <p class="text-purple-200 mb-6 max-w-2xl mx-auto">
           Get exclusive content, early access to features, and stay connected with fellow faith-based creators.
           Our newsletter is packed with actionable tips, success stories, and opportunities to grow your ministry.
@@ -85,7 +84,7 @@
             type="email"
             bind:value={email}
             placeholder="Enter your email address"
-            class="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+            class="flex-1 px-4 py-3 surface-2 border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-purple-500"
           />
           <button
             onclick={subscribe}
@@ -95,7 +94,7 @@
           </button>
         </div>
 
-        <p class="text-xs text-gray-400 mt-4">
+        <p class="text-xs text-muted-foreground mt-4">
           We respect your privacy. Unsubscribe at any time.
         </p>
       </div>
@@ -104,7 +103,7 @@
     <!-- Success Message -->
     <div class="bg-green-600/20 border border-green-600 rounded-xl p-6 text-center">
       <div class="text-4xl mb-2">✅</div>
-      <h2 class="text-xl font-bold text-white mb-2">Welcome to our community!</h2>
+      <h2 class="text-xl font-bold text-foreground mb-2">Welcome to our community!</h2>
       <p class="text-green-200">
         You'll receive your first newsletter within 24 hours. Check your email for a confirmation link.
       </p>
@@ -113,50 +112,50 @@
 
   <!-- Newsletter Benefits -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">📚</div>
-      <h3 class="text-lg font-bold text-white mb-2">Weekly Creator Tips</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Weekly Creator Tips</h3>
+      <p class="text-foreground/80 text-sm">
         Practical advice on content creation, audience building, and ministry growth strategies.
       </p>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">🚀</div>
-      <h3 class="text-lg font-bold text-white mb-2">Feature Updates</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Feature Updates</h3>
+      <p class="text-foreground/80 text-sm">
         Be first to know about new platform features, tools, and opportunities for creators.
       </p>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">🏆</div>
-      <h3 class="text-lg font-bold text-white mb-2">Creator Spotlights</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Creator Spotlights</h3>
+      <p class="text-foreground/80 text-sm">
         Inspiring stories and interviews with successful faith-based creators in our community.
       </p>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">📅</div>
-      <h3 class="text-lg font-bold text-white mb-2">Event Notifications</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Event Notifications</h3>
+      <p class="text-foreground/80 text-sm">
         Early access to workshops, conferences, and exclusive creator community events.
       </p>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">💡</div>
-      <h3 class="text-lg font-bold text-white mb-2">Exclusive Resources</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Exclusive Resources</h3>
+      <p class="text-foreground/80 text-sm">
         Free templates, graphics, music, and other resources to enhance your content creation.
       </p>
     </div>
 
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <div class="text-3xl mb-3">💰</div>
-      <h3 class="text-lg font-bold text-white mb-2">Monetization Opportunities</h3>
-      <p class="text-gray-300 text-sm">
+      <h3 class="text-lg font-bold text-foreground mb-2">Monetization Opportunities</h3>
+      <p class="text-foreground/80 text-sm">
         Information about sponsorships, grants, and other revenue opportunities for creators.
       </p>
     </div>
@@ -164,9 +163,9 @@
 
   <!-- Newsletter Preferences -->
   {#if isSubscribed}
-    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-      <h3 class="text-lg font-bold text-white mb-4">📋 Newsletter Preferences</h3>
-      <p class="text-gray-300 mb-6">Customize what content you receive in your newsletter:</p>
+    <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+      <h3 class="text-lg font-bold text-foreground mb-4">📋 Newsletter Preferences</h3>
+      <p class="text-foreground/80 mb-6">Customize what content you receive in your newsletter:</p>
 
       <div class="space-y-4">
         <label class="flex items-center space-x-3">
@@ -176,8 +175,8 @@
             class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <div class="text-white font-medium">Weekly Creator Digest</div>
-            <div class="text-gray-400 text-sm">Tips, tutorials, and community highlights</div>
+            <div class="text-foreground font-medium">Weekly Creator Digest</div>
+            <div class="text-muted-foreground text-sm">Tips, tutorials, and community highlights</div>
           </div>
         </label>
 
@@ -188,8 +187,8 @@
             class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <div class="text-white font-medium">Event Announcements</div>
-            <div class="text-gray-400 text-sm">Workshops, conferences, and community events</div>
+            <div class="text-foreground font-medium">Event Announcements</div>
+            <div class="text-muted-foreground text-sm">Workshops, conferences, and community events</div>
           </div>
         </label>
 
@@ -200,8 +199,8 @@
             class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <div class="text-white font-medium">Free Resources</div>
-            <div class="text-gray-400 text-sm">Templates, graphics, and downloadable content</div>
+            <div class="text-foreground font-medium">Free Resources</div>
+            <div class="text-muted-foreground text-sm">Templates, graphics, and downloadable content</div>
           </div>
         </label>
 
@@ -212,8 +211,8 @@
             class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <div class="text-white font-medium">Creator Spotlights</div>
-            <div class="text-gray-400 text-sm">Interviews and success stories from creators</div>
+            <div class="text-foreground font-medium">Creator Spotlights</div>
+            <div class="text-muted-foreground text-sm">Interviews and success stories from creators</div>
           </div>
         </label>
 
@@ -224,8 +223,8 @@
             class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <div class="text-white font-medium">Technical Updates</div>
-            <div class="text-gray-400 text-sm">Platform updates, new features, and technical tips</div>
+            <div class="text-foreground font-medium">Technical Updates</div>
+            <div class="text-muted-foreground text-sm">Platform updates, new features, and technical tips</div>
           </div>
         </label>
       </div>
@@ -240,18 +239,18 @@
   {/if}
 
   <!-- Recent Newsletter Archives -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-    <h3 class="text-lg font-bold text-white mb-4">📰 Recent Newsletter Issues</h3>
-    <p class="text-gray-300 mb-6">
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+    <h3 class="text-lg font-bold text-foreground mb-4">📰 Recent Newsletter Issues</h3>
+    <p class="text-foreground/80 mb-6">
       Missed a newsletter? Catch up on recent issues and browse our archive.
     </p>
 
     <div class="space-y-4">
-      <div class="border border-white/20 rounded-lg p-4">
+      <div class="border border-border rounded-lg p-4">
         <div class="flex items-start justify-between">
           <div>
-            <h4 class="text-white font-medium">Creator Spotlight: Sarah's Ministry Journey</h4>
-            <p class="text-gray-400 text-sm mt-1">
+            <h4 class="text-foreground font-medium">Creator Spotlight: Sarah's Ministry Journey</h4>
+            <p class="text-muted-foreground text-sm mt-1">
               February 12, 2024 • How one creator built a community of 50K+ faithful followers
             </p>
           </div>
@@ -259,11 +258,11 @@
         </div>
       </div>
 
-      <div class="border border-white/20 rounded-lg p-4">
+      <div class="border border-border rounded-lg p-4">
         <div class="flex items-start justify-between">
           <div>
-            <h4 class="text-white font-medium">5 Video Editing Tips for Better Sermons</h4>
-            <p class="text-gray-400 text-sm mt-1">
+            <h4 class="text-foreground font-medium">5 Video Editing Tips for Better Sermons</h4>
+            <p class="text-muted-foreground text-sm mt-1">
               February 5, 2024 • Professional techniques to enhance your teaching content
             </p>
           </div>
@@ -271,11 +270,11 @@
         </div>
       </div>
 
-      <div class="border border-white/20 rounded-lg p-4">
+      <div class="border border-border rounded-lg p-4">
         <div class="flex items-start justify-between">
           <div>
-            <h4 class="text-white font-medium">New Feature: Prayer Request Integration</h4>
-            <p class="text-gray-400 text-sm mt-1">
+            <h4 class="text-foreground font-medium">New Feature: Prayer Request Integration</h4>
+            <p class="text-muted-foreground text-sm mt-1">
               January 29, 2024 • Connect deeper with your audience through prayer
             </p>
           </div>
@@ -283,11 +282,11 @@
         </div>
       </div>
 
-      <div class="border border-white/20 rounded-lg p-4">
+      <div class="border border-border rounded-lg p-4">
         <div class="flex items-start justify-between">
           <div>
-            <h4 class="text-white font-medium">Faith & Film Conference Early Bird Registration</h4>
-            <p class="text-gray-400 text-sm mt-1">
+            <h4 class="text-foreground font-medium">Faith & Film Conference Early Bird Registration</h4>
+            <p class="text-muted-foreground text-sm mt-1">
               January 22, 2024 • Save 40% on tickets with exclusive creator discount
             </p>
           </div>
@@ -305,7 +304,7 @@
 
   <!-- Newsletter Statistics -->
   <div class="bg-blue-600/20 border border-blue-600 rounded-xl p-6">
-    <h3 class="text-lg font-bold text-white mb-4">📊 Newsletter Community</h3>
+    <h3 class="text-lg font-bold text-foreground mb-4">📊 Newsletter Community</h3>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="text-center">
         <div class="text-2xl font-bold text-blue-400">8,247</div>
@@ -327,35 +326,35 @@
   </div>
 
   <!-- Testimonials -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-    <h3 class="text-lg font-bold text-white mb-6">💬 What Creators Are Saying</h3>
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
+    <h3 class="text-lg font-bold text-foreground mb-6">💬 What Creators Are Saying</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white/5 rounded-lg p-4">
-        <p class="text-gray-300 text-sm mb-3">
+      <div class="surface-1 rounded-lg p-4">
+        <p class="text-foreground/80 text-sm mb-3">
           "The weekly newsletter has been invaluable for my ministry. The tips and resources have helped me
           reach thousands more people with the Gospel message."
         </p>
         <div class="text-purple-400 font-medium">— Pastor Mike, SermonStream</div>
       </div>
 
-      <div class="bg-white/5 rounded-lg p-4">
-        <p class="text-gray-300 text-sm mb-3">
+      <div class="surface-1 rounded-lg p-4">
+        <p class="text-foreground/80 text-sm mb-3">
           "I love the creator spotlights! It's so encouraging to see how God is using other creators to
           impact lives. Plus the technical tips have saved me hours of research."
         </p>
         <div class="text-purple-400 font-medium">— Sarah J., FaithLife Productions</div>
       </div>
 
-      <div class="bg-white/5 rounded-lg p-4">
-        <p class="text-gray-300 text-sm mb-3">
+      <div class="surface-1 rounded-lg p-4">
+        <p class="text-foreground/80 text-sm mb-3">
           "The event notifications helped me attend workshops that completely transformed my content strategy.
           The ROI from this free newsletter is incredible!"
         </p>
         <div class="text-purple-400 font-medium">— David L., Kingdom Content</div>
       </div>
 
-      <div class="bg-white/5 rounded-lg p-4">
-        <p class="text-gray-300 text-sm mb-3">
+      <div class="surface-1 rounded-lg p-4">
+        <p class="text-foreground/80 text-sm mb-3">
           "As a new creator, the newsletter has been like having a mentor. The step-by-step guides and
           encouragement keep me motivated to continue growing my ministry online."
         </p>
@@ -366,7 +365,7 @@
 
   <!-- Contact Info -->
   <div class="bg-yellow-600/20 border border-yellow-600 rounded-xl p-4">
-    <h3 class="text-lg font-bold text-white mb-2">📧 Newsletter Support</h3>
+    <h3 class="text-lg font-bold text-foreground mb-2">📧 Newsletter Support</h3>
     <p class="text-yellow-200 text-sm">
       Questions about your subscription or suggestions for content? Email us at
       <a href="mailto:info@sepharstudios.com" class="text-yellow-100 underline">info@sepharstudios.com</a>

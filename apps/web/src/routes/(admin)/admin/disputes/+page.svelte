@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { ShieldAlert, ExternalLink } from '@lucide/svelte';
+  import { untrack } from 'svelte';
+  import { ShieldAlert, ExternalLink, ChevronLeft, ChevronRight } from '@lucide/svelte';
   import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
@@ -19,29 +19,54 @@
     creatorEmail: string | null;
   }
 
+  interface PaginationMeta {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  }
+
+  const PAGE_SIZE = 25;
+
   let disputes = $state<DisputeRow[]>([]);
   let loading = $state(true);
   let filter = $state<string>('open');
+  let page = $state(1);
+  let pagination = $state<PaginationMeta>({ page: 1, pageSize: PAGE_SIZE, total: 0, totalPages: 1 });
 
   async function load() {
     loading = true;
     try {
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('status', filter);
+      params.set('page', String(page));
+      params.set('pageSize', String(PAGE_SIZE));
       const res = await fetch(`/api/admin/disputes?${params}`);
       const body = await res.json();
       disputes = body.disputes ?? [];
+      if (body.pagination) pagination = body.pagination;
     } finally {
       loading = false;
     }
   }
-  $effect(() => { filter; void load(); });
-  onMount(load);
+  // Reset to page 1 whenever filter changes — otherwise switching from
+  // "all" (10 pages) to "won" (1 page) leaves you on page 7 staring at an
+  // empty table. untrack() seeds prevFilter without subscribing to it.
+  let prevFilter = untrack(() => filter);
+  $effect(() => {
+    if (filter !== prevFilter) {
+      prevFilter = filter;
+      page = 1;
+    }
+    // Track both filter and page; load() reads both via closure.
+    filter; page;
+    void load();
+  });
 
   function statusBadge(s: string) {
     if (s === 'won') return 'bg-green-600/30 text-green-200';
     if (s === 'lost') return 'bg-red-600/30 text-red-200';
-    if (s === 'withdrawn') return 'bg-gray-600/30 text-gray-300';
+    if (s === 'withdrawn') return 'bg-gray-600/30 text-foreground/80';
     if (s === 'warning_closed') return 'bg-yellow-600/30 text-yellow-200';
     return 'bg-orange-600/30 text-orange-200';
   }
@@ -67,7 +92,7 @@
       <button
         type="button"
         onclick={() => (filter = f)}
-        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-white' : 'surface-2 text-gray-300 hover:text-white'}"
+        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-foreground' : 'surface-2 text-foreground/80 hover:text-foreground'}"
       >{f}</button>
     {/each}
   </div>
@@ -77,12 +102,12 @@
       {#each Array(4) as _ (_)}<Skeleton class="h-16 rounded-lg" />{/each}
     </div>
   {:else if disputes.length === 0}
-    <div class="surface-1 rounded-xl p-12 text-center text-gray-400">No disputes match this filter.</div>
+    <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No disputes match this filter.</div>
   {:else}
     <div class="surface-1 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-white/5">
-          <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+        <thead class="surface-1">
+          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th class="px-4 py-3">Processor</th>
             <th class="px-4 py-3">Amount</th>
             <th class="px-4 py-3">Reason</th>
@@ -96,24 +121,24 @@
         <tbody>
           {#each disputes as d (d.id)}
             <tr class="border-t border-white/5">
-              <td class="px-4 py-3 text-white capitalize">{d.processor}</td>
+              <td class="px-4 py-3 text-foreground capitalize">{d.processor}</td>
               <td class="px-4 py-3 tabular-nums">{money(d.amountCents, d.currency)}</td>
-              <td class="px-4 py-3 text-gray-300">{d.reason ?? '—'}</td>
-              <td class="px-4 py-3 text-gray-300">
+              <td class="px-4 py-3 text-foreground/80">{d.reason ?? '—'}</td>
+              <td class="px-4 py-3 text-foreground/80">
                 {d.creatorDisplayName ?? '—'}
-                {#if d.creatorEmail}<div class="text-xs text-gray-500">{d.creatorEmail}</div>{/if}
+                {#if d.creatorEmail}<div class="text-xs text-muted-foreground">{d.creatorEmail}</div>{/if}
               </td>
               <td class="px-4 py-3">
                 <span class="text-xs px-2 py-0.5 rounded capitalize {statusBadge(d.status)}">{d.status.replace('_', ' ')}</span>
               </td>
-              <td class="px-4 py-3 text-xs text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</td>
+              <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(d.createdAt).toLocaleDateString()}</td>
               <td class="px-4 py-3 text-xs">
                 {#if d.evidenceDueAt}
                   <span class={d.status === 'open' && new Date(d.evidenceDueAt) < new Date() ? 'text-red-300' : 'text-yellow-300'}>
                     {new Date(d.evidenceDueAt).toLocaleDateString()}
                   </span>
                 {:else}
-                  <span class="text-gray-500">—</span>
+                  <span class="text-muted-foreground">—</span>
                 {/if}
               </td>
               <td class="px-4 py-3 text-right">
@@ -128,5 +153,32 @@
         </tbody>
       </table>
     </div>
+
+    {#if pagination.totalPages > 1}
+      <div class="flex items-center justify-between text-sm text-muted-foreground">
+        <div>
+          Showing {(pagination.page - 1) * pagination.pageSize + 1}–{Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total}
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 1 || loading}
+            onclick={() => (page = Math.max(1, page - 1))}
+            class="px-2 py-1 rounded surface-2 disabled:opacity-40 inline-flex items-center gap-1"
+          >
+            <ChevronLeft class="w-4 h-4" /> Prev
+          </button>
+          <span>Page {pagination.page} / {pagination.totalPages}</span>
+          <button
+            type="button"
+            disabled={page >= pagination.totalPages || loading}
+            onclick={() => (page = Math.min(pagination.totalPages, page + 1))}
+            class="px-2 py-1 rounded surface-2 disabled:opacity-40 inline-flex items-center gap-1"
+          >
+            Next <ChevronRight class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    {/if}
   {/if}
 </div>

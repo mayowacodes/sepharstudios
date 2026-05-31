@@ -41,13 +41,79 @@ button, a, [role="button"], input[type="checkbox"], input[type="radio"], select 
   display: none;
 }
 
-/* Sephar Studios Brand Colors - Faith-Based Streaming Platform */
+/* Sephar Studios Brand Colors - Faith-Based Streaming Platform
+ *
+ * Theme convention (shadcn-standard): :root holds the LIGHT palette;
+ * the .dark class (applied by mode-watcher) overrides every variable.
+ * Dark stays the default (defaultMode="dark" in the root layout) so the
+ * platform's default Netflix-like feel is preserved.
+ */
 :root {
   --radius: 0.5rem;
   --radius-card: 1rem;
   --radius-pill: 999px;
   --blur-glass: 18px;
   --blur-soft: 10px;
+  --font-sans: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Playfair Display", "Times New Roman", serif;
+
+  /* ─── Light theme — clean off-white, near-black text ─────────── */
+  --shadow-glass: 0 8px 30px rgba(15, 23, 42, 0.10);
+  --shadow-glow: 0 0 0 1px rgba(255, 94, 14, 0.35), 0 0 24px rgba(255, 94, 14, 0.20);
+  --shadow-gold: 0 0 0 1px rgba(255, 191, 0, 0.4), 0 0 20px rgba(255, 191, 0, 0.18);
+  --veil-strong: linear-gradient(0deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 45%, rgba(255, 255, 255, 0) 78%);
+  --veil-soft: linear-gradient(0deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.35) 55%, rgba(255, 255, 255, 0) 80%);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-highlight: rgba(15, 23, 42, 0.04);
+  --surface-charcoal: #f8fafc;
+  --surface-deep: #ffffff;
+  --surface-warm: #fefaf5;
+
+  /* Surface tints — dark ink on light bg */
+  --surface-tint-1: rgba(15, 23, 42, 0.04);
+  --surface-tint-2: rgba(15, 23, 42, 0.07);
+  --surface-tint-3: rgba(15, 23, 42, 0.10);
+  --surface-tint-border: rgba(15, 23, 42, 0.10);
+
+  /* Core */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  /* Brand stays the same in both themes — orange / gold / brown */
+  --primary: 20 94% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 100% 50%;
+  --secondary-foreground: 222 47% 11%;
+  --accent: 20 35% 42%;
+  --accent-foreground: 0 0% 100%;
+
+  /* UI */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 88%;
+  --input: 220 13% 88%;
+  --ring: 20 94% 53%;
+
+  /* Sidebar */
+  --sidebar-background: 220 14% 96%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 20 94% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 92%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 220 13% 88%;
+  --sidebar-ring: 20 94% 53%;
+}
+
+.dark {
+  /* ─── Dark theme (default) — deep charcoal, off-white text ─── */
   --shadow-glass: 0 8px 30px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 0 0 1px rgba(255, 94, 14, 0.35), 0 0 24px rgba(255, 94, 14, 0.25);
   --shadow-gold: 0 0 0 1px rgba(255, 191, 0, 0.4), 0 0 20px rgba(255, 191, 0, 0.2);
@@ -59,78 +125,34 @@ button, a, [role="button"], input[type="checkbox"], input[type="radio"], select 
   --surface-charcoal: #0b0c10;
   --surface-deep: #0f1117;
   --surface-warm: #1b120d;
-  --font-sans: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Playfair Display", "Times New Roman", serif;
 
-  /* Core Background & Text */
-  --background: 222 20% 6%;          /* Deep charcoal */
-  --foreground: 210 40% 98%;         /* Off-white */
+  /* Surface tints — white ink on dark bg */
+  --surface-tint-1: rgba(255, 255, 255, 0.04);
+  --surface-tint-2: rgba(255, 255, 255, 0.07);
+  --surface-tint-3: rgba(255, 255, 255, 0.12);
+  --surface-tint-border: rgba(255, 255, 255, 0.10);
 
-  /* Brand Colors - Orange, Gold, Brown */
-  --primary: 20 94% 53%;            /* #FF5E0E - Vibrant Orange */
-  --primary-foreground: 0 0% 100%;  /* White text on orange */
-
-  --secondary: 40 100% 50%;         /* #FFBF00 - Golden Yellow */
-  --secondary-foreground: 222.2 84% 4.9%; /* Dark text on gold */
-
-  --accent: 20 35% 42%;             /* #8F5A40 - Earthy Brown (darker) */
-  --accent-foreground: 0 0% 100%;   /* White text on brown */
-
-  /* UI Colors */
-  --card: 222 22% 9%;
-  --card-foreground: 210 40% 98%;
-
-  --popover: 222 22% 9%;
-  --popover-foreground: 210 40% 98%;
-
-  --muted: 220 10% 16%;
-  --muted-foreground: 215 20% 70%;
-
-  --destructive: 0 72.2% 50.6%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 220 8% 22%;
-  --input: 220 8% 22%;
-  --ring: 20 94% 53%;               /* Orange ring to match primary */
-
-  /* Sidebar */
-  --sidebar-background: 222 18% 10%;
-  --sidebar-foreground: 210 40% 96%;
-  --sidebar-primary: 20 94% 53%;    /* Orange */
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 220 8% 18%;
-  --sidebar-accent-foreground: 210 40% 96%;
-  --sidebar-border: 220 10% 22%;
-  --sidebar-ring: 20 94% 53%;       /* Orange ring */
-}
-
-.dark {
+  /* Core */
   --background: 222 20% 6%;
   --foreground: 210 40% 98%;
 
-  /* Brand Colors stay vibrant in dark mode */
-  --primary: 20 94% 58%;             /* Slightly brighter orange for dark mode */
+  /* Brand — slightly brighter for contrast on dark */
+  --primary: 20 94% 58%;
   --primary-foreground: 0 0% 100%;
-
-  --secondary: 40 100% 55%;          /* Slightly brighter gold */
-  --secondary-foreground: 222.2 84% 4.9%;
-
-  --accent: 20 35% 54%;              /* Slightly brighter brown */
+  --secondary: 40 100% 55%;
+  --secondary-foreground: 222 47% 11%;
+  --accent: 20 35% 54%;
   --accent-foreground: 0 0% 100%;
 
-  /* UI Colors */
+  /* UI */
   --card: 222 22% 9%;
   --card-foreground: 210 40% 98%;
-
   --popover: 222 22% 9%;
   --popover-foreground: 210 40% 98%;
-
   --muted: 220 10% 16%;
   --muted-foreground: 215 20% 70%;
-
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
-
   --border: 220 8% 22%;
   --input: 220 8% 22%;
   --ring: 20 94% 58%;
@@ -345,18 +367,20 @@ input:checked + .slider:before {
 
 /* Semantic surface tokens — used by KpiCard / PageHeader / new dashboard
    primitives. Solves the bg-white/10 vs bg-white/5 vs bg-blue-600/20 drift
-   across hand-rolled dashboards. */
+   across hand-rolled dashboards. The tint var resolves to white-on-dark
+   in dark mode and dark-on-light in light mode, so a surface looks
+   correct in both themes without per-component overrides. */
 .surface-1 {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--surface-tint-1);
+  border: 1px solid var(--surface-tint-border);
 }
 .surface-2 {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--surface-tint-2);
+  border: 1px solid var(--surface-tint-border);
 }
 .surface-3 {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--surface-tint-3);
+  border: 1px solid var(--surface-tint-border);
 }
 
 .halo-ring {

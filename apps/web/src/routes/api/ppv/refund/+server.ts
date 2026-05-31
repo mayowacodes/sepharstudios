@@ -89,6 +89,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	// 4. Write the audit row BEFORE the Paystack call so we have a record even
 	//    if the network call hangs or the process dies mid-refund.
+	//    Reconciliation: any row stuck in 'pending' longer than 10 min is
+	//    swept by /api/internal/refunds/sweep-pending (cron) so the admin
+	//    sees stuck rows in the refunds dashboard instead of them rotting
+	//    silently.
 	const [auditRow] = await db.insert(refunds).values({
 		userId,
 		reference: purchase.paystackReference,

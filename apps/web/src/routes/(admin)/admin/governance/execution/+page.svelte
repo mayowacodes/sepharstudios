@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import TimelockQueueTable from '$lib/components/admin/governance/TimelockQueueTable.svelte';
 	import MultisigApprovalsPanel from '$lib/components/admin/governance/MultisigApprovalsPanel.svelte';
+	import { Timer } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type Proposal = {
 		id: string;
@@ -77,26 +79,26 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-6">
-	<h1 class="text-2xl font-bold text-white">Timelock Queue & Execution</h1>
+	<PageHeader icon={Timer} title="Timelock & Execution" subtitle="Queued proposals awaiting execution windows." />
 
 	{#if message}
 		<p class="text-sm text-cyan-300">{message}</p>
 	{/if}
 
-	<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-		<h2 class="text-lg font-semibold text-white mb-3">Submitted Proposals</h2>
+	<div class="rounded-xl border border-border/40 surface-1 p-4">
+		<h2 class="text-lg font-semibold text-foreground mb-3">Submitted Proposals</h2>
 		{#if loading}
-			<p class="text-sm text-gray-400">Loading...</p>
+			<p class="text-sm text-muted-foreground">Loading...</p>
 		{:else if submitted.length === 0}
-			<p class="text-sm text-gray-400">No submitted proposals awaiting queue.</p>
+			<p class="text-sm text-muted-foreground">No submitted proposals awaiting queue.</p>
 		{:else}
 			<div class="space-y-2">
 				{#each submitted as p}
-					<div class="rounded-lg bg-black/30 border border-white/10 px-3 py-2">
+					<div class="rounded-lg bg-black/30 border border-border/40 px-3 py-2">
 						<div class="flex items-center justify-between gap-3">
 							<div class="space-y-1">
-							<p class="text-white text-sm">{p.title}</p>
-							<p class="text-xs text-gray-400">{p.type}</p>
+							<p class="text-foreground text-sm">{p.title}</p>
+							<p class="text-xs text-muted-foreground">{p.type}</p>
 							{#if (p.guardrailWarnings?.length ?? 0) > 0}
 								<p class="text-xs text-amber-300">Has guardrail warnings</p>
 							{/if}
@@ -125,7 +127,7 @@
 	</div>
 
 	<div>
-		<h2 class="text-lg font-semibold text-white mb-3">Queued Actions</h2>
+		<h2 class="text-lg font-semibold text-foreground mb-3">Queued Actions</h2>
 		<TimelockQueueTable items={queue} onExecute={execute} />
 	</div>
 </div>

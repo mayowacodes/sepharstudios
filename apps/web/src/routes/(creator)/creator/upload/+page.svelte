@@ -9,8 +9,56 @@
   import AssetManagementStep from '$lib/components/creator/upload/AssetManagementStep.svelte';
   import MetadataStep from '$lib/components/creator/upload/MetadataStep.svelte';
   import ReviewSubmitStep from '$lib/components/creator/upload/ReviewSubmitStep.svelte';
+  import { Upload } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   let isSubmitting = $state(false);
+  // Submission progress UX: when the wizard is uploading the video file
+  // to the orchestrator's storage (the slowest step), surface a real
+  // progress bar instead of a silent spinner. Without this the user
+  // sees "Processing…" for minutes on big uploads and can't tell if it
+  // froze.
+  let submitStep = $state<'idle' | 'metadata' | 'job' | 'uploading' | 'committing'>('idle');
+  let videoUploadPct = $state(0);
+  let videoUploadXhr: XMLHttpRequest | null = null;
+
+  /**
+   * Upload a video file to an orchestrator-signed URL with progress
+   * reporting. Uses XMLHttpRequest because `fetch` doesn't expose upload
+   * progress events in browsers. Resolves when the PUT returns a 2xx;
+   * rejects on network failure or non-2xx status.
+   */
+  function uploadVideoWithProgress(url: string, method: string, file: File): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      videoUploadXhr = xhr;
+      xhr.open(method, url);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          videoUploadPct = (e.loaded / e.total) * 100;
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Failed to upload video to encoder storage (${xhr.status})`));
+        videoUploadXhr = null;
+      };
+      xhr.onerror = () => {
+        reject(new Error('Network error during video upload. Check your connection and try again.'));
+        videoUploadXhr = null;
+      };
+      xhr.onabort = () => {
+        reject(new Error('Upload cancelled.'));
+        videoUploadXhr = null;
+      };
+      xhr.send(file);
+    });
+  }
+
+  function cancelUpload() {
+    if (videoUploadXhr) videoUploadXhr.abort();
+  }
   /** When set, the wizard pre-fills from this content's metadata. The video
    *  must still be uploaded fresh (existing rows keep their video URL until
    *  the submit flow swaps in the new one). */
@@ -128,6 +176,14 @@
 
   async function submitContent() {
     isSubmitting = true;
+    submitStep = 'metadata';
+    videoUploadPct = 0;
+    // Tracks whether THIS run created a fresh content row that we own
+    // cleanup for. If the encoder step or upload fails, we soft-archive
+    // the row so the creator's content list isn't littered with
+    // half-broken submissions. For the edit path (editId set) we never
+    // delete — the existing row + old video should stay intact.
+    let createdContentId: string | null = null;
     try {
       const videoData = wizardState.stepData[UploadStep.VIDEO_UPLOAD];
       const videoFile = videoData.videoFile;
@@ -203,6 +259,7 @@
         if (!res.ok) throw new Error('Failed to save metadata');
         const body = await res.json();
         contentId = body.contentId;
+        createdContentId = contentId;
       }
 
       // 1.5 Fire AI auto-tagging in the background. The endpoint reads from DB
@@ -226,6 +283,7 @@
       // ladder) if probing fails or the file isn't readable.
       const profile = await pickEncoderProfile(videoFile);
 
+      submitStep = 'job';
       const jobRes = await fetch('/api/encoder/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -241,17 +299,13 @@
       const { jobId, upload } = await jobRes.json();
 
       // 3. Upload directly to orchestrator-controlled object storage.
-      const uploadRes = await fetch(upload.url, {
-          method: upload.method || 'PUT',
-          headers: { 'Content-Type': videoFile.type || 'application/octet-stream' },
-          body: videoFile
-      });
-
-      if (!uploadRes.ok) {
-          throw new Error(`Failed to upload video to encoder storage (${uploadRes.status})`);
-      }
+      // Surfaces real progress so the user can see the bar move on big
+      // files instead of staring at a silent spinner.
+      submitStep = 'uploading';
+      await uploadVideoWithProgress(upload.url, upload.method || 'PUT', videoFile);
 
       // 4. Commit the job so workers can encode it.
+      submitStep = 'committing';
       const commitRes = await fetch(`/api/encoder/jobs/${jobId}/commit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
@@ -268,12 +322,37 @@
     } catch (error) {
         console.error('Submission error:', error);
         const message = error instanceof Error ? error.message : 'Unknown error';
+        // Rollback the orphan row created by step 1 so the creator's
+        // content list isn't polluted with broken stubs. Best-effort:
+        // if the cleanup fetch fails we surface a softer warning but
+        // don't mask the original failure.
+        if (createdContentId) {
+          try {
+            const cleanup = await fetch(`/api/creator/content/${createdContentId}`, { method: 'DELETE' });
+            if (!cleanup.ok) {
+              console.warn(`Rollback DELETE failed for ${createdContentId}: HTTP ${cleanup.status}`);
+              toast.warning('Submission failed and cleanup did not finish', {
+                description: 'You may see an archived/broken entry in your content list. Contact support if it persists.'
+              });
+            }
+          } catch (cleanupErr) {
+            console.warn(`Rollback DELETE threw for ${createdContentId}:`, cleanupErr);
+          }
+        }
         toast.error('Submission failed', { description: message });
     } finally {
         isSubmitting = false;
+        submitStep = 'idle';
+        videoUploadPct = 0;
     }
   }
   
+  // Surfaces a banner on the wizard when we're editing an existing row
+  // so the creator knows the Video + Assets steps are still empty and
+  // must be re-uploaded if they want to replace the media (otherwise
+  // those steps look mysteriously blank even though Basic Info is full).
+  let editPrefillBanner = $state<{ title: string; existingThumb: string | null } | null>(null);
+
   async function prefillFromExistingContent(contentId: string) {
     try {
       const res = await fetch(`/api/creator/content?id=${contentId}`);
@@ -303,6 +382,10 @@
       };
       validateStep(UploadStep.BASIC_INFO);
       validateStep(UploadStep.METADATA);
+      editPrefillBanner = {
+        title: item.title,
+        existingThumb: item.thumbnail ?? item.posterUrl ?? null
+      };
     } catch (err) {
       console.error('Failed to prefill from existing content:', err);
     }
@@ -316,35 +399,68 @@
       return; // skip localStorage draft when editing
     }
 
-    // Load any draft data from localStorage
+    // Load any draft data from localStorage. The wizard shape evolves over
+    // time (added/renamed fields, new steps); old drafts persisted before a
+    // schema change would silently corrupt wizardState if spread blindly.
+    // Bump DRAFT_SCHEMA_VERSION whenever any UploadStep payload structure
+    // changes — stale drafts are discarded with a one-time toast.
     const draftData = localStorage.getItem('upload_draft');
     if (draftData) {
       try {
         const parsed = JSON.parse(draftData);
-        // Clean up File objects as they can't be stringified/parsed
-        wizardState = { ...wizardState, ...parsed };
+        if (parsed?._version === DRAFT_SCHEMA_VERSION) {
+          // Strip the version marker before merging — it isn't part of the
+          // wizard's actual state shape.
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { _version, ...payload } = parsed;
+          wizardState = { ...wizardState, ...payload };
+        } else {
+          localStorage.removeItem('upload_draft');
+          toast.info('Earlier draft was discarded because the upload form has changed.');
+        }
       } catch (e) {
         console.error('Failed to load draft data:', e);
+        localStorage.removeItem('upload_draft');
       }
     }
   });
-  
+
+  // Bump whenever the wizardState shape changes — even a renamed field on
+  // any UploadStep payload. Mismatched versions in onMount trigger a clean
+  // reset so the creator never sees fields populated from an obsolete
+  // schema.
+  const DRAFT_SCHEMA_VERSION = 2;
+
   // Auto-save draft data (excluding File objects). In runes mode, $: is no
   // longer reactive — use $effect to track wizardState changes.
   $effect(() => {
     if (typeof localStorage !== 'undefined') {
       const stateToSave = JSON.parse(JSON.stringify(wizardState));
-      localStorage.setItem('upload_draft', JSON.stringify(stateToSave));
+      localStorage.setItem('upload_draft', JSON.stringify({ _version: DRAFT_SCHEMA_VERSION, ...stateToSave }));
     }
   });
 </script>
 
-<div class="container py-10 space-y-8 min-h-screen">
-  <!-- Header -->
-  <div class="space-y-2 text-center">
-    <h1 class="text-4xl font-bold tracking-tight">Post New Content</h1>
-    <p class="text-xl text-muted-foreground">Share your faith-based content with believers worldwide</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={Upload} title="Upload" subtitle="Submit a new video for review and encoding." />
+
+  {#if editPrefillBanner}
+    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start">
+      {#if editPrefillBanner.existingThumb}
+        <img src={editPrefillBanner.existingThumb} alt="" class="w-20 h-12 object-cover rounded shrink-0" />
+      {/if}
+      <div class="text-sm flex-1">
+        <strong class="text-foreground">Editing "{editPrefillBanner.title}"</strong>
+        <p class="text-foreground/80 mt-1">
+          Basic info and metadata have been pre-filled. The
+          <strong>Video upload</strong> and <strong>Images &amp; assets</strong>
+          steps are intentionally blank — re-upload them only if you want to
+          replace the existing media. Leaving them empty keeps the current
+          video and posters in place.
+        </p>
+      </div>
+    </div>
+  {/if}
   
   <!-- Step Indicator -->
   <StepIndicator 
@@ -409,13 +525,56 @@
         Next →
       </button>
     {:else}
-      <button 
+      <button
         onclick={submitContent}
         disabled={!wizardState.isValid[wizardState.currentStep] || isSubmitting}
-        class="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-8 py-3 rounded-lg font-bold transition-colors shadow-lg"
+        class="bg-primary hover:opacity-90 disabled:opacity-50 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-opacity"
       >
-        {isSubmitting ? 'Processing...' : '🚀 Submit for Review'}
+        {isSubmitting ? 'Processing…' : 'Submit for review'}
       </button>
     {/if}
   </div>
+
+  <!-- Submission progress overlay — shows live state and a real progress
+       bar during the slow video upload step so the user knows it isn't
+       stuck. Closing the tab aborts the upload. -->
+  {#if isSubmitting && submitStep !== 'idle'}
+    <div class="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 pointer-events-none">
+      <div class="max-w-2xl mx-auto surface-glass border border-border rounded-2xl p-4 shadow-2xl pointer-events-auto">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center">
+            <div class="w-3 h-3 rounded-full bg-primary animate-pulse"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-foreground">
+              {#if submitStep === 'metadata'}Saving metadata…
+              {:else if submitStep === 'job'}Preparing encoder job…
+              {:else if submitStep === 'uploading'}Uploading video — {Math.round(videoUploadPct)}%
+              {:else if submitStep === 'committing'}Queueing for encoding…
+              {/if}
+            </div>
+            <div class="text-xs text-muted-foreground">
+              {submitStep === 'uploading'
+                ? 'Keep this tab open. Closing it will cancel the upload.'
+                : 'This should only take a moment.'}
+            </div>
+          </div>
+          {#if submitStep === 'uploading'}
+            <button type="button" onclick={cancelUpload} class="text-xs text-red-400 hover:text-red-300 shrink-0">
+              Cancel
+            </button>
+          {/if}
+        </div>
+        {#if submitStep === 'uploading'}
+          <div class="h-1.5 surface-2 rounded-full overflow-hidden">
+            <div class="h-full bg-primary transition-all duration-200" style="width: {videoUploadPct}%"></div>
+          </div>
+        {:else}
+          <div class="h-1.5 surface-2 rounded-full overflow-hidden">
+            <div class="h-full bg-primary/60 w-1/3 animate-pulse"></div>
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
 </div>

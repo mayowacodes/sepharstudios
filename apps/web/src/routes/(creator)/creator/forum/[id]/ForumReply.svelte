@@ -77,13 +77,13 @@
   }
 </script>
 
-<div class="bg-white/5 border border-white/10 rounded-lg p-3 {depth > 0 ? 'ml-6' : ''}">
+<div class="surface-1 border border-border/40 rounded-lg p-3 {depth > 0 ? 'ml-6' : ''}">
   <div class="flex items-start gap-3">
     <div class="bg-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-white text-sm font-bold shrink-0">
       {(reply.authorName ?? '?').charAt(0).toUpperCase()}
     </div>
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+      <div class="flex items-center gap-2 text-xs text-muted-foreground mb-1">
         <strong class="text-purple-300">{reply.authorName ?? 'unknown'}</strong>
         <span>·</span>
         <span>{relativeTime(reply.createdAt)}</span>
@@ -91,20 +91,20 @@
           <span class="text-yellow-400">(pending review)</span>
         {/if}
       </div>
-      <p class="text-gray-100 text-sm whitespace-pre-line">{reply.body}</p>
+      <p class="text-foreground text-sm whitespace-pre-line">{reply.body}</p>
 
       <div class="flex items-center gap-4 mt-2 text-xs">
         <button
           type="button"
           onclick={toggleLike}
-          class="flex items-center gap-1 hover:text-pink-300 transition-colors {reply.likedByMe ? 'text-pink-400' : 'text-gray-400'}"
+          class="flex items-center gap-1 hover:text-pink-300 transition-colors {reply.likedByMe ? 'text-pink-400' : 'text-muted-foreground'}"
         >
           <span>❤️</span><span>{reply.likeCount}</span>
         </button>
         <button
           type="button"
           onclick={() => replyOpen = !replyOpen}
-          class="text-gray-400 hover:text-white"
+          class="text-muted-foreground hover:text-foreground"
         >Reply</button>
         {#if isAdmin || reply.status === 'published'}
           <button
@@ -121,12 +121,12 @@
           <textarea
             bind:value={replyText}
             rows="2"
-            class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+            class="w-full px-3 py-2 surface-2 border border-border rounded text-foreground text-sm focus:outline-none focus:border-purple-500"
             placeholder="Reply…"
           ></textarea>
           {#if postError}<p class="text-red-300 text-xs">{postError}</p>{/if}
           <div class="flex justify-end gap-2">
-            <button type="button" onclick={() => replyOpen = false} class="text-xs text-gray-300">Cancel</button>
+            <button type="button" onclick={() => replyOpen = false} class="text-xs text-foreground/80">Cancel</button>
             <button
               type="submit"
               disabled={posting || !replyText.trim()}

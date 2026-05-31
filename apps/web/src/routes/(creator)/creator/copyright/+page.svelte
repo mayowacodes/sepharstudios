@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ShieldCheck, FileText, Mail, AlertTriangle } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
   const sections = [
     {
@@ -68,17 +69,8 @@ agent: copyright@sepharstudios.com.`
   <meta name="description" content="Copyright, licensing and DMCA policy for Sephar Studios creators." />
 </svelte:head>
 
-<div class="px-4 py-10 max-w-3xl mx-auto space-y-8">
-  <header class="space-y-3">
-    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">
-      <ShieldCheck class="w-4 h-4" /> Creator Policy
-    </div>
-    <h1 class="text-3xl md:text-4xl font-bold">Copyright & Licensing</h1>
-    <p class="text-muted-foreground">
-      Last updated 2026-05-27. This policy governs what you can upload, what you keep, and how we respond to
-      copyright complaints. Read it carefully before submitting work — by uploading you agree to every clause below.
-    </p>
-  </header>
+<div class="container mx-auto max-w-3xl py-6 px-4 space-y-6">
+  <PageHeader icon={ShieldCheck} title="Copyright & Licensing" subtitle="Last updated 2026-05-27. By uploading you agree to every clause below." />
 
   <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">
     <AlertTriangle class="w-5 h-5 text-yellow-300 shrink-0 mt-0.5" />

@@ -295,8 +295,12 @@ export const mediaLibrary = pgTable('media_library', {
 
 	// Review-queue assignment — admin currently working this item. Distinct
 	// from `reviewedBy` which is set only once the review completes.
+	// `assignedBy` records WHO performed the assignment (the acting admin),
+	// not the assignee — so audit logs show whether admin A self-claimed
+	// the item or whether admin B reassigned it from admin C.
 	assignedTo: text('assigned_to').references(() => user.id, { onDelete: 'set null' }),
 	assignedAt: timestamp('assigned_at'),
+	assignedBy: text('assigned_by').references(() => user.id, { onDelete: 'set null' }),
 
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()

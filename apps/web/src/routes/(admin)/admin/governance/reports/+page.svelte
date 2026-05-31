@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { BarChart3, Download } from '@lucide/svelte';
+	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
 
 	type ReportData = {
 		generatedAt: string;
@@ -64,38 +66,41 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 space-y-6">
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold text-white">Governance Reports</h1>
-		<button class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-sm" onclick={exportCsv} disabled={!report}>Export CSV</button>
-	</div>
+	<PageHeader icon={BarChart3} title="Governance Reports" subtitle="Voting activity, proposal outcomes, treasury flows.">
+		{#snippet actions()}
+			<button class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors disabled:opacity-50" onclick={exportCsv} disabled={!report}>
+				<Download class="w-3 h-3" /> Export CSV
+			</button>
+		{/snippet}
+	</PageHeader>
 
 	{#if loading}
-		<p class="text-sm text-gray-400">Generating report...</p>
+		<p class="text-sm text-muted-foreground">Generating report...</p>
 	{:else if report}
 		<div class="grid md:grid-cols-4 gap-4">
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<p class="text-xs text-gray-400">Total Proposals</p>
-				<p class="text-2xl font-bold text-white">{report.summary.totalProposals}</p>
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<p class="text-xs text-muted-foreground">Total Proposals</p>
+				<p class="text-2xl font-bold text-foreground">{report.summary.totalProposals}</p>
 			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<p class="text-xs text-gray-400">Executed</p>
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<p class="text-xs text-muted-foreground">Executed</p>
 				<p class="text-2xl font-bold text-green-300">{report.summary.executedProposals}</p>
 			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<p class="text-xs text-gray-400">Queued</p>
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<p class="text-xs text-muted-foreground">Queued</p>
 				<p class="text-2xl font-bold text-amber-300">{report.summary.queuedProposals}</p>
 			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-				<p class="text-xs text-gray-400">Execution Rate</p>
+			<div class="rounded-xl border border-border/40 surface-1 p-4">
+				<p class="text-xs text-muted-foreground">Execution Rate</p>
 				<p class="text-2xl font-bold text-cyan-300">{report.summary.executionRate}%</p>
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-			<p class="text-xs text-gray-400 mb-3">Generated at {new Date(report.generatedAt).toLocaleString()}</p>
+		<div class="rounded-xl border border-border/40 surface-1 p-4">
+			<p class="text-xs text-muted-foreground mb-3">Generated at {new Date(report.generatedAt).toLocaleString()}</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
-					<thead class="text-gray-400">
+					<thead class="text-muted-foreground">
 						<tr>
 							<th class="text-left py-2">Title</th>
 							<th class="text-left py-2">Type</th>
@@ -106,12 +111,12 @@
 					</thead>
 					<tbody>
 						{#each report.entries as e}
-							<tr class="border-t border-white/10">
-								<td class="py-2 text-white">{e.title}</td>
-								<td class="py-2 text-gray-300">{e.type}</td>
-								<td class="py-2 text-gray-300">{e.status}</td>
-								<td class="py-2 text-gray-300">{e.createdByName}</td>
-								<td class="py-2 text-gray-400">{new Date(e.createdAt).toLocaleString()}</td>
+							<tr class="border-t border-border/40">
+								<td class="py-2 text-foreground">{e.title}</td>
+								<td class="py-2 text-foreground/80">{e.type}</td>
+								<td class="py-2 text-foreground/80">{e.status}</td>
+								<td class="py-2 text-foreground/80">{e.createdByName}</td>
+								<td class="py-2 text-muted-foreground">{new Date(e.createdAt).toLocaleString()}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -119,17 +124,17 @@
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-white/10 bg-white/5 p-4">
-			<h2 class="text-lg font-semibold text-white mb-3">Audit Trail</h2>
+		<div class="rounded-xl border border-border/40 surface-1 p-4">
+			<h2 class="text-lg font-semibold text-foreground mb-3">Audit Trail</h2>
 			{#if (report.auditEntries?.length ?? 0) === 0}
-				<p class="text-sm text-gray-400">No audit entries yet.</p>
+				<p class="text-sm text-muted-foreground">No audit entries yet.</p>
 			{:else}
 				<div class="space-y-2">
 					{#each report.auditEntries ?? [] as a}
-						<div class="border-t border-white/10 pt-2">
-							<p class="text-sm text-white">{a.action} · {a.actorName}</p>
-							<p class="text-xs text-gray-300">{a.note}</p>
-							<p class="text-xs text-gray-500">{new Date(a.createdAt).toLocaleString()}</p>
+						<div class="border-t border-border/40 pt-2">
+							<p class="text-sm text-foreground">{a.action} · {a.actorName}</p>
+							<p class="text-xs text-foreground/80">{a.note}</p>
+							<p class="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleString()}</p>
 						</div>
 					{/each}
 				</div>

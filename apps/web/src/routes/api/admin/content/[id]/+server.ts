@@ -75,3 +75,31 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	return json({ ...item, subtitles, descriptions });
 };
+
+/**
+ * DELETE /api/admin/content/[id]
+ *
+ * Soft-delete: flips `is_active = false` and `status = 'archived'` so the
+ * row is hidden from every public catalog query but stays in the DB for
+ * audit + recovery. Hard-deletion would cascade into payouts / refunds /
+ * watch-progress and orphan downstream rows.
+ */
+export const DELETE: RequestHandler = async ({ params, locals }) => {
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
+
+	const contentId = params.id;
+	if (!contentId) return json({ error: 'Missing content ID' }, { status: 400 });
+
+	const adminUser = await db.select({ role: user.role }).from(user).where(eq(user.id, session.user.id)).then(r => r[0]);
+	if (adminUser?.role !== 'admin') return json({ error: 'Forbidden' }, { status: 403 });
+
+	const [updated] = await db
+		.update(mediaLibrary)
+		.set({ isActive: false, status: 'archived', updatedAt: new Date() })
+		.where(eq(mediaLibrary.id, contentId))
+		.returning({ id: mediaLibrary.id });
+
+	if (!updated) return json({ error: 'Content not found' }, { status: 404 });
+	return json({ ok: true, id: updated.id });
+};

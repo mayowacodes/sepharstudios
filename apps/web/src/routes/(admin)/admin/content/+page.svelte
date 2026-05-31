@@ -1,6 +1,7 @@
 <!-- Admin Content Management System -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { ContentStatus, ContentType } from '$lib/types/creator';
   import { Video, Clock, CheckCircle2, XCircle, FileText } from '@lucide/svelte';
   import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
@@ -155,6 +156,80 @@
     allContent = allContent.map(c => c.id === id ? { ...c, isPpv: false, ppvPriceCents: null } : c);
   }
 
+  // ─── Per-region pricing modal ──────────────────────────────────────
+  interface RegionPrice { id: string; regionCode: string; priceCents: number; currency: string; }
+  let regionModalContentId = $state<string | null>(null);
+  let regionRows = $state<RegionPrice[]>([]);
+  let regionLoading = $state(false);
+  let regionSaving = $state(false);
+  let regionError = $state('');
+  let newRegionCode = $state('');
+  let newRegionPrice = $state('');
+  let newRegionCurrency = $state('USD');
+
+  async function openRegionModal(id: string) {
+    regionModalContentId = id;
+    regionError = '';
+    newRegionCode = '';
+    newRegionPrice = '';
+    newRegionCurrency = 'USD';
+    regionLoading = true;
+    try {
+      const res = await fetch(`/api/admin/content/${id}/pricing`);
+      if (res.ok) {
+        const body = await res.json();
+        regionRows = body.rows ?? [];
+      }
+    } finally {
+      regionLoading = false;
+    }
+  }
+
+  async function addRegionPrice() {
+    if (!regionModalContentId) return;
+    const code = newRegionCode.trim().toUpperCase();
+    const cents = Math.round(parseFloat(newRegionPrice) * 100);
+    if (code !== '*' && !/^[A-Z]{2}$/.test(code)) { regionError = 'Code must be * or 2-letter ISO country (e.g. US, NG).'; return; }
+    if (!Number.isFinite(cents) || cents < 99) { regionError = 'Price must be ≥ $0.99'; return; }
+    regionError = '';
+    regionSaving = true;
+    try {
+      const res = await fetch(`/api/admin/content/${regionModalContentId}/pricing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regionCode: code, priceCents: cents, currency: newRegionCurrency.trim().toUpperCase() })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) { regionError = body.error ?? 'Failed'; return; }
+      // Refresh list
+      await openRegionModal(regionModalContentId);
+      newRegionCode = '';
+      newRegionPrice = '';
+    } finally {
+      regionSaving = false;
+    }
+  }
+
+  async function removeRegionPrice(regionCode: string) {
+    if (!regionModalContentId) return;
+    // Optimistic removal + revert on failure so the admin doesn't see a
+    // "deleted" row that's still live on the server. Surfaces the server
+    // error so the next attempt can be informed.
+    const snapshot = regionRows;
+    regionRows = regionRows.filter((r) => r.regionCode !== regionCode);
+    try {
+      const res = await fetch(`/api/admin/content/${regionModalContentId}/pricing?regionCode=${encodeURIComponent(regionCode)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        regionRows = snapshot;
+        regionError = body.error ?? `Failed to remove ${regionCode} (HTTP ${res.status})`;
+      }
+    } catch (err) {
+      regionRows = snapshot;
+      regionError = `Network error removing ${regionCode}: ${err instanceof Error ? err.message : 'unknown'}`;
+    }
+  }
+
   async function publishContent(id: string) {
     publishing = id;
     publishError = '';
@@ -175,7 +250,7 @@
   
   function getStatusColor(status: ContentStatus) {
     switch (status) {
-      case ContentStatus.DRAFT: return 'bg-gray-600 text-white';
+      case ContentStatus.DRAFT: return 'bg-gray-600 text-foreground';
       case ContentStatus.SUBMITTED: return 'bg-blue-600 text-white';
       case ContentStatus.THEOLOGICAL_REVIEW: return 'bg-purple-600 text-white';
       case ContentStatus.CONTENT_REVIEW: return 'bg-yellow-600 text-black';
@@ -183,7 +258,7 @@
       case ContentStatus.APPROVED: return 'bg-green-600 text-white';
       case ContentStatus.PUBLISHED: return 'bg-emerald-600 text-white';
       case ContentStatus.REJECTED: return 'bg-red-600 text-white';
-      default: return 'bg-gray-500 text-white';
+      default: return 'bg-gray-500 text-foreground';
     }
   }
   
@@ -192,7 +267,7 @@
       case 'high': return 'text-red-400';
       case 'medium': return 'text-yellow-400';
       case 'low': return 'text-green-400';
-      default: return 'text-gray-400';
+      default: return 'text-muted-foreground';
     }
   }
   
@@ -263,18 +338,32 @@
   }
   
   function editContent(id: string) {
-    // Navigate to content editor
-    window.location.href = `/admin/content/edit/${id}`;
+    // No dedicated edit page exists — the review detail page lets the
+    // admin inspect/edit a content row end-to-end. Route there via
+    // SvelteKit so the SPA navigation runs (preserves auth, layout, no
+    // full reload).
+    void goto(`/admin/review/${id}`);
   }
-  
+
   function reviewContent(id: string) {
-    // Navigate to review interface
-    window.location.href = `/admin/review/${id}`;
+    void goto(`/admin/review/${id}`);
   }
-  
-  function deleteContent(id: string) {
-    if (confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
-      allContent = allContent.filter(c => c.id !== id);
+
+  async function deleteContent(id: string) {
+    if (!confirm('Are you sure you want to delete this content? This action cannot be undone.')) return;
+    // Optimistic UI — pull from local state immediately, then call the
+    // server DELETE. If the server rejects, restore the row and toast.
+    const previous = allContent;
+    allContent = allContent.filter((c) => c.id !== id);
+    try {
+      const res = await fetch(`/api/admin/content/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Delete failed (HTTP ${res.status})`);
+      }
+    } catch (err) {
+      allContent = previous;
+      alert(`Delete failed: ${err instanceof Error ? err.message : 'unknown'}`);
     }
   }
   
@@ -301,7 +390,7 @@
   </div>
 
   <!-- Filters and Controls -->
-  <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+  <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
     <div class="flex flex-col lg:flex-row gap-4 mb-4">
       <!-- Search -->
       <div class="flex-1">
@@ -309,7 +398,7 @@
           type="text" 
           bind:value={searchTerm}
           placeholder="Search content, creators, or descriptions..."
-          class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"
+          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"
         />
       </div>
       
@@ -317,7 +406,7 @@
       <div class="flex flex-wrap gap-3">
         <select 
           bind:value={selectedStatus}
-          class="px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+          class="px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
         >
           <option value="all">All Statuses</option>
           <option value={ContentStatus.SUBMITTED}>Submitted</option>
@@ -331,7 +420,7 @@
         
         <select 
           bind:value={selectedType}
-          class="px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+          class="px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
         >
           <option value="all">All Types</option>
           <option value={ContentType.MOVIE}>Movies</option>
@@ -344,7 +433,7 @@
         
         <select 
           bind:value={sortBy}
-          class="px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+          class="px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
@@ -358,13 +447,13 @@
       <div class="flex rounded-lg overflow-hidden">
         <button 
           onclick={() => viewMode = 'grid'}
-          class="px-4 py-2 {viewMode === 'grid' ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300'}"
+          class="px-4 py-2 {viewMode === 'grid' ? 'bg-red-600 text-foreground' : 'surface-2 text-white/80'}"
         >
           📊
         </button>
         <button 
           onclick={() => viewMode = 'list'}
-          class="px-4 py-2 {viewMode === 'list' ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300'}"
+          class="px-4 py-2 {viewMode === 'list' ? 'bg-red-600 text-foreground' : 'surface-2 text-white/80'}"
         >
           📄
         </button>
@@ -379,7 +468,7 @@
         </div>
         <select 
           bind:value={bulkAction}
-          class="px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+          class="px-3 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
         >
           <option value="">Choose Action...</option>
           <option value="approve">Approve All</option>
@@ -399,7 +488,7 @@
         </button>
         <button 
           onclick={() => { selectedContent = []; showBulkActions = false; }}
-          class="text-gray-300 hover:text-white"
+          class="text-foreground/80 hover:text-foreground"
         >
           Cancel
         </button>
@@ -411,21 +500,21 @@
     <!-- Loading State -->
     <div class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      <p class="text-white ml-4">Loading content...</p>
+      <p class="text-foreground ml-4">Loading content...</p>
     </div>
   {:else if filteredContent.length === 0}
     <!-- Empty State -->
     <div class="text-center py-12">
       <div class="text-6xl mb-4">📚</div>
-      <h3 class="text-xl font-bold text-white mb-2">No Content Found</h3>
-      <p class="text-gray-400">Try adjusting your filters or search terms.</p>
+      <h3 class="text-xl font-bold text-foreground mb-2">No Content Found</h3>
+      <p class="text-muted-foreground">Try adjusting your filters or search terms.</p>
     </div>
   {:else}
     <!-- Content Grid/List -->
     {#if viewMode === 'grid'}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {#each filteredContent as content}
-          <div class="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/15 transition-all">
+          <div class="surface-2 backdrop-blur-sm rounded-xl overflow-hidden hover:surface-3 transition-all">
             <!-- Selection Checkbox -->
             <div class="p-4 pb-0">
               <input 
@@ -448,13 +537,13 @@
             <!-- Content Info -->
             <div class="p-4">
               <div class="flex items-start justify-between mb-2">
-                <h3 class="font-bold text-white text-sm line-clamp-2">{content.title}</h3>
+                <h3 class="font-bold text-foreground text-sm line-clamp-2">{content.title}</h3>
                 <span class={`text-xs font-medium ${getPriorityColor(content.priority)}`}>
                   {content.priority?.toUpperCase()}
                 </span>
               </div>
               
-              <p class="text-gray-300 text-xs mb-3 line-clamp-2">{content.description}</p>
+              <p class="text-foreground/80 text-xs mb-3 line-clamp-2">{content.description}</p>
               
               <!-- Status & Metadata -->
               <div class="space-y-2 mb-3">
@@ -462,7 +551,7 @@
                   {content.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                 </span>
                 
-                <div class="text-xs text-gray-400 space-y-1">
+                <div class="text-xs text-muted-foreground space-y-1">
                   <div>By: {content.creatorName}</div>
                   <div>{content.duration}min • {content.fileSize}</div>
                   <div>Submitted: {formatDate(content.submittedAt)}</div>
@@ -498,11 +587,14 @@
                 {/if}
               </div>
               <!-- PPV button row -->
-              <div class="flex gap-1 mt-1">
+              <div class="flex gap-1 mt-1 flex-wrap">
                 {#if content.isPpv}
                   <span class="text-xs bg-amber-600/20 text-amber-400 border border-amber-600/30 px-2 py-1 rounded">
                     PPV ${(content.ppvPriceCents / 100).toFixed(2)}
                   </span>
+                  <button onclick={() => openRegionModal(content.id)} class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 px-2 py-1 rounded transition-colors">
+                    Region prices
+                  </button>
                   <button onclick={() => removePpv(content.id)} class="text-xs text-red-400 hover:text-red-300 px-2 py-1">Remove PPV</button>
                 {:else}
                   <button onclick={() => openPpvModal(content.id)} class="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30 px-2 py-1 rounded transition-colors">
@@ -519,16 +611,16 @@
       </div>
     {:else}
       <!-- List View -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden">
+      <div class="surface-2 backdrop-blur-sm rounded-xl overflow-hidden">
         <!-- Table Header -->
-        <div class="bg-white/5 p-4">
+        <div class="surface-1 p-4">
           <div class="flex items-center">
             <input 
               type="checkbox" 
               onchange={selectAll}
               class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 mr-4"
             />
-            <div class="flex-1 grid grid-cols-12 gap-4 text-sm font-medium text-gray-300">
+            <div class="flex-1 grid grid-cols-12 gap-4 text-sm font-medium text-foreground/80">
               <div class="col-span-3">Content</div>
               <div class="col-span-2">Creator</div>
               <div class="col-span-2">Status</div>
@@ -543,7 +635,7 @@
         <!-- Table Rows -->
         <div class="divide-y divide-gray-700">
           {#each filteredContent as content}
-            <div class="p-4 hover:bg-white/5 transition-colors">
+            <div class="p-4 hover:surface-1 transition-colors">
               <div class="flex items-center">
                 <input 
                   type="checkbox" 
@@ -560,15 +652,15 @@
                       class="w-12 h-8 object-cover rounded"
                     />
                     <div>
-                      <div class="font-medium text-white text-sm">{content.title}</div>
-                      <div class="text-xs text-gray-400">{content.duration}min</div>
+                      <div class="font-medium text-foreground text-sm">{content.title}</div>
+                      <div class="text-xs text-muted-foreground">{content.duration}min</div>
                     </div>
                   </div>
                   
                   <!-- Creator -->
                   <div class="col-span-2">
-                    <div class="text-white text-sm">{content.creatorName}</div>
-                    <div class="text-xs text-gray-400">{content.creatorEmail}</div>
+                    <div class="text-foreground text-sm">{content.creatorName}</div>
+                    <div class="text-xs text-muted-foreground">{content.creatorEmail}</div>
                   </div>
                   
                   <!-- Status -->
@@ -580,12 +672,12 @@
                   
                   <!-- Type -->
                   <div class="col-span-1">
-                    <span class="text-gray-300 text-sm">{content.contentType}</span>
+                    <span class="text-foreground/80 text-sm">{content.contentType}</span>
                   </div>
                   
                   <!-- Submitted -->
                   <div class="col-span-2">
-                    <span class="text-gray-300 text-sm">{formatDate(content.submittedAt)}</span>
+                    <span class="text-foreground/80 text-sm">{formatDate(content.submittedAt)}</span>
                   </div>
                   
                   <!-- Priority -->
@@ -631,8 +723,8 @@
 
     <!-- Pagination -->
     {#if totalPages > 1}
-      <div class="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-xl p-4">
-        <div class="text-gray-300 text-sm">
+      <div class="flex items-center justify-between surface-2 backdrop-blur-sm rounded-xl p-4">
+        <div class="text-foreground/80 text-sm">
           Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
         </div>
         
@@ -640,7 +732,7 @@
           <button 
             onclick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            class="px-3 py-2 bg-white/10 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+            class="px-3 py-2 surface-2 text-foreground rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:surface-3 transition-colors"
           >
             Previous
           </button>
@@ -652,7 +744,7 @@
             {#if page <= totalPages}
               <button 
                 onclick={() => goToPage(page)}
-                class="px-3 py-2 rounded-lg transition-colors {currentPage === page ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}"
+                class="px-3 py-2 rounded-lg transition-colors {currentPage === page ? 'bg-red-600 text-foreground' : 'surface-2 text-white/80 hover:surface-3'}"
               >
                 {page}
               </button>
@@ -662,7 +754,7 @@
           <button 
             onclick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            class="px-3 py-2 bg-white/10 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+            class="px-3 py-2 surface-2 text-foreground rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:surface-3 transition-colors"
           >
             Next
           </button>
@@ -675,26 +767,26 @@
 <!-- PPV Price Modal -->
 {#if ppvModalContentId}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-      <h3 class="text-lg font-bold text-white mb-1">Set PPV Price</h3>
-      <p class="text-gray-400 text-sm mb-4">This price overrides any creator suggestion. Viewers without a subscription will pay this amount to watch.</p>
+    <div class="bg-gray-900 border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+      <h3 class="text-lg font-bold text-foreground mb-1">Set PPV Price</h3>
+      <p class="text-muted-foreground text-sm mb-4">This price overrides any creator suggestion. Viewers without a subscription will pay this amount to watch.</p>
 
-      <label for="ppv-price-input" class="block text-sm text-gray-300 mb-1">Final Price (USD)</label>
+      <label for="ppv-price-input" class="block text-sm text-foreground/80 mb-1">Final Price (USD)</label>
       <div class="flex items-center gap-2 mb-3">
-        <span class="text-gray-400">$</span>
+        <span class="text-muted-foreground">$</span>
         <input
           id="ppv-price-input"
           type="number"
           bind:value={ppvPrice}
           min="0.99" max="49.99" step="0.01"
           placeholder="4.99"
-          class="flex-1 px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          class="flex-1 px-3 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
 
       <label class="flex items-center gap-2 mb-4 cursor-pointer">
         <input type="checkbox" bind:checked={ppvActive} class="w-4 h-4 accent-amber-500" />
-        <span class="text-sm text-gray-300">Activate immediately</span>
+        <span class="text-sm text-foreground/80">Activate immediately</span>
       </label>
 
       {#if ppvError}
@@ -702,11 +794,88 @@
       {/if}
 
       <div class="flex gap-3">
-        <button onclick={() => ppvModalContentId = null} class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-colors">
+        <button onclick={() => ppvModalContentId = null} class="flex-1 px-4 py-2 surface-2 hover:surface-3 text-foreground rounded-lg text-sm transition-colors">
           Cancel
         </button>
         <button onclick={savePpv} disabled={ppvSaving} class="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors">
           {ppvSaving ? 'Saving...' : 'Save PPV Price'}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Region pricing modal -->
+{#if regionModalContentId}
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <div class="surface-glass border border-border rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+      <h3 class="text-lg font-bold text-foreground mb-1">Per-region pricing</h3>
+      <p class="text-muted-foreground text-sm mb-4">
+        Override the global PPV price for specific countries. Use <code class="text-foreground bg-muted px-1 rounded">*</code> as the regionCode for a default-region fallback. resolvePrice() reads exact-region first, then <code class="text-foreground bg-muted px-1 rounded">*</code>, then the global PPV price.
+      </p>
+
+      <div class="mb-4 space-y-2 max-h-64 overflow-y-auto">
+        {#if regionLoading}
+          <div class="text-sm text-muted-foreground">Loading…</div>
+        {:else if regionRows.length === 0}
+          <div class="text-sm text-muted-foreground">No region overrides yet. The global PPV price applies everywhere.</div>
+        {:else}
+          {#each regionRows as r (r.id)}
+            <div class="flex items-center gap-3 surface-1 rounded-lg px-3 py-2">
+              <span class="font-mono text-sm text-foreground w-10 shrink-0">{r.regionCode}</span>
+              <span class="text-sm text-foreground tabular-nums flex-1">
+                {(r.priceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {r.currency}
+              </span>
+              <button type="button" onclick={() => removeRegionPrice(r.regionCode)} class="text-xs text-red-400 hover:text-red-300">
+                Remove
+              </button>
+            </div>
+          {/each}
+        {/if}
+      </div>
+
+      <div class="border-t border-border pt-4 space-y-2">
+        <div class="text-xs uppercase tracking-wide text-muted-foreground">Add override</div>
+        <div class="grid grid-cols-[5rem_1fr_5rem] gap-2">
+          <input
+            type="text"
+            bind:value={newRegionCode}
+            placeholder="US or *"
+            maxlength="2"
+            class="surface-1 rounded-md px-2 py-1.5 text-sm text-foreground uppercase font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <input
+            type="number"
+            bind:value={newRegionPrice}
+            placeholder="Price"
+            min="0.99"
+            step="0.01"
+            class="surface-1 rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <input
+            type="text"
+            bind:value={newRegionCurrency}
+            placeholder="USD"
+            maxlength="3"
+            class="surface-1 rounded-md px-2 py-1.5 text-sm text-foreground uppercase font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        {#if regionError}
+          <p class="text-xs text-red-400">{regionError}</p>
+        {/if}
+        <button
+          type="button"
+          onclick={addRegionPrice}
+          disabled={regionSaving || !newRegionCode || !newRegionPrice}
+          class="w-full px-3 py-2 rounded bg-primary hover:opacity-90 text-primary-foreground text-sm font-medium disabled:opacity-50"
+        >
+          {regionSaving ? 'Adding…' : 'Add override'}
+        </button>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button onclick={() => (regionModalContentId = null)} class="px-4 py-2 surface-2 hover:surface-3 text-foreground rounded-lg text-sm transition-colors">
+          Close
         </button>
       </div>
     </div>

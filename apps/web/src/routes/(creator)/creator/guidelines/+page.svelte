@@ -1,5 +1,8 @@
 <!-- Creator Guidelines -->
 <script lang="ts">
+  import { BookOpen } from '@lucide/svelte';
+  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+
   let activeSection = 'overview';
   
   const sections = [
@@ -12,22 +15,18 @@
   ];
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-3xl font-bold text-white mb-2">Creator Guidelines</h1>
-    <p class="text-gray-300">Everything you need to know about creating content for Sephar Studios</p>
-  </div>
+<div class="container mx-auto px-4 py-6 space-y-6">
+  <PageHeader icon={BookOpen} title="Creator Guidelines" subtitle="Everything you need to know about creating content for Sephar Studios." />
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Navigation Sidebar -->
     <div class="lg:col-span-1">
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 sticky top-6">
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-4 sticky top-6">
         <nav class="space-y-2">
           {#each sections as section}
             <button
               onclick={() => activeSection = section.id}
-              class="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 {activeSection === section.id ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'}"
+              class="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 {activeSection === section.id ? 'bg-purple-600 text-foreground' : 'text-foreground/80 hover:text-white hover:surface-2'}"
             >
               <span>{section.icon}</span>
               <span class="text-sm font-medium">{section.title}</span>
@@ -39,12 +38,12 @@
 
     <!-- Content Area -->
     <div class="lg:col-span-3">
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+      <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
         {#if activeSection === 'overview'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Welcome to Sephar Studios</h2>
-              <p class="text-gray-300 mb-4">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Welcome to Sephar Studios</h2>
+              <p class="text-foreground/80 mb-4">
                 Sephar Studios is a faith-based streaming platform dedicated to sharing Christian content that inspires, 
                 educates, and transforms lives. As a creator, you play a vital role in building a community centered around 
                 faith, hope, and love.
@@ -52,7 +51,7 @@
             </div>
 
             <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">🎯</span> Our Mission
               </h3>
               <p class="text-blue-200">
@@ -62,23 +61,23 @@
             </div>
 
             <div>
-              <h3 class="text-xl font-bold text-white mb-4">Core Values</h3>
+              <h3 class="text-xl font-bold text-foreground mb-4">Core Values</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2">🙏 Faith-Centered</div>
-                  <p class="text-gray-300 text-sm">All content should reflect Christian values and biblical principles.</p>
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2">🙏 Faith-Centered</div>
+                  <p class="text-foreground/80 text-sm">All content should reflect Christian values and biblical principles.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2">👨‍👩‍👧‍👦 Family-Friendly</div>
-                  <p class="text-gray-300 text-sm">Content should be appropriate for viewers of all ages in the family.</p>
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2">👨‍👩‍👧‍👦 Family-Friendly</div>
+                  <p class="text-foreground/80 text-sm">Content should be appropriate for viewers of all ages in the family.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2">⚡ High-Quality</div>
-                  <p class="text-gray-300 text-sm">We maintain high standards for both content quality and technical excellence.</p>
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2">⚡ High-Quality</div>
+                  <p class="text-foreground/80 text-sm">We maintain high standards for both content quality and technical excellence.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2">🌍 Global Impact</div>
-                  <p class="text-gray-300 text-sm">Content that reaches and transforms lives across cultures and communities.</p>
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2">🌍 Global Impact</div>
+                  <p class="text-foreground/80 text-sm">Content that reaches and transforms lives across cultures and communities.</p>
                 </div>
               </div>
             </div>
@@ -87,15 +86,15 @@
         {:else if activeSection === 'content'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Content Standards</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Content Standards</h2>
+              <p class="text-foreground/80 mb-6">
                 All content submitted to Sephar Studios must align with our faith-based values and community standards.
               </p>
             </div>
 
             <div class="space-y-4">
               <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+                <h3 class="text-lg font-bold text-foreground mb-3 flex items-center">
                   <span class="mr-2">✅</span> Required Content Standards
                 </h3>
                 <ul class="space-y-2 text-green-200">
@@ -109,7 +108,7 @@
               </div>
 
               <div class="bg-red-600/20 border border-red-600 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+                <h3 class="text-lg font-bold text-foreground mb-3 flex items-center">
                   <span class="mr-2">❌</span> Prohibited Content
                 </h3>
                 <ul class="space-y-2 text-red-200">
@@ -125,31 +124,31 @@
             </div>
 
             <div>
-              <h3 class="text-xl font-bold text-white mb-4">Content Categories</h3>
+              <h3 class="text-xl font-bold text-foreground mb-4">Content Categories</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2 flex items-center">
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2 flex items-center">
                     <span class="mr-2">🎬</span> Movies & Documentaries
                   </div>
-                  <p class="text-gray-300 text-sm">Feature-length films, documentaries, and biographical content with Christian themes.</p>
+                  <p class="text-foreground/80 text-sm">Feature-length films, documentaries, and biographical content with Christian themes.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2 flex items-center">
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2 flex items-center">
                     <span class="mr-2">⛪</span> Sermons & Teaching
                   </div>
-                  <p class="text-gray-300 text-sm">Biblical teaching, sermons, and educational content from qualified ministers.</p>
+                  <p class="text-foreground/80 text-sm">Biblical teaching, sermons, and educational content from qualified ministers.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2 flex items-center">
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2 flex items-center">
                     <span class="mr-2">🎵</span> Worship & Music
                   </div>
-                  <p class="text-gray-300 text-sm">Christian music, worship services, and musical performances.</p>
+                  <p class="text-foreground/80 text-sm">Christian music, worship services, and musical performances.</p>
                 </div>
-                <div class="bg-white/5 rounded-lg p-4">
-                  <div class="text-lg font-medium text-white mb-2 flex items-center">
+                <div class="surface-1 rounded-lg p-4">
+                  <div class="text-lg font-medium text-foreground mb-2 flex items-center">
                     <span class="mr-2">🧸</span> Children's Content
                   </div>
-                  <p class="text-gray-300 text-sm">Age-appropriate content designed specifically for children and families.</p>
+                  <p class="text-foreground/80 text-sm">Age-appropriate content designed specifically for children and families.</p>
                 </div>
               </div>
             </div>
@@ -158,20 +157,20 @@
         {:else if activeSection === 'technical'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Technical Requirements</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Technical Requirements</h2>
+              <p class="text-foreground/80 mb-6">
                 To ensure the best viewing experience, all content must meet our technical standards.
               </p>
             </div>
 
             <div class="space-y-6">
               <div>
-                <h3 class="text-xl font-bold text-white mb-4">Video Specifications</h3>
-                <div class="bg-white/5 rounded-lg p-4">
+                <h3 class="text-xl font-bold text-foreground mb-4">Video Specifications</h3>
+                <div class="surface-1 rounded-lg p-4">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h4 class="font-medium text-white mb-2">Resolution & Quality</h4>
-                      <ul class="space-y-1 text-gray-300 text-sm">
+                      <h4 class="font-medium text-foreground mb-2">Resolution & Quality</h4>
+                      <ul class="space-y-1 text-foreground/80 text-sm">
                         <li>• <strong>Minimum:</strong> 720p HD (1280x720)</li>
                         <li>• <strong>Recommended:</strong> 1080p Full HD (1920x1080)</li>
                         <li>• <strong>Maximum:</strong> 4K UHD (3840x2160)</li>
@@ -179,8 +178,8 @@
                       </ul>
                     </div>
                     <div>
-                      <h4 class="font-medium text-white mb-2">Format & Compression</h4>
-                      <ul class="space-y-1 text-gray-300 text-sm">
+                      <h4 class="font-medium text-foreground mb-2">Format & Compression</h4>
+                      <ul class="space-y-1 text-foreground/80 text-sm">
                         <li>• <strong>Format:</strong> MP4 (H.264/H.265)</li>
                         <li>• <strong>Bitrate:</strong> 5-25 Mbps (depending on resolution)</li>
                         <li>• <strong>Frame Rate:</strong> 24, 25, or 30 fps</li>
@@ -192,12 +191,12 @@
               </div>
 
               <div>
-                <h3 class="text-xl font-bold text-white mb-4">Audio Specifications</h3>
-                <div class="bg-white/5 rounded-lg p-4">
+                <h3 class="text-xl font-bold text-foreground mb-4">Audio Specifications</h3>
+                <div class="surface-1 rounded-lg p-4">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h4 class="font-medium text-white mb-2">Audio Quality</h4>
-                      <ul class="space-y-1 text-gray-300 text-sm">
+                      <h4 class="font-medium text-foreground mb-2">Audio Quality</h4>
+                      <ul class="space-y-1 text-foreground/80 text-sm">
                         <li>• <strong>Format:</strong> AAC or MP3</li>
                         <li>• <strong>Sample Rate:</strong> 44.1 kHz or 48 kHz</li>
                         <li>• <strong>Bit Depth:</strong> 16-bit minimum</li>
@@ -205,8 +204,8 @@
                       </ul>
                     </div>
                     <div>
-                      <h4 class="font-medium text-white mb-2">Audio Standards</h4>
-                      <ul class="space-y-1 text-gray-300 text-sm">
+                      <h4 class="font-medium text-foreground mb-2">Audio Standards</h4>
+                      <ul class="space-y-1 text-foreground/80 text-sm">
                         <li>• Clear, professional-quality recording</li>
                         <li>• Minimal background noise</li>
                         <li>• Consistent audio levels throughout</li>
@@ -218,37 +217,37 @@
               </div>
 
               <div>
-                <h3 class="text-xl font-bold text-white mb-4">Image Assets Requirements</h3>
+                <h3 class="text-xl font-bold text-foreground mb-4">Image Assets Requirements</h3>
                 <div class="space-y-4">
-                  <div class="bg-white/5 rounded-lg p-4">
-                    <h4 class="font-medium text-white mb-2">Required Assets</h4>
+                  <div class="surface-1 rounded-lg p-4">
+                    <h4 class="font-medium text-foreground mb-2">Required Assets</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
                         <p class="text-purple-400 font-medium">Portrait Poster (2:3)</p>
-                        <p class="text-gray-300">Minimum: 400x600px</p>
-                        <p class="text-gray-300">Recommended: 800x1200px</p>
+                        <p class="text-foreground/80">Minimum: 400x600px</p>
+                        <p class="text-foreground/80">Recommended: 800x1200px</p>
                       </div>
                       <div>
                         <p class="text-purple-400 font-medium">Hero Background (16:9)</p>
-                        <p class="text-gray-300">Minimum: 1920x1080px</p>
-                        <p class="text-gray-300">Recommended: 3840x2160px</p>
+                        <p class="text-foreground/80">Minimum: 1920x1080px</p>
+                        <p class="text-foreground/80">Recommended: 3840x2160px</p>
                       </div>
                     </div>
                   </div>
-                  <div class="bg-white/5 rounded-lg p-4">
-                    <h4 class="font-medium text-white mb-2">Optional Assets</h4>
+                  <div class="surface-1 rounded-lg p-4">
+                    <h4 class="font-medium text-foreground mb-2">Optional Assets</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
                         <p class="text-blue-400 font-medium">Square Poster (1:1)</p>
-                        <p class="text-gray-300">400x400px - 800x800px</p>
+                        <p class="text-foreground/80">400x400px - 800x800px</p>
                       </div>
                       <div>
                         <p class="text-blue-400 font-medium">Landscape Poster (16:9)</p>
-                        <p class="text-gray-300">800x450px - 1600x900px</p>
+                        <p class="text-foreground/80">800x450px - 1600x900px</p>
                       </div>
                       <div>
                         <p class="text-blue-400 font-medium">Title Logo (PNG)</p>
-                        <p class="text-gray-300">Transparent background</p>
+                        <p class="text-foreground/80">Transparent background</p>
                       </div>
                     </div>
                   </div>
@@ -260,8 +259,8 @@
         {:else if activeSection === 'submission'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Submission Process</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Submission Process</h2>
+              <p class="text-foreground/80 mb-6">
                 Follow our step-by-step submission process to get your content reviewed and published.
               </p>
             </div>
@@ -274,7 +273,7 @@
                 { step: 4, title: 'Metadata', desc: 'Add Bible references, themes, tags, and keywords', icon: '📚' },
                 { step: 5, title: 'Review & Submit', desc: 'Review all information and submit for approval', icon: '✅' }
               ] as item}
-                <div class="bg-white/5 rounded-lg p-4">
+                <div class="surface-1 rounded-lg p-4">
                   <div class="flex items-start space-x-4">
                     <div class="bg-purple-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">
                       {item.step}
@@ -282,9 +281,9 @@
                     <div class="flex-1">
                       <div class="flex items-center space-x-2 mb-2">
                         <span class="text-xl">{item.icon}</span>
-                        <h3 class="text-lg font-medium text-white">{item.title}</h3>
+                        <h3 class="text-lg font-medium text-foreground">{item.title}</h3>
                       </div>
-                      <p class="text-gray-300">{item.desc}</p>
+                      <p class="text-foreground/80">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -292,7 +291,7 @@
             </div>
 
             <div class="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">💡</span> Submission Tips
               </h3>
               <ul class="space-y-1 text-yellow-200 text-sm">
@@ -308,8 +307,8 @@
         {:else if activeSection === 'review'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Review Process</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Review Process</h2>
+              <p class="text-foreground/80 mb-6">
                 Understanding our multi-stage review process helps ensure faster approval.
               </p>
             </div>
@@ -321,14 +320,14 @@
                 { stage: 'Technical QA', desc: 'Video and audio quality, file format, and technical specifications check', icon: '⚙️', color: 'green' },
                 { stage: 'Final Approval', desc: 'Content is approved and scheduled for publication', icon: '✅', color: 'emerald' }
               ] as stage}
-                <div class="bg-white/5 rounded-lg p-4">
+                <div class="surface-1 rounded-lg p-4">
                   <div class="flex items-start space-x-4">
-                    <div class="bg-{stage.color}-600 rounded-full w-12 h-12 flex items-center justify-center text-white text-xl">
+                    <div class="bg-{stage.color}-600 rounded-full w-12 h-12 flex items-center justify-center text-foreground text-xl">
                       {stage.icon}
                     </div>
                     <div class="flex-1">
-                      <h3 class="text-lg font-medium text-white mb-2">{stage.stage}</h3>
-                      <p class="text-gray-300">{stage.desc}</p>
+                      <h3 class="text-lg font-medium text-foreground mb-2">{stage.stage}</h3>
+                      <p class="text-foreground/80">{stage.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -336,7 +335,7 @@
             </div>
 
             <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">⏱️</span> Review Timeline
               </h3>
               <div class="text-blue-200 space-y-1">
@@ -348,7 +347,7 @@
             </div>
 
             <div class="bg-green-600/20 border border-green-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">🚀</span> After Approval
               </h3>
               <ul class="space-y-1 text-green-200 text-sm">
@@ -363,18 +362,18 @@
         {:else if activeSection === 'best-practices'}
           <div class="space-y-6">
             <div>
-              <h2 class="text-2xl font-bold text-white mb-4">Best Practices</h2>
-              <p class="text-gray-300 mb-6">
+              <h2 class="text-2xl font-bold text-foreground mb-4">Best Practices</h2>
+              <p class="text-foreground/80 mb-6">
                 Follow these best practices to maximize your content's impact and engagement.
               </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="bg-white/5 rounded-lg p-6">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+              <div class="surface-1 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-foreground mb-4 flex items-center">
                   <span class="mr-2">🎯</span> Content Strategy
                 </h3>
-                <ul class="space-y-2 text-gray-300 text-sm">
+                <ul class="space-y-2 text-foreground/80 text-sm">
                   <li>• Focus on clear, biblical messaging</li>
                   <li>• Tell compelling, personal stories</li>
                   <li>• Address real-life challenges and solutions</li>
@@ -383,11 +382,11 @@
                 </ul>
               </div>
 
-              <div class="bg-white/5 rounded-lg p-6">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+              <div class="surface-1 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-foreground mb-4 flex items-center">
                   <span class="mr-2">📱</span> Mobile Optimization
                 </h3>
-                <ul class="space-y-2 text-gray-300 text-sm">
+                <ul class="space-y-2 text-foreground/80 text-sm">
                   <li>• Ensure text is readable on small screens</li>
                   <li>• Use clear, high-contrast visuals</li>
                   <li>• Test audio quality with mobile speakers</li>
@@ -396,11 +395,11 @@
                 </ul>
               </div>
 
-              <div class="bg-white/5 rounded-lg p-6">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+              <div class="surface-1 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-foreground mb-4 flex items-center">
                   <span class="mr-2">🎨</span> Visual Excellence
                 </h3>
-                <ul class="space-y-2 text-gray-300 text-sm">
+                <ul class="space-y-2 text-foreground/80 text-sm">
                   <li>• Use professional lighting and composition</li>
                   <li>• Maintain consistent branding</li>
                   <li>• Create eye-catching thumbnails</li>
@@ -409,11 +408,11 @@
                 </ul>
               </div>
 
-              <div class="bg-white/5 rounded-lg p-6">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+              <div class="surface-1 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-foreground mb-4 flex items-center">
                   <span class="mr-2">📊</span> Engagement Tips
                 </h3>
-                <ul class="space-y-2 text-gray-300 text-sm">
+                <ul class="space-y-2 text-foreground/80 text-sm">
                   <li>• Hook viewers in the first 15 seconds</li>
                   <li>• Use relevant Bible verses and quotes</li>
                   <li>• Encourage community discussion</li>
@@ -424,7 +423,7 @@
             </div>
 
             <div class="bg-purple-600/20 border border-purple-600 rounded-lg p-4">
-              <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+              <h3 class="text-lg font-bold text-foreground mb-2 flex items-center">
                 <span class="mr-2">🏆</span> Success Metrics
               </h3>
               <p class="text-purple-200 mb-3">
