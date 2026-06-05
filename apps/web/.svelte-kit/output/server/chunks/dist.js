@@ -1,4 +1,4 @@
-import { Ft as run, _t as head, et as MediaQuery, it as on, kt as attr, mt as derived, nt as createSubscriber, wt as html } from "./ui-libs.js";
+import { Ht as run, Lt as attr, Mt as html, St as derived, Tt as head, ct as MediaQuery, ft as on, ut as createSubscriber } from "./ui-libs.js";
 import "clsx";
 import "style-to-object";
 //#region ../../node_modules/mode-watcher/node_modules/runed/dist/internal/configurable-globals.js
@@ -719,6 +719,14 @@ createDerivedTheme();
 function toggleMode() {
 	userPrefersMode.current = derivedMode.current === "dark" ? "light" : "dark";
 }
+/** Set the mode to light or dark */
+function setMode(mode) {
+	userPrefersMode.current = mode;
+}
+/** Reset the mode to operating system preference */
+function resetMode() {
+	userPrefersMode.current = "system";
+}
 function defineConfig(config) {
 	return config;
 }
@@ -809,4 +817,4 @@ function Mode_watcher($$renderer, $$props) {
 	});
 }
 //#endregion
-export { toggleMode as n, Mode_watcher as t };
+export { derivedMode as a, toggleMode as i, resetMode as n, setMode as r, Mode_watcher as t };

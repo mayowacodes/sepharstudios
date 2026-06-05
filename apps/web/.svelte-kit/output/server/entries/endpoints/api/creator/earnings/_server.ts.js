@@ -1,7 +1,7 @@
 import { n as public_env, t as private_env } from "../../../../../chunks/shared-server.js";
-import { M as mediaWatchProgress, et as transactions, g as creators, j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, T as creators, U as mediaWatchProgress, gt as transactions, t as db, tt as ppvPurchases } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { createPublicClient, http, isAddress, parseAbi } from "viem";
 import { polygon, polygonAmoy } from "viem/chains";
 //#region src/lib/server/creator-tier.ts
@@ -124,16 +124,60 @@ var GET = async ({ locals }) => {
 	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"))).orderBy(desc(transactions.createdAt)).limit(20);
 	const contentRows = await db.select({
 		id: mediaLibrary.id,
+		title: mediaLibrary.title,
+		thumbnail: mediaLibrary.thumbnail,
 		viewCount: mediaLibrary.viewCount
 	}).from(mediaLibrary).where(eq(mediaLibrary.creatorId, session.user.id));
 	const totalViews = contentRows.reduce((a, c) => a + Number(c.viewCount ?? 0), 0);
 	let completedWatches = 0;
+	const byContent = [];
 	if (contentRows.length > 0) {
 		const contentIds = contentRows.map((c) => c.id);
 		const [completedRow] = await db.select({ count: sql`count(*)::int` }).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), eq(mediaWatchProgress.isCompleted, true)));
 		completedWatches = Number(completedRow?.count ?? 0);
+		const thirtyDaysAgo = /* @__PURE__ */ new Date(Date.now() - 30 * 864e5);
+		const ppvRows = await db.select({
+			contentId: ppvPurchases.contentId,
+			lifetimeCents: sql`coalesce(sum(${ppvPurchases.amountPaidCents}), 0)::int`,
+			last30dCents: sql`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
+			purchaseCount: sql`count(*)::int`
+		}).from(ppvPurchases).where(inArray(ppvPurchases.contentId, contentIds)).groupBy(ppvPurchases.contentId);
+		const ppvMap = new Map(ppvRows.map((r) => [r.contentId, r]));
+		for (const c of contentRows) {
+			const ppv = ppvMap.get(c.id);
+			byContent.push({
+				contentId: c.id,
+				title: c.title,
+				thumbnail: c.thumbnail,
+				viewCount: Number(c.viewCount ?? 0),
+				lifetimeCents: ppv ? Number(ppv.lifetimeCents) : 0,
+				last30dCents: ppv ? Number(ppv.last30dCents) : 0,
+				purchaseCount: ppv ? Number(ppv.purchaseCount) : 0
+			});
+		}
+		byContent.sort((a, b) => b.lifetimeCents - a.lifetimeCents);
 	}
 	const payment = (creator.preferences ?? {}).payment ?? null;
+	const SERIES_DAYS = 30;
+	const seriesEarnings = new Array(SERIES_DAYS).fill(0);
+	const sinceDate = /* @__PURE__ */ new Date(Date.now() - SERIES_DAYS * 864e5);
+	const dailyRows = await db.select({
+		day: sql`to_char(date_trunc('day', ${transactions.createdAt}), 'YYYY-MM-DD')`,
+		cents: sql`coalesce(sum(${transactions.amount}), 0)::int`
+	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), gte(transactions.createdAt, sinceDate))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+	const today = /* @__PURE__ */ new Date();
+	today.setHours(0, 0, 0, 0);
+	for (const r of dailyRows) {
+		const d = new Date(r.day);
+		const ago = Math.floor((today.getTime() - d.getTime()) / 864e5);
+		const idx = SERIES_DAYS - 1 - ago;
+		if (idx >= 0 && idx < SERIES_DAYS) seriesEarnings[idx] = Number(r.cents);
+	}
+	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+	const [lastMonthAgg] = await db.select({ total: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"), gte(transactions.createdAt, lastMonthStart), sql`${transactions.createdAt} < ${lastMonthEnd}`));
+	const lastMonthCents = Number(lastMonthAgg?.total ?? 0);
+	const earningsDelta = lastMonthCents > 0 ? Math.round((totals.monthCents - lastMonthCents) / lastMonthCents * 1e3) / 10 : totals.monthCents > 0 ? 100 : 0;
 	const tierResolved = await resolveCreatorTier({
 		walletAddress: creator.walletAddress ?? null,
 		dbCreatorType: creator.creatorType
@@ -155,6 +199,9 @@ var GET = async ({ locals }) => {
 			totalViews,
 			completedWatches
 		},
+		byContent,
+		series: { earnings: seriesEarnings },
+		deltas: { earnings: earningsDelta },
 		paymentPreference: payment ?? null
 	});
 };

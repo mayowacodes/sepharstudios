@@ -49,8 +49,17 @@
     loadingHealth = true;
     try {
       const res = await fetch('/api/health');
-      health = await res.json();
+      if (!res.ok) {
+        console.error('[system-health] /api/health HTTP', res.status);
+        return;
+      }
+      // Guard json parse so a transient HTML error response doesn't throw
+      // an unhandled rejection that blanks the page after first paint.
+      const body = await res.json().catch(() => null);
+      if (body) health = body;
       lastRefresh = new Date();
+    } catch (err) {
+      console.error('[system-health] loadHealth failed:', err);
     } finally {
       loadingHealth = false;
     }
@@ -62,8 +71,16 @@
       const params = new URLSearchParams();
       if (jobStatus !== 'all') params.set('status', jobStatus);
       const res = await fetch(`/api/admin/encoder/jobs?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[system-health] /api/admin/encoder/jobs HTTP', res.status);
+        jobs = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       jobs = body.jobs ?? [];
+    } catch (err) {
+      console.error('[system-health] loadJobs failed:', err);
+      jobs = [];
     } finally {
       loadingJobs = false;
     }

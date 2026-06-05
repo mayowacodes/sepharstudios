@@ -158,18 +158,41 @@ export enum UploadStep {
 export interface UploadWizardState {
   currentStep: UploadStep;
   stepData: {
-    [UploadStep.BASIC_INFO]: Partial<Pick<ContentSubmission, 'title' | 'description' | 'contentType' | 'ageRating'>>;
+    // Every field is required and DEFINED — Svelte 5 `$bindable()` props
+    // crash with `props_invalid_value` if the parent's `bind:` target
+    // resolves to `undefined`. The contentType/ageRating widen to include
+    // `''` so the "not-yet-selected" state is a valid value (not undefined).
+    [UploadStep.BASIC_INFO]: {
+      title: string;
+      description: string;
+      contentType: ContentType | '';
+      ageRating: AgeRating | '';
+    };
     [UploadStep.VIDEO_UPLOAD]: {
-      videoFile?: File;
-      trailerFile?: File;
-      videoProgress?: VideoUploadProgress;
-      trailerProgress?: VideoUploadProgress;
+      videoFile: File | null;
+      trailerFile: File | null;
+      videoProgress: VideoUploadProgress | null;
+      trailerProgress: VideoUploadProgress | null;
     };
     [UploadStep.ASSET_MANAGEMENT]: {
       uploadedAssets: Partial<ContentAssets>;
       assetProgress: AssetUploadProgress[];
     };
-    [UploadStep.METADATA]: Partial<Pick<ContentSubmission, 'bibleReferences' | 'themes' | 'ministryAffiliation' | 'duration' | 'language' | 'hasSubtitles' | 'hasClosedCaptions' | 'tags' | 'keywords' | 'genre'>>;
+    // `duration` widens to `number | ''` because a number-input field that
+    // hasn't been touched holds `''`, and the bindable child also accepts
+    // that — keeps the two halves in agreement.
+    [UploadStep.METADATA]: {
+      bibleReferences: string[];
+      themes: string[];
+      ministryAffiliation: string;
+      duration: number | '';
+      language: string;
+      hasSubtitles: boolean;
+      hasClosedCaptions: boolean;
+      tags: string[];
+      keywords: string[];
+      genre: string[];
+    };
     [UploadStep.REVIEW_SUBMIT]: {
       termsAccepted: boolean;
       guidelinesAccepted: boolean;

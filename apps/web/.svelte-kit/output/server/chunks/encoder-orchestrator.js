@@ -35,9 +35,22 @@ async function createEncoderJob(input) {
 		profile: input.profile ?? "vod-multi"
 	};
 	if (input.durationHint) body.durationHint = input.durationHint;
+	if (input.mediaId) body.mediaId = input.mediaId;
 	return orchestratorFetch("/v1/jobs", {
 		method: "POST",
 		body: JSON.stringify(body)
+	});
+}
+/**
+* Cancel a running job. The orchestrator flips state → CANCELLED; the
+* worker learns on next /control poll, kills FFmpeg, and emits a
+* `cancelled` progress webhook back to us. The caller should optimistically
+* show "cancelling" until that webhook arrives.
+*/
+async function cancelEncoderJob(jobId) {
+	return orchestratorFetch(`/v1/jobs/${encodeURIComponent(jobId)}/cancel`, {
+		method: "POST",
+		body: "{}"
 	});
 }
 async function commitEncoderJob(jobId) {
@@ -56,4 +69,4 @@ async function getEncoderPlayback(jobId, ttlSeconds = 3600) {
 	});
 }
 //#endregion
-export { getEncoderPlayback as i, createEncoderJob as n, getEncoderJob as r, commitEncoderJob as t };
+export { getEncoderPlayback as a, getEncoderJob as i, commitEncoderJob as n, createEncoderJob as r, cancelEncoderJob as t };

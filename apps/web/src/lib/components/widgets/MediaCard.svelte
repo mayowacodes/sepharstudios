@@ -19,11 +19,9 @@
     isNew?: boolean;
   };
 
-  export let media: Media;
-  export let onClick: () => void = () => {};
-  export let onHover: () => void = () => {};
+  let { media, onClick = () => {}, onHover = () => {} }: { media: Media; onClick?: () => void; onHover?: () => void } = $props();
 
-  let addedToList = false;
+  let addedToList = $state(false);
 
   async function toggleMyList() {
     try {
@@ -54,8 +52,8 @@
     }
   }
 
-  let videoRef: HTMLVideoElement;
-  let isHovered = false;
+  let videoRef: HTMLVideoElement | undefined = $state();
+  let isHovered = $state(false);
   let previewTimeout: ReturnType<typeof setTimeout>;
 
   const handleMouseEnter = () => {
@@ -99,10 +97,10 @@
   tabindex="0"
   aria-label={media.title}
   class="relative group w-40 sm:w-48 lg:w-52 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 focus:outline-none"
-  on:mouseenter={handleMouseEnter}
-  on:mouseleave={handleMouseLeave}
-  on:click={onClick}
-  on:keydown={handleKeyDown}
+  onmouseenter={handleMouseEnter}
+  onmouseleave={handleMouseLeave}
+  onclick={onClick}
+  onkeydown={handleKeyDown}
 >
   <div class="relative aspect-2/3 bg-muted rounded-xl overflow-hidden">
     {#if isHovered && media.trailerUrl}
@@ -159,14 +157,14 @@
       <button
         type="button"
         aria-label={`Play ${media.title}`}
-        on:click|stopPropagation={onClick}
+        onclick={(e) => { e.stopPropagation(); onClick(); }}
         class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm"
       >&#9654;</button>
       <button
         type="button"
         aria-label={addedToList ? `Remove ${media.title} from My List` : `Add ${media.title} to My List`}
         title={addedToList ? 'In My List' : 'Add to My List'}
-        on:click|stopPropagation={toggleMyList}
+        onclick={(e) => { e.stopPropagation(); toggleMyList(); }}
         class="bg-white/10 hover:bg-white/20 dark:bg-black/30 dark:hover:bg-black/50 p-1.5 rounded-full text-white text-sm transition-colors {addedToList ? 'text-[#FFBF00]' : ''}"
       >{addedToList ? '✓' : '+'}</button>
     </div>

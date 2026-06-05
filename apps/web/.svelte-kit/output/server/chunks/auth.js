@@ -1,11 +1,12 @@
 import { n as __reExport, t as __exportAll } from "./rolldown-runtime.js";
 import { t as private_env } from "./shared-server.js";
 import { n as account, r as schema$2, t as db } from "./drizzle.js";
+import { r as Role } from "./constants.js";
 import { t as sendEmailAction } from "./server2.js";
 import { c as PACKAGE_VERSION, d as getOrigin, f as getProtocol, g as wildcardMatch, h as resolveBaseURL, i as ADMIN_ERROR_CODES, l as getBaseURL, m as isRequestLike, n as roles, o as defaultRoles, p as isDynamicBaseURLConfig, r as hasPermission, t as ac, u as getHost } from "./permissions.js";
-import { r as Role } from "./constants.js";
 import { t as track } from "./analytics.js";
 import { eq } from "drizzle-orm";
+import * as z$1 from "zod";
 import { createLogger, env, isDevelopment, isProduction, isTest, logger, shouldPublishLog } from "@better-auth/core/env";
 import { APIError, APIError as APIError$1, BASE_ERROR_CODES, BetterAuthError } from "@better-auth/core/error";
 import { createRandomStringGenerator } from "@better-auth/utils/random";
@@ -20,7 +21,6 @@ import { bytesToHex, hexToBytes, managedNonce, utf8ToBytes } from "@noble/cipher
 import { getAuthTables } from "@better-auth/core/db";
 import { filterOutputFields } from "@better-auth/core/utils/db";
 import { safeJSONParse } from "@better-auth/core/utils/json";
-import * as z from "zod";
 import { base64Url } from "@better-auth/utils/base64";
 import { binary } from "@better-auth/utils/binary";
 import { createHMAC } from "@better-auth/utils/hmac";
@@ -727,9 +727,9 @@ async function getAccountCookie(c) {
 	}
 	return null;
 }
-var getSessionQuerySchema = z.optional(z.object({
-	disableCookieCache: z.coerce.boolean().meta({ description: "Disable cookie cache and fetch session from database" }).optional(),
-	disableRefresh: z.coerce.boolean().meta({ description: "Disable session refresh. Useful for checking session status, without updating the session" }).optional()
+var getSessionQuerySchema = z$1.optional(z$1.object({
+	disableCookieCache: z$1.coerce.boolean().meta({ description: "Disable cookie cache and fetch session from database" }).optional(),
+	disableRefresh: z$1.coerce.boolean().meta({ description: "Disable session refresh. Useful for checking session status, without updating the session" }).optional()
 }));
 //#endregion
 //#region ../../node_modules/better-auth/dist/cookies/index.mjs
@@ -878,18 +878,18 @@ function deleteSessionCookie(ctx, skipDontRememberMe) {
 }
 //#endregion
 //#region ../../node_modules/better-auth/dist/state.mjs
-var stateDataSchema = z.looseObject({
-	callbackURL: z.string(),
-	codeVerifier: z.string(),
-	errorURL: z.string().optional(),
-	newUserURL: z.string().optional(),
-	expiresAt: z.number(),
-	oauthState: z.string().optional(),
-	link: z.object({
-		email: z.string(),
-		userId: z.coerce.string()
+var stateDataSchema = z$1.looseObject({
+	callbackURL: z$1.string(),
+	codeVerifier: z$1.string(),
+	errorURL: z$1.string().optional(),
+	newUserURL: z$1.string().optional(),
+	expiresAt: z$1.number(),
+	oauthState: z$1.string().optional(),
+	link: z$1.object({
+		email: z$1.string(),
+		userId: z$1.coerce.string()
 	}).optional(),
-	requestSignUp: z.boolean().optional()
+	requestSignUp: z$1.boolean().optional()
 });
 var StateError = class extends BetterAuthError {
 	code;
@@ -1789,7 +1789,7 @@ var listSessions = () => createAuthEndpoint("/list-sessions", {
 */
 var revokeSession = createAuthEndpoint("/revoke-session", {
 	method: "POST",
-	body: z.object({ token: z.string().meta({ description: "The token to revoke" }) }),
+	body: z$1.object({ token: z$1.string().meta({ description: "The token to revoke" }) }),
 	use: [sensitiveSessionMiddleware],
 	requireHeaders: true,
 	metadata: { openapi: {
@@ -3135,21 +3135,21 @@ var listUserAccounts = createAuthEndpoint("/list-accounts", {
 var linkSocialAccount = createAuthEndpoint("/link-social", {
 	method: "POST",
 	requireHeaders: true,
-	body: z.object({
-		callbackURL: z.string().meta({ description: "The URL to redirect to after the user has signed in" }).optional(),
+	body: z$1.object({
+		callbackURL: z$1.string().meta({ description: "The URL to redirect to after the user has signed in" }).optional(),
 		provider: SocialProviderListEnum,
-		idToken: z.object({
-			token: z.string(),
-			nonce: z.string().optional(),
-			accessToken: z.string().optional(),
-			refreshToken: z.string().optional(),
-			scopes: z.array(z.string()).optional()
+		idToken: z$1.object({
+			token: z$1.string(),
+			nonce: z$1.string().optional(),
+			accessToken: z$1.string().optional(),
+			refreshToken: z$1.string().optional(),
+			scopes: z$1.array(z$1.string()).optional()
 		}).optional(),
-		requestSignUp: z.boolean().optional(),
-		scopes: z.array(z.string()).meta({ description: "Additional scopes to request from the provider" }).optional(),
-		errorCallbackURL: z.string().meta({ description: "The URL to redirect to if there is an error during the link process" }).optional(),
-		disableRedirect: z.boolean().meta({ description: "Disable automatic redirection to the provider. Useful for handling the redirection yourself" }).optional(),
-		additionalData: z.record(z.string(), z.any()).optional()
+		requestSignUp: z$1.boolean().optional(),
+		scopes: z$1.array(z$1.string()).meta({ description: "Additional scopes to request from the provider" }).optional(),
+		errorCallbackURL: z$1.string().meta({ description: "The URL to redirect to if there is an error during the link process" }).optional(),
+		disableRedirect: z$1.boolean().meta({ description: "Disable automatic redirection to the provider. Useful for handling the redirection yourself" }).optional(),
+		additionalData: z$1.record(z$1.string(), z$1.any()).optional()
 	}),
 	use: [sessionMiddleware],
 	metadata: { openapi: {
@@ -3266,9 +3266,9 @@ var linkSocialAccount = createAuthEndpoint("/link-social", {
 });
 var unlinkAccount = createAuthEndpoint("/unlink-account", {
 	method: "POST",
-	body: z.object({
-		providerId: z.string(),
-		accountId: z.string().optional()
+	body: z$1.object({
+		providerId: z$1.string(),
+		accountId: z$1.string().optional()
 	}),
 	use: [freshSessionMiddleware],
 	metadata: { openapi: {
@@ -3292,10 +3292,10 @@ var unlinkAccount = createAuthEndpoint("/unlink-account", {
 });
 var getAccessToken = createAuthEndpoint("/get-access-token", {
 	method: "POST",
-	body: z.object({
-		providerId: z.string().meta({ description: "The provider ID for the OAuth provider" }),
-		accountId: z.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
-		userId: z.string().meta({ description: "The user ID associated with the account" }).optional()
+	body: z$1.object({
+		providerId: z$1.string().meta({ description: "The provider ID for the OAuth provider" }),
+		accountId: z$1.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
+		userId: z$1.string().meta({ description: "The user ID associated with the account" }).optional()
 	}),
 	metadata: { openapi: {
 		description: "Get a valid access token, doing a refresh if needed",
@@ -3381,10 +3381,10 @@ var getAccessToken = createAuthEndpoint("/get-access-token", {
 });
 var refreshToken = createAuthEndpoint("/refresh-token", {
 	method: "POST",
-	body: z.object({
-		providerId: z.string().meta({ description: "The provider ID for the OAuth provider" }),
-		accountId: z.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
-		userId: z.string().meta({ description: "The user ID associated with the account" }).optional()
+	body: z$1.object({
+		providerId: z$1.string().meta({ description: "The provider ID for the OAuth provider" }),
+		accountId: z$1.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
+		userId: z$1.string().meta({ description: "The user ID associated with the account" }).optional()
 	}),
 	metadata: { openapi: {
 		description: "Refresh the access token using a refresh token",
@@ -3486,7 +3486,7 @@ var refreshToken = createAuthEndpoint("/refresh-token", {
 		});
 	}
 });
-var accountInfoQuerySchema = z.optional(z.object({ accountId: z.string().meta({ description: "The provider given account id for which to get the account info" }).optional() }));
+var accountInfoQuerySchema = z$1.optional(z$1.object({ accountId: z$1.string().meta({ description: "The provider given account id for which to get the account info" }).optional() }));
 var accountInfo = createAuthEndpoint("/account-info", {
 	method: "GET",
 	use: [sessionMiddleware],
@@ -3587,9 +3587,9 @@ async function sendVerificationEmailFn(ctx, user) {
 var sendVerificationEmail = createAuthEndpoint("/send-verification-email", {
 	method: "POST",
 	operationId: "sendVerificationEmail",
-	body: z.object({
-		email: z.email().meta({ description: "The email to send the verification email to" }),
-		callbackURL: z.string().meta({ description: "The URL to use for email verification callback" }).optional()
+	body: z$1.object({
+		email: z$1.email().meta({ description: "The email to send the verification email to" }),
+		callbackURL: z$1.string().meta({ description: "The URL to use for email verification callback" }).optional()
 	}),
 	metadata: { openapi: {
 		operationId: "sendVerificationEmail",
@@ -3660,9 +3660,9 @@ var sendVerificationEmail = createAuthEndpoint("/send-verification-email", {
 var verifyEmail = createAuthEndpoint("/verify-email", {
 	method: "GET",
 	operationId: "verifyEmail",
-	query: z.object({
-		token: z.string().meta({ description: "The token to verify the email" }),
-		callbackURL: z.string().meta({ description: "The URL to redirect to after email verification" }).optional()
+	query: z$1.object({
+		token: z$1.string().meta({ description: "The token to verify the email" }),
+		callbackURL: z$1.string().meta({ description: "The URL to redirect to after email verification" }).optional()
 	}),
 	use: [originCheck((ctx) => ctx.query.callbackURL)],
 	metadata: { openapi: {
@@ -3714,10 +3714,10 @@ var verifyEmail = createAuthEndpoint("/verify-email", {
 		if (e instanceof JWTExpired) return redirectOnError(BASE_ERROR_CODES.TOKEN_EXPIRED);
 		return redirectOnError(BASE_ERROR_CODES.INVALID_TOKEN);
 	}
-	const parsed = z.object({
-		email: z.email(),
-		updateTo: z.string().optional(),
-		requestType: z.string().optional()
+	const parsed = z$1.object({
+		email: z$1.email(),
+		updateTo: z$1.string().optional(),
+		requestType: z$1.string().optional()
 	}).parse(jwt.payload);
 	const user = await ctx.context.internalAdapter.findUserByEmail(parsed.email);
 	if (!user) return redirectOnError(BASE_ERROR_CODES.USER_NOT_FOUND);
@@ -3979,13 +3979,13 @@ async function handleOAuthUserInfo(c, opts) {
 }
 //#endregion
 //#region ../../node_modules/better-auth/dist/api/routes/callback.mjs
-var schema$1 = z.object({
-	code: z.string().optional(),
-	error: z.string().optional(),
-	device_id: z.string().optional(),
-	error_description: z.string().optional(),
-	state: z.string().optional(),
-	user: z.string().optional()
+var schema$1 = z$1.object({
+	code: z$1.string().optional(),
+	error: z$1.string().optional(),
+	device_id: z$1.string().optional(),
+	error_description: z$1.string().optional(),
+	state: z$1.string().optional(),
+	user: z$1.string().optional()
 });
 var callbackOAuth = createAuthEndpoint("/callback/:id", {
 	method: ["GET", "POST"],
@@ -4586,9 +4586,9 @@ function redirectCallback(ctx, callbackURL, query) {
 }
 var requestPasswordReset = createAuthEndpoint("/request-password-reset", {
 	method: "POST",
-	body: z.object({
-		email: z.email().meta({ description: "The email address of the user to send a password reset email to" }),
-		redirectTo: z.string().meta({ description: "The URL to redirect the user to reset their password. If the token isn't valid or expired, it'll be redirected with a query parameter `?error=INVALID_TOKEN`. If the token is valid, it'll be redirected with a query parameter `?token=VALID_TOKEN" }).optional()
+	body: z$1.object({
+		email: z$1.email().meta({ description: "The email address of the user to send a password reset email to" }),
+		redirectTo: z$1.string().meta({ description: "The URL to redirect the user to reset their password. If the token isn't valid or expired, it'll be redirected with a query parameter `?error=INVALID_TOKEN`. If the token is valid, it'll be redirected with a query parameter `?token=VALID_TOKEN" }).optional()
 	}),
 	metadata: { openapi: {
 		operationId: "requestPasswordReset",
@@ -4650,7 +4650,7 @@ var requestPasswordReset = createAuthEndpoint("/request-password-reset", {
 var requestPasswordResetCallback = createAuthEndpoint("/reset-password/:token", {
 	method: "GET",
 	operationId: "resetPasswordCallback",
-	query: z.object({ callbackURL: z.string().meta({ description: "The URL to redirect the user to reset their password" }) }),
+	query: z$1.object({ callbackURL: z$1.string().meta({ description: "The URL to redirect the user to reset their password" }) }),
 	use: [originCheck((ctx) => ctx.query.callbackURL)],
 	metadata: { openapi: {
 		operationId: "resetPasswordCallback",
@@ -4687,10 +4687,10 @@ var requestPasswordResetCallback = createAuthEndpoint("/reset-password/:token", 
 var resetPassword = createAuthEndpoint("/reset-password", {
 	method: "POST",
 	operationId: "resetPassword",
-	query: z.object({ token: z.string().optional() }).optional(),
-	body: z.object({
-		newPassword: z.string().meta({ description: "The new password to set" }),
-		token: z.string().meta({ description: "The token to reset the password" }).optional()
+	query: z$1.object({ token: z$1.string().optional() }).optional(),
+	body: z$1.object({
+		newPassword: z$1.string().meta({ description: "The new password to set" }),
+		token: z$1.string().meta({ description: "The token to reset the password" }).optional()
 	}),
 	metadata: { openapi: {
 		operationId: "resetPassword",
@@ -4733,7 +4733,7 @@ var resetPassword = createAuthEndpoint("/reset-password", {
 });
 var verifyPassword$1 = createAuthEndpoint("/verify-password", {
 	method: "POST",
-	body: z.object({ password: z.string().meta({ description: "The password to verify" }) }),
+	body: z$1.object({ password: z$1.string().meta({ description: "The password to verify" }) }),
 	metadata: {
 		scope: "server",
 		openapi: {
@@ -4760,30 +4760,30 @@ var verifyPassword$1 = createAuthEndpoint("/verify-password", {
 });
 //#endregion
 //#region ../../node_modules/better-auth/dist/api/routes/sign-in.mjs
-var socialSignInBodySchema = z.object({
-	callbackURL: z.string().meta({ description: "Callback URL to redirect to after the user has signed in" }).optional(),
-	newUserCallbackURL: z.string().optional(),
-	errorCallbackURL: z.string().meta({ description: "Callback URL to redirect to if an error happens" }).optional(),
+var socialSignInBodySchema = z$1.object({
+	callbackURL: z$1.string().meta({ description: "Callback URL to redirect to after the user has signed in" }).optional(),
+	newUserCallbackURL: z$1.string().optional(),
+	errorCallbackURL: z$1.string().meta({ description: "Callback URL to redirect to if an error happens" }).optional(),
 	provider: SocialProviderListEnum,
-	disableRedirect: z.boolean().meta({ description: "Disable automatic redirection to the provider. Useful for handling the redirection yourself" }).optional(),
-	idToken: z.optional(z.object({
-		token: z.string().meta({ description: "ID token from the provider" }),
-		nonce: z.string().meta({ description: "Nonce used to generate the token" }).optional(),
-		accessToken: z.string().meta({ description: "Access token from the provider" }).optional(),
-		refreshToken: z.string().meta({ description: "Refresh token from the provider" }).optional(),
-		expiresAt: z.number().meta({ description: "Expiry date of the token" }).optional(),
-		user: z.object({
-			name: z.object({
-				firstName: z.string().optional(),
-				lastName: z.string().optional()
+	disableRedirect: z$1.boolean().meta({ description: "Disable automatic redirection to the provider. Useful for handling the redirection yourself" }).optional(),
+	idToken: z$1.optional(z$1.object({
+		token: z$1.string().meta({ description: "ID token from the provider" }),
+		nonce: z$1.string().meta({ description: "Nonce used to generate the token" }).optional(),
+		accessToken: z$1.string().meta({ description: "Access token from the provider" }).optional(),
+		refreshToken: z$1.string().meta({ description: "Refresh token from the provider" }).optional(),
+		expiresAt: z$1.number().meta({ description: "Expiry date of the token" }).optional(),
+		user: z$1.object({
+			name: z$1.object({
+				firstName: z$1.string().optional(),
+				lastName: z$1.string().optional()
 			}).optional(),
-			email: z.string().optional()
+			email: z$1.string().optional()
 		}).meta({ description: "The user object from the provider. Only available for some providers like Apple." }).optional()
 	})),
-	scopes: z.array(z.string()).meta({ description: "Array of scopes to request from the provider. This will override the default scopes passed." }).optional(),
-	requestSignUp: z.boolean().meta({ description: "Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider" }).optional(),
-	loginHint: z.string().meta({ description: "The login hint to use for the authorization code request" }).optional(),
-	additionalData: z.record(z.string(), z.any()).optional().meta({ description: "Additional data to be passed through the OAuth flow" })
+	scopes: z$1.array(z$1.string()).meta({ description: "Array of scopes to request from the provider. This will override the default scopes passed." }).optional(),
+	requestSignUp: z$1.boolean().meta({ description: "Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider" }).optional(),
+	loginHint: z$1.string().meta({ description: "The login hint to use for the authorization code request" }).optional(),
+	additionalData: z$1.record(z$1.string(), z$1.any()).optional().meta({ description: "Additional data to be passed through the OAuth flow" })
 });
 var signInSocial = () => createAuthEndpoint("/sign-in/social", {
 	method: "POST",
@@ -4893,11 +4893,11 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 	method: "POST",
 	operationId: "signInEmail",
 	use: [formCsrfMiddleware],
-	body: z.object({
-		email: z.string().meta({ description: "Email of the user" }),
-		password: z.string().meta({ description: "Password of the user" }),
-		callbackURL: z.string().meta({ description: "Callback URL to use as a redirect for email verification" }).optional(),
-		rememberMe: z.boolean().meta({ description: "If this is false, the session will not be remembered. Default is `true`." }).default(true).optional()
+	body: z$1.object({
+		email: z$1.string().meta({ description: "Email of the user" }),
+		password: z$1.string().meta({ description: "Password of the user" }),
+		callbackURL: z$1.string().meta({ description: "Callback URL to use as a redirect for email verification" }).optional(),
+		rememberMe: z$1.boolean().meta({ description: "If this is false, the session will not be remembered. Default is `true`." }).default(true).optional()
 	}),
 	metadata: {
 		allowedMediaTypes: ["application/x-www-form-urlencoded", "application/json"],
@@ -4949,7 +4949,7 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 		});
 	}
 	const { email, password } = ctx.body;
-	if (!z.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
+	if (!z$1.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
 	const user = await ctx.context.internalAdapter.findUserByEmail(email, { includeAccounts: true });
 	if (!user) {
 		await ctx.context.password.hash(password);
@@ -5035,14 +5035,14 @@ var signOut = createAuthEndpoint("/sign-out", {
 });
 //#endregion
 //#region ../../node_modules/better-auth/dist/api/routes/sign-up.mjs
-var signUpEmailBodySchema = z.object({
-	name: z.string(),
-	email: z.email(),
-	password: z.string().nonempty(),
-	image: z.string().optional(),
-	callbackURL: z.string().optional(),
-	rememberMe: z.boolean().optional()
-}).and(z.record(z.string(), z.any()));
+var signUpEmailBodySchema = z$1.object({
+	name: z$1.string(),
+	email: z$1.email(),
+	password: z$1.string().nonempty(),
+	image: z$1.string().optional(),
+	callbackURL: z$1.string().optional(),
+	rememberMe: z$1.boolean().optional()
+}).and(z$1.record(z$1.string(), z$1.any()));
 var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 	method: "POST",
 	operationId: "signUpWithEmailAndPassword",
@@ -5170,7 +5170,7 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 		});
 		const body = ctx.body;
 		const { name, email, password, image, callbackURL: _callbackURL, rememberMe, ...rest } = body;
-		if (!z.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
+		if (!z$1.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
 		if (!password || typeof password !== "string") throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_PASSWORD);
 		const minPasswordLength = ctx.context.password.config.minPasswordLength;
 		if (password.length < minPasswordLength) {
@@ -5289,7 +5289,7 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 });
 //#endregion
 //#region ../../node_modules/better-auth/dist/api/routes/update-session.mjs
-var updateSessionBodySchema = z.record(z.string().meta({ description: "Field name must be a string" }), z.any());
+var updateSessionBodySchema = z$1.record(z$1.string().meta({ description: "Field name must be a string" }), z$1.any());
 var updateSession = () => createAuthEndpoint("/update-session", {
 	method: "POST",
 	operationId: "updateSession",
@@ -5334,7 +5334,7 @@ var updateSession = () => createAuthEndpoint("/update-session", {
 });
 //#endregion
 //#region ../../node_modules/better-auth/dist/api/routes/update-user.mjs
-var updateUserBodySchema = z.record(z.string().meta({ description: "Field name must be a string" }), z.any());
+var updateUserBodySchema = z$1.record(z$1.string().meta({ description: "Field name must be a string" }), z$1.any());
 var updateUser = () => createAuthEndpoint("/update-user", {
 	method: "POST",
 	operationId: "updateUser",
@@ -5401,10 +5401,10 @@ var updateUser = () => createAuthEndpoint("/update-user", {
 var changePassword = createAuthEndpoint("/change-password", {
 	method: "POST",
 	operationId: "changePassword",
-	body: z.object({
-		newPassword: z.string().meta({ description: "The new password to set" }),
-		currentPassword: z.string().meta({ description: "The current password is required" }),
-		revokeOtherSessions: z.boolean().meta({ description: "Must be a boolean value" }).optional()
+	body: z$1.object({
+		newPassword: z$1.string().meta({ description: "The new password to set" }),
+		currentPassword: z$1.string().meta({ description: "The current password is required" }),
+		revokeOtherSessions: z$1.boolean().meta({ description: "Must be a boolean value" }).optional()
 	}),
 	use: [sensitiveSessionMiddleware],
 	metadata: { openapi: {
@@ -5510,7 +5510,7 @@ var changePassword = createAuthEndpoint("/change-password", {
 });
 var setPassword = createAuthEndpoint({
 	method: "POST",
-	body: z.object({ newPassword: z.string().meta({ description: "The new password to set is required" }) }),
+	body: z$1.object({ newPassword: z$1.string().meta({ description: "The new password to set is required" }) }),
 	use: [sensitiveSessionMiddleware]
 }, async (ctx) => {
 	const { newPassword } = ctx.body;
@@ -5541,10 +5541,10 @@ var setPassword = createAuthEndpoint({
 var deleteUser = createAuthEndpoint("/delete-user", {
 	method: "POST",
 	use: [sensitiveSessionMiddleware],
-	body: z.object({
-		callbackURL: z.string().meta({ description: "The callback URL to redirect to after the user is deleted" }).optional(),
-		password: z.string().meta({ description: "The password of the user is required to delete the user" }).optional(),
-		token: z.string().meta({ description: "The token to delete the user is required" }).optional()
+	body: z$1.object({
+		callbackURL: z$1.string().meta({ description: "The callback URL to redirect to after the user is deleted" }).optional(),
+		password: z$1.string().meta({ description: "The password of the user is required to delete the user" }).optional(),
+		token: z$1.string().meta({ description: "The token to delete the user is required" }).optional()
 	}),
 	metadata: { openapi: {
 		operationId: "deleteUser",
@@ -5646,9 +5646,9 @@ var deleteUser = createAuthEndpoint("/delete-user", {
 });
 var deleteUserCallback = createAuthEndpoint("/delete-user/callback", {
 	method: "GET",
-	query: z.object({
-		token: z.string().meta({ description: "The token to verify the deletion request" }),
-		callbackURL: z.string().meta({ description: "The URL to redirect to after deletion" }).optional()
+	query: z$1.object({
+		token: z$1.string().meta({ description: "The token to verify the deletion request" }),
+		callbackURL: z$1.string().meta({ description: "The URL to redirect to after deletion" }).optional()
 	}),
 	use: [originCheck((ctx) => ctx.query.callbackURL)],
 	metadata: { openapi: {
@@ -5702,9 +5702,9 @@ var deleteUserCallback = createAuthEndpoint("/delete-user/callback", {
 });
 var changeEmail = createAuthEndpoint("/change-email", {
 	method: "POST",
-	body: z.object({
-		newEmail: z.email().meta({ description: "The new email address to set must be a valid email address" }),
-		callbackURL: z.string().meta({ description: "The URL to redirect to after email verification" }).optional()
+	body: z$1.object({
+		newEmail: z$1.email().meta({ description: "The new email address to set must be a valid email address" }),
+		callbackURL: z$1.string().meta({ description: "The URL to redirect to after email verification" }).optional()
 	}),
 	use: [sensitiveSessionMiddleware],
 	metadata: { openapi: {
@@ -7081,9 +7081,9 @@ var adminMiddleware = createAuthMiddleware(async (ctx) => {
 function parseRoles(roles) {
 	return Array.isArray(roles) ? roles.join(",") : roles;
 }
-var setRoleBodySchema = z.object({
-	userId: z.coerce.string().meta({ description: "The user id" }),
-	role: z.union([z.string().meta({ description: "The role to set. `admin` or `user` by default" }), z.array(z.string().meta({ description: "The roles to set. `admin` or `user` by default" }))]).meta({ description: "The role to set, this can be a string or an array of strings. Eg: `admin` or `[admin, user]`" })
+var setRoleBodySchema = z$1.object({
+	userId: z$1.coerce.string().meta({ description: "The user id" }),
+	role: z$1.union([z$1.string().meta({ description: "The role to set. `admin` or `user` by default" }), z$1.array(z$1.string().meta({ description: "The roles to set. `admin` or `user` by default" }))]).meta({ description: "The role to set, this can be a string or an array of strings. Eg: `admin` or `[admin, user]`" })
 });
 /**
 * ### Endpoint
@@ -7135,7 +7135,7 @@ var setRole = (opts) => createAuthEndpoint("/admin/set-role", {
 	const updatedUser = await ctx.context.internalAdapter.updateUser(ctx.body.userId, { role: parseRoles(ctx.body.role) });
 	return ctx.json({ user: parseUserOutput(ctx.context.options, updatedUser) });
 });
-var getUserQuerySchema = z.object({ id: z.string().meta({ description: "The id of the User" }) });
+var getUserQuerySchema = z$1.object({ id: z$1.string().meta({ description: "The id of the User" }) });
 var getUser = (opts) => createAuthEndpoint("/admin/get-user", {
 	method: "GET",
 	query: getUserQuerySchema,
@@ -7164,12 +7164,12 @@ var getUser = (opts) => createAuthEndpoint("/admin/get-user", {
 	if (!user) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
 	return parseUserOutput(ctx.context.options, user);
 });
-var createUserBodySchema = z.object({
-	email: z.string().meta({ description: "The email of the user" }),
-	password: z.string().optional().meta({ description: "The password of the user. If not provided, the user will be created without a credential account (useful for magic link or social login only users)." }),
-	name: z.string().meta({ description: "The name of the user" }),
-	role: z.union([z.string().meta({ description: "The role of the user" }), z.array(z.string().meta({ description: "The roles of user" }))]).optional().meta({ description: `A string or array of strings representing the roles to apply to the new user. Eg: \"user\"` }),
-	data: z.record(z.string(), z.any()).optional().meta({ description: "Extra fields for the user. Including custom additional fields." })
+var createUserBodySchema = z$1.object({
+	email: z$1.string().meta({ description: "The email of the user" }),
+	password: z$1.string().optional().meta({ description: "The password of the user. If not provided, the user will be created without a credential account (useful for magic link or social login only users)." }),
+	name: z$1.string().meta({ description: "The name of the user" }),
+	role: z$1.union([z$1.string().meta({ description: "The role of the user" }), z$1.array(z$1.string().meta({ description: "The roles of user" }))]).optional().meta({ description: `A string or array of strings representing the roles to apply to the new user. Eg: \"user\"` }),
+	data: z$1.record(z$1.string(), z$1.any()).optional().meta({ description: "Extra fields for the user. Including custom additional fields." })
 });
 /**
 * ### Endpoint
@@ -7216,7 +7216,7 @@ var createUser = (opts) => createAuthEndpoint("/admin/create-user", {
 		})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_CREATE_USERS);
 	}
 	const email = ctx.body.email.toLowerCase();
-	if (!z.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
+	if (!z$1.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
 	if (await ctx.context.internalAdapter.findUserByEmail(email)) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL);
 	const user = await ctx.context.internalAdapter.createUser({
 		email,
@@ -7236,9 +7236,9 @@ var createUser = (opts) => createAuthEndpoint("/admin/create-user", {
 	}
 	return ctx.json({ user: parseUserOutput(ctx.context.options, user) });
 });
-var adminUpdateUserBodySchema = z.object({
-	userId: z.coerce.string().meta({ description: "The user id" }),
-	data: z.record(z.any(), z.any()).meta({ description: "The user data to update" })
+var adminUpdateUserBodySchema = z$1.object({
+	userId: z$1.coerce.string().meta({ description: "The user id" }),
+	data: z$1.record(z$1.any(), z$1.any()).meta({ description: "The user data to update" })
 });
 /**
 * ### Endpoint
@@ -7297,21 +7297,21 @@ var adminUpdateUser = (opts) => createAuthEndpoint("/admin/update-user", {
 	const updatedUser = await ctx.context.internalAdapter.updateUser(ctx.body.userId, ctx.body.data);
 	return ctx.json(parseUserOutput(ctx.context.options, updatedUser));
 });
-var listUsersQuerySchema = z.object({
-	searchValue: z.string().optional().meta({ description: "The value to search for. Eg: \"some name\"" }),
-	searchField: z.enum(["email", "name"]).meta({ description: "The field to search in, defaults to email. Can be `email` or `name`. Eg: \"name\"" }).optional(),
-	searchOperator: z.enum([
+var listUsersQuerySchema = z$1.object({
+	searchValue: z$1.string().optional().meta({ description: "The value to search for. Eg: \"some name\"" }),
+	searchField: z$1.enum(["email", "name"]).meta({ description: "The field to search in, defaults to email. Can be `email` or `name`. Eg: \"name\"" }).optional(),
+	searchOperator: z$1.enum([
 		"contains",
 		"starts_with",
 		"ends_with"
 	]).meta({ description: "The operator to use for the search. Can be `contains`, `starts_with` or `ends_with`. Eg: \"contains\"" }).optional(),
-	limit: z.string().meta({ description: "The number of users to return" }).or(z.number()).optional(),
-	offset: z.string().meta({ description: "The offset to start from" }).or(z.number()).optional(),
-	sortBy: z.string().meta({ description: "The field to sort by" }).optional(),
-	sortDirection: z.enum(["asc", "desc"]).meta({ description: "The direction to sort by" }).optional(),
-	filterField: z.string().meta({ description: "The field to filter by" }).optional(),
-	filterValue: z.string().meta({ description: "The value to filter by" }).or(z.number()).or(z.boolean()).or(z.array(z.string())).or(z.array(z.number())).optional(),
-	filterOperator: z.enum(whereOperators).meta({ description: "The operator to use for the filter" }).optional()
+	limit: z$1.string().meta({ description: "The number of users to return" }).or(z$1.number()).optional(),
+	offset: z$1.string().meta({ description: "The offset to start from" }).or(z$1.number()).optional(),
+	sortBy: z$1.string().meta({ description: "The field to sort by" }).optional(),
+	sortDirection: z$1.enum(["asc", "desc"]).meta({ description: "The direction to sort by" }).optional(),
+	filterField: z$1.string().meta({ description: "The field to filter by" }).optional(),
+	filterValue: z$1.string().meta({ description: "The value to filter by" }).or(z$1.number()).or(z$1.boolean()).or(z$1.array(z$1.string())).or(z$1.array(z$1.number())).optional(),
+	filterOperator: z$1.enum(whereOperators).meta({ description: "The operator to use for the filter" }).optional()
 });
 var listUsers = (opts) => createAuthEndpoint("/admin/list-users", {
 	method: "GET",
@@ -7376,7 +7376,7 @@ var listUsers = (opts) => createAuthEndpoint("/admin/list-users", {
 		});
 	}
 });
-var listUserSessionsBodySchema = z.object({ userId: z.coerce.string().meta({ description: "The user id" }) });
+var listUserSessionsBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
 /**
 * ### Endpoint
 *
@@ -7422,7 +7422,7 @@ var listUserSessions = (opts) => createAuthEndpoint("/admin/list-user-sessions",
 	const sessions = await ctx.context.internalAdapter.listSessions(ctx.body.userId);
 	return ctx.json({ sessions: sessions.map((s) => parseSessionOutput(ctx.context.options, s)) });
 });
-var unbanUserBodySchema = z.object({ userId: z.coerce.string().meta({ description: "The user id" }) });
+var unbanUserBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
 /**
 * ### Endpoint
 *
@@ -7470,10 +7470,10 @@ var unbanUser = (opts) => createAuthEndpoint("/admin/unban-user", {
 	});
 	return ctx.json({ user: parseUserOutput(ctx.context.options, user) });
 });
-var banUserBodySchema = z.object({
-	userId: z.coerce.string().meta({ description: "The user id" }),
-	banReason: z.string().meta({ description: "The reason for the ban" }).optional(),
-	banExpiresIn: z.number().meta({ description: "The number of seconds until the ban expires" }).optional()
+var banUserBodySchema = z$1.object({
+	userId: z$1.coerce.string().meta({ description: "The user id" }),
+	banReason: z$1.string().meta({ description: "The reason for the ban" }).optional(),
+	banExpiresIn: z$1.number().meta({ description: "The number of seconds until the ban expires" }).optional()
 });
 /**
 * ### Endpoint
@@ -7525,7 +7525,7 @@ var banUser = (opts) => createAuthEndpoint("/admin/ban-user", {
 	await ctx.context.internalAdapter.deleteSessions(ctx.body.userId);
 	return ctx.json({ user: parseUserOutput(ctx.context.options, user) });
 });
-var impersonateUserBodySchema = z.object({ userId: z.coerce.string().meta({ description: "The user id" }) });
+var impersonateUserBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
 /**
 * ### Endpoint
 *
@@ -7635,7 +7635,7 @@ var stopImpersonating = () => createAuthEndpoint("/admin/stop-impersonating", {
 		user: parseUserOutput(ctx.context.options, adminSession.user)
 	});
 });
-var revokeUserSessionBodySchema = z.object({ sessionToken: z.string().meta({ description: "The session token" }) });
+var revokeUserSessionBodySchema = z$1.object({ sessionToken: z$1.string().meta({ description: "The session token" }) });
 /**
 * ### Endpoint
 *
@@ -7678,7 +7678,7 @@ var revokeUserSession = (opts) => createAuthEndpoint("/admin/revoke-user-session
 	await ctx.context.internalAdapter.deleteSession(ctx.body.sessionToken);
 	return ctx.json({ success: true });
 });
-var revokeUserSessionsBodySchema = z.object({ userId: z.coerce.string().meta({ description: "The user id" }) });
+var revokeUserSessionsBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
 /**
 * ### Endpoint
 *
@@ -7721,7 +7721,7 @@ var revokeUserSessions = (opts) => createAuthEndpoint("/admin/revoke-user-sessio
 	await ctx.context.internalAdapter.deleteSessions(ctx.body.userId);
 	return ctx.json({ success: true });
 });
-var removeUserBodySchema = z.object({ userId: z.coerce.string().meta({ description: "The user id" }) });
+var removeUserBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
 /**
 * ### Endpoint
 *
@@ -7767,9 +7767,9 @@ var removeUser = (opts) => createAuthEndpoint("/admin/remove-user", {
 	await ctx.context.internalAdapter.deleteUser(ctx.body.userId);
 	return ctx.json({ success: true });
 });
-var setUserPasswordBodySchema = z.object({
-	newPassword: z.string().nonempty("newPassword cannot be empty").meta({ description: "The new password" }),
-	userId: z.coerce.string().nonempty("userId cannot be empty").meta({ description: "The user id" })
+var setUserPasswordBodySchema = z$1.object({
+	newPassword: z$1.string().nonempty("newPassword cannot be empty").meta({ description: "The new password" }),
+	userId: z$1.coerce.string().nonempty("userId cannot be empty").meta({ description: "The user id" })
 });
 /**
 * ### Endpoint
@@ -7824,10 +7824,10 @@ var setUserPassword = (opts) => createAuthEndpoint("/admin/set-user-password", {
 	await ctx.context.internalAdapter.updatePassword(userId, hashedPassword);
 	return ctx.json({ status: true });
 });
-var userHasPermissionBodySchema = z.object({
-	userId: z.coerce.string().optional().meta({ description: `The user id. Eg: "user-id"` }),
-	role: z.string().optional().meta({ description: `The role to check permission for. Eg: "admin"` })
-}).and(z.xor([z.object({ permission: z.record(z.string(), z.array(z.string())) }), z.object({ permissions: z.record(z.string(), z.array(z.string())) })]));
+var userHasPermissionBodySchema = z$1.object({
+	userId: z$1.coerce.string().optional().meta({ description: `The user id. Eg: "user-id"` }),
+	role: z$1.string().optional().meta({ description: `The role to check permission for. Eg: "admin"` })
+}).and(z$1.xor([z$1.object({ permission: z$1.record(z$1.string(), z$1.array(z$1.string())) }), z$1.object({ permissions: z$1.record(z$1.string(), z$1.array(z$1.string())) })]));
 /**
 * ### Endpoint
 *
@@ -8074,19 +8074,19 @@ var defaultKeyHasher = async (otp) => {
 };
 //#endregion
 //#region ../../node_modules/better-auth/dist/plugins/magic-link/index.mjs
-var signInMagicLinkBodySchema = z.object({
-	email: z.email().meta({ description: "Email address to send the magic link" }),
-	name: z.string().meta({ description: "User display name. Only used if the user is registering for the first time. Eg: \"my-name\"" }).optional(),
-	callbackURL: z.string().meta({ description: "URL to redirect after magic link verification" }).optional(),
-	newUserCallbackURL: z.string().meta({ description: "URL to redirect after new user signup. Only used if the user is registering for the first time." }).optional(),
-	errorCallbackURL: z.string().meta({ description: "URL to redirect after error." }).optional(),
-	metadata: z.record(z.string(), z.any()).meta({ description: "Additional metadata to pass to sendMagicLink." }).optional()
+var signInMagicLinkBodySchema = z$1.object({
+	email: z$1.email().meta({ description: "Email address to send the magic link" }),
+	name: z$1.string().meta({ description: "User display name. Only used if the user is registering for the first time. Eg: \"my-name\"" }).optional(),
+	callbackURL: z$1.string().meta({ description: "URL to redirect after magic link verification" }).optional(),
+	newUserCallbackURL: z$1.string().meta({ description: "URL to redirect after new user signup. Only used if the user is registering for the first time." }).optional(),
+	errorCallbackURL: z$1.string().meta({ description: "URL to redirect after error." }).optional(),
+	metadata: z$1.record(z$1.string(), z$1.any()).meta({ description: "Additional metadata to pass to sendMagicLink." }).optional()
 });
-var magicLinkVerifyQuerySchema = z.object({
-	token: z.string().meta({ description: "Verification token" }),
-	callbackURL: z.string().meta({ description: "URL to redirect after magic link verification, if not provided the user will be redirected to the root URL. Eg: \"/dashboard\"" }).optional(),
-	errorCallbackURL: z.string().meta({ description: "URL to redirect after error." }).optional(),
-	newUserCallbackURL: z.string().meta({ description: "URL to redirect after new user signup. Only used if the user is registering for the first time." }).optional()
+var magicLinkVerifyQuerySchema = z$1.object({
+	token: z$1.string().meta({ description: "Verification token" }),
+	callbackURL: z$1.string().meta({ description: "URL to redirect after magic link verification, if not provided the user will be redirected to the root URL. Eg: \"/dashboard\"" }).optional(),
+	errorCallbackURL: z$1.string().meta({ description: "URL to redirect after error." }).optional(),
+	newUserCallbackURL: z$1.string().meta({ description: "URL to redirect after new user signup. Only used if the user is registering for the first time." }).optional()
 });
 var magicLink = (options) => {
 	const opts = {
@@ -8273,7 +8273,13 @@ var auth = betterAuth({
 		schema: schema$2
 	}),
 	session: { expiresIn: 3600 * 24 * 30 },
-	advanced: { cookies: { sessionToken: { attributes: { domain: private_env.NODE_ENV === "production" ? ".sepharstudios.com" : void 0 } } } },
+	advanced: { ...private_env.NODE_ENV === "production" ? {
+		useSecureCookies: true,
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: "sepharstudios.com"
+		}
+	} : {} },
 	plugins: [
 		admin({
 			defaultRole: Role.USER,

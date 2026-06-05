@@ -42,9 +42,17 @@
       params.set('page', String(page));
       params.set('pageSize', String(PAGE_SIZE));
       const res = await fetch(`/api/admin/disputes?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[disputes] load HTTP', res.status);
+        disputes = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       disputes = body.disputes ?? [];
       if (body.pagination) pagination = body.pagination;
+    } catch (err) {
+      console.error('[disputes] load failed:', err);
+      disputes = [];
     } finally {
       loading = false;
     }

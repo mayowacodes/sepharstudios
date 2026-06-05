@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z`}],[`circle`,{cx:`12`,cy:`12`,r:`10`}]];n(r,e({name:`circle-play`},()=>a,{get iconNode(){return o}}))}export{r as t};

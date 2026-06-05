@@ -1,4 +1,4 @@
-import { J as reviews, M as mediaWatchProgress, a as user, g as creators, it as watchSessionMeta, j as mediaLibrary, p as contentShares, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, T as creators, U as mediaWatchProgress, a as user, bt as watchSessionMeta, st as reviews, t as db, v as contentShares } from "../../../../../chunks/drizzle.js";
 import { t as getRedis } from "../../../../../chunks/redis.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
@@ -129,13 +129,48 @@ var GET = async ({ locals, url }) => {
 		count: Number(r.count)
 	}));
 	let trends = [];
-	if (days && days <= 90) trends = (await db.select({
-		day: sql`to_char(date_trunc('day', ${mediaWatchProgress.updatedAt}), 'YYYY-MM-DD')`,
-		views: sql`count(*)::int`
-	}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, cutoff))).groupBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`).orderBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`)).map((r) => ({
-		date: r.day,
-		views: Number(r.views)
-	}));
+	const seriesDays = Math.min(days ?? 30, 30);
+	const seriesViews = new Array(seriesDays).fill(0);
+	const seriesWatchMinutes = new Array(seriesDays).fill(0);
+	const seriesCompletion = new Array(seriesDays).fill(0);
+	if (days && days <= 90) {
+		const trendRows = await db.select({
+			day: sql`to_char(date_trunc('day', ${mediaWatchProgress.updatedAt}), 'YYYY-MM-DD')`,
+			views: sql`count(*)::int`,
+			watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
+			avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
+		}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, cutoff))).groupBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`).orderBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`);
+		trends = trendRows.map((r) => ({
+			date: r.day,
+			views: Number(r.views)
+		}));
+		const today = /* @__PURE__ */ new Date();
+		today.setHours(0, 0, 0, 0);
+		for (const r of trendRows) {
+			const d = new Date(r.day);
+			const ago = Math.floor((today.getTime() - d.getTime()) / 864e5);
+			const idx = seriesDays - 1 - ago;
+			if (idx >= 0 && idx < seriesDays) {
+				seriesViews[idx] = Number(r.views);
+				seriesWatchMinutes[idx] = Math.round(Number(r.watchSeconds) / 60);
+				seriesCompletion[idx] = Math.round(Number(r.avgCompletion));
+			}
+		}
+	}
+	let watchTimeDelta = 0;
+	let completionDelta = 0;
+	if (cutoff && priorCutoff) {
+		const [priorRow] = await db.select({
+			watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
+			avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
+		}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, priorCutoff), lt(mediaWatchProgress.updatedAt, cutoff)));
+		const priorWatchSeconds = Number(priorRow?.watchSeconds ?? 0);
+		const priorAvgCompletion = Number(priorRow?.avgCompletion ?? 0);
+		if (priorWatchSeconds > 0) watchTimeDelta = Math.round((totalWatchSeconds - priorWatchSeconds) / priorWatchSeconds * 1e3) / 10;
+		else if (totalWatchSeconds > 0) watchTimeDelta = 100;
+		if (priorAvgCompletion > 0) completionDelta = Math.round((overallCompletionRate - priorAvgCompletion) / priorAvgCompletion * 1e3) / 10;
+		else if (overallCompletionRate > 0) completionDelta = 100;
+	}
 	const ageGroups = (await db.select({
 		bucket: sql`
 				CASE
@@ -189,7 +224,17 @@ var GET = async ({ locals, url }) => {
 			genderDistribution,
 			topCountries
 		},
-		engagementTrends: trends
+		engagementTrends: trends,
+		series: {
+			views: seriesViews,
+			watchMinutes: seriesWatchMinutes,
+			completion: seriesCompletion
+		},
+		deltas: {
+			views: growthRate,
+			watchTime: watchTimeDelta,
+			completion: completionDelta
+		}
 	});
 };
 function emptyResponse(period) {
@@ -212,7 +257,17 @@ function emptyResponse(period) {
 			genderDistribution: [],
 			topCountries: []
 		},
-		engagementTrends: []
+		engagementTrends: [],
+		series: {
+			views: [],
+			watchMinutes: [],
+			completion: []
+		},
+		deltas: {
+			views: 0,
+			watchTime: 0,
+			completion: 0
+		}
 	};
 }
 //#endregion

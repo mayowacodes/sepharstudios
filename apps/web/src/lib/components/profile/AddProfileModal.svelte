@@ -2,21 +2,21 @@
   import type { Profile } from '$lib/types/types';
   import { tick } from 'svelte';
 
-  export let isOpen = false;
-  export let onAdd: (newProfile: Omit<Profile, 'id'>) => void;
-  export let onClose: () => void;
+  let { isOpen = false, onAdd, onClose }: { isOpen?: boolean; onAdd: (newProfile: Omit<Profile, 'id'>) => void; onClose: () => void } = $props();
 
-  let newName = '';
-  let newAvatarUrl = '';
-  let dialogEl: HTMLDivElement;
-  let firstFocusable: HTMLInputElement;
+  let newName = $state('');
+  let newAvatarUrl = $state('');
+  let dialogEl: HTMLDivElement | undefined = $state();
+  let firstFocusable: HTMLInputElement | undefined = $state();
 
   // Move keyboard focus into the dialog when it opens (WCAG SC 2.4.3) and
   // return it to the body on close so screen-reader users don't lose their
   // place. The triggering element is responsible for restoring its own focus.
-  $: if (isOpen && firstFocusable) {
-    tick().then(() => firstFocusable?.focus());
-  }
+  $effect(() => {
+    if (isOpen && firstFocusable) {
+      tick().then(() => firstFocusable?.focus());
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -59,14 +59,14 @@
   };
 </script>
 
-<svelte:window on:keydown={isOpen ? handleKeydown : undefined} />
+<svelte:window onkeydown={isOpen ? handleKeydown : undefined} />
 
 {#if isOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    on:click={onClose}
+          onclick={onClose}
   >
     <div
       bind:this={dialogEl}
@@ -75,7 +75,7 @@
       aria-modal="true"
       aria-labelledby="add-profile-title"
       class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm"
-      on:click|stopPropagation
+      onclick={(e) => e.stopPropagation()}
     >
       <h2 id="add-profile-title" class="text-xl font-semibold mb-4">Add New Profile</h2>
 
@@ -105,13 +105,13 @@
       <div class="flex justify-end gap-4">
         <button
           class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-          on:click={onClose}
+    onclick={onClose}
         >
           Cancel
         </button>
         <button
           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          on:click={addProfile}
+          onclick={addProfile}
         >
           Add Profile
         </button>

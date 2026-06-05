@@ -1,5 +1,6 @@
-import { _t as head } from "../../../../chunks/ui-libs.js";
-import { i as Arrow_left, t as LazySubscriptionNFT } from "../../../../chunks/web3-lazy.js";
+import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
+import { t as LazySubscriptionNFT } from "../../../../chunks/web3-lazy.js";
 //#region src/routes/(web3)/subscription/+page.svelte
 function _page($$renderer) {
 	head("13wsfl1", $$renderer, ($$renderer) => {

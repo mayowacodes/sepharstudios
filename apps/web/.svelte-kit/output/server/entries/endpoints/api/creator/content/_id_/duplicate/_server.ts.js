@@ -1,4 +1,4 @@
-import { j as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/creator/content/[id]/duplicate/+server.ts

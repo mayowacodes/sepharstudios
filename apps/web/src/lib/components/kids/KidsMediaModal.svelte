@@ -3,7 +3,7 @@
   import { onDestroy } from 'svelte';
   import type { MediaItem } from '$lib/types/media';
 
-  let media: MediaItem | null = null;
+  let media: MediaItem | null = $state(null);
 
   const unsubscribe = mediaModalStore.subscribe((state) => {
     media = state.media;
@@ -22,7 +22,7 @@
 {#if media}
   <div class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
     <div class="bg-white rounded-lg w-full max-w-2xl p-4 relative">
-      <button on:click={closeModal} class="absolute top-2 right-2 text-2xl">✖️</button>
+      <button onclick={closeModal} class="absolute top-2 right-2 text-2xl">✖️</button>
 
       <h2 class="text-xl font-bold mb-2">{media.title}</h2>
 

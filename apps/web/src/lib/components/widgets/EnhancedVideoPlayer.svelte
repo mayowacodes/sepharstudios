@@ -25,38 +25,50 @@
   };
 
 
-  export let videoId: string = ''; 
-  export let videoUrl: string = '';
-  export let title: string;
-  export let thumbnailUrl = '';
-  export let chapters: Chapter[] = [];
-  export let subtitles: Subtitle[] = [];
-  export let audioTracks: AudioTrack[] = [];
-  export let settings: PlayerSettings = defaultSettings;
+  let {
+    videoId = '',
+    videoUrl = '',
+    title,
+    thumbnailUrl = '',
+    chapters = [],
+    subtitles = [],
+    audioTracks = [],
+    settings = defaultSettings
+  }: {
+    videoId?: string;
+    videoUrl?: string;
+    title: string;
+    thumbnailUrl?: string;
+    chapters?: Chapter[];
+    subtitles?: Subtitle[];
+    audioTracks?: AudioTrack[];
+    settings?: PlayerSettings;
+  } = $props();
 
   let videoElement: HTMLVideoElement;
   let containerElement: HTMLDivElement;
-  let isPlaying = false;
-  let currentTime = 0;
-  let duration = 0;
-  let volume = 1;
-  let isFullscreen = false;
-  let showControls = true;
-  let playbackRate = 1;
-
+  let isPlaying = $state(false);
+  let currentTime = $state(0);
+  let duration = $state(0);
+  let volume = $state(1);
+  let isFullscreen = $state(false);
+  let showControls = $state(true);
+  let playbackRate = $state(1);
   let hls: Hls | null = null;
-  let quality = '1080p';
-  let qualities: string[] = ['4K', '1080p', '720p', '480p'];
-  let currentAudioTrack: AudioTrack | null = null;
+  let quality = $state('1080p');
+  let qualities = $state(['4K', '1080p', '720p', '480p']);
+  let currentAudioTrack = $state<AudioTrack | null>(null);
   let audioElement: HTMLAudioElement | null = null;
 
-  const STORAGE_KEY = `video-progress-${videoId || videoUrl}`;
-  let isLoaded = false;
-  let loadError = '';
+  // Recompute the storage key whenever the video changes so a player
+  // reused for multiple videos doesn't bleed progress across them.
+  const STORAGE_KEY = $derived(`video-progress-${videoId || videoUrl}`);
+  let isLoaded = $state(false);
+  let loadError = $state('');
 
   // Analytics Metrics
-  let startTime = 0;
-  let startupTimeMs: number | null = null;
+  let startTime = $state(0);
+  let startupTimeMs: number | null = $state(null);
 
   async function fetchSignedUrl(id: string) {
     try {
@@ -263,8 +275,8 @@
   class="relative group w-full h-full"
   role="region"
   aria-label="Video Player Controls"
-  on:mousemove={() => showControls = true}
-  on:mouseleave={() => showControls = false}
+  onmousemove={() => showControls = true}
+  onmouseleave={() => showControls = false}
 >
   {#if !isLoaded}
     <div class="absolute inset-0 flex items-center justify-center bg-black">
@@ -281,7 +293,7 @@
       <h3 class="text-white text-xl font-bold mb-2">Playback Error</h3>
       <p class="text-zinc-400 mb-6">{loadError}</p>
       <button 
-        on:click={() => window.location.reload()}
+        onclick={() => window.location.reload()}
         class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition"
       >
         Retry
@@ -300,8 +312,8 @@
     poster={thumbnailUrl}
     muted={settings.muted}
     loop={settings.loop}
-    on:timeupdate={handleTimeUpdate}
-    on:loadedmetadata={() => {
+    ontimeupdate={handleTimeUpdate}
+    onloadedmetadata={() => {
       duration = videoElement.duration;
       isLoaded = true;
     }}

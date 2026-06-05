@@ -1,4 +1,4 @@
-import { yt as spread_props } from "./ui-libs.js";
+import { Dt as spread_props } from "./ui-libs.js";
 import { t as Icon } from "./Icon.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/lock.svelte
 function Lock($$renderer, $$props) {

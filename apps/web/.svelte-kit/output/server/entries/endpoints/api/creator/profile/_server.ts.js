@@ -1,4 +1,4 @@
-import { a as user, g as creators, t as db } from "../../../../../chunks/drizzle.js";
+import { T as creators, a as user, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/creator/profile/+server.ts
@@ -16,6 +16,18 @@ var defaultSocial = {
 	twitter: "",
 	website: "",
 	podcast: ""
+};
+var normalizeDocuments = (documents) => {
+	if (documents === void 0) return void 0;
+	if (documents === null) return null;
+	return documents.map((document) => {
+		if (typeof document !== "string") return document;
+		return {
+			id: crypto.randomUUID(),
+			url: document,
+			name: document.split("/").pop() || "Document"
+		};
+	}).filter((document) => !!document.url && !!document.name);
 };
 var GET = async ({ locals }) => {
 	const session = await locals.auth.getSession();
@@ -67,6 +79,7 @@ var PUT = async ({ locals, request }) => {
 	const creatorType = payload.creatorType ?? existing?.creatorType ?? "individual";
 	const displayName = creatorType === "organization" ? payload.ministryInfo?.ministryName?.trim() : legalName;
 	const now = /* @__PURE__ */ new Date();
+	const verificationDocuments = normalizeDocuments(payload.ministryInfo?.verificationDocuments);
 	const updatePayload = {
 		creatorType,
 		legalName,
@@ -77,7 +90,7 @@ var PUT = async ({ locals, request }) => {
 		yearsInMinistry: payload.ministryInfo?.yearsInMinistry ? Number(payload.ministryInfo.yearsInMinistry) : existing?.yearsInMinistry ?? null,
 		ministryDescription: payload.ministryInfo?.ministryDescription ?? existing?.ministryDescription ?? null,
 		ministryAddress: payload.ministryInfo?.ministryAddress ?? existing?.ministryAddress ?? null,
-		verificationDocuments: payload.ministryInfo?.verificationDocuments ?? existing?.verificationDocuments ?? null,
+		verificationDocuments: verificationDocuments ?? existing?.verificationDocuments ?? null,
 		contactEmail: payload.personalInfo?.email ?? existing?.contactEmail ?? session.user.email ?? null,
 		contactPhone: payload.personalInfo?.phone ?? existing?.contactPhone ?? null,
 		bio: payload.personalInfo?.bio ?? existing?.bio ?? null,

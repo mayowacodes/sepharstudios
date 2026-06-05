@@ -1,0 +1,1 @@
+import{Cn as e,Ht as t,Jn as n,Yt as r,Zt as i}from"../chunks/CocL4akC.js";var a=i(`<div class="animate-in"><!></div>`);function o(i,o){var s=a();t(e(s),()=>o.children),n(s),r(i,s)}export{o as component};

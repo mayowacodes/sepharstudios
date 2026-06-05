@@ -1,93 +1,173 @@
-<!-- Asset Management Step -->
 <script lang="ts">
   import { toast } from 'svelte-sonner';
-  import type { ContentAssets, AssetUploadProgress } from '$lib/types/creator';
+  import type { AssetUploadProgress, ContentAssets } from '$lib/types/creator';
 
-  export let data: any;
-  export let onUpdate: (data: any) => void;
-  
-  let uploadedAssets: Partial<ContentAssets> = data.uploadedAssets || {};
-  let assetProgress: AssetUploadProgress[] = data.assetProgress || [];
-  
-  // Update parent when data changes
-  $: onUpdate({ uploadedAssets, assetProgress });
-  
+  // Each field is a $bindable prop — parent owns wizardState, bind: writes
+  // through. Removes the sync-effect race that was wiping user edits.
+  let {
+    uploadedAssets = $bindable<Partial<ContentAssets>>({}),
+    assetProgress = $bindable<AssetUploadProgress[]>([])
+  }: {
+    uploadedAssets?: Partial<ContentAssets>;
+    assetProgress?: AssetUploadProgress[];
+  } = $props();
+
+  const MB = 1024 * 1024;
+  // Standard photographic image MIME set used by every slot except the
+  // title logo, which must be a transparent PNG (so AVIF/JPG/WebP are
+  // explicitly rejected even though they're fine for posters/backdrops).
+  const STD_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/avif'];
+  const STD_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/avif,.png,.jpg,.jpeg,.webp,.avif';
+  const STD_IMAGE_EXT = /\.(png|jpe?g|webp|avif)$/i;
+  const PNG_ONLY_EXT = /\.png$/i;
+
   const assetTypes = [
     {
       key: 'posterPortrait' as keyof ContentAssets,
       title: 'Portrait Poster',
-      description: '2:3 ratio - Main movie cards',
-      icon: '📱',
-      aspectRatio: '2:3',
+      description: 'Required. 2:3 vertical card used for movie tiles and browsing.',
+      accept: STD_IMAGE_ACCEPT,
+      mime: STD_IMAGE_MIME,
+      extRegex: STD_IMAGE_EXT,
+      formatLabel: 'PNG, JPG, WebP, or AVIF',
       required: true,
-      recommendations: 'Minimum 400x600px, Max 2MB'
-    },
-    {
-      key: 'backdropHero' as keyof ContentAssets,
-      title: 'Hero Background',
-      description: '16:9 ratio - Hero carousel',
-      icon: '🖼️',
-      aspectRatio: '16:9',
-      required: true,
-      recommendations: 'Minimum 1920x1080px, Max 5MB'
+      maxBytes: 2 * MB
     },
     {
       key: 'posterLandscape' as keyof ContentAssets,
       title: 'Landscape Poster',
-      description: '16:9 ratio - Horizontal cards',
-      icon: '🖥️',
-      aspectRatio: '16:9',
+      description: 'Optional. 16:9 horizontal card used in featured rows.',
+      accept: STD_IMAGE_ACCEPT,
+      mime: STD_IMAGE_MIME,
+      extRegex: STD_IMAGE_EXT,
+      formatLabel: 'PNG, JPG, WebP, or AVIF',
       required: false,
-      recommendations: 'Minimum 800x450px, Max 3MB'
+      maxBytes: 3 * MB
     },
     {
       key: 'posterSquare' as keyof ContentAssets,
       title: 'Square Poster',
-      description: '1:1 ratio - Mobile/compact views',
-      icon: '📐',
-      aspectRatio: '1:1',
+      description: 'Optional. 1:1 card used on mobile and compact layouts.',
+      accept: STD_IMAGE_ACCEPT,
+      mime: STD_IMAGE_MIME,
+      extRegex: STD_IMAGE_EXT,
+      formatLabel: 'PNG, JPG, WebP, or AVIF',
       required: false,
-      recommendations: 'Minimum 400x400px, Max 2MB'
+      maxBytes: 2 * MB
+    },
+    {
+      key: 'backdropHero' as keyof ContentAssets,
+      title: 'Hero Background',
+      description: 'Required. 16:9 HD image behind detail pages and featured rows.',
+      accept: STD_IMAGE_ACCEPT,
+      mime: STD_IMAGE_MIME,
+      extRegex: STD_IMAGE_EXT,
+      formatLabel: 'PNG, JPG, WebP, or AVIF',
+      required: true,
+      maxBytes: 5 * MB
     },
     {
       key: 'logoTitle' as keyof ContentAssets,
       title: 'Title Logo',
-      description: 'Transparent PNG - Movie title',
-      icon: '🏷️',
-      aspectRatio: 'flexible',
+      // PNG-only because a transparent background is required — JPG has no
+      // alpha channel and AVIF/WebP variants get rejected to keep the
+      // detail-page composite clean. Players overlay this on top of the
+      // backdrop, so any non-transparent format would show a colored box.
+      description: 'Optional. Transparent PNG title treatment shown over the hero backdrop.',
+      accept: 'image/png,.png',
+      mime: ['image/png'],
+      extRegex: PNG_ONLY_EXT,
+      formatLabel: 'transparent PNG',
       required: false,
-      recommendations: 'PNG with transparency, Max 1MB'
+      maxBytes: 1 * MB
     },
     {
       key: 'thumbnail' as keyof ContentAssets,
       title: 'Video Thumbnail',
-      description: '16:9 ratio - Video preview',
-      icon: '🎬',
-      aspectRatio: '16:9',
+      description: 'Optional. Compact preview image used in cards and notifications.',
+      accept: STD_IMAGE_ACCEPT,
+      mime: STD_IMAGE_MIME,
+      extRegex: STD_IMAGE_EXT,
+      formatLabel: 'PNG, JPG, WebP, or AVIF',
       required: false,
-      recommendations: 'Minimum 640x360px, Max 1MB'
+      maxBytes: 1 * MB
     }
   ];
-  
-  function handleFileUpload(assetType: keyof ContentAssets, event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      startAssetUpload(assetType, file);
-    }
+
+  function formatSize(bytes: number): string {
+    if (bytes >= MB) return `${(bytes / MB).toFixed(1)} MB`;
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   }
-  
-  function handleFileDrop(assetType: keyof ContentAssets, event: DragEvent) {
-    event.preventDefault();
-    
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      const file = event.dataTransfer.files[0];
-      startAssetUpload(assetType, file);
+
+  function validateImage(file: File, asset: typeof assetTypes[number]): boolean {
+    const mimeOk = asset.mime.includes(file.type);
+    const extOk = asset.extRegex.test(file.name);
+    if (!mimeOk && !extOk) {
+      toast.error(`Unsupported format for ${asset.title}`, {
+        description: `Use ${asset.formatLabel}.`
+      });
+      return false;
     }
+
+    if (file.size > asset.maxBytes) {
+      toast.error(`${asset.title} is too large`, {
+        description: `${formatSize(file.size)} exceeds the ${formatSize(asset.maxBytes)} limit.`
+      });
+      return false;
+    }
+
+    return true;
   }
-  
-  async function startAssetUpload(assetType: keyof ContentAssets, file: File) {
-    // Add to progress tracking
+
+  function progressFor(assetType: keyof ContentAssets) {
+    return assetProgress.find((item) => item.assetType === assetType);
+  }
+
+  function setProgress(assetType: keyof ContentAssets, patch: Partial<AssetUploadProgress>) {
+    const current = progressFor(assetType);
+    if (!current) return;
+    assetProgress = assetProgress.map((item) =>
+      item.assetType === assetType ? { ...item, ...patch } : item
+    );
+  }
+
+  function handleFileSelect(assetType: keyof ContentAssets, event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    const asset = assetTypes.find((item) => item.key === assetType);
+    if (!file || !asset) return;
+
+    if (!validateImage(file, asset)) {
+      input.value = '';
+      return;
+    }
+
+    void uploadAsset(assetType, file);
+  }
+
+  // Strip characters MinIO and our presign endpoint won't accept, so a
+  // user dropping `My Logo (Final v2)!.png` doesn't fail validation just
+  // because of the exclamation mark. Only letters, digits, `._-() ` are
+  // allowed by the server-side `SAFE_FILENAME` regex.
+  function sanitizeFilename(name: string): string {
+    const cleaned = name.replace(/[^A-Za-z0-9._\-() ]/g, '_').trim();
+    return cleaned.length > 0 ? cleaned : `upload-${Date.now()}.bin`;
+  }
+
+  // Three-step upload — no file bytes ever pass through our SvelteKit
+  // server. The wizard previously POSTed the whole multipart body to
+  // `/api/files`, which was subject to BODY_SIZE_LIMIT (default 512 KB
+  // in adapter-node) and to every reverse-proxy body cap between the
+  // browser and our app. Even with the cap raised, large files were
+  // hitting silent 403s from upstream middleware. Going browser →
+  // MinIO directly bypasses all of it.
+  //
+  //   1. POST /api/files/sign   → { uploadUrl, objectName, bucket }
+  //   2. PUT  <uploadUrl>       → bytes go directly to MinIO; XHR
+  //                                progress events drive the UI bar
+  //   3. POST /api/files/commit → records the row in filesTable and
+  //                                returns the durable directUrl
+  async function uploadAsset(assetType: keyof ContentAssets, file: File) {
     const progressItem: AssetUploadProgress = {
       assetType,
       fileName: file.name,
@@ -96,242 +176,190 @@
       isCompleted: false,
       hasError: false
     };
-    
-    assetProgress = [...assetProgress.filter(p => p.assetType !== assetType), progressItem];
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', 'thumbnails');
 
+    assetProgress = [...assetProgress.filter((item) => item.assetType !== assetType), progressItem];
+
+    const safeName = sanitizeFilename(file.name);
+    const contentType = file.type || 'application/octet-stream';
+
+    // Step 1: ask the server for a presigned PUT URL.
+    let signed: { uploadUrl: string; objectName: string; bucket: string };
+    try {
+      const signRes = await fetch('/api/files/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: safeName, bucket: 'thumbnails', contentType })
+      });
+      const body = (await signRes.json().catch(() => ({}))) as {
+        uploadUrl?: string;
+        objectName?: string;
+        bucket?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!signRes.ok || !body.uploadUrl || !body.objectName || !body.bucket) {
+        handleUploadError(assetType, body.detail ?? body.error ?? `Could not start upload (HTTP ${signRes.status}).`);
+        return;
+      }
+      signed = { uploadUrl: body.uploadUrl, objectName: body.objectName, bucket: body.bucket };
+    } catch (err) {
+      handleUploadError(assetType, err instanceof Error ? err.message : 'Could not reach the upload service.');
+      return;
+    }
+
+    // Step 2: PUT directly to MinIO. XMLHttpRequest is required (not
+    // fetch) because `fetch` still has no upload-progress events as of
+    // 2025-ish — we need `xhr.upload.onprogress` to drive the bar.
+    const putOk = await new Promise<boolean>((resolve) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/files');
-      
+      xhr.open('PUT', signed.uploadUrl);
+      xhr.setRequestHeader('Content-Type', contentType);
+
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          const current = assetProgress.find(p => p.assetType === assetType);
-          if (current) {
-            current.progressPercentage = (event.loaded / event.total) * 100;
-            assetProgress = [...assetProgress];
-          }
+          setProgress(assetType, { progressPercentage: (event.loaded / event.total) * 100 });
         }
       };
-      
+
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          let response: { directUrl?: string; url?: string; error?: string } = {};
-          try {
-            response = JSON.parse(xhr.responseText);
-          } catch {
-            handleError('Server returned an invalid response. The upload may not have completed.');
-            return;
-          }
-          // `/api/files` returns both `directUrl` (public HTTPS, displayable
-          // in <img>) and `url` (admin-console URL that requires auth). Use
-          // directUrl so the inline preview thumbnail actually renders.
-          const url = response.directUrl ?? response.url;
-          if (!url) {
-            handleError('Upload succeeded but no URL was returned.');
-            return;
-          }
-          const current = assetProgress.find(p => p.assetType === assetType);
-          const label = assetTypes.find(a => a.key === assetType)?.title ?? String(assetType);
-          if (current) {
-            current.isCompleted = true;
-            current.url = url;
-            uploadedAssets[assetType] = url;
-            uploadedAssets = { ...uploadedAssets };
-            assetProgress = [...assetProgress];
-          }
-          toast.success(`${label} uploaded`, { description: file.name });
+          resolve(true);
         } else {
-          let parsedError = `Upload failed (HTTP ${xhr.status})`;
-          try {
-            const body = JSON.parse(xhr.responseText);
-            if (body?.error) parsedError = body.error;
-          } catch { /* keep status-based fallback */ }
-          handleError(parsedError);
+          // MinIO returns XML on error, not JSON. Extract the <Message>
+          // tag if present; otherwise fall back to a status-based note.
+          const xml = xhr.responseText || '';
+          const m = xml.match(/<Message>([^<]+)<\/Message>/);
+          handleUploadError(
+            assetType,
+            m ? `Storage rejected the upload: ${m[1]}` : `Upload failed at storage (HTTP ${xhr.status}).`
+          );
+          resolve(false);
         }
       };
 
-      xhr.onerror = () => handleError('Network error while uploading.');
-      xhr.send(formData);
-    } catch (error: any) {
-      handleError(error.message || 'Error starting upload');
-    }
+      xhr.onerror = () => {
+        handleUploadError(assetType, 'Network error while sending the file to storage.');
+        resolve(false);
+      };
 
-    function handleError(msg: string) {
-      const current = assetProgress.find(p => p.assetType === assetType);
-      if (current) {
-        current.hasError = true;
-        current.errorMessage = msg;
-        assetProgress = [...assetProgress];
+      xhr.send(file);
+    });
+
+    if (!putOk) return;
+
+    // Step 3: tell our server the bytes are in MinIO so it can record
+    // the row and hand back the durable directUrl.
+    try {
+      const commitRes = await fetch('/api/files/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          objectName: signed.objectName,
+          bucket: signed.bucket,
+          size: file.size,
+          contentType,
+          filename: safeName
+        })
+      });
+      const body = (await commitRes.json().catch(() => ({}))) as {
+        directUrl?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!commitRes.ok || !body.directUrl) {
+        handleUploadError(assetType, body.detail ?? body.error ?? `Could not finalize upload (HTTP ${commitRes.status}).`);
+        return;
       }
-      const label = assetTypes.find(a => a.key === assetType)?.title ?? String(assetType);
-      toast.error(`Upload failed: ${label}`, { description: msg });
+
+      uploadedAssets = { ...uploadedAssets, [assetType]: body.directUrl };
+      setProgress(assetType, { progressPercentage: 100, isCompleted: true, url: body.directUrl });
+      toast.success('Image uploaded', { description: file.name });
+    } catch (err) {
+      handleUploadError(assetType, err instanceof Error ? err.message : 'Could not finalize upload.');
     }
   }
-  
+
+  function handleUploadError(assetType: keyof ContentAssets, message: string) {
+    setProgress(assetType, { hasError: true, errorMessage: message });
+    toast.error('Image upload failed', { description: message });
+  }
+
   function removeAsset(assetType: keyof ContentAssets) {
-    delete uploadedAssets[assetType];
-    uploadedAssets = { ...uploadedAssets };
-    assetProgress = assetProgress.filter(p => p.assetType !== assetType);
-  }
-  
-  function getAssetProgress(assetType: keyof ContentAssets) {
-    return assetProgress.find(p => p.assetType === assetType);
-  }
-  
-  function formatFileSize(bytes: number) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const nextAssets = { ...uploadedAssets };
+    delete nextAssets[assetType];
+    uploadedAssets = nextAssets;
+    assetProgress = assetProgress.filter((item) => item.assetType !== assetType);
   }
 </script>
 
 <div class="space-y-6">
-  <div class="text-center mb-8">
-    <h2 class="text-2xl font-bold text-white mb-2">Image Assets & Media</h2>
-    <p class="text-gray-300">Upload images that will represent your content across the platform</p>
+  <div class="text-center">
+    <h2 class="text-2xl font-bold text-white">Image Assets</h2>
+    <p class="text-gray-400">Upload the artwork used across the platform</p>
   </div>
-  
-  <!-- Asset Upload Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {#each assetTypes as assetType}
-      {@const progress = getAssetProgress(assetType.key)}
-      {@const isUploaded = uploadedAssets[assetType.key]}
-      {@const isUploading = progress && !progress.isCompleted}
-      
-      <div class="bg-white/10 rounded-lg p-6">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <div class="flex items-center">
-              <span class="text-2xl mr-2">{assetType.icon}</span>
-              <div>
-                <div class="font-medium text-white">{assetType.title}</div>
-                {#if assetType.required}
-                  <span class="text-xs bg-red-600 text-white px-2 py-1 rounded">Required</span>
-                {/if}
-              </div>
-            </div>
-            <div class="text-sm text-gray-400 mt-1">{assetType.description}</div>
-            <div class="text-xs text-gray-500 mt-1">{assetType.recommendations}</div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {#each assetTypes as asset (asset.key)}
+      {@const progress = progressFor(asset.key)}
+      {@const assetUrl = uploadedAssets[asset.key]}
+      <section class="bg-white/5 border border-border/80 rounded-xl p-4 space-y-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold text-white">{asset.title}</h3>
+            {#if asset.required}
+              <span class="text-[10px] uppercase tracking-wide bg-primary text-primary-foreground rounded px-2 py-0.5">Required</span>
+            {/if}
           </div>
-          
-          {#if isUploaded && !isUploading}
-            <button
-              type="button"
-              onclick={() => removeAsset(assetType.key)}
-              class="text-red-400 hover:text-red-300 text-xl"
-            >
-              ✗
-            </button>
-          {/if}
+          <p class="text-sm text-gray-400">{asset.description}</p>
+          <p class="text-xs text-gray-500">Max {formatSize(asset.maxBytes)}</p>
         </div>
-        
-        {#if isUploaded && !isUploading}
-          <!-- Uploaded Asset Preview -->
-          <div class="relative">
-            <img 
-              src={uploadedAssets[assetType.key]} 
-              alt={assetType.title}
-              class="w-full h-32 object-cover rounded-lg"
-            />
-            <div class="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
-              ✓ Uploaded
-            </div>
-          </div>
-        {:else if isUploading && progress}
-          <!-- Upload Progress -->
+
+        {#if assetUrl && progress?.isCompleted}
           <div class="space-y-3">
-            <div class="text-sm text-white">{progress.fileName}</div>
-            <div class="flex justify-between text-xs text-gray-400">
-              <span>Uploading...</span>
-              <span>{Math.round(progress.progressPercentage)}%</span>
+            <img src={assetUrl} alt={asset.title} class="w-full h-32 object-cover rounded-lg border border-border/60" />
+            <div class="flex items-center justify-between gap-3 text-sm">
+              <span class="text-emerald-400 truncate">{progress.fileName}</span>
+              <button type="button" class="text-red-400 hover:text-red-300" onclick={() => removeAsset(asset.key)}>
+                Remove
+              </button>
             </div>
-            <div class="w-full bg-gray-700 rounded-full h-2">
-              <div
-                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style="width: {progress.progressPercentage}%"
-              ></div>
-            </div>
-          </div>
-        {:else if progress && progress.hasError}
-          <!-- Upload Error -->
-          <div class="bg-red-600/20 border border-red-600/50 rounded-lg p-3 space-y-2">
-            <div class="text-sm font-medium text-red-200">Upload failed</div>
-            <div class="text-xs text-red-300">{progress.errorMessage ?? 'Unknown error'}</div>
-            <button
-              type="button"
-              onclick={() => removeAsset(assetType.key)}
-              class="text-xs text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
-            >Try another file</button>
           </div>
         {:else}
-          <!-- Upload Area -->
-          <div
-            class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-all"
-            ondragover={(e) => e.preventDefault()}
-            ondrop={(e) => { e.preventDefault(); handleFileDrop(assetType.key, e); }}
-            role="button"
-            tabindex="0"
-            aria-label={`Drop ${assetType.title} image here or click to browse`}
-            onkeydown={(e) => e.key === 'Enter' && document.getElementById(`upload-${assetType.key}`)?.click()}
-          >
-            <div class="text-gray-400 text-sm mb-3">
-              Drop image here or click to browse
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onchange={(e) => handleFileUpload(assetType.key, e)}
-              class="hidden"
-              id="upload-{assetType.key}"
-            />
-            <label 
-              for="upload-{assetType.key}" 
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer text-sm inline-block transition-colors"
-            >
-              Choose Image
+          <div class="space-y-2">
+            <label for={`asset-${asset.key}`} class="block text-sm font-medium text-white">
+              Choose {asset.title}
             </label>
-            <div class="text-xs text-gray-500 mt-2">
-              Aspect Ratio: {assetType.aspectRatio}
+            <input
+              id={`asset-${asset.key}`}
+              data-testid={`asset-input-${asset.key}`}
+              type="file"
+              accept={asset.accept}
+              onchange={(event) => handleFileSelect(asset.key, event)}
+              class="block w-full text-sm text-gray-300 file:mr-4 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:opacity-90"
+            />
+          </div>
+        {/if}
+
+        {#if progress && !progress.isCompleted && !progress.hasError}
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-gray-400">
+              <span class="truncate">{progress.fileName}</span>
+              <span>{Math.round(progress.progressPercentage)}%</span>
+            </div>
+            <div class="h-2 rounded-full bg-gray-800 overflow-hidden">
+              <div class="h-full bg-primary transition-all" style="width: {progress.progressPercentage}%"></div>
             </div>
           </div>
         {/if}
-      </div>
+
+        {#if progress?.hasError}
+          <p class="text-sm text-red-300">{progress.errorMessage}</p>
+        {/if}
+      </section>
     {/each}
   </div>
-  
-  <!-- Asset Guidelines -->
-  <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4">
-    <div class="flex items-start">
-      <div class="text-2xl mr-3">💡</div>
-      <div>
-        <div class="font-medium text-white mb-1">Image Asset Tips</div>
-        <div class="text-sm text-blue-200 space-y-1">
-          <div>• High-quality images perform better and look more professional</div>
-          <div>• Use images that accurately represent your content</div>
-          <div>• Avoid text-heavy images as they may not scale well</div>
-          <div>• Ensure images are appropriate for all age groups viewing your content</div>
-          <div>• Images will be automatically optimized for different screen sizes</div>
-        </div>
-      </div>
-    </div>
+
+  <div class="bg-secondary/10 border border-secondary/30 rounded-xl p-4 text-sm text-yellow-100">
+    Required before continuing: Portrait Poster and Hero Background.
   </div>
-  
-  <!-- Progress Summary -->
-  {#if assetProgress.length > 0 || Object.keys(uploadedAssets).length > 0}
-    <div class="bg-white/10 rounded-lg p-4">
-      <div class="text-white font-medium mb-3">Upload Summary</div>
-      <div class="text-sm text-gray-300">
-        {Object.keys(uploadedAssets).length} of {assetTypes.filter(a => a.required).length} required assets uploaded
-      </div>
-      <div class="text-sm text-gray-300">
-        {Object.keys(uploadedAssets).length} of {assetTypes.length} total assets uploaded
-      </div>
-    </div>
-  {/if}
 </div>

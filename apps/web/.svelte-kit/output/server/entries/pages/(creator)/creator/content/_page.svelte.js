@@ -1,21 +1,45 @@
-import { jt as escape_html, kt as attr, mt as derived } from "../../../../../chunks/ui-libs.js";
+import { Ht as run, Lt as attr, St as derived, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { t as Upload } from "../../../../../chunks/upload.js";
+import { t as Video } from "../../../../../chunks/video.js";
+import "../../../../../chunks/state.js";
 import "../../../../../chunks/navigation.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { n as ContentStatus, r as ContentType } from "../../../../../chunks/creator.js";
 //#region src/routes/(creator)/creator/content/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		const initial = new URLSearchParams();
 		let contentLibrary = [];
-		let selectedFilter = "all";
-		let searchTerm = "";
-		let selectedType = "all";
-		derived(() => contentLibrary.filter((content) => {
-			return true;
-		}));
-		$$renderer.push(`<div class="space-y-6"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between"><div><h1 class="text-3xl font-bold text-white mb-2">Content Library</h1> <p class="text-gray-300">Manage your submitted content and track review progress</p></div> <div class="mt-4 sm:mt-0"><a href="/creator/upload" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center"><span class="mr-2">+</span> Upload New Content</a></div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6"><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div><label for="search" class="block text-sm font-medium text-white mb-2">Search Content</label> <input type="text" id="search"${attr("value", searchTerm)} placeholder="Search by title or description..." class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"/></div> <div><label for="status-filter" class="block text-sm font-medium text-white mb-2">Filter by Status</label> `);
+		let selectedFilter = initial.get("status") ?? "all";
+		let searchTerm = initial.get("q") ?? "";
+		let selectedType = initial.get("type") ?? "all";
+		parseInt(initial.get("page") ?? "1", 10);
+		let totalItems = 0;
+		let selected = {};
+		derived(() => Object.keys(selected).filter((id) => selected[id]));
+		derived(() => contentLibrary);
+		run(() => selectedFilter);
+		run(() => selectedType);
+		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		{
+			function actions($$renderer) {
+				$$renderer.push(`<a href="/creator/upload" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">`);
+				Upload($$renderer, { class: "w-3 h-3" });
+				$$renderer.push(`<!----> Upload</a>`);
+			}
+			PageHeader($$renderer, {
+				icon: Video,
+				title: "Content Library",
+				subtitle: "Manage your submitted content and track review progress.",
+				actions,
+				$$slots: { actions: true }
+			});
+		}
+		$$renderer.push(`<!----> <div class="surface-2 backdrop-blur-sm rounded-xl p-6"><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div><label for="search" class="block text-sm font-medium text-foreground mb-2">Search Content</label> <input type="text" id="search"${attr("value", searchTerm)} placeholder="Search by title or description..." class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"/></div> <div><label for="status-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Status</label> `);
 		$$renderer.select({
 			id: "status-filter",
 			value: selectedFilter,
-			class: "w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+			class: "w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Statuses`);
@@ -45,11 +69,11 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`Rejected`);
 			});
 		});
-		$$renderer.push(`</div> <div><label for="type-filter" class="block text-sm font-medium text-white mb-2">Filter by Type</label> `);
+		$$renderer.push(`</div> <div><label for="type-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Type</label> `);
 		$$renderer.select({
 			id: "type-filter",
 			value: selectedType,
-			class: "w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+			class: "w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Types`);
@@ -76,9 +100,9 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`Kids Content`);
 			});
 		});
-		$$renderer.push(`</div> <div><div class="text-sm font-medium text-white mb-2">Quick Stats</div> <div class="text-2xl font-bold text-purple-400">${escape_html(contentLibrary.length)}</div> <div class="text-xs text-gray-400">Total Submissions</div></div></div></div> `);
+		$$renderer.push(`</div> <div><div class="text-sm font-medium text-foreground mb-2">Quick Stats</div> <div class="text-2xl font-bold text-purple-400">${escape_html(totalItems)}</div> <div class="text-xs text-muted-foreground">Matching submissions</div></div></div></div> `);
 		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-white ml-4">Loading your content...</p></div>`);
+		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-foreground ml-4">Loading your content...</p></div>`);
 		$$renderer.push(`<!--]--></div>`);
 	});
 }

@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M12 3v12`}],[`path`,{d:`m17 8-5-5-5 5`}],[`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}]];n(r,e({name:`upload`},()=>a,{get iconNode(){return o}}))}export{r as t};

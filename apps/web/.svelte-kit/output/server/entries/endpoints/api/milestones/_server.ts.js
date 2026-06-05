@@ -1,4 +1,4 @@
-import { M as mediaWatchProgress, rt as userMilestones, t as db } from "../../../../chunks/drizzle.js";
+import { U as mediaWatchProgress, t as db, yt as userMilestones } from "../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq, sum } from "drizzle-orm";
 //#region src/routes/api/milestones/+server.ts

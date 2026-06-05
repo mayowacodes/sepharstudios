@@ -38,15 +38,30 @@
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('agent', filter);
       const res = await fetch(`/api/admin/agent-runs?${params}`);
-      const body = await res.json();
+      // Guard JSON parse — a 500 returning HTML would otherwise throw an
+      // unhandled rejection inside res.json() and blank the page.
+      if (!res.ok) {
+        console.error('[ai-runs] load HTTP', res.status);
+        runs = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       runs = body.runs ?? [];
+    } catch (err) {
+      console.error('[ai-runs] load failed:', err);
+      runs = [];
     } finally {
       loading = false;
     }
   }
 
   $effect(() => { filter; void load(); });
-  onMount(load);
+  
+  onMount(async () => {
+    // Initial load is handled by the $effect above, which fires immediately
+    // since filter is accessed in its dependency list. We don't need to call
+    // load() again here — doing so causes a double-fetch and race condition.
+  });
 
   async function manualFire(agent: string) {
     if (!confirm(`Fire ${agent} now? Requires AI_AGENTS_ENABLED=true on the server.`)) return;

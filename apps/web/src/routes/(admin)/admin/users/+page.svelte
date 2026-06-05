@@ -34,8 +34,16 @@
       if (roleFilter !== 'all') params.set('role', roleFilter);
       if (bannedFilter !== 'all') params.set('banned', bannedFilter);
       const res = await fetch(`/api/admin/users?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[admin/users] load HTTP', res.status);
+        users = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       users = body.users ?? [];
+    } catch (err) {
+      console.error('[admin/users] load failed:', err);
+      users = [];
     } finally {
       loading = false;
     }

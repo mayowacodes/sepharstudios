@@ -1,19 +1,24 @@
-import { a as user, et as transactions, g as creators, j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, T as creators, a as user, gt as transactions, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql } from "drizzle-orm";
 //#region src/routes/api/admin/creators/+server.ts
-var GET = async ({ locals }) => {
+var GET = async ({ locals, url }) => {
 	const { error } = await requireAdmin(locals);
 	if (error) return error;
-	const users = await db.select({
+	const search = url.searchParams.get("search")?.trim() ?? "";
+	const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get("limit") ?? "500", 10)));
+	const searchPattern = search ? `%${search.replace(/[%_]/g, (m) => `\\${m}`)}%` : null;
+	const baseQuery = db.select({
 		id: user.id,
 		name: user.name,
 		email: user.email,
 		image: user.image,
 		createdAt: user.createdAt,
 		banned: user.banned
-	}).from(user).where(eq(user.role, "creator"));
+	}).from(user);
+	const where = searchPattern ? and(eq(user.role, "creator"), or(ilike(user.name, searchPattern), ilike(user.email, searchPattern))) : eq(user.role, "creator");
+	const users = await baseQuery.where(where).limit(limit);
 	const creatorProfiles = await db.select({
 		userId: creators.userId,
 		displayName: creators.displayName,

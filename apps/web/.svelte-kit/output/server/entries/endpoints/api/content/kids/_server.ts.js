@@ -1,4 +1,4 @@
-import { j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 //#region src/routes/api/content/kids/+server.ts
@@ -7,7 +7,11 @@ var GET = async ({ url }) => {
 		const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20"), 50);
 		const hasBibleRef = url.searchParams.get("hasBibleRef") === "true";
 		const mediaType = url.searchParams.get("type");
-		const conditions = [eq(mediaLibrary.isActive, true), sql`(${mediaLibrary.ageRating} IN ('G', 'PG', 'ALL_AGES') OR ${mediaLibrary.ageRating} ILIKE '%kids%' OR ${mediaLibrary.ageRating} ILIKE '%children%')`];
+		const conditions = [
+			eq(mediaLibrary.isActive, true),
+			eq(mediaLibrary.visibility, "public"),
+			sql`(${mediaLibrary.ageRating} IN ('G', 'PG', 'ALL_AGES') OR ${mediaLibrary.ageRating} ILIKE '%kids%' OR ${mediaLibrary.ageRating} ILIKE '%children%')`
+		];
 		if (hasBibleRef) conditions.push(isNotNull(mediaLibrary.bibleReference));
 		if (mediaType) conditions.push(eq(mediaLibrary.mediaType, mediaType));
 		return json(await db.select({

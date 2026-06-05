@@ -1,4 +1,4 @@
-import { g as creators, t as db } from "../../../../../chunks/drizzle.js";
+import { T as creators, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/creator/payment-preferences/+server.ts

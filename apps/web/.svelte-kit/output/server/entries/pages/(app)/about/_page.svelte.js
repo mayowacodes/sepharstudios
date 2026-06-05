@@ -1,33 +1,7 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html, yt as spread_props } from "../../../../chunks/ui-libs.js";
-import { t as Icon } from "../../../../chunks/Icon.js";
+import { Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Eye } from "../../../../chunks/eye.js";
+import { t as Target } from "../../../../chunks/target.js";
 import { a as Card, i as Card_content } from "../../../../chunks/card.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/target.svelte
-function Target($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "target" },
-		props,
-		{ iconNode: [
-			["circle", {
-				"cx": "12",
-				"cy": "12",
-				"r": "10"
-			}],
-			["circle", {
-				"cx": "12",
-				"cy": "12",
-				"r": "6"
-			}],
-			["circle", {
-				"cx": "12",
-				"cy": "12",
-				"r": "2"
-			}]
-		] }
-	]));
-}
-//#endregion
 //#region src/routes/(app)/about/+page.svelte
 function _page($$renderer) {
 	const milestones = [

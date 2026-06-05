@@ -1,4 +1,4 @@
-import { gt as ensure_array_like, kt as attr, ut as attr_class } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr, vt as attr_class, wt as ensure_array_like } from "../../../../../chunks/ui-libs.js";
 //#region src/routes/kids/kiddies/profile/+page.svelte
 function _page($$renderer) {
 	let selectedAvatar = localStorage.getItem("avatar") || "/avatars/teen-1.png";

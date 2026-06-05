@@ -1,18 +1,7 @@
-import { At as clsx, G as Dialog_overlay, K as Portal, S as Dialog, U as Dialog_description, W as Dialog_trigger, b as Dialog_content, ft as attributes, pt as bind_props, q as Dialog_title, x as Dialog_close, yt as spread_props } from "./ui-libs.js";
-import { t as Icon } from "./Icon.js";
+import { Dt as spread_props, Q as Dialog_overlay, Rt as clsx, S as Dialog, X as Dialog_description, Z as Dialog_trigger, b as Dialog_content, bt as attributes, et as Portal, tt as Dialog_title, x as Dialog_close, xt as bind_props } from "./ui-libs.js";
 import { t as X } from "./x.js";
 import { t as cn } from "./utils2.js";
 import { tv } from "tailwind-variants";
-//#region ../../node_modules/@lucide/svelte/dist/icons/chevron-right.svelte
-function Chevron_right($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "chevron-right" },
-		props,
-		{ iconNode: [["path", { "d": "m9 18 6-6-6-6" }]] }
-	]));
-}
-//#endregion
 //#region src/lib/components/ui/sheet/sheet.svelte
 function Sheet($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -314,4 +303,4 @@ function Sheet_description($$renderer, $$props) {
 	});
 }
 //#endregion
-export { Sheet_trigger as a, Sheet_content as i, Sheet_title as n, Sheet as o, Sheet_header as r, Chevron_right as s, Sheet_description as t };
+export { Sheet_trigger as a, Sheet_content as i, Sheet_title as n, Sheet as o, Sheet_header as r, Sheet_description as t };

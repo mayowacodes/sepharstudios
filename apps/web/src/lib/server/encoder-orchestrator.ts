@@ -56,11 +56,44 @@ async function orchestratorFetch<T>(path: string, init: RequestInit = {}): Promi
 	});
 
 	const text = await response.text();
-	const data = text ? JSON.parse(text) : {};
+
+	// Parse JSON with a guard. Previously this was a bare `JSON.parse(text)`,
+	// which threw SyntaxError before the `!response.ok` branch could
+	// surface a useful error — so any non-JSON failure (502 Bad Gateway
+	// HTML from Traefik, plain-text "Bad Request" from the orchestrator,
+	// etc.) reached callers as the cryptic `Unexpected identifier "Bad"`
+	// instead of the actual status + body. Now we keep the parsed data
+	// when it's valid JSON, fall back to the raw text otherwise, and
+	// always include both the HTTP status and a short preview of the
+	// response body in the thrown error so the caller log says what's
+	// actually wrong.
+	let data: JsonObject = {};
+	let parseError: string | null = null;
+	if (text) {
+		try {
+			data = JSON.parse(text) as JsonObject;
+		} catch (e) {
+			parseError = e instanceof Error ? e.message : String(e);
+		}
+	}
 
 	if (!response.ok) {
-		const message = typeof data?.message === 'string' ? data.message : 'Encoder orchestrator request failed';
+		const message =
+			typeof data?.message === 'string'
+				? data.message
+				: text
+					? `Encoder orchestrator ${response.status}: ${text.slice(0, 200)}`
+					: `Encoder orchestrator request failed with HTTP ${response.status}`;
 		throw new Error(message);
+	}
+
+	// 2xx but body didn't parse as JSON — that's still an error (we asked
+	// for JSON and got something else). Surface it instead of returning
+	// an empty object and letting the caller silently misbehave.
+	if (parseError) {
+		throw new Error(
+			`Encoder orchestrator returned HTTP ${response.status} with non-JSON body: ${text.slice(0, 200)} (parse error: ${parseError})`
+		);
 	}
 
 	return data as T;

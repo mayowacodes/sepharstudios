@@ -1,4 +1,4 @@
-import { T as forumThreads, t as db, w as forumReplies } from "../../../../../../../chunks/drizzle.js";
+import { N as forumReplies, P as forumThreads, t as db } from "../../../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../../../chunks/notify.js";
 import { a as take } from "../../../../../../../chunks/rate-limit.js";
 import { t as moderateComment } from "../../../../../../../chunks/ai-moderation.js";

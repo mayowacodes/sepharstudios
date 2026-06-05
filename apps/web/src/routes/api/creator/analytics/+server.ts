@@ -36,10 +36,34 @@ const PERIOD_DAYS: Record<string, number | null> = {
 	'all': null
 };
 
+// Empty-payload shape the creator/analytics page expects when no data is
+// available. The page's `loadAnalytics` already falls back to this when
+// the API returns !ok, so reusing it here keeps the contract consistent.
+function emptyAnalyticsPayload() {
+	return {
+		overview: {
+			totalViews: 0, totalWatchTime: 0, averageWatchTime: 0,
+			completionRate: 0, totalLikes: 0, totalShares: 0,
+			activeViewers: 0, growthRate: 0
+		},
+		contentPerformance: [] as unknown[],
+		viewsByDevice: [] as unknown[],
+		demographics: { ageGroups: [], genderDistribution: [], topCountries: [] as unknown[] },
+		engagementTrends: [] as unknown[],
+		series: { views: [] as number[], watchMinutes: [] as number[], completion: [] as number[] },
+		deltas: { views: 0, watchTime: 0, completion: 0 }
+	};
+}
+
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
+	// Wrap the whole pipeline so a schema-drift failure in any of the ~12 DB
+	// queries below returns an empty-zero payload instead of 500'ing the
+	// route and blanking /creator/analytics. The page already handles an
+	// empty payload gracefully (renders zero KPIs + an empty-state).
+	try {
 	const [creator] = await db
 		.select()
 		.from(creators)
@@ -372,6 +396,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			completion: completionDelta
 		}
 	});
+	} catch (err) {
+		console.error('[creator/analytics] pipeline failed; returning empty payload:', err instanceof Error ? err.message : err);
+		return json(emptyAnalyticsPayload());
+	}
 };
 
 function emptyResponse(period: string) {

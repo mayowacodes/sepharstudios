@@ -1,9 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  export let avatars: string[] = [];
-  export let redirectTo: string = '/kids';
-  export let selectedAvatar: string | null = null; // input/output binding
+  let { avatars = [], redirectTo = '/kids', selectedAvatar = $bindable(null) }: { avatars?: string[]; redirectTo?: string; selectedAvatar?: string | null } = $props();
 
   // Function to select avatar
   function selectAvatar(avatar: string) {
@@ -28,7 +26,7 @@
       <button
         type="button"
         class="w-20 h-20 rounded-full border-4 hover:border-yellow-500 transition cursor-pointer p-0 overflow-hidden focus:outline-none focus:ring-2 focus:ring-yellow-500"
-        on:click={() => selectAvatar(avatar)}
+        onclick={() => selectAvatar(avatar)}
         aria-label="Select avatar"
       >
         <img

@@ -1,8 +1,5 @@
 <script lang="ts">
-  export let width: string = '100%'; // Default width, can be overridden
-  export let height: string = '100px'; // Default height, can be overridden
-  export let rounded: boolean = true; // Whether the skeleton is rounded
-  export let className: string = ''; // Additional classes for custom styling
+  let { width = '100%', height = '100px', rounded = true, className = '' }: { width?: string; height?: string; rounded?: boolean; className?: string } = $props();
 </script>
 
 <div

@@ -1,9 +1,9 @@
-import { Ct as unsubscribe_stores, Nt as fallback, Ot as writable, _t as head, bt as store_get, gt as ensure_array_like, jt as escape_html, kt as attr, pt as bind_props, ut as attr_class, yt as spread_props } from "../../../../chunks/ui-libs.js";
+import { Dt as spread_props, It as writable, Lt as attr, Ot as store_get, Tt as head, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as WalletConnect } from "../../../../chunks/WalletConnect.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
-import { a as Sheet_trigger, i as Sheet_content, o as Sheet, s as Chevron_right } from "../../../../chunks/sheet.js";
+import { t as Chevron_right } from "../../../../chunks/chevron-right.js";
 import { n as Clapperboard, t as List_video } from "../../../../chunks/list-video.js";
 import { t as Clock } from "../../../../chunks/clock.js";
 import { t as Coins } from "../../../../chunks/coins.js";
@@ -16,9 +16,10 @@ import "../../../../chunks/trash-2.js";
 import { t as User } from "../../../../chunks/user.js";
 import { t as page } from "../../../../chunks/state.js";
 import { t as Button } from "../../../../chunks/button.js";
+import { a as Sheet_trigger, i as Sheet_content, o as Sheet } from "../../../../chunks/sheet.js";
 import { a as isConnected } from "../../../../chunks/wallet2.js";
 import { n as RecentlyWatched, t as Recommendations } from "../../../../chunks/Recommendations2.js";
-import "../../../../chunks/contracts.js";
+import "../../../../chunks/contracts2.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/circle-plus.svelte
 function Circle_plus($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -53,10 +54,7 @@ var currentProfile = writable(null);
 //#region src/lib/components/profile/EditProfileModal.svelte
 function EditProfileModal($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let isOpen = fallback($$props["isOpen"], false);
-		let profile = $$props["profile"];
-		let onSave = $$props["onSave"];
-		let onClose = $$props["onClose"];
+		let { isOpen = false, profile, onSave, onClose } = $$props;
 		let newName = profile.name;
 		let newAvatarUrl = profile.avatarUrl ?? "";
 		if (isOpen) {
@@ -64,21 +62,13 @@ function EditProfileModal($$renderer, $$props) {
 			$$renderer.push(`<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="edit-profile-title" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm"><h2 id="edit-profile-title" class="text-xl font-semibold mb-4">Edit Profile</h2> <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700">Profile Name</label> <input id="name" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newName)} placeholder="Enter profile name"/></div> <div class="mb-4"><label for="avatar" class="block text-sm font-medium text-gray-700">Avatar URL</label> <input id="avatar" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newAvatarUrl)} placeholder="Enter avatar URL or base64 image"/></div> <div class="flex justify-end gap-4"><button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button> <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
-		bind_props($$props, {
-			isOpen,
-			profile,
-			onSave,
-			onClose
-		});
 	});
 }
 //#endregion
 //#region src/lib/components/profile/AddProfileModal.svelte
 function AddProfileModal($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let isOpen = fallback($$props["isOpen"], false);
-		let onAdd = $$props["onAdd"];
-		let onClose = $$props["onClose"];
+		let { isOpen = false, onAdd, onClose } = $$props;
 		let newName = "";
 		let newAvatarUrl = "";
 		if (isOpen) {
@@ -86,11 +76,6 @@ function AddProfileModal($$renderer, $$props) {
 			$$renderer.push(`<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="add-profile-title" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm"><h2 id="add-profile-title" class="text-xl font-semibold mb-4">Add New Profile</h2> <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700">Profile Name</label> <input id="name" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newName)} placeholder="Enter profile name"/></div> <div class="mb-4"><label for="avatar" class="block text-sm font-medium text-gray-700">Avatar URL</label> <input id="avatar" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newAvatarUrl)} placeholder="Enter avatar URL or base64 image"/></div> <div class="flex justify-end gap-4"><button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button> <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add Profile</button></div></div></div>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
-		bind_props($$props, {
-			isOpen,
-			onAdd,
-			onClose
-		});
 	});
 }
 //#endregion
@@ -336,10 +321,10 @@ function Settings($$renderer, $$props) {
 //#region src/lib/components/sections/dashboard/AccountSettings.svelte
 function AccountSettings($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let accountSettings = fallback($$props["accountSettings"], () => ({
+		let { accountSettings = {
 			email: "user@example.com",
 			password: "••••••••"
-		}), true);
+		} } = $$props;
 		let newEmail = accountSettings.email;
 		let newPassword = accountSettings.password;
 		const updateAccountDetails = () => {
@@ -358,7 +343,6 @@ function AccountSettings($$renderer, $$props) {
 			$$slots: { default: true }
 		});
 		$$renderer.push(`<!----></div></section>`);
-		bind_props($$props, { accountSettings });
 	});
 }
 //#endregion

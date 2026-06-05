@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5`}],[`rect`,{x:`2`,y:`6`,width:`14`,height:`12`,rx:`2`}]];n(r,e({name:`video`},()=>a,{get iconNode(){return o}}))}export{r as t};

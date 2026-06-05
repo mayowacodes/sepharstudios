@@ -1,4 +1,4 @@
-import { Ct as unsubscribe_stores, Et as get, _t as head, bt as store_get, gt as ensure_array_like, jt as escape_html, kt as attr, ut as attr_class } from "../../../../chunks/ui-libs.js";
+import { Lt as attr, Ot as store_get, Pt as get, Tt as head, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Arrow_right } from "../../../../chunks/arrow-right.js";
 import { t as Calendar } from "../../../../chunks/calendar.js";
@@ -9,7 +9,7 @@ import { t as Trending_up } from "../../../../chunks/trending-up.js";
 import { t as Wallet } from "../../../../chunks/wallet.js";
 import { t as Button } from "../../../../chunks/button.js";
 import { a as isConnected, n as connectWallet, o as walletAddress, s as walletGeneration } from "../../../../chunks/wallet2.js";
-import { s as stcToken } from "../../../../chunks/contracts.js";
+import { s as stcToken } from "../../../../chunks/contracts2.js";
 //#region src/routes/(app)/staking/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

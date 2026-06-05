@@ -1,4 +1,4 @@
-import { Nt as fallback, St as stringify, _t as head, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, pt as bind_props } from "../../../../chunks/ui-libs.js";
+import { At as stringify, Lt as attr, St as derived, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Bookmark } from "../../../../chunks/bookmark.js";
 import { t as Circle_play } from "../../../../chunks/circle-play.js";
 import { t as Play } from "../../../../chunks/play.js";
@@ -8,9 +8,7 @@ import { t as Button } from "../../../../chunks/button.js";
 //#region src/lib/components/DocumentaryCard.svelte
 function DocumentaryCard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let documentary = $$props["documentary"];
-		let onClick = fallback($$props["onClick"], () => {});
-		let onHover = fallback($$props["onHover"], () => {});
+		let { documentary, onClick = () => {}, onHover = () => {} } = $$props;
 		$$renderer.push(`<div role="button" tabindex="0" class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"${attr("aria-label", `Watch ${documentary.title}`)}><div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">`);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<img${attr("src", documentary.thumbnail || "/placeholder-vertical.jpg")} alt="" width="280" height="420" loading="lazy" decoding="async" class="w-full h-full object-cover"/>`);
@@ -39,11 +37,6 @@ function DocumentaryCard($$renderer, $$props) {
 		$$renderer.push(`<!----> Play</button> <button class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"${attr("aria-label", `Add ${documentary.title} to My List`)}>`);
 		Bookmark($$renderer, { class: "h-3.5 w-3.5" });
 		$$renderer.push(`<!----> My List</button></div></div></div>`);
-		bind_props($$props, {
-			documentary,
-			onClick,
-			onHover
-		});
 	});
 }
 //#endregion

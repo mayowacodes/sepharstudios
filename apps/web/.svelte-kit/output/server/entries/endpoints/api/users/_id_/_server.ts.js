@@ -27,6 +27,10 @@ var requireAdmin = async (locals) => {
 var PATCH = async ({ locals, params, request }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error;
+	if (!params.id) return json({
+		status: "error",
+		message: "Missing user id"
+	}, { status: 400 });
 	const { data } = await request.json();
 	if (!data) return json({
 		status: "error",
@@ -66,6 +70,10 @@ var PATCH = async ({ locals, params, request }) => {
 var DELETE = async ({ locals, params }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error;
+	if (!params.id) return json({
+		status: "error",
+		message: "Missing user id"
+	}, { status: 400 });
 	if (params.id === session.user.id) return json({
 		status: "error",
 		message: "You cannot delete your own account. Ask another admin to do it."

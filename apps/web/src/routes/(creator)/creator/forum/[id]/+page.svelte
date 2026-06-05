@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import ForumReply from './ForumReply.svelte';
   import ReportButton from '$lib/components/ReportButton.svelte';
@@ -47,7 +47,7 @@
   let posting = $state(false);
   let postError = $state('');
 
-  const threadId = $derived($page.params.id);
+  const threadId = $derived(page.params.id);
 
   $effect(() => {
     threadId; // re-run when route changes

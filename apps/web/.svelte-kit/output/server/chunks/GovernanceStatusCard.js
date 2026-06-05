@@ -1,4 +1,4 @@
-import { jt as escape_html, mt as derived, ut as attr_class } from "./ui-libs.js";
+import { St as derived, vt as attr_class, zt as escape_html } from "./ui-libs.js";
 //#region src/lib/components/admin/governance/GovernanceStatusCard.svelte
 function GovernanceStatusCard($$renderer, $$props) {
 	let { title, value, subtitle = "", tone = "default" } = $$props;

@@ -1,1 +1,0 @@
-import{ct as e,lt as t}from"./BgHc62fs.js";import{t as n}from"./FqtpMiZa.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M5 12h14`}],[`path`,{d:`M12 5v14`}]];n(r,t({name:`plus`},()=>a,{get iconNode(){return o}}))}export{r as t};

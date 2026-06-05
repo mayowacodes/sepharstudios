@@ -1,1 +1,0 @@
-import{ct as e,lt as t}from"./BgHc62fs.js";import{t as n}from"./FqtpMiZa.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`rect`,{width:`18`,height:`11`,x:`3`,y:`11`,rx:`2`,ry:`2`}],[`path`,{d:`M7 11V7a5 5 0 0 1 10 0v4`}]];n(r,t({name:`lock`},()=>a,{get iconNode(){return o}}))}export{r as t};

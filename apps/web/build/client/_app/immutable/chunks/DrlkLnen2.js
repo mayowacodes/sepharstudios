@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7`}],[`rect`,{x:`2`,y:`4`,width:`20`,height:`16`,rx:`2`}]];n(r,e({name:`mail`},()=>a,{get iconNode(){return o}}))}export{r as t};

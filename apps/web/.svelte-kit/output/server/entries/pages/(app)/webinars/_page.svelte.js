@@ -1,29 +1,13 @@
-import { St as stringify, _t as head, gt as ensure_array_like, jt as escape_html, ut as attr_class, yt as spread_props } from "../../../../chunks/ui-libs.js";
-import { t as Icon } from "../../../../chunks/Icon.js";
+import { At as stringify, Tt as head, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Arrow_right } from "../../../../chunks/arrow-right.js";
 import { t as Bell } from "../../../../chunks/bell.js";
 import { t as Calendar } from "../../../../chunks/calendar.js";
 import { t as Clock } from "../../../../chunks/clock.js";
 import { t as Users } from "../../../../chunks/users.js";
+import { t as Video } from "../../../../chunks/video.js";
 import { n as goto } from "../../../../chunks/client.js";
 import "../../../../chunks/navigation.js";
 import { t as Button } from "../../../../chunks/button.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/video.svelte
-function Video($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "video" },
-		props,
-		{ iconNode: [["path", { "d": "m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" }], ["rect", {
-			"x": "2",
-			"y": "6",
-			"width": "14",
-			"height": "12",
-			"rx": "2"
-		}]] }
-	]));
-}
-//#endregion
 //#region src/routes/(app)/webinars/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

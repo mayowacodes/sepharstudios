@@ -1,4 +1,4 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { a as Card, i as Card_content } from "../../../../chunks/card.js";
 //#region src/routes/(app)/privacy/+page.svelte
 function _page($$renderer, $$props) {

@@ -69,5 +69,7 @@
 
 {@render children?.()}
 
-<!-- AI Copilot — visible to everyone; shows login prompt for unauthenticated users -->
-<AICopilot {isLoggedIn} />
+{#if !isPortalRoute}
+	<!-- AI Copilot — visible to everyone; shows login prompt for unauthenticated users -->
+	<AICopilot {isLoggedIn} />
+{/if}

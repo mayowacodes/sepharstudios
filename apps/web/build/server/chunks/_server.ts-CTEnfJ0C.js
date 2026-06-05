@@ -1,0 +1,131 @@
+import { w as db, ab as supportTickets } from './drizzle-CKUH7ukq.js';
+import { n as notify } from './notify-DpHZNtZn.js';
+import { C as Constants } from './constants-BEpeHz1K.js';
+import { s as sendEmailAction } from './server2-D6YOLBns.js';
+import { t as take } from './rate-limit-C3y7GHEd.js';
+import { j as json } from './index-Cv5VcsYq.js';
+import { eq, desc } from 'drizzle-orm';
+import './rolldown-runtime-pTpnEGsq.js';
+import './shared-server-DUDL94jl.js';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import 'drizzle-orm/pg-core';
+import 'web-push';
+import './ui-libs-BjzLDLAh.js';
+import './file-text-C_v9vOk2.js';
+import './Icon-CM89Lxh4.js';
+import './house-B7XjrWsP.js';
+import './layout-dashboard-PdpePzL-.js';
+import './user-DvE0JuLE.js';
+import './users-B-WaIXgI.js';
+import './redis-B0W1dNO5.js';
+import 'ioredis';
+import './index-DBqjc0Yf.js';
+import './utils-BAX50FA_.js';
+
+//#region src/routes/api/support/tickets/+server.ts
+/**
+* GET  /api/support/tickets?mine=1 — list the current user's tickets.
+* POST /api/support/tickets        — submit a tech-support ticket.
+*
+* Auth optional. Rate-limited 3/hr per user/IP. Inserts a `support_tickets`
+* row, emails Constants.SUPPORTEMAIL, and fires an in-app `notify()` so the
+* submitter sees confirmation in their notification center.
+*/
+var GET = async ({ url, locals }) => {
+	if (url.searchParams.get("mine") !== "1") return json({ error: "Only ?mine=1 listing is supported" }, { status: 400 });
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	return json({ tickets: await db.select({
+		id: supportTickets.id,
+		subject: supportTickets.subject,
+		category: supportTickets.category,
+		priority: supportTickets.priority,
+		description: supportTickets.description,
+		status: supportTickets.status,
+		adminResponse: supportTickets.adminResponse,
+		attachments: supportTickets.attachments,
+		createdAt: supportTickets.createdAt,
+		updatedAt: supportTickets.updatedAt
+	}).from(supportTickets).where(eq(supportTickets.userId, session.user.id)).orderBy(desc(supportTickets.createdAt)).limit(100) });
+};
+var ALLOWED_CATEGORIES = new Set([
+	"video-playback",
+	"audio-issues",
+	"streaming-quality",
+	"login",
+	"profile",
+	"payments",
+	"monetization",
+	"mobile",
+	"other"
+]);
+var ALLOWED_PRIORITIES = new Set([
+	"low",
+	"normal",
+	"high",
+	"urgent"
+]);
+function isValidEmail(value) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+var POST = async ({ request, locals, getClientAddress }) => {
+	const session = await locals.auth.getSession();
+	if (!(await take(`support-tickets:${session?.user.id ?? `ip:${getClientAddress()}`}`, {
+		capacity: 3,
+		refillPerSec: 1 / 1200
+	})).allowed) return json({ error: "Too many tickets, try again later." }, { status: 429 });
+	const body = await request.json().catch(() => ({}));
+	const subject = body.subject?.trim() ?? "";
+	const description = body.description?.trim() ?? "";
+	const email = (body.email ?? session?.user.email ?? "").trim();
+	const category = body.category && ALLOWED_CATEGORIES.has(body.category) ? body.category : null;
+	const priority = body.priority && ALLOWED_PRIORITIES.has(body.priority) ? body.priority : "normal";
+	if (!subject || subject.length < 3) return json({ error: "Subject is required." }, { status: 400 });
+	if (!description || description.length < 20) return json({ error: "Description is too short (20+ characters)." }, { status: 400 });
+	if (description.length > 5e3) return json({ error: "Description is too long (max 5000 characters)." }, { status: 400 });
+	if (!email || !isValidEmail(email)) return json({ error: "A valid email is required." }, { status: 400 });
+	const attachments = (body.attachments ?? []).filter((a) => a && typeof a.url === "string" && typeof a.name === "string").slice(0, 5).map((a) => ({
+		id: a.id ?? crypto.randomUUID(),
+		url: a.url,
+		name: a.name,
+		size: a.size
+	}));
+	const [inserted] = await db.insert(supportTickets).values({
+		userId: session?.user.id ?? null,
+		email: email.slice(0, 320),
+		subject: subject.slice(0, 255),
+		category,
+		priority,
+		description,
+		attachments: attachments.length > 0 ? attachments : null
+	}).returning({ id: supportTickets.id });
+	const attachmentList = attachments.length > 0 ? `\n\nAttachments:\n${attachments.map((a) => `- ${a.name}: ${a.url}`).join("\n")}` : "";
+	const submitter = session?.user.name ? `${session.user.name} <${email}>` : email;
+	try {
+		await sendEmailAction({
+			to: Constants.SUPPORTEMAIL,
+			subject: `[Support ticket #${inserted.id.slice(0, 8)}] ${subject}`,
+			meta: {
+				description: `Priority: ${priority}\nCategory: ${category ?? "unspecified"}\nFrom: ${submitter}\n\n${description}${attachmentList}`,
+				link: `mailto:${email}`
+			}
+		});
+	} catch (err) {
+		console.error("[support/tickets] email send failed:", err);
+	}
+	if (session?.user.id) await notify({
+		userId: session.user.id,
+		kind: "system",
+		title: "Support ticket received",
+		message: `We've received your ticket "${subject.slice(0, 80)}" and will get back to you within 24 hours.`,
+		actionUrl: "/creator/tech-support"
+	}).catch(() => void 0);
+	return json({
+		success: true,
+		id: inserted.id
+	});
+};
+
+export { GET, POST };
+//# sourceMappingURL=_server.ts-CTEnfJ0C.js.map

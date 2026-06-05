@@ -50,17 +50,18 @@ async function handle({ event, resolve }) {
 		event.locals.session = void 0;
 		event.locals.user = void 0;
 	}
+	event.locals.auth = { getSession: async () => session$1 };
 	event.locals.activeProfileId = event.cookies.get("activeProfileId") || void 0;
 	const user = event.locals.user;
 	const apexOrigin = `https://${hostname.includes("localhost") ? hostname : hostname.split(".").slice(-2).join(".")}`;
 	if (isAdminSubdomain && !isAuthPath) {
 		if (!user) return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent("https://admin.sepharstudios.com/admin")}`, 307);
-		if (user.role !== "admin") return Response.redirect(`${apexOrigin}/?denied=admin`, 307);
+		if (user.role !== "admin") return Response.redirect(`${apexOrigin}/access-denied?reason=admin`, 307);
 		if (deviceType === "tv" || deviceType === "mobile") return new Response("Access Denied: Admin portal is not available on this device.", { status: 403 });
 	}
 	if (isCreatorsSubdomain && !isAuthPath) {
 		if (!user) return Response.redirect(`${apexOrigin}/auth/login?redirectTo=${encodeURIComponent("https://creators.sepharstudios.com/creator")}`, 307);
-		if (user.role !== "creator" && user.role !== "admin") return Response.redirect(`${apexOrigin}/apply/creator`, 307);
+		if (user.role !== "creator" && user.role !== "admin") return Response.redirect(`${apexOrigin}/access-denied?reason=creator`, 307);
 		if (deviceType === "tv" || deviceType === "mobile") return new Response("Access Denied: Creator tools are not available on this device.", { status: 403 });
 	}
 	if (isCreatorsSubdomain && path === "/") return Response.redirect(`${event.url.origin}/creator`, 307);

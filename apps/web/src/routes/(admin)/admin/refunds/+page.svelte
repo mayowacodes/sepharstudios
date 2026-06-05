@@ -38,8 +38,16 @@
       if (status !== 'all') params.set('status', status);
       if (q.trim()) params.set('q', q.trim());
       const res = await fetch(`/api/admin/refunds?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[refunds] load HTTP', res.status);
+        rows = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       rows = body.refunds ?? [];
+    } catch (err) {
+      console.error('[refunds] load failed:', err);
+      rows = [];
     } finally {
       loading = false;
     }
@@ -52,7 +60,12 @@
   }
 
   $effect(() => { status; void load(); });
-  onMount(load);
+  
+  onMount(() => {
+    // Initial load is handled by the $effect above, which fires immediately
+    // since status is accessed in its dependency list. We don't need to call
+    // load() again here — doing so causes a double-fetch and race condition.
+  });
 
   async function issueRefund() {
     if (!issueRef.trim()) {

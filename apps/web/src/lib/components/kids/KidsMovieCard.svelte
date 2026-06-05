@@ -1,15 +1,15 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
 
-  export let movie: {
+  let { movie }: { movie: {
     id: string;
     title: string;
     thumbnailUrl: string;
     trailerUrl?: string;
     genres?: string[];
-  };
+  } } = $props();
 
-  let isHovered = false;
+  let isHovered = $state(false);
 
   function handleClick() {
     goto(`/kids/kiddies/movies/${movie.id}`);
@@ -18,13 +18,13 @@
 
 <div
   class="relative rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 border-4 border-yellow-300 bg-white text-center cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2"
-  on:mouseenter={() => isHovered = true}
-  on:mouseleave={() => isHovered = false}
-  on:click={handleClick}
+  onmouseenter={() => isHovered = true}
+  onmouseleave={() => isHovered = false}
+  onclick={handleClick}
   role="button"
   tabindex="0"
   aria-label={`Watch ${movie.title}`}
-  on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleClick())}
+  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleClick())}
 >
   {#if isHovered && movie.trailerUrl}
     <video

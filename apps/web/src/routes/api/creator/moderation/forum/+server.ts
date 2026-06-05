@@ -53,18 +53,24 @@ export const GET: RequestHandler = async ({ locals }) => {
 		.where(inArray(forumReplies.threadId, threadIds))
 		.orderBy(desc(forumReplies.createdAt));
 
-	const reportRows = await db
-		.select({
-			targetId: abuseReports.targetId,
-			count: sql<number>`count(*)::int`
-		})
-		.from(abuseReports)
-		.where(and(
-			eq(abuseReports.targetType, 'forum_reply'),
-			eq(abuseReports.status, 'open'),
-			inArray(abuseReports.targetId, replies.map((r) => r.id))
-		))
-		.groupBy(abuseReports.targetId);
+	// Drizzle's `inArray()` throws on an empty list, so a creator whose
+	// threads have no replies would crash this endpoint with a 500 and
+	// blank the moderation page. Guard the no-replies branch.
+	const replyIds = replies.map((r) => r.id);
+	const reportRows = replyIds.length === 0
+		? []
+		: await db
+			.select({
+				targetId: abuseReports.targetId,
+				count: sql<number>`count(*)::int`
+			})
+			.from(abuseReports)
+			.where(and(
+				eq(abuseReports.targetType, 'forum_reply'),
+				eq(abuseReports.status, 'open'),
+				inArray(abuseReports.targetId, replyIds)
+			))
+			.groupBy(abuseReports.targetId);
 	const reportMap = new Map(reportRows.map((r) => [r.targetId, Number(r.count)]));
 
 	const enrichedReplies = replies.map((r) => ({

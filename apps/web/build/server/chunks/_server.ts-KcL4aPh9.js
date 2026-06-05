@@ -1,0 +1,35 @@
+import { p as private_env } from './shared-server-DUDL94jl.js';
+import { a as getEncoderPresignedUploadUrl } from './minio2-CjcJBaLF.js';
+import { j as json } from './index-Cv5VcsYq.js';
+import './drizzle-CKUH7ukq.js';
+import './rolldown-runtime-pTpnEGsq.js';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import 'drizzle-orm/pg-core';
+import 'drizzle-orm';
+import 'minio';
+import './index-DBqjc0Yf.js';
+import './utils-BAX50FA_.js';
+
+//#region src/routes/api/encoder/presigned/+server.ts
+var INPUT_BUCKET = private_env.ENCODER_INPUT_BUCKET || "encoder-input";
+var POST = async ({ request, locals }) => {
+	if (!await locals.auth.getSession()) return json({ error: "Unauthorized" }, { status: 401 });
+	const { filename, contentType } = await request.json();
+	if (!filename) return json({ error: "Filename required" }, { status: 400 });
+	try {
+		const objectName = `${Date.now()}-${filename}`;
+		return json({
+			success: true,
+			presignedUrl: await getEncoderPresignedUploadUrl(INPUT_BUCKET, objectName),
+			objectName,
+			publicUrl: `${private_env.PUBLIC_ENCODER_MINIO_URL}/${INPUT_BUCKET}/${objectName}`
+		});
+	} catch (error) {
+		console.error("Presigned URL error:", error);
+		return json({ error: "Failed to generate presigned URL" }, { status: 500 });
+	}
+};
+
+export { POST };
+//# sourceMappingURL=_server.ts-KcL4aPh9.js.map

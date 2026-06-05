@@ -76,6 +76,7 @@ export const GET = async ({ locals }: RequestEvent) => {
 
 	// Real totalRevenueUSD: sum of all completed creator_payout transactions
 	// for this user in USD. STC payouts excluded (already counted separately).
+	// Defensive: deployed `transactions` table may be missing columns.
 	const [revRow] = await db
 		.select({
 			total: sql<number>`coalesce(sum(${transactions.amount}), 0)`
@@ -86,7 +87,11 @@ export const GET = async ({ locals }: RequestEvent) => {
 			eq(transactions.type, 'creator_payout'),
 			eq(transactions.status, 'completed'),
 			eq(transactions.currency, 'USD')
-		));
+		))
+		.catch((err) => {
+			console.warn('[ai/creator-insights] revRow failed:', err instanceof Error ? err.message : err);
+			return [{ total: 0 }];
+		});
 	const totalRevenueUSD = Number(revRow?.total ?? 0) / 100; // cents → dollars
 
 	// followerGrowth30d: net new followers in the last 30 days.

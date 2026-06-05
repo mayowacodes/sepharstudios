@@ -1,4 +1,4 @@
-import { T as forumThreads, t as db, w as forumReplies } from "../../../../../../chunks/drizzle.js";
+import { N as forumReplies, P as forumThreads, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq, sql } from "drizzle-orm";
 //#region src/routes/api/forum/replies/[id]/+server.ts

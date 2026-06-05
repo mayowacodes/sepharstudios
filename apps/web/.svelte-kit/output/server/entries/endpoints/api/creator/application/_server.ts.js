@@ -1,4 +1,4 @@
-import { a as user, g as creators, m as creatorApplications, t as db, u as adminSettings } from "../../../../../chunks/drizzle.js";
+import { C as creatorApplications, T as creators, a as user, d as adminSettings, t as db } from "../../../../../chunks/drizzle.js";
 import { t as track } from "../../../../../chunks/analytics.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -6,6 +6,18 @@ import { eq } from "drizzle-orm";
 var defaultSettings = { platform: { creatorApplicationsOpen: true } };
 var getCreatorApplicationsOpen = async () => {
 	return (await db.select().from(adminSettings).then((r) => r[0]))?.platform?.creatorApplicationsOpen ?? defaultSettings.platform.creatorApplicationsOpen;
+};
+var normalizeDocuments = (documents) => {
+	if (documents === void 0) return void 0;
+	if (documents === null) return null;
+	return documents.map((document) => {
+		if (typeof document !== "string") return document;
+		return {
+			id: crypto.randomUUID(),
+			url: document,
+			name: document.split("/").pop() || "Document"
+		};
+	}).filter((document) => !!document.url && !!document.name);
 };
 var GET = async ({ locals }) => {
 	const session = await locals.auth.getSession();
@@ -30,6 +42,7 @@ var POST = async ({ locals, request }) => {
 	if (payload.creatorType !== void 0 && !ALLOWED_CREATOR_TYPES.includes(payload.creatorType)) return json({ error: `Invalid creatorType. Must be one of: ${ALLOWED_CREATOR_TYPES.join(", ")}` }, { status: 400 });
 	const [existing] = await db.select().from(creatorApplications).where(eq(creatorApplications.userId, session.user.id));
 	const now = /* @__PURE__ */ new Date();
+	const documents = normalizeDocuments(payload.documents);
 	if (existing) {
 		if (existing.status === "approved") return json({ error: "Your creator application is already approved." }, { status: 400 });
 		const [updated] = await db.update(creatorApplications).set({
@@ -46,7 +59,7 @@ var POST = async ({ locals, request }) => {
 			bio: payload.bio ?? existing.bio,
 			portfolioUrl: payload.portfolioUrl ?? existing.portfolioUrl,
 			socialLinks: payload.socialLinks ?? existing.socialLinks,
-			documents: payload.documents ?? existing.documents,
+			documents: documents ?? existing.documents,
 			status: "pending",
 			reviewNotes: null,
 			rejectionReason: null,
@@ -79,7 +92,7 @@ var POST = async ({ locals, request }) => {
 		bio: payload.bio ?? null,
 		portfolioUrl: payload.portfolioUrl ?? null,
 		socialLinks: payload.socialLinks ?? null,
-		documents: payload.documents ?? null
+		documents: documents ?? null
 	}).returning();
 	await track(session.user.id, "creator_apply", {
 		creatorType: payload.creatorType,

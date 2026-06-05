@@ -1,4 +1,4 @@
-import { pt as bind_props, yt as spread_props, z as Separator$1 } from "./ui-libs.js";
+import { Dt as spread_props, K as Separator$1, xt as bind_props } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/separator/separator.svelte
 function Separator($$renderer, $$props) {

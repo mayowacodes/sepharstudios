@@ -1,4 +1,4 @@
-import { Ct as unsubscribe_stores, Ot as writable, _t as head, bt as store_get, gt as ensure_array_like, jt as escape_html, kt as attr } from "../../../../chunks/ui-libs.js";
+import { It as writable, Lt as attr, Ot as store_get, St as derived, Tt as head, jt as unsubscribe_stores, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Check } from "../../../../chunks/check.js";
 import { t as Circle_play } from "../../../../chunks/circle-play.js";
@@ -9,7 +9,6 @@ import { a as Card, i as Card_content } from "../../../../chunks/card.js";
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let filteredGuidelines;
 		const searchQuery = writable("");
 		const guidelines = [
 			{
@@ -64,11 +63,11 @@ function _page($$renderer, $$props) {
 				]
 			}
 		];
-		$: filteredGuidelines = guidelines.map((section) => ({
+		let filteredGuidelines = derived(() => guidelines.map((section) => ({
 			...section,
 			allowed: section.allowed.filter((item) => item.toLowerCase().includes(store_get($$store_subs ??= {}, "$searchQuery", searchQuery).toLowerCase())),
 			prohibited: section.prohibited.filter((item) => item.toLowerCase().includes(store_get($$store_subs ??= {}, "$searchQuery", searchQuery).toLowerCase()))
-		}));
+		})));
 		head("lvikix", $$renderer, ($$renderer) => {
 			$$renderer.title(($$renderer) => {
 				$$renderer.push(`<title>Content Guidelines | Sephar Studios</title>`);
@@ -96,7 +95,7 @@ function _page($$renderer, $$props) {
 			$$slots: { default: true }
 		});
 		$$renderer.push(`<!----></div></section> <section class="text-center space-y-6 pb-24"><h1 class="text-4xl sm:text-6xl font-bold tracking-tight">Content Guidelines</h1> <p class="text-xl text-muted-foreground max-w-2xl mx-auto">Our content guidelines ensure alignment with our mission to provide quality, faith-based entertainment.</p> <input type="text" placeholder="Search guidelines..."${attr("value", store_get($$store_subs ??= {}, "$searchQuery", searchQuery))} class="w-full p-3 rounded-lg border border-gray-300 shadow-sm focus:ring focus:ring-primary focus:border-primary"/></section> <section class="text-center space-y-8"><!--[-->`);
-		const each_array = ensure_array_like(filteredGuidelines);
+		const each_array = ensure_array_like(filteredGuidelines());
 		for (let $$index_2 = 0, $$length = each_array.length; $$index_2 < $$length; $$index_2++) {
 			let section = each_array[$$index_2];
 			if (section.allowed.length || section.prohibited.length) {

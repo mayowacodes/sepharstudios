@@ -1,4 +1,4 @@
-import { yt as spread_props } from "../../../../chunks/ui-libs.js";
+import { Dt as spread_props } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Book_open } from "../../../../chunks/book-open.js";
 import { t as External_link } from "../../../../chunks/external-link.js";

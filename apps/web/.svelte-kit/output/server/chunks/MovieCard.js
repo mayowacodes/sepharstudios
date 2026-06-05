@@ -1,4 +1,4 @@
-import { Nt as fallback, Ot as writable, jt as escape_html, kt as attr, pt as bind_props } from "./ui-libs.js";
+import { It as writable, Lt as attr, zt as escape_html } from "./ui-libs.js";
 import "./index-server.js";
 import { t as Bookmark } from "./bookmark.js";
 import { t as Play } from "./play.js";
@@ -23,9 +23,7 @@ var mediaModalStore = {
 //#region src/lib/components/MovieCard.svelte
 function MovieCard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let movie = $$props["movie"];
-		let onClick = fallback($$props["onClick"], () => {});
-		let onHover = fallback($$props["onHover"], () => {});
+		let { movie, onClick = () => {}, onHover = () => {} } = $$props;
 		$$renderer.push(`<div role="button" tabindex="0" class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"${attr("aria-label", `Watch ${movie.title}`)}><div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">`);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<img${attr("src", movie.thumbnail || "/placeholder-vertical.jpg")} alt="" width="280" height="420" loading="lazy" decoding="async" class="w-full h-full object-cover"/>`);
@@ -54,11 +52,6 @@ function MovieCard($$renderer, $$props) {
 		$$renderer.push(`<!----> Play</button> <button class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"${attr("aria-label", `Add ${movie.title} to My List`)}>`);
 		Bookmark($$renderer, { class: "h-3.5 w-3.5" });
 		$$renderer.push(`<!----> My List</button></div></div></div>`);
-		bind_props($$props, {
-			movie,
-			onClick,
-			onHover
-		});
 	});
 }
 //#endregion

@@ -1,7 +1,7 @@
 import { f as get_message, h as base64_decode, n as TRAILING_SLASH_PARAM, p as get_status, r as create_remote_key, t as INVALIDATED_PARAM, y as noop } from "./shared.js";
 import { r as base } from "./server.js";
 import { S as compact, f as make_trackable, g as add_data_suffix, h as noop_span, l as decode_params, p as normalize_path, s as hash, u as decode_pathname } from "./exports.js";
-import { Ot as writable, Pt as noop$1, at as index_server_exports, ct as tick$1, st as settled } from "./ui-libs.js";
+import { It as writable, Vt as noop$1, gt as tick$1, ht as settled, pt as index_server_exports } from "./ui-libs.js";
 import "./index-server.js";
 import "./internal.js";
 import "./environment.js";
@@ -1305,6 +1305,13 @@ function push_invalidated(resource) {
 	}
 }
 /**
+* Causes all `load` and `query` functions belonging to the currently active page to re-run. Returns a `Promise` that resolves when the page is subsequently updated.
+* @returns {Promise<void>}
+*/
+function invalidateAll() {
+	throw new Error("Cannot call invalidateAll() on the server");
+}
+/**
 * @param {URL} url
 * @param {boolean[]} invalid
 * @returns {Promise<import('types').ServerNodesResponse | import('types').ServerRedirectNode>}
@@ -1499,4 +1506,4 @@ function get_id(url) {
 	return decodeURIComponent(id);
 }
 //#endregion
-export { page as a, navigating as i, goto as n, updated as o, stores as r, beforeNavigate as t };
+export { navigating as a, stores as i, goto as n, page as o, invalidateAll as r, updated as s, beforeNavigate as t };

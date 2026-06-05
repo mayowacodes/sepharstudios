@@ -1,4 +1,4 @@
-import { T as forumThreads, a as user, t as db } from "../../../../../chunks/drizzle.js";
+import { P as forumThreads, a as user, t as db } from "../../../../../chunks/drizzle.js";
 import { a as take } from "../../../../../chunks/rate-limit.js";
 import { t as moderateComment } from "../../../../../chunks/ai-moderation.js";
 import { json } from "@sveltejs/kit";

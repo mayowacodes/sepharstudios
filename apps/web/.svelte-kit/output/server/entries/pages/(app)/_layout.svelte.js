@@ -1,8 +1,8 @@
-import { At as clsx, Nt as fallback, Ot as writable, c as Scroll_area_corner, d as Scroll_area_viewport, f as Scroll_area$1, gt as ensure_array_like, jt as escape_html, kt as attr, l as Scroll_area_thumb, mt as derived, pt as bind_props, u as Scroll_area_scrollbar$1, ut as attr_class, yt as spread_props } from "../../../chunks/ui-libs.js";
+import { Dt as spread_props, It as writable, Lt as attr, Rt as clsx, St as derived, c as Scroll_area_corner, d as Scroll_area_viewport, f as Scroll_area$1, l as Scroll_area_thumb, u as Scroll_area_scrollbar$1, vt as attr_class, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../chunks/ui-libs.js";
 import "../../../chunks/index-server.js";
 import { t as Icon } from "../../../chunks/Icon.js";
 import { t as Bell } from "../../../chunks/bell.js";
-import { a as Sheet_trigger, i as Sheet_content, n as Sheet_title, o as Sheet, r as Sheet_header, s as Chevron_right, t as Sheet_description } from "../../../chunks/sheet.js";
+import { t as Chevron_right } from "../../../chunks/chevron-right.js";
 import { n as Clapperboard, t as List_video } from "../../../chunks/list-video.js";
 import { t as Clock } from "../../../chunks/clock.js";
 import { t as Coins } from "../../../chunks/coins.js";
@@ -18,8 +18,9 @@ import { t as page } from "../../../chunks/state.js";
 import "../../../chunks/navigation.js";
 import { t as cn } from "../../../chunks/utils2.js";
 import { t as Button } from "../../../chunks/button.js";
+import { a as Sheet_trigger, i as Sheet_content, n as Sheet_title, o as Sheet, r as Sheet_header, t as Sheet_description } from "../../../chunks/sheet.js";
+import { a as Dropdown_menu_label, c as Dropdown_menu_content, i as Dropdown_menu_separator, o as Dropdown_menu_item, r as Dropdown_menu_trigger, u as Dropdown_menu } from "../../../chunks/dropdown-menu.js";
 import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../chunks/avatar.js";
-import { i as Dropdown_menu_item, n as Dropdown_menu_separator, o as Dropdown_menu_content, r as Dropdown_menu_label, s as Dropdown_menu, t as Dropdown_menu_trigger } from "../../../chunks/dropdown-menu.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/menu.svelte
 function Menu($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -179,14 +180,12 @@ function MyStudiosDrawer($$renderer, $$props) {
 //#region src/lib/components/Logo.svelte
 function Logo($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let user, isAuthenticated;
-		let className = fallback($$props["class"], void 0);
-		$: user = page.data.user || null;
-		$: isAuthenticated = !!user;
-		$$renderer.push(`<a${attr("href", isAuthenticated ? "/browse" : "/")}${attr_class(clsx(cn("flex items-center space-x-2 transition-opacity hover:opacity-80", className)))}><img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain"/> <!---->`);
-		$$renderer.push(`<span class="font-extrabold tracking-tight text-base sm:text-lg md:text-xl text-white">${escape_html(isAuthenticated ? "My Studios" : "Sephar Studios")}</span>`);
+		let user = derived(() => page.data.user || null);
+		let isAuthenticated = derived(() => !!user());
+		let { class: className } = $$props;
+		$$renderer.push(`<a${attr("href", isAuthenticated() ? "/browse" : "/")}${attr_class(clsx(cn("flex items-center space-x-2 transition-opacity hover:opacity-80", className)))}><img src="/logo-alone-sepharstudios-bgless.png" alt="Sephar Studios" class="h-8 w-auto object-contain"/> <!---->`);
+		$$renderer.push(`<span class="font-extrabold tracking-tight text-base sm:text-lg md:text-xl text-white">${escape_html(isAuthenticated() ? "My Studios" : "Sephar Studios")}</span>`);
 		$$renderer.push(`<!----></a>`);
-		bind_props($$props, { class: className });
 	});
 }
 //#endregion
@@ -395,8 +394,7 @@ function NotificationCenter($$renderer, $$props) {
 //#region src/lib/components/Search.svelte
 function Search_1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let placeholder = fallback($$props["placeholder"], "Search...");
-		let value = fallback($$props["value"], "");
+		let { placeholder = "Search...", value = "" } = $$props;
 		$$renderer.push(`<div class="relative w-full max-w-md"><input type="text"${attr("value", value)} class="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 pr-10 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary"${attr("placeholder", placeholder)}/> <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">`);
 		if (value) {
 			$$renderer.push("<!--[0-->");
@@ -407,10 +405,6 @@ function Search_1($$renderer, $$props) {
 		$$renderer.push(`<!--]--> `);
 		Search($$renderer, { class: "h-4 w-4 text-white/60" });
 		$$renderer.push(`<!----></div></div>`);
-		bind_props($$props, {
-			placeholder,
-			value
-		});
 	});
 }
 //#endregion
@@ -769,7 +763,7 @@ function Header($$renderer, $$props) {
 //#region src/lib/components/sections/footer.svelte
 function Footer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let className = fallback($$props["class"], "");
+		let { class: className = "" } = $$props;
 		const links = {
 			"About Us": [
 				{
@@ -843,7 +837,6 @@ function Footer($$renderer, $$props) {
 			$$renderer.push(`<!--]--></ul></div>`);
 		}
 		$$renderer.push(`<!--]--></div> <div class="mt-8 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4"><p class="text-sm text-muted-foreground"><span>© ${escape_html((/* @__PURE__ */ new Date()).getFullYear())} Sephar Studios.</span> All rights reserved.</p> <div class="flex items-center gap-4"><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="Facebook"><svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path></svg></a> <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter"><svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"></path></svg></a> <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="Instagram"><svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0z"></path></svg></a></div></div></div></footer>`);
-		bind_props($$props, { class: className });
 	});
 }
 //#endregion

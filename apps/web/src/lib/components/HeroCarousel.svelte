@@ -6,11 +6,10 @@
   import SkeletonLoader from '$lib/components/widgets/SkeletonLoader.svelte';
   import { goto } from '$app/navigation';
 
-  export let mediaItems: MediaItem[] = [];
-  export let sectionTitle: string = 'Trending';
+  let { mediaItems = [], sectionTitle = 'Trending' }: { mediaItems?: MediaItem[]; sectionTitle?: string } = $props();
 
-  let hoveredItem: MediaItem | null = null;
-  let loading = false;
+  let hoveredItem: MediaItem | null = $state(null);
+  let loading = $state(false);
 
   const openModal = (media: MediaItem) => {
     mediaModalStore.open(media);
@@ -58,8 +57,8 @@
           role="button"
           tabindex="0"
           aria-label={`Open modal for ${item.title}`}
-          on:mouseenter={() => handleMouseEnter(item)}
-          on:mouseleave={handleMouseLeave}
+          onmouseenter={() => handleMouseEnter(item)}
+          onmouseleave={handleMouseLeave}
         >
           {#if hoveredItem && hoveredItem.id === item.id}
             <video
@@ -102,7 +101,7 @@
 
           <div class="absolute bottom-4 left-4" transition:fade>
             <button
-              on:click={() => openModal(item)}
+              onclick={() => openModal(item)}
               class="bg-[#FF5E0E] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#FFBF00] transition"
               aria-label={`Watch Now: ${item.title}`}
             >

@@ -3,12 +3,10 @@
   import { Play, Bookmark } from '@lucide/svelte';
   import { goto } from '$app/navigation';
 
-  export let documentary: MediaItem;
-  export let onClick: () => void = () => {};
-  export let onHover: () => void = () => {};
+  let { documentary, onClick = () => {}, onHover = () => {} }: { documentary: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
 
-  let videoRef: HTMLVideoElement;
-  let isHovered = false;
+  let videoRef: HTMLVideoElement | undefined = $state();
+  let isHovered = $state(false);
   let previewTimeout: ReturnType<typeof setTimeout>;
 
   const handleMouseEnter = () => {
@@ -43,10 +41,10 @@
   tabindex="0"
   class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"
   aria-label={`Watch ${documentary.title}`}
-  on:mouseenter={handleMouseEnter}
-  on:mouseleave={handleMouseLeave}
-  on:click={navigate}
-  on:keydown={handleKeyDown}
+  onmouseenter={handleMouseEnter}
+  onmouseleave={handleMouseLeave}
+  onclick={navigate}
+  onkeydown={handleKeyDown}
 >
   <div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">
     {#if isHovered && documentary.trailerUrl}
@@ -91,7 +89,7 @@
     <div class="mt-3 flex items-center gap-2">
       <button
         class="inline-flex items-center gap-1 rounded-full bg-[#FF5E0E] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition"
-        on:click|stopPropagation={navigate}
+        onclick={(e) => { e.stopPropagation(); navigate(); }}
         aria-label={`Play ${documentary.title}`}
       >
         <Play class="h-3.5 w-3.5" />
@@ -99,7 +97,7 @@
       </button>
       <button
         class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"
-        on:click|stopPropagation
+        onclick={(e) => e.stopPropagation()}
         aria-label={`Add ${documentary.title} to My List`}
       >
         <Bookmark class="h-3.5 w-3.5" />

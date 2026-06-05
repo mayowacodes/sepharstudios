@@ -32,14 +32,27 @@
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('status', filter);
       const res = await fetch(`/api/admin/tax-forms?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[tax-forms] load HTTP', res.status);
+        forms = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       forms = body.forms ?? [];
+    } catch (err) {
+      console.error('[tax-forms] load failed:', err);
+      forms = [];
     } finally {
       loading = false;
     }
   }
   $effect(() => { filter; void load(); });
-  onMount(load);
+  
+  onMount(() => {
+    // Initial load is handled by the $effect above, which fires immediately
+    // since filter is accessed in its dependency list. We don't need to call
+    // load() again here — doing so causes a double-fetch and race condition.
+  });
 
   async function verify(f: FormRow) {
     busy[f.id] = true;
@@ -109,7 +122,7 @@
       <button
         type="button"
         onclick={() => (filter = f)}
-        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-foreground' : 'surface-2 text-foreground/80 text-white hover:text-white'}"
+        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-foreground' : 'surface-2  text-white hover:text-white'}"
       >{f}</button>
     {/each}
   </div>

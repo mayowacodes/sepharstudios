@@ -1,4 +1,4 @@
-import { b as events, t as db, y as eventRegistrations } from "../../../../../chunks/drizzle.js";
+import { O as eventRegistrations, k as events, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, sql } from "drizzle-orm";
 //#region src/routes/api/events/[id]/+server.ts

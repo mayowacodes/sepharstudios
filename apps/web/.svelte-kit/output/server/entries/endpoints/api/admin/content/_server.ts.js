@@ -1,4 +1,4 @@
-import { a as user, j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, a as user, et as ppvContent, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 //#region src/routes/api/admin/content/+server.ts
@@ -16,7 +16,7 @@ var GET = async ({ url, locals }) => {
 	if (status) filters.push(eq(mediaLibrary.status, status));
 	if (onlyPending) filters.push(eq(mediaLibrary.status, "submitted"));
 	const whereClause = filters.length ? and(...filters) : void 0;
-	let query = db.select({
+	const baseQuery = db.select({
 		id: mediaLibrary.id,
 		title: mediaLibrary.title,
 		description: mediaLibrary.description,
@@ -30,10 +30,11 @@ var GET = async ({ url, locals }) => {
 		createdAt: mediaLibrary.createdAt,
 		creatorId: mediaLibrary.creatorId,
 		creatorName: user.name,
-		creatorEmail: user.email
-	}).from(mediaLibrary).leftJoin(user, eq(mediaLibrary.creatorId, user.id));
-	if (whereClause) query = query.where(whereClause);
-	return json(await query.orderBy(desc(mediaLibrary.createdAt)).limit(limit).offset(offset));
+		creatorEmail: user.email,
+		isPpv: ppvContent.isActive,
+		ppvPriceCents: ppvContent.finalPriceCents
+	}).from(mediaLibrary).leftJoin(user, eq(mediaLibrary.creatorId, user.id)).leftJoin(ppvContent, eq(ppvContent.contentId, mediaLibrary.id));
+	return json(await (whereClause ? baseQuery.where(whereClause) : baseQuery).orderBy(desc(mediaLibrary.createdAt)).limit(limit).offset(offset));
 };
 //#endregion
 export { GET };

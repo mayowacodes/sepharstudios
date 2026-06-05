@@ -1,4 +1,4 @@
-import { At as clsx, G as Dialog_overlay$1, K as Portal, S as Dialog$1, U as Dialog_description$1, W as Dialog_trigger$1, b as Dialog_content$1, ft as attributes, pt as bind_props, q as Dialog_title$1, x as Dialog_close, yt as spread_props } from "./ui-libs.js";
+import { Dt as spread_props, Q as Dialog_overlay$1, Rt as clsx, S as Dialog$1, X as Dialog_description$1, Z as Dialog_trigger$1, b as Dialog_content$1, bt as attributes, et as Portal, tt as Dialog_title$1, x as Dialog_close, xt as bind_props } from "./ui-libs.js";
 import { t as X } from "./x.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/dialog/dialog.svelte

@@ -1,22 +1,24 @@
-import { Ct as unsubscribe_stores, St as stringify, bt as store_get, jt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr, Ot as store_get, jt as unsubscribe_stores, vt as attr_class, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
+import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
 import { t as Calendar } from "../../../../../chunks/calendar.js";
 import { t as WalletConnect } from "../../../../../chunks/WalletConnect.js";
 import { t as Coins } from "../../../../../chunks/coins.js";
-import "../../../../../chunks/credit-card.js";
+import { t as Credit_card } from "../../../../../chunks/credit-card.js";
 import { t as Crown } from "../../../../../chunks/crown.js";
 import { t as Dollar_sign } from "../../../../../chunks/dollar-sign.js";
 import { t as Refresh_cw } from "../../../../../chunks/refresh-cw.js";
 import { t as Settings } from "../../../../../chunks/settings.js";
 import { t as Trending_up } from "../../../../../chunks/trending-up.js";
 import { t as Wallet } from "../../../../../chunks/wallet.js";
-import { t as Button } from "../../../../../chunks/button.js";
 import { t as Input } from "../../../../../chunks/input.js";
+import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../../chunks/card.js";
 import { a as isConnected } from "../../../../../chunks/wallet2.js";
 import { t as Label } from "../../../../../chunks/label.js";
-import "../../../../../chunks/contracts.js";
+import "../../../../../chunks/contracts2.js";
 //#region src/routes/(creator)/creator/earnings/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -31,6 +33,9 @@ function _page($$renderer, $$props) {
 			totalViews: 0,
 			completedWatches: 0
 		};
+		let series = { earnings: [] };
+		let earningsDelta = 0;
+		let loadingEarnings = true;
 		let tokenomicsData = {
 			stcBalance: "0",
 			usdcBalance: "0",
@@ -47,6 +52,32 @@ function _page($$renderer, $$props) {
 			isUpdating: false,
 			updateResult: ""
 		};
+		let payoutMethod = {
+			processor: "paystack",
+			stripeStatus: null,
+			stripePayoutsEnabled: false,
+			requirementsPastDue: [],
+			onboarding: false,
+			saving: false
+		};
+		async function startStripeOnboarding() {
+			payoutMethod.onboarding = true;
+			try {
+				const res = await fetch("/api/creator/payouts/stripe/onboard", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({})
+				});
+				const data = await res.json();
+				if (!res.ok || !data.url) throw new Error(data.error ?? "Onboarding failed");
+				window.location.href = data.url;
+			} catch (err) {
+				console.error(err);
+				alert(err instanceof Error ? err.message : "Stripe onboarding failed");
+			} finally {
+				payoutMethod.onboarding = false;
+			}
+		}
 		async function updatePaymentPreferences() {
 			paymentSettings.isUpdating = true;
 			paymentSettings.updateResult = "";
@@ -70,174 +101,67 @@ function _page($$renderer, $$props) {
 				paymentSettings.isUpdating = false;
 			}
 		}
-		function getTierColor(tier) {
-			switch (tier) {
-				case "top_performer": return "bg-primary text-primary-foreground";
-				case "exclusive": return "bg-secondary text-secondary-foreground";
-				default: return "bg-muted text-muted-foreground";
-			}
-		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="space-y-8"><div class="text-center"><h1 class="text-4xl font-bold text-white mb-2">Creator Earnings Dashboard</h1> <p class="text-xl text-gray-300">Track your revenue, STC tokens, and payment preferences</p></div> <div class="grid grid-cols-1 md:grid-cols-4 gap-6">`);
-			Card($$renderer, {
-				children: ($$renderer) => {
-					Card_header($$renderer, {
-						class: "pb-2",
-						children: ($$renderer) => {
-							Card_title($$renderer, {
-								class: "text-sm font-medium text-muted-foreground flex items-center",
-								children: ($$renderer) => {
-									Dollar_sign($$renderer, { class: "h-4 w-4 mr-2" });
-									$$renderer.push(`<!----> This Month`);
-								},
-								$$slots: { default: true }
-							});
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!----> `);
-					Card_content($$renderer, {
-						class: "pt-0",
-						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html((earningsData.monthCents / 100).toFixed(2))}</div> `);
-							Badge($$renderer, {
-								class: "text-xs mt-1",
-								variant: "secondary",
-								children: ($$renderer) => {
-									$$renderer.push(`<!---->${escape_html(earningsData.revenueShare)}% share`);
-								},
-								$$slots: { default: true }
-							});
-							$$renderer.push(`<!---->`);
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!---->`);
-				},
-				$$slots: { default: true }
+			$$renderer.push(`<div class="space-y-8">`);
+			PageHeader($$renderer, {
+				icon: Wallet,
+				title: "Earnings",
+				subtitle: `Track your revenue, STC tokens, and payment preferences. Tier: ${earningsData.tier === "top_performer" ? "Top Performer" : earningsData.tier === "exclusive" ? "Exclusive Partner" : "Standard"} (${earningsData.revenueShare}% share).`
+			});
+			$$renderer.push(`<!----> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">`);
+			KpiCard($$renderer, {
+				label: "This Month",
+				value: `$${(earningsData.monthCents / 100).toFixed(2)}`,
+				icon: Dollar_sign,
+				accent: "green",
+				delta: earningsDelta,
+				deltaLabel: "vs last month",
+				sparkline: series.earnings,
+				loading: loadingEarnings,
+				index: 0
 			});
 			$$renderer.push(`<!----> `);
-			Card($$renderer, {
-				children: ($$renderer) => {
-					Card_header($$renderer, {
-						class: "pb-2",
-						children: ($$renderer) => {
-							Card_title($$renderer, {
-								class: "text-sm font-medium text-muted-foreground flex items-center",
-								children: ($$renderer) => {
-									Calendar($$renderer, { class: "h-4 w-4 mr-2" });
-									$$renderer.push(`<!----> This Year`);
-								},
-								$$slots: { default: true }
-							});
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!----> `);
-					Card_content($$renderer, {
-						class: "pt-0",
-						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html((earningsData.yearCents / 100).toLocaleString(void 0, {
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2
-							}))}</div> `);
-							Badge($$renderer, {
-								class: "text-xs mt-1",
-								variant: "outline",
-								children: ($$renderer) => {
-									$$renderer.push(`<!---->12 months`);
-								},
-								$$slots: { default: true }
-							});
-							$$renderer.push(`<!---->`);
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!---->`);
-				},
-				$$slots: { default: true }
+			KpiCard($$renderer, {
+				label: "This Year",
+				value: `$${(earningsData.yearCents / 100).toLocaleString(void 0, {
+					minimumFractionDigits: 2,
+					maximumFractionDigits: 2
+				})}`,
+				icon: Calendar,
+				accent: "blue",
+				deltaLabel: "12 months",
+				loading: loadingEarnings,
+				index: 1
 			});
 			$$renderer.push(`<!----> `);
-			Card($$renderer, {
-				children: ($$renderer) => {
-					Card_header($$renderer, {
-						class: "pb-2",
-						children: ($$renderer) => {
-							Card_title($$renderer, {
-								class: "text-sm font-medium text-muted-foreground flex items-center",
-								children: ($$renderer) => {
-									Trending_up($$renderer, { class: "h-4 w-4 mr-2" });
-									$$renderer.push(`<!----> Total Earned`);
-								},
-								$$slots: { default: true }
-							});
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!----> `);
-					Card_content($$renderer, {
-						class: "pt-0",
-						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html((earningsData.lifetimeCents / 100).toLocaleString(void 0, {
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2
-							}))}</div> `);
-							Badge($$renderer, {
-								class: `text-xs mt-1 ${stringify(getTierColor(earningsData.tier))}`,
-								children: ($$renderer) => {
-									$$renderer.push(`<!---->${escape_html(earningsData.tier === "top_performer" ? "Top Performer" : earningsData.tier === "exclusive" ? "Exclusive Partner" : "Standard Creator")}`);
-								},
-								$$slots: { default: true }
-							});
-							$$renderer.push(`<!---->`);
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!---->`);
-				},
-				$$slots: { default: true }
+			KpiCard($$renderer, {
+				label: "Total Earned",
+				value: `$${(earningsData.lifetimeCents / 100).toLocaleString(void 0, {
+					minimumFractionDigits: 2,
+					maximumFractionDigits: 2
+				})}`,
+				icon: Trending_up,
+				accent: "purple",
+				deltaLabel: "lifetime",
+				loading: loadingEarnings,
+				index: 2
 			});
 			$$renderer.push(`<!----> `);
-			Card($$renderer, {
-				children: ($$renderer) => {
-					Card_header($$renderer, {
-						class: "pb-2",
-						children: ($$renderer) => {
-							Card_title($$renderer, {
-								class: "text-sm font-medium text-muted-foreground flex items-center",
-								children: ($$renderer) => {
-									Coins($$renderer, { class: "h-4 w-4 mr-2" });
-									$$renderer.push(`<!----> STC Value`);
-								},
-								$$slots: { default: true }
-							});
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!----> `);
-					Card_content($$renderer, {
-						class: "pt-0",
-						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html(tokenomicsData.stcValue.toFixed(2))}</div> `);
-							Badge($$renderer, {
-								class: "text-xs mt-1",
-								variant: "secondary",
-								children: ($$renderer) => {
-									$$renderer.push(`<!---->${escape_html(parseFloat(tokenomicsData.totalStcEarned).toLocaleString())} STC`);
-								},
-								$$slots: { default: true }
-							});
-							$$renderer.push(`<!---->`);
-						},
-						$$slots: { default: true }
-					});
-					$$renderer.push(`<!---->`);
-				},
-				$$slots: { default: true }
-			});
-			$$renderer.push(`<!----></div> `);
+			if (store_get($$store_subs ??= {}, "$isConnected", isConnected)) {
+				$$renderer.push("<!--[0-->");
+				KpiCard($$renderer, {
+					label: "STC Value",
+					value: `$${tokenomicsData.stcValue.toFixed(2)}`,
+					icon: Coins,
+					accent: "orange",
+					deltaLabel: `${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`,
+					loading: loadingEarnings,
+					index: 3
+				});
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div> `);
 			Card($$renderer, {
 				class: "bg-linear-to-r from-primary/10 to-secondary/10",
 				children: ($$renderer) => {
@@ -283,6 +207,151 @@ function _page($$renderer, $$props) {
 								} else $$renderer.push("<!--[-1-->");
 								$$renderer.push(`<!--]--></div>`);
 							}
+							$$renderer.push(`<!--]-->`);
+						},
+						$$slots: { default: true }
+					});
+					$$renderer.push(`<!---->`);
+				},
+				$$slots: { default: true }
+			});
+			$$renderer.push(`<!----> `);
+			Card($$renderer, {
+				children: ($$renderer) => {
+					Card_content($$renderer, {
+						class: "py-4 flex items-center justify-between",
+						children: ($$renderer) => {
+							$$renderer.push(`<div><div class="text-sm font-medium">Tax forms</div> <div class="text-xs text-muted-foreground">Submit W-9 / W-8BEN before annual 1099 generation.</div></div> `);
+							Button($$renderer, {
+								href: "/creator/earnings/tax-forms",
+								variant: "outline",
+								size: "sm",
+								children: ($$renderer) => {
+									$$renderer.push(`<!---->Manage forms`);
+								},
+								$$slots: { default: true }
+							});
+							$$renderer.push(`<!---->`);
+						},
+						$$slots: { default: true }
+					});
+				},
+				$$slots: { default: true }
+			});
+			$$renderer.push(`<!----> `);
+			Card($$renderer, {
+				children: ($$renderer) => {
+					Card_header($$renderer, {
+						children: ($$renderer) => {
+							Card_title($$renderer, {
+								class: "flex items-center gap-2",
+								children: ($$renderer) => {
+									Credit_card($$renderer, { class: "h-5 w-5" });
+									$$renderer.push(`<!----> <span>Setup payouts</span>`);
+								},
+								$$slots: { default: true }
+							});
+						},
+						$$slots: { default: true }
+					});
+					$$renderer.push(`<!----> `);
+					Card_content($$renderer, {
+						class: "space-y-4",
+						children: ($$renderer) => {
+							$$renderer.push(`<p class="text-sm text-muted-foreground">Choose how the platform pays you. Paystack is best for NGN / African
+        creators (instant local-bank settlement). Stripe Connect Express
+        works for USD / global creators (bank or debit card, 30+ countries).</p> <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button type="button"${attr("disabled", payoutMethod.saving, true)}${attr_class(`text-left rounded-xl border p-4 transition-colors ${payoutMethod.processor === "paystack" ? "border-orange-500 bg-orange-500/10" : "border-border/40 hover:surface-1"}`)}><div class="flex items-center justify-between"><div class="font-medium">Paystack</div> `);
+							if (payoutMethod.processor === "paystack") {
+								$$renderer.push("<!--[0-->");
+								Badge($$renderer, {
+									variant: "outline",
+									children: ($$renderer) => {
+										$$renderer.push(`<!---->Selected`);
+									},
+									$$slots: { default: true }
+								});
+							} else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]--></div> <div class="text-xs text-muted-foreground mt-1">NGN, KES, ZAR, GHS · local bank settlement</div></button> <button type="button"${attr("disabled", payoutMethod.saving || !payoutMethod.stripePayoutsEnabled, true)}${attr_class(`text-left rounded-xl border p-4 transition-colors ${payoutMethod.processor === "stripe" ? "border-purple-500 bg-purple-500/10" : "border-border/40 hover:surface-1"} ${!payoutMethod.stripePayoutsEnabled ? "opacity-60 cursor-not-allowed" : ""}`)}><div class="flex items-center justify-between"><div class="font-medium">Stripe Connect</div> `);
+							if (payoutMethod.processor === "stripe") {
+								$$renderer.push("<!--[0-->");
+								Badge($$renderer, {
+									variant: "outline",
+									children: ($$renderer) => {
+										$$renderer.push(`<!---->Selected`);
+									},
+									$$slots: { default: true }
+								});
+							} else if (payoutMethod.stripeStatus === "verified") {
+								$$renderer.push("<!--[1-->");
+								Badge($$renderer, {
+									variant: "outline",
+									class: "text-green-300",
+									children: ($$renderer) => {
+										$$renderer.push(`<!---->Verified`);
+									},
+									$$slots: { default: true }
+								});
+							} else if (payoutMethod.stripeStatus) {
+								$$renderer.push("<!--[2-->");
+								Badge($$renderer, {
+									variant: "outline",
+									class: "text-yellow-300",
+									children: ($$renderer) => {
+										$$renderer.push(`<!---->${escape_html(payoutMethod.stripeStatus)}`);
+									},
+									$$slots: { default: true }
+								});
+							} else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]--></div> <div class="text-xs text-muted-foreground mt-1">USD, EUR, GBP and more · global bank settlement</div></button></div> `);
+							if (payoutMethod.stripeStatus !== "verified") {
+								$$renderer.push("<!--[0-->");
+								$$renderer.push(`<div class="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4 space-y-3"><div class="text-sm"><strong>Stripe Connect onboarding</strong> — connect a bank account or
+            debit card to receive USD payouts. Stripe handles ID verification
+            and tax forms.</div> `);
+								if (payoutMethod.requirementsPastDue.length > 0) {
+									$$renderer.push("<!--[0-->");
+									$$renderer.push(`<div class="text-xs text-red-300">Past-due requirements: ${escape_html(payoutMethod.requirementsPastDue.join(", "))}</div>`);
+								} else $$renderer.push("<!--[-1-->");
+								$$renderer.push(`<!--]--> `);
+								Button($$renderer, {
+									onclick: startStripeOnboarding,
+									disabled: payoutMethod.onboarding,
+									children: ($$renderer) => {
+										$$renderer.push(`<!---->${escape_html(payoutMethod.onboarding ? "Redirecting…" : payoutMethod.stripeStatus ? "Continue Stripe setup" : "Setup with Stripe")}`);
+									},
+									$$slots: { default: true }
+								});
+								$$renderer.push(`<!----></div>`);
+							} else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]-->`);
+						},
+						$$slots: { default: true }
+					});
+					$$renderer.push(`<!---->`);
+				},
+				$$slots: { default: true }
+			});
+			$$renderer.push(`<!----> `);
+			Card($$renderer, {
+				children: ($$renderer) => {
+					Card_header($$renderer, {
+						children: ($$renderer) => {
+							Card_title($$renderer, {
+								class: "flex items-center gap-2",
+								children: ($$renderer) => {
+									Dollar_sign($$renderer, { class: "h-5 w-5" });
+									$$renderer.push(`<!----> <span>Earnings by content</span>`);
+								},
+								$$slots: { default: true }
+							});
+						},
+						$$slots: { default: true }
+					});
+					$$renderer.push(`<!----> `);
+					Card_content($$renderer, {
+						children: ($$renderer) => {
+							$$renderer.push("<!--[0-->");
+							$$renderer.push(`<p class="text-sm text-muted-foreground py-6 text-center">Loading…</p>`);
 							$$renderer.push(`<!--]-->`);
 						},
 						$$slots: { default: true }

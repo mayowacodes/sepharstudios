@@ -60,11 +60,11 @@
     }
   ];
 
-  $: filteredGuidelines = guidelines.map(section => ({
+  let filteredGuidelines = $derived(guidelines.map(section => ({
     ...section,
     allowed: section.allowed.filter(item => item.toLowerCase().includes($searchQuery.toLowerCase())),
     prohibited: section.prohibited.filter(item => item.toLowerCase().includes($searchQuery.toLowerCase()))
-  }));
+  })));
 </script>
 
 <svelte:head>

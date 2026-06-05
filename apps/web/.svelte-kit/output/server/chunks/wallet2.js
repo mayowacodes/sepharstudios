@@ -1,4 +1,4 @@
-import { Ot as writable, Tt as derived } from "./ui-libs.js";
+import { It as writable, Nt as derived } from "./ui-libs.js";
 import "./index-server.js";
 import { n as config, t as DEFAULT_CHAIN } from "./config.js";
 import { connect, disconnect, getAccount, switchChain } from "@wagmi/core";

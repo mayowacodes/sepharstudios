@@ -1,8 +1,8 @@
-import { Ct as unsubscribe_stores, bt as store_get, jt as escape_html, kt as attr, ut as attr_class, yt as spread_props } from "../../../../chunks/ui-libs.js";
-import { t as Icon } from "../../../../chunks/Icon.js";
+import { Lt as attr, Ot as store_get, jt as unsubscribe_stores, vt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Arrow_right } from "../../../../chunks/arrow-right.js";
 import { t as Arrow_up_down } from "../../../../chunks/arrow-up-down.js";
 import { t as Circle_alert } from "../../../../chunks/circle-alert.js";
+import { t as Circle_check } from "../../../../chunks/circle-check.js";
 import { t as Coins } from "../../../../chunks/coins.js";
 import { t as External_link } from "../../../../chunks/external-link.js";
 import { t as Loader_circle } from "../../../../chunks/loader-circle.js";
@@ -13,23 +13,9 @@ import { t as Zap } from "../../../../chunks/zap.js";
 import { t as Button } from "../../../../chunks/button.js";
 import "../../../../chunks/config.js";
 import { a as isConnected, n as connectWallet, o as walletAddress } from "../../../../chunks/wallet2.js";
-import { c as subscriptionContract, s as stcToken, u as usdcToken } from "../../../../chunks/contracts.js";
+import { c as subscriptionContract, s as stcToken, u as usdcToken } from "../../../../chunks/contracts2.js";
 import "viem";
 import "@wagmi/core";
-//#region ../../node_modules/@lucide/svelte/dist/icons/circle-check.svelte
-function Circle_check($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "circle-check" },
-		props,
-		{ iconNode: [["circle", {
-			"cx": "12",
-			"cy": "12",
-			"r": "10"
-		}], ["path", { "d": "m9 12 2 2 4-4" }]] }
-	]));
-}
-//#endregion
 //#region src/routes/(app)/token/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

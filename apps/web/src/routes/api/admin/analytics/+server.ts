@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const [usersAgg] = await db
 		.select({
 			totalUsers: sql<number>`count(*)`,
-			newUsers: sql<number>`sum(case when ${user.createdAt} >= ${startDate} then 1 else 0 end)`,
+			newUsers: sql<number>`sum(case when ${user.createdAt} >= ${startDate.toISOString()} then 1 else 0 end)`,
 			creators: sql<number>`sum(case when ${user.role} = 'creator' then 1 else 0 end)`
 		})
 		.from(user);
@@ -34,12 +34,19 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		})
 		.from(mediaLibrary);
 
+	// Defensive: deployed `transactions` table may be missing the
+	// amount/type columns (older schema, IF NOT EXISTS skipped). Fall
+	// back to zero revenue so the analytics dashboard still renders.
 	const [revenueAgg] = await db
 		.select({
 			totalRevenue: sql<number>`coalesce(sum(${transactions.amount}), 0)`
 		})
 		.from(transactions)
-		.where(eq(transactions.type, 'purchase'));
+		.where(eq(transactions.type, 'purchase'))
+		.catch((err) => {
+			console.warn('[admin/analytics] revenue aggregate failed:', err instanceof Error ? err.message : err);
+			return [{ totalRevenue: 0 }];
+		});
 
 	const categories = await db
 		.select({
@@ -53,7 +60,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const recentUsers = await db
 		.select({ createdAt: user.createdAt, role: user.role })
 		.from(user)
-		.where(sql`${user.createdAt} >= ${startDate}`);
+		.where(gte(user.createdAt, startDate));
 
 	const growthMap = new Map<string, { users: number; creators: number }>();
 	for (const row of recentUsers) {
@@ -71,7 +78,11 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const revenueRows = await db
 		.select({ amount: transactions.amount, createdAt: transactions.createdAt })
 		.from(transactions)
-		.where(eq(transactions.type, 'purchase'));
+		.where(eq(transactions.type, 'purchase'))
+		.catch((err) => {
+			console.warn('[admin/analytics] revenueRows failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ amount: number; createdAt: Date }>;
+		});
 
 	const revenueMap = new Map<string, { revenue: number; payouts: number }>();
 	for (const row of revenueRows) {
@@ -135,7 +146,11 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		})
 		.from(transactions)
 		.where(and(eq(transactions.type, 'purchase'), gte(transactions.createdAt, since)))
-		.groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+		.groupBy(sql`date_trunc('day', ${transactions.createdAt})`)
+		.catch((err) => {
+			console.warn('[admin/analytics] dailyRevenue failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ day: string; amount: number }>;
+		});
 
 	const dailyContent = await db
 		.select({
@@ -171,7 +186,11 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			eq(transactions.type, 'purchase'),
 			gte(transactions.createdAt, priorSince),
 			lt(transactions.createdAt, since)
-		));
+		))
+		.catch((err) => {
+			console.warn('[admin/analytics] priorRevenue failed:', err instanceof Error ? err.message : err);
+			return [{ amount: 0 }];
+		});
 	const [priorContent] = await db
 		.select({ count: sql<number>`count(*)::int` })
 		.from(mediaLibrary)

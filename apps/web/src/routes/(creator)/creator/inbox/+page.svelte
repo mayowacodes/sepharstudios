@@ -191,9 +191,8 @@
               <div class="pl-4 pt-4">
                 <input
                   type="checkbox"
-                  checked={!!selected[m.id]}
-                  onclick={(e) => toggleSelected(m.id, e)}
-                  onchange={(e) => e.stopPropagation()}
+                  bind:checked={selected[m.id]}
+                  onclick={(e) => e.stopPropagation()}
                   class="w-4 h-4 accent-purple-500"
                   aria-label={`Select ${m.subject}`}
                 />

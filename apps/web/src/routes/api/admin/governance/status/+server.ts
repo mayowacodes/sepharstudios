@@ -9,24 +9,45 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const { actor, allowed } = await getGovernanceActor(locals, 'governance.view');
 	if (!actor || !allowed) return json({ error: 'Forbidden' }, { status: 403 });
 
-	const [activeSubs, activeContent] = await Promise.all([
-		db
-			.select({ total: count() })
-			.from(paystackSubscriptions)
-			.where(eq(paystackSubscriptions.status, 'active'))
-			.then((r) => r[0]?.total ?? 0),
-		db
-			.select({ total: count() })
-			.from(mediaLibrary)
-			.where(eq(mediaLibrary.isActive, true))
-			.then((r) => r[0]?.total ?? 0)
-	]);
+	// Defensive defaults — if any of the DB queries or governance-store
+	// reads throw (missing tables on a fresh DB, transient Postgres error,
+	// etc.) we still return a complete shape with zeros so the admin page
+	// doesn't blank. Errors are logged for diagnosis but the response
+	// itself remains 200.
+	const safe = async <T,>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> => {
+		try {
+			return await fn();
+		} catch (err) {
+			console.error(`[admin/governance/status] ${label} failed:`, err);
+			return fallback;
+		}
+	};
 
-	const [queue, proposals, emergency, audit] = await Promise.all([
-		listQueue(),
-		listProposals(),
-		getActivePause(),
-		listAuditEntries()
+	const [activeSubs, activeContent, queue, proposals, emergency, audit] = await Promise.all([
+		safe(
+			() =>
+				db
+					.select({ total: count() })
+					.from(paystackSubscriptions)
+					.where(eq(paystackSubscriptions.status, 'active'))
+					.then((r) => r[0]?.total ?? 0),
+			0,
+			'activeSubs'
+		),
+		safe(
+			() =>
+				db
+					.select({ total: count() })
+					.from(mediaLibrary)
+					.where(eq(mediaLibrary.isActive, true))
+					.then((r) => r[0]?.total ?? 0),
+			0,
+			'activeContent'
+		),
+		safe(() => listQueue(), [] as Awaited<ReturnType<typeof listQueue>>, 'queue'),
+		safe(() => listProposals(), [] as Awaited<ReturnType<typeof listProposals>>, 'proposals'),
+		safe(() => getActivePause(), null as Awaited<ReturnType<typeof getActivePause>>, 'emergency'),
+		safe(() => listAuditEntries(), [] as Awaited<ReturnType<typeof listAuditEntries>>, 'audit')
 	]);
 
 	return json({

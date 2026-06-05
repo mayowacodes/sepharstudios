@@ -3,31 +3,52 @@
   import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
 
-  export let isPlaying: boolean;
-  export let currentTime: number;
-  export let duration: number;
-  export let volume: number;
-  export let isMuted: boolean;
-  export let quality: string;
-  export let qualities: string[] = [];
-  export let audioTracks: AudioTrack[] = [];
-  export let currentAudioTrack: AudioTrack | null;
-  export let chapters: Chapter[] = [];
-  export let playbackRate: number;
-  export let isFullscreen: boolean;
+  let {
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    isMuted,
+    quality,
+    qualities = [],
+    audioTracks = [],
+    currentAudioTrack,
+    chapters = [],
+    playbackRate,
+    isFullscreen,
+    onSeek,
+    onTogglePlay,
+    onVolumeChange,
+    onToggleMute,
+    onQualityChange,
+    onSwitchAudio,
+    onPlaybackRateChange,
+    onToggleFullscreen
+  }: {
+    isPlaying: boolean;
+    currentTime: number;
+    duration: number;
+    volume: number;
+    isMuted: boolean;
+    quality: string;
+    qualities?: string[];
+    audioTracks?: AudioTrack[];
+    currentAudioTrack: AudioTrack | null;
+    chapters?: Chapter[];
+    playbackRate: number;
+    isFullscreen: boolean;
+    onSeek: (time: number) => void;
+    onTogglePlay: () => void;
+    onVolumeChange: (volume: number) => void;
+    onToggleMute: () => void;
+    onQualityChange: (quality: string) => void;
+    onSwitchAudio: (track: AudioTrack) => void;
+    onPlaybackRateChange: (rate: number) => void;
+    onToggleFullscreen: () => void;
+  } = $props();
 
-  // Function Props (Replaces createEventDispatcher)
-  export let onSeek: (time: number) => void;
-  export let onTogglePlay: () => void;
-  export let onVolumeChange: (volume: number) => void;
-  export let onToggleMute: () => void;
-  export let onQualityChange: (quality: string) => void;
-  export let onSwitchAudio: (track: AudioTrack) => void;
-  export let onPlaybackRateChange: (rate: number) => void;
-  export let onToggleFullscreen: () => void;
-
-  let showAudioTracks = false;
-  let showQualityOptions = false;
+  let showAudioTracks = $state(false);
+  let showQualityOptions = $state(false);
 
   const playbackRates = [0.5, 1, 1.5, 2];
 
@@ -103,8 +124,8 @@
     class="relative w-full h-1.5 bg-white/20 cursor-pointer group rounded-full"
     role="slider"
     tabindex="0"
-    on:click={handleSeek}
-    on:keydown={(e: KeyboardEvent) => handleKeydownSeek(e)}
+    onclick={handleSeek}
+    onkeydown={(e: KeyboardEvent) => handleKeydownSeek(e)}
     aria-valuenow={currentTime}
     aria-valuemin={0}
     aria-valuemax={duration}
@@ -130,8 +151,8 @@
   <div class="flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md px-4 py-2">
     <button
       class="text-white hover:text-[var(--primary)]"
-      on:click={onTogglePlay}
-      on:keydown={(e: KeyboardEvent) => handleKeydownTogglePlay(e)}
+      onclick={onTogglePlay}
+      onkeydown={(e: KeyboardEvent) => handleKeydownTogglePlay(e)}
     >
       {#if isPlaying}
         <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
@@ -146,16 +167,16 @@
 
     <button
       class="text-white hover:text-[var(--primary)]"
-      on:click={() => onSeek(currentTime - 10)}
-      on:keydown={(e: KeyboardEvent) => handleKeydownSeekBackward(e)}
+      onclick={() => onSeek(currentTime - 10)}
+      onkeydown={(e: KeyboardEvent) => handleKeydownSeekBackward(e)}
     >
       -10s
     </button>
 
     <button
       class="text-white hover:text-[var(--primary)]"
-      on:click={() => onSeek(currentTime + 10)}
-      on:keydown={(e: KeyboardEvent) => handleKeydownSeekForward(e)}
+      onclick={() => onSeek(currentTime + 10)}
+      onkeydown={(e: KeyboardEvent) => handleKeydownSeekForward(e)}
     >
       +10s
     </button>
@@ -170,8 +191,8 @@
         <div class="relative">
           <button
             class="text-white hover:text-[var(--primary)]"
-            on:click={() => showAudioTracks = !showAudioTracks}
-            on:keydown={(e: KeyboardEvent) => {
+            onclick={() => showAudioTracks = !showAudioTracks}
+            onkeydown={(e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 showAudioTracks = !showAudioTracks;
               }
@@ -185,8 +206,8 @@
                 <button
                   class="w-full px-3 py-2 text-left text-sm hover:bg-white/10 text-white"
                   class:bg-[var(--primary)]="{currentAudioTrack?.id === track.id}"
-                  on:click={() => { onSwitchAudio(track); showAudioTracks = false; }}
-                  on:keydown={(e: KeyboardEvent) => handleKeydownAudioChange(e, track)}
+                  onclick={() => { onSwitchAudio(track); showAudioTracks = false; }}
+                  onkeydown={(e: KeyboardEvent) => handleKeydownAudioChange(e, track)}
                 >
                   {track.label}
                 </button>
@@ -198,10 +219,10 @@
 
       <!-- Quality Selection -->
       <div class="relative">
-        <button
-          class="text-white hover:text-[var(--primary)]"
-          on:click={() => showQualityOptions = !showQualityOptions}
-          on:keydown={(e: KeyboardEvent) => {
+          <button
+            class="text-white hover:text-[var(--primary)]"
+            onclick={() => showQualityOptions = !showQualityOptions}
+            onkeydown={(e: KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               showQualityOptions = !showQualityOptions;
             }
@@ -215,8 +236,8 @@
               <button
                 class="w-full px-3 py-2 text-left text-sm hover:bg-white/10 text-white"
                 class:bg-[var(--primary)]={quality === q}
-                on:click={() => { onQualityChange(q); showQualityOptions = false; }}
-                on:keydown={(e: KeyboardEvent) => handleKeydownQualityChange(e, q)}
+                onclick={() => { onQualityChange(q); showQualityOptions = false; }}
+                onkeydown={(e: KeyboardEvent) => handleKeydownQualityChange(e, q)}
               >
                 {q}
               </button>
@@ -251,8 +272,8 @@
       <div class="flex items-center gap-2">
         <button
           class="text-white hover:text-[var(--primary)]"
-          on:click={onToggleMute}
-          on:keydown={(e: KeyboardEvent) => handleKeydownMute(e)}
+          onclick={onToggleMute}
+          onkeydown={(e: KeyboardEvent) => handleKeydownMute(e)}
         >
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
             {#if isMuted}
@@ -262,14 +283,14 @@
             {/if}
           </svg>
         </button>
-        <input type="range" min="0" max="1" step="0.1" value={volume} on:input={(e) => onVolumeChange(parseFloat(e.currentTarget.value))} class="w-20 accent-[#FF5E0E]" />
+        <input type="range" min="0" max="1" step="0.1" value={volume} oninput={(e) => onVolumeChange(parseFloat(e.currentTarget.value))} class="w-20 accent-[#FF5E0E]" />
       </div>
 
       <!-- Fullscreen -->
       <button
         class="text-white hover:text-[var(--primary)]"
-        on:click={onToggleFullscreen}
-        on:keydown={(e: KeyboardEvent) => handleKeydownFullscreen(e)}
+        onclick={onToggleFullscreen}
+        onkeydown={(e: KeyboardEvent) => handleKeydownFullscreen(e)}
       >
         {#if isFullscreen}
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6h12v12H6z" /></svg>

@@ -1,4 +1,4 @@
-import { t as db, u as adminSettings } from "../../../../../chunks/drizzle.js";
+import { d as adminSettings, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -19,7 +19,8 @@ var defaults = {
 		],
 		moderationMode: "hybrid",
 		minContentDuration: 60,
-		maxContentDuration: 7200
+		maxContentDuration: 7200,
+		minVideoHeight: 1080
 	},
 	payment: {
 		stripePublishableKey: "",

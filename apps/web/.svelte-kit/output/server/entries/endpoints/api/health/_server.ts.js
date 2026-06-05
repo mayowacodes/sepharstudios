@@ -1,6 +1,7 @@
 import { t as private_env } from "../../../../chunks/shared-server.js";
 import { t as db } from "../../../../chunks/drizzle.js";
 import { t as getRedis } from "../../../../chunks/redis.js";
+import { a as isMeiliConfigured, t as getMeiliClient } from "../../../../chunks/meilisearch2.js";
 import { json } from "@sveltejs/kit";
 import { sql } from "drizzle-orm";
 //#region src/routes/api/health/+server.ts
@@ -32,6 +33,40 @@ async function checkRedis() {
 		if (result !== "PONG") throw new Error(`Unexpected PING reply: ${result}`);
 	});
 }
+async function checkMeili() {
+	if (!isMeiliConfigured()) return {
+		ok: true,
+		latencyMs: 0,
+		error: "not_configured"
+	};
+	return timed(async () => {
+		const client = getMeiliClient();
+		if (!client) throw new Error("Meili client unavailable");
+		const health = await client.health();
+		if (health.status !== "available") throw new Error(`status=${health.status}`);
+	});
+}
+async function checkOrchestrator() {
+	const url = private_env.ORCHESTRATOR_BASE_URL || private_env.ENCODER_ORCHESTRATOR_URL;
+	if (!url) return {
+		ok: true,
+		latencyMs: 0,
+		error: "not_configured"
+	};
+	return timed(async () => {
+		const controller = new AbortController();
+		const tid = setTimeout(() => controller.abort(), 2500);
+		try {
+			const res = await fetch(`${url.replace(/\/+$/, "")}/health`, {
+				method: "GET",
+				signal: controller.signal
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		} finally {
+			clearTimeout(tid);
+		}
+	});
+}
 async function checkMinio() {
 	const endpoint = private_env.MINIO_ENDPOINT || "s3.sepharstudios.com";
 	const port = Number(private_env.MINIO_PORT) || 443;
@@ -61,18 +96,22 @@ async function checkMinio() {
 *   { status: "ok" | "degraded", uptimeSec, db: CheckResult, minio: CheckResult }
 */
 var GET = async () => {
-	const [dbResult, redisResult, minioResult] = await Promise.all([
+	const [dbResult, redisResult, minioResult, meiliResult, orchestratorResult] = await Promise.all([
 		checkDb(),
 		checkRedis(),
-		checkMinio()
+		checkMinio(),
+		checkMeili(),
+		checkOrchestrator()
 	]);
-	const healthy = dbResult.ok && redisResult.ok && minioResult.ok;
+	const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && orchestratorResult.ok;
 	return json({
 		status: healthy ? "ok" : "degraded",
 		uptimeSec: Math.round((Date.now() - startedAt) / 1e3),
 		db: dbResult,
 		redis: redisResult,
-		minio: minioResult
+		minio: minioResult,
+		meili: meiliResult,
+		orchestrator: orchestratorResult
 	}, { status: healthy ? 200 : 503 });
 };
 //#endregion

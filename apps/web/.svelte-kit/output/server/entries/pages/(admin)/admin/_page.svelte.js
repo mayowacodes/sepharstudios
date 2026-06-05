@@ -1,13 +1,19 @@
-import { gt as ensure_array_like, jt as escape_html, ut as attr_class } from "../../../../chunks/ui-libs.js";
-import { t as Activity } from "../../../../chunks/activity.js";
+import { Lt as attr, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
+import { n as Arrow_up_right, t as KpiCard } from "../../../../chunks/KpiCard.js";
+import { t as Banknote } from "../../../../chunks/banknote.js";
+import { t as Circle_check } from "../../../../chunks/circle-check.js";
+import { t as Circle_x } from "../../../../chunks/circle-x.js";
+import { t as Clock } from "../../../../chunks/clock.js";
 import { t as Coins } from "../../../../chunks/coins.js";
-import { t as Crown } from "../../../../chunks/crown.js";
-import { t as Dollar_sign } from "../../../../chunks/dollar-sign.js";
-import { t as Trending_up } from "../../../../chunks/trending-up.js";
+import { t as Eye } from "../../../../chunks/eye.js";
+import { t as File_check } from "../../../../chunks/file-check.js";
+import { t as Message_square } from "../../../../chunks/message-square.js";
+import { t as Shield_check } from "../../../../chunks/shield-check.js";
+import { t as Sparkles } from "../../../../chunks/sparkles.js";
+import { t as Triangle_alert } from "../../../../chunks/triangle-alert.js";
 import { t as Users } from "../../../../chunks/users.js";
-import { t as Button } from "../../../../chunks/button.js";
-import { t as Badge } from "../../../../chunks/badge.js";
-import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../chunks/card.js";
+import { t as Video } from "../../../../chunks/video.js";
+import { t as PageHeader } from "../../../../chunks/PageHeader.js";
 //#region src/routes/(admin)/admin/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -22,136 +28,140 @@ function _page($$renderer, $$props) {
 			approvedApplications30d: 0,
 			avgApprovalHours: 0
 		};
-		let tokenomicsStats = {
-			stcPrice: "0",
-			totalStaked: "0",
-			activeNFTs: 0,
-			monthlyRevenue: "0",
-			revenuePool: "0",
-			buybackAmount: "0"
-		};
-		let adminWeb3Status = {
-			stcBalance: "0",
-			subscriptionCount: 0,
-			isConnected: false,
-			hasSubscription: false,
-			subscriptionTier: 0,
-			subscriptionTokenId: 0
-		};
-		let urgentReviews = [];
-		$$renderer.push(`<div class="space-y-8"><div class="text-center"><div class="flex justify-center items-center space-x-4 mb-4"><h1 class="text-4xl font-bold text-white">Admin Dashboard</h1> `);
-		Badge($$renderer, {
-			variant: "outline",
-			class: "bg-green-500/20 text-green-400 border-green-400",
-			children: ($$renderer) => {
-				$$renderer.push(`<!---->${escape_html(adminWeb3Status.isConnected ? "Web3 Connected" : "Web3 Disconnected")}`);
+		const quickActions = [
+			{
+				href: "/admin/review",
+				label: "Review Queue",
+				icon: Shield_check,
+				accent: "yellow"
 			},
-			$$slots: { default: true }
+			{
+				href: "/admin/content",
+				label: "Content",
+				icon: Video,
+				accent: "blue"
+			},
+			{
+				href: "/admin/creators",
+				label: "Creators",
+				icon: Users,
+				accent: "green"
+			},
+			{
+				href: "/admin/payouts",
+				label: "Payouts",
+				icon: Banknote,
+				accent: "orange"
+			},
+			{
+				href: "/admin/tokenomics",
+				label: "Tokenomics",
+				icon: Coins,
+				accent: "amber"
+			},
+			{
+				href: "/admin/communications",
+				label: "Messages",
+				icon: Message_square,
+				accent: "cyan"
+			}
+		];
+		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		{
+			function actions($$renderer) {
+				$$renderer.push(`<a href="/admin/ai-runs" class="hidden md:inline-flex items-center gap-1.5 text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors">`);
+				Sparkles($$renderer, { class: "w-3.5 h-3.5" });
+				$$renderer.push(`<!----> AI Runs</a>`);
+			}
+			PageHeader($$renderer, {
+				icon: Shield_check,
+				title: "Admin",
+				subtitle: "Platform overview, content review, creator community.",
+				actions,
+				$$slots: { actions: true }
+			});
+		}
+		$$renderer.push(`<!----> <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">`);
+		KpiCard($$renderer, {
+			label: "Pending Reviews",
+			value: adminStats.pendingReviews,
+			icon: Clock,
+			accent: "yellow",
+			href: "/admin/review",
+			index: 0
 		});
 		$$renderer.push(`<!----> `);
-		if (parseFloat(adminWeb3Status.stcBalance) > 1e3) {
-			$$renderer.push("<!--[0-->");
-			Badge($$renderer, {
-				variant: "outline",
-				class: "bg-yellow-500/20 text-yellow-400 border-yellow-400",
-				children: ($$renderer) => {
-					$$renderer.push(`<!---->Super Admin`);
-				},
-				$$slots: { default: true }
-			});
-		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
-		if (adminWeb3Status.hasSubscription) {
-			$$renderer.push("<!--[0-->");
-			Badge($$renderer, {
-				variant: "outline",
-				class: "bg-purple-500/20 text-purple-400 border-purple-400",
-				children: ($$renderer) => {
-					$$renderer.push(`<!---->NFT Tier ${escape_html(adminWeb3Status.subscriptionTier)} #${escape_html(adminWeb3Status.subscriptionTokenId)}`);
-				},
-				$$slots: { default: true }
-			});
-		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div> <p class="text-xl text-gray-300">Manage platform content and creator community</p> `);
-		if (adminWeb3Status.isConnected) {
-			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<p class="text-sm text-gray-400 mt-2">Admin STC Balance: ${escape_html(parseFloat(adminWeb3Status.stcBalance).toLocaleString())} STC</p>`);
-		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"><div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-yellow-400">${escape_html(adminStats.pendingReviews)}</div> <div class="text-gray-300 text-sm">Pending Reviews</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-blue-400">${escape_html(adminStats.totalCreators)}</div> <div class="text-gray-300 text-sm">Active Creators</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-green-400">${escape_html(adminStats.publishedContent)}</div> <div class="text-gray-300 text-sm">Published Content</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-red-400">${escape_html(adminStats.rejectedContent)}</div> <div class="text-gray-300 text-sm">Rejected Content</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-purple-400">${escape_html(adminStats.totalViews.toLocaleString())}</div> <div class="text-gray-300 text-sm">Platform Views</div></div></div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-yellow-300">${escape_html(adminStats.pendingApplications)}</div> <div class="text-gray-300 text-sm">Pending Creator Apps</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-green-300">${escape_html(adminStats.approvedApplications7d)}</div> <div class="text-gray-300 text-sm">Approved (7 days)</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-blue-300">${escape_html(Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : "0.0")}</div> <div class="text-gray-300 text-sm">Avg Approval (hrs)</div></div></div> `);
-		Card($$renderer, {
-			class: "bg-linear-to-r from-primary/20 to-secondary/20",
-			children: ($$renderer) => {
-				Card_header($$renderer, {
-					children: ($$renderer) => {
-						Card_title($$renderer, {
-							class: "flex items-center space-x-2 text-white",
-							children: ($$renderer) => {
-								Coins($$renderer, { class: "h-6 w-6" });
-								$$renderer.push(`<!----> <span>Platform Tokenomics Overview</span>`);
-							},
-							$$slots: { default: true }
-						});
-					},
-					$$slots: { default: true }
-				});
-				$$renderer.push(`<!----> `);
-				Card_content($$renderer, {
-					children: ($$renderer) => {
-						$$renderer.push(`<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"><div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Dollar_sign($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-green-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">$${escape_html(tokenomicsStats.stcPrice.slice(0, 8))}</div> <div class="text-xs text-gray-300">STC Price</div></div> <div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Crown($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-yellow-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">${escape_html(tokenomicsStats.activeNFTs.toLocaleString())}</div> <div class="text-xs text-gray-300">Active NFTs</div></div> <div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Trending_up($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-blue-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">$${escape_html(parseFloat(tokenomicsStats.monthlyRevenue).toLocaleString())}</div> <div class="text-xs text-gray-300">Monthly Revenue</div></div> <div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Coins($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-orange-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">${escape_html(parseFloat(tokenomicsStats.totalStaked).toLocaleString())}</div> <div class="text-xs text-gray-300">STC Staked</div></div> <div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Activity($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-purple-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">$${escape_html(parseFloat(tokenomicsStats.buybackAmount).toLocaleString())}</div> <div class="text-xs text-gray-300">Monthly Buyback</div></div> <div class="text-center p-3 bg-white/10 rounded-lg">`);
-						Users($$renderer, { class: "h-6 w-6 mx-auto mb-2 text-cyan-400" });
-						$$renderer.push(`<!----> <div class="text-lg font-bold text-white">$${escape_html(parseFloat(tokenomicsStats.revenuePool).toLocaleString())}</div> <div class="text-xs text-gray-300">Creator Pool</div></div></div> <div class="mt-4 flex space-x-3">`);
-						Button($$renderer, {
-							href: "/admin/tokenomics",
-							class: "bg-primary hover:bg-primary/90",
-							children: ($$renderer) => {
-								Coins($$renderer, { class: "mr-2 h-4 w-4" });
-								$$renderer.push(`<!----> Manage Tokenomics`);
-							},
-							$$slots: { default: true }
-						});
-						$$renderer.push(`<!----> `);
-						Button($$renderer, {
-							href: "/admin/creators",
-							variant: "outline",
-							children: ($$renderer) => {
-								Users($$renderer, { class: "mr-2 h-4 w-4" });
-								$$renderer.push(`<!----> Creator Payments`);
-							},
-							$$slots: { default: true }
-						});
-						$$renderer.push(`<!----></div>`);
-					},
-					$$slots: { default: true }
-				});
-				$$renderer.push(`<!---->`);
-			},
-			$$slots: { default: true }
+		KpiCard($$renderer, {
+			label: "Active Creators",
+			value: adminStats.totalCreators,
+			icon: Users,
+			accent: "blue",
+			href: "/admin/creators",
+			index: 1
 		});
-		$$renderer.push(`<!----> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6"><a href="/admin/review" class="bg-linear-to-r from-yellow-600 to-orange-600 rounded-xl p-6 text-center hover:from-yellow-700 hover:to-orange-700 transition-all"><div class="text-3xl mb-3">👁️</div> <h3 class="text-lg font-bold text-white mb-1">Review Queue</h3> <p class="text-gray-200 text-sm">Review pending content</p></a> <a href="/admin/content" class="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center hover:from-blue-700 hover:to-indigo-700 transition-all"><div class="text-3xl mb-3">🎬</div> <h3 class="text-lg font-bold text-white mb-1">Content Library</h3> <p class="text-gray-200 text-sm">Manage all content</p></a> <a href="/admin/creators" class="bg-linear-to-r from-green-600 to-teal-600 rounded-xl p-6 text-center hover:from-green-700 hover:to-teal-700 transition-all"><div class="text-3xl mb-3">👥</div> <h3 class="text-lg font-bold text-white mb-1">Creators</h3> <p class="text-gray-200 text-sm">Manage creator accounts</p></a> <a href="/admin/tokenomics" class="bg-linear-to-r from-orange-600 to-amber-600 rounded-xl p-6 text-center hover:from-orange-700 hover:to-amber-700 transition-all"><div class="text-3xl mb-3">💰</div> <h3 class="text-lg font-bold text-white mb-1">Tokenomics</h3> <p class="text-gray-200 text-sm">STC &amp; Revenue Control</p></a> <a href="/admin/policies" class="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-center hover:from-purple-700 hover:to-indigo-700 transition-all"><div class="text-3xl mb-3">📋</div> <h3 class="text-lg font-bold text-white mb-1">Policies</h3> <p class="text-gray-200 text-sm">Content guidelines</p></a> <a href="/admin/communications" class="bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl p-6 text-center hover:from-cyan-700 hover:to-blue-700 transition-all"><div class="text-3xl mb-3">💬</div> <h3 class="text-lg font-bold text-white mb-1">Messages</h3> <p class="text-gray-200 text-sm">Creator communication</p></a></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><h2 class="text-2xl font-bold text-white mb-4">Urgent Reviews Required</h2> <div class="space-y-4">`);
-		if (urgentReviews.length === 0) {
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Published",
+			value: adminStats.publishedContent,
+			icon: Circle_check,
+			accent: "green",
+			href: "/admin/content?status=approved",
+			index: 2
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Rejected",
+			value: adminStats.rejectedContent,
+			icon: Circle_x,
+			accent: "red",
+			href: "/admin/content?status=rejected",
+			index: 3
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Platform Views",
+			value: adminStats.totalViews.toLocaleString(),
+			icon: Eye,
+			accent: "purple",
+			href: "/admin/analytics",
+			index: 4
+		});
+		$$renderer.push(`<!----></div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-3"><section class="lg:col-span-2 surface-1 rounded-xl p-5"><header class="flex items-center justify-between mb-4"><div class="flex items-center gap-2">`);
+		Triangle_alert($$renderer, { class: "w-4 h-4 text-yellow-500" });
+		$$renderer.push(`<!----> <h2 class="text-sm font-semibold text-foreground">Urgent reviews</h2></div> <a href="/admin/review" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">Open queue `);
+		Arrow_up_right($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----></a></header> `);
+		{
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="text-gray-400 text-sm">No pending content reviews.</div>`);
-		} else {
-			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--[-->`);
-			const each_array = ensure_array_like(urgentReviews);
-			for (let index = 0, $$length = each_array.length; index < $$length; index++) {
-				let item = each_array[index];
-				$$renderer.push(`<div${attr_class(`flex items-center justify-between py-3 ${index < urgentReviews.length - 1 ? "border-b border-gray-700" : ""}`)}><div><div class="text-white font-medium">"${escape_html(item.title)}" - ${escape_html(item.mediaType)}</div> <div class="text-gray-400 text-sm">Submitted ${escape_html(new Date(item.createdAt).toLocaleDateString())}</div></div> <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">Pending</span></div>`);
+			$$renderer.push(`<div class="space-y-2"><!--[-->`);
+			const each_array = ensure_array_like(Array(3));
+			for (let i = 0, $$length = each_array.length; i < $$length; i++) {
+				each_array[i];
+				$$renderer.push(`<div class="surface-2 rounded h-12 animate-pulse"></div>`);
 			}
-			$$renderer.push(`<!--]-->`);
+			$$renderer.push(`<!--]--></div>`);
 		}
-		$$renderer.push(`<!--]--></div> <div class="mt-6"><a href="/admin/review" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg inline-block transition-colors">Review All Pending Content</a></div></div></div>`);
+		$$renderer.push(`<!--]--></section> <section class="surface-1 rounded-xl p-5 space-y-4"><header class="flex items-center justify-between"><div class="flex items-center gap-2">`);
+		File_check($$renderer, { class: "w-4 h-4 text-blue-500" });
+		$$renderer.push(`<!----> <h2 class="text-sm font-semibold text-foreground">Creator applications</h2></div> <a href="/admin/creator-applications" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">Review `);
+		Arrow_up_right($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----></a></header> <div class="space-y-3"><div><div class="text-3xl font-semibold text-foreground tabular-nums">${escape_html(adminStats.pendingApplications)}</div> <div class="text-xs text-muted-foreground">pending</div></div> <div class="grid grid-cols-2 gap-2 text-xs"><div class="surface-2 rounded-md px-2 py-1.5"><div class="text-foreground font-medium tabular-nums">${escape_html(adminStats.approvedApplications7d)}</div> <div class="text-muted-foreground">approved · 7d</div></div> <div class="surface-2 rounded-md px-2 py-1.5"><div class="text-foreground font-medium tabular-nums">${escape_html(Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : "0.0")}h</div> <div class="text-muted-foreground">avg approval</div></div></div></div></section></div> <section><h2 class="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Quick actions</h2> <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2"><!--[-->`);
+		const each_array_2 = ensure_array_like(quickActions);
+		for (let $$index_2 = 0, $$length = each_array_2.length; $$index_2 < $$length; $$index_2++) {
+			let a = each_array_2[$$index_2];
+			const Icon = a.icon;
+			$$renderer.push(`<a${attr("href", a.href)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex flex-col items-start gap-2 group">`);
+			if (Icon) {
+				$$renderer.push("<!--[-->");
+				Icon($$renderer, { class: "w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" });
+				$$renderer.push("<!--]-->");
+			} else {
+				$$renderer.push("<!--[!-->");
+				$$renderer.push("<!--]-->");
+			}
+			$$renderer.push(` <span class="text-sm font-medium text-foreground">${escape_html(a.label)}</span></a>`);
+		}
+		$$renderer.push(`<!--]--></div></section></div>`);
 	});
 }
 //#endregion

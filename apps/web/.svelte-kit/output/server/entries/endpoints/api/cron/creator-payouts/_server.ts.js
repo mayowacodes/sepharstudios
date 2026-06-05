@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { I as paymentIntents, M as mediaWatchProgress, a as user, et as transactions, g as creators, j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, T as creators, U as mediaWatchProgress, Y as payouts, a as user, gt as transactions, q as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { i as transferStc, r as isTreasuryReady } from "../../../../../chunks/stc-transfer.js";
 import { json } from "@sveltejs/kit";
@@ -57,6 +57,8 @@ var POST = async ({ request }) => {
 		displayName: creators.displayName,
 		creatorType: creators.creatorType,
 		preferences: creators.preferences,
+		payoutProcessor: creators.payoutProcessor,
+		stripePayoutsEnabled: creators.stripePayoutsEnabled,
 		email: user.email
 	}).from(creators).innerJoin(user, eq(user.id, creators.userId)).limit(BATCH_SIZE);
 	const results = {
@@ -168,11 +170,11 @@ var POST = async ({ request }) => {
 			if (stcCents > 0 && treasuryReady) try {
 				const [creatorRow] = await db.select({ wallet: creators.walletAddress }).from(creators).where(eq(creators.id, creator.id)).limit(1);
 				if (creatorRow?.wallet) {
-					const stcAmount = (stcCents / 100).toString();
+					const stcAmount = stcCents / 100;
 					const txHash = await transferStc(creatorRow.wallet, stcAmount);
 					await db.update(transactions).set({
 						status: "completed",
-						txHash
+						txHash: txHash.txHash
 					}).where(and(eq(transactions.userId, creator.userId), eq(transactions.type, "creator_payout"), eq(transactions.currency, "STC"), eq(transactions.status, "pending"), sql`${transactions.createdAt} >= ${now}`));
 					results.stcSettled += 1;
 				} else results.stcQueued += 1;
@@ -181,6 +183,19 @@ var POST = async ({ request }) => {
 				results.stcQueued += 1;
 			}
 			else if (stcCents > 0) results.stcQueued += 1;
+			const processor = creator.payoutProcessor === "stripe" && creator.stripePayoutsEnabled ? "stripe" : "paystack";
+			const platformFeeCents = grossCents - shareCents;
+			await db.insert(payouts).values({
+				creatorId: creator.id,
+				processor,
+				periodStart,
+				periodEnd: now,
+				grossCents,
+				platformFeeCents,
+				netCents: shareCents,
+				currency: "USD",
+				status: "pending"
+			});
 			await db.update(creators).set({
 				totalEarnings: sql`coalesce(${creators.totalEarnings}, 0) + ${shareCents}`,
 				updatedAt: now

@@ -1,8 +1,10 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Circle_question_mark } from "../../../../chunks/circle-question-mark.js";
 import { t as Download } from "../../../../chunks/download.js";
-import { n as Tablet, r as Monitor, t as Tv } from "../../../../chunks/tv.js";
+import { t as Monitor } from "../../../../chunks/monitor.js";
 import { t as Smartphone } from "../../../../chunks/smartphone.js";
+import { t as Tablet } from "../../../../chunks/tablet.js";
+import { t as Tv } from "../../../../chunks/tv.js";
 import { t as Wifi } from "../../../../chunks/wifi.js";
 import { t as PWAInstallPrompt } from "../../../../chunks/PWAInstallPrompt.js";
 //#region src/routes/(app)/device-support/+page.svelte

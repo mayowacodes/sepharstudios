@@ -5,9 +5,9 @@
   import EnhancedVideoPlayer from '$lib/components/widgets/EnhancedVideoPlayer.svelte';
   import type { MediaItem } from '../types/media';
 
-  let media: MediaItem | null = null;
-  let isOpen = false;
-  let isImageLoaded = false;
+  let media: MediaItem | null = $state(null);
+  let isOpen = $state(false);
+  let isImageLoaded = $state(false);
 
   const unsubscribe = mediaModalStore.subscribe((state) => {
     isOpen = state.isOpen;
@@ -29,7 +29,7 @@
         src={$mediaModalStore.media.backdrop_url}
         alt={$mediaModalStore.media.title}
         class="absolute inset-0 w-full h-full object-cover opacity-25"
-        on:load={onImageLoad}
+        onload={onImageLoad}
       />
       <div class="absolute inset-0 veil-strong"></div>
 
@@ -44,7 +44,7 @@
 
       <button
         class="absolute top-4 right-4 z-20 rounded-full bg-white/10 hover:bg-white/20 p-2 text-white"
-        on:click={closeModal}
+        onclick={closeModal}
         aria-label="Close"
       >
         <X class="h-4 w-4" />

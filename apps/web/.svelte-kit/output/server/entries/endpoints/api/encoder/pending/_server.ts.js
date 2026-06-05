@@ -1,4 +1,4 @@
-import { j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { t as isValidInternalRequest } from "../../../../../chunks/internal-auth.js";
 import { json } from "@sveltejs/kit";
 import { and, isNotNull, ne } from "drizzle-orm";

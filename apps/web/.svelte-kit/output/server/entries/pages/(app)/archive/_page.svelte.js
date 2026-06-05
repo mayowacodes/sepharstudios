@@ -1,4 +1,4 @@
-import { gt as ensure_array_like } from "../../../../chunks/ui-libs.js";
+import { wt as ensure_array_like } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/EnhancedVideoPlayer.js";
 //#region src/lib/components/browse/ArchiveVideo.svelte
 function ArchiveVideo($$renderer, $$props) {

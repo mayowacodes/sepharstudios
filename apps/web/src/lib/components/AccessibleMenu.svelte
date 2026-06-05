@@ -3,12 +3,11 @@
   import { onClickOutside } from '$lib/utils/onClickOutside';
   import { onMount } from 'svelte';
 
-  export let label = 'Menu';
-  export const items: string[] = []; // or just export let items if it's to be used inside
+  let { label = 'Menu', children }: { label?: string; children?: import('svelte').Snippet } = $props();
 
-  let isOpen = false;
-  let button: HTMLButtonElement;
-  let menu: HTMLDivElement;
+  let isOpen = $state(false);
+  let button: HTMLButtonElement | undefined = $state();
+  let menu: HTMLDivElement | undefined = $state();
   let popper = createPopperActions({ placement: 'bottom-start' });
 
   const toggleMenu = () => (isOpen = !isOpen);
@@ -28,7 +27,7 @@
     class="text-sm font-medium focus:outline-none"
     aria-haspopup="true"
     aria-expanded={isOpen}
-    on:click={toggleMenu}>
+    onclick={toggleMenu}>
     {label}
   </button>
 
@@ -39,7 +38,7 @@
       use:popper[1]
       role="menu"
       aria-orientation="vertical">
-      <slot />
+      {@render children?.()}
     </div>
   {/if}
 </div>

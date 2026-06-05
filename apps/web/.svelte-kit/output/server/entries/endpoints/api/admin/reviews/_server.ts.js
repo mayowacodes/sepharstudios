@@ -1,4 +1,4 @@
-import { J as reviews, t as db } from "../../../../../chunks/drizzle.js";
+import { st as reviews, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";
 //#region src/routes/api/admin/reviews/+server.ts

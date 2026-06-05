@@ -1,4 +1,4 @@
-import { D as governanceMemberships, a as user, t as db } from "../../../../../../chunks/drizzle.js";
+import { I as governanceMemberships, a as user, t as db } from "../../../../../../chunks/drizzle.js";
 import { n as DEFAULT_GOVERNANCE_PERMISSIONS, t as getGovernanceActor } from "../../../../../../chunks/governance-auth.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";

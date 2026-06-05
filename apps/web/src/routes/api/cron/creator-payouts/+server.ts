@@ -249,7 +249,7 @@ export const POST: RequestHandler = async ({ request }) => {
 								eq(transactions.type, 'creator_payout'),
 								eq(transactions.currency, 'STC'),
 								eq(transactions.status, 'pending'),
-								sql`${transactions.createdAt} >= ${now}`
+								gte(transactions.createdAt, now)
 							));
 						results.stcSettled += 1;
 					} else {

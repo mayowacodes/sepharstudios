@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { Sparkles, Send, X, Check, AlertTriangle, Plus, ChevronRight } from '@lucide/svelte';
+  import { Sparkles, Send, X, Check, AlertTriangle, Plus, ChevronRight, StopCircle, RotateCw, History } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
-  import { copilotState, resetCopilot, clearQueuedQuery } from './copilot-rail-store';
+  import { Chat } from '@ai-sdk/svelte';
+  import { DefaultChatTransport, type UIMessage } from 'ai';
+  import { copilotState, clearQueuedQuery } from './copilot-rail-store';
 
   interface Props {
     variant: 'creator' | 'admin';
@@ -15,102 +17,126 @@
 
   let { variant, open = $bindable(true) }: Props = $props();
 
+  // The Chat instance from @ai-sdk/svelte owns ALL the message state, the
+  // streaming lifecycle, and the abort/regenerate primitives. We just
+  // give it the endpoint and let it run. The variant is passed via `body`
+  // so it isn't polluting the messages array — that's the canonical
+  // multi-tenant pattern from the Vercel AI SDK production guide.
   let input = $state('');
   let listEl: HTMLDivElement | null = $state(null);
+  let conversationId = $state<string | null>(null);
+  let conversations = $state<Array<{ id: string; title: string; updatedAt: string }>>([]);
+  let showHistory = $state(false);
+  let loadingConversation = $state(false);
 
-  // If the palette queued a question, replay it on mount.
-  onMount(async () => {
-    const queued = $copilotState.queuedQuery;
-    if (queued) {
-      input = queued;
-      clearQueuedQuery();
-      await tick();
-      void send();
+  const chat = new Chat({
+    transport: new DefaultChatTransport({
+      api: '/api/ai/copilot',
+      body: () => ({
+        variant,
+        conversationId
+      })
+    }),
+    onFinish: () => {
+      void tick().then(scrollToBottom);
+      // Refresh the conversation list whenever a turn settles so the
+      // history dropdown's recency ordering stays accurate.
+      void refreshConversations();
+    },
+    onError: (err: Error) => {
+      console.error('[copilot] chat error:', err);
+      toast.error(err.message || 'Copilot is unavailable.');
     }
   });
 
-  async function send() {
-    const text = input.trim();
-    if (!text) return;
-    if ($copilotState.sending) return;
+  // On first mount: replay any palette-queued question AND load the
+  // signed-in user's recent conversations into the switcher dropdown.
+  onMount(async () => {
+    await refreshConversations();
+    const queued = $copilotState.queuedQuery;
+    if (queued) {
+      clearQueuedQuery();
+      await chat.sendMessage({ text: queued });
+    }
+  });
 
-    copilotState.update((s) => ({
-      ...s,
-      sending: true,
-      messages: [...s.messages, { id: `temp-${Date.now()}`, role: 'user', content: text }]
-    }));
-    input = '';
-    await tick();
-    scrollToBottom();
-
+  async function refreshConversations() {
     try {
-      const res = await fetch('/api/ai/copilot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'send',
-          variant,
-          conversationId: $copilotState.conversationId,
-          message: text
-        })
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? 'Copilot failed');
-      copilotState.update((s) => ({
-        ...s,
-        conversationId: body.conversationId,
-        messages: [...s.messages, ...(body.messages ?? [])],
-        pending: body.pendingApproval ?? null
-      }));
+      const res = await fetch(`/api/ai/copilot/conversations?variant=${variant}`);
+      if (!res.ok) return;
+      const body = await res.json().catch(() => ({} as { conversations?: Array<{ id: string; title: string; updatedAt: string }> }));
+      conversations = body.conversations ?? [];
+    } catch (err) {
+      console.warn('[copilot] failed to load conversation list:', err);
+    }
+  }
+
+  async function loadConversation(id: string) {
+    if (loadingConversation || id === conversationId) {
+      showHistory = false;
+      return;
+    }
+    loadingConversation = true;
+    try {
+      const res = await fetch(`/api/ai/copilot/conversations?id=${encodeURIComponent(id)}`);
+      if (!res.ok) {
+        toast.error(`Couldn't load conversation (HTTP ${res.status}).`);
+        return;
+      }
+      const body = await res.json().catch(() => ({} as { initialMessages?: UIMessage[] }));
+      const restored = (body.initialMessages ?? []) as UIMessage[];
+      chat.messages = restored;
+      conversationId = id;
+      showHistory = false;
       await tick();
       scrollToBottom();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Copilot failed');
+      console.error('[copilot] loadConversation failed:', err);
+      toast.error('Could not load that conversation.');
     } finally {
-      copilotState.update((s) => ({ ...s, sending: false }));
+      loadingConversation = false;
     }
   }
 
-  async function approve() {
-    const cur = $copilotState;
-    if (!cur.pending || !cur.conversationId) return;
-    copilotState.update((s) => ({ ...s, sending: true }));
+  function send() {
+    const text = input.trim();
+    if (!text) return;
+    if (chat.status === 'submitted' || chat.status === 'streaming') return;
+    input = '';
+    void chat.sendMessage({ text });
+  }
+
+  async function approveAction(actionId: string) {
     try {
-      const res = await fetch('/api/ai/copilot', {
+      const res = await fetch('/api/ai/copilot/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'approve',
-          actionId: cur.pending.actionId,
-          conversationId: cur.conversationId,
-          variant
-        })
+        body: JSON.stringify({ actionId })
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? 'Approval failed');
-      copilotState.update((s) => ({
-        ...s,
-        messages: [...s.messages, { id: `approved-${Date.now()}`, role: 'assistant', content: `Approved ${body.tool}.` }],
-        pending: null
-      }));
+      const body = await res.json().catch(() => ({} as { error?: string; tool?: string }));
+      if (!res.ok) throw new Error(body.error ?? `Approve failed (HTTP ${res.status})`);
+      toast.success(`Approved ${body.tool ?? 'action'}.`);
+      // Re-prompt the model so it summarizes the approval into the thread.
+      await chat.regenerate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Approval failed');
-    } finally {
-      copilotState.update((s) => ({ ...s, sending: false }));
+      toast.error(err instanceof Error ? err.message : 'Approve failed');
     }
-  }
-
-  function decline() {
-    copilotState.update((s) => ({
-      ...s,
-      pending: null,
-      messages: [...s.messages, { id: `declined-${Date.now()}`, role: 'assistant', content: 'OK — I won\'t take that action.' }]
-    }));
   }
 
   function newChat() {
-    resetCopilot();
+    chat.messages = [];
+    conversationId = null;
     input = '';
+    showHistory = false;
+  }
+
+  function relativeTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60_000) return 'just now';
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`;
+    if (diff < 604_800_000) return `${Math.floor(diff / 86_400_000)}d`;
+    return new Date(iso).toLocaleDateString();
   }
 
   function scrollToBottom() {
@@ -120,19 +146,36 @@
   function onKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      void send();
+      send();
     }
+  }
+
+  // Helpers for rendering tool result parts. A streamed part has type
+  // 'tool-<toolName>' and may carry an `output` shaped as either a
+  // result payload OR the approval-gate envelope from buildCopilotTools.
+  type ApprovalOutput = {
+    approval: 'required' | 'failed';
+    actionId?: string;
+    tool?: string;
+    preview?: unknown;
+    error?: string;
+  };
+  function isApprovalRequired(output: unknown): output is ApprovalOutput & { approval: 'required'; actionId: string } {
+    return !!output && typeof output === 'object'
+      && (output as ApprovalOutput).approval === 'required'
+      && typeof (output as ApprovalOutput).actionId === 'string';
   }
 
   const accentClass = $derived(variant === 'admin' ? 'text-red-300' : 'text-purple-300');
   const sendBtnClass = $derived(variant === 'admin' ? 'text-red-300 hover:text-red-200' : 'text-purple-300 hover:text-purple-200');
+  const streaming = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+  const canSend = $derived(!streaming && input.trim().length > 0);
 </script>
 
 <aside
   class="hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col {open ? 'w-80' : 'w-12'}"
   aria-label="AI Copilot"
 >
-  <!-- Collapsed spine — clickable to expand -->
   {#if !open}
     <button
       type="button"
@@ -144,15 +187,26 @@
       <Sparkles class="w-4 h-4 {accentClass}" />
       <span class="rotate-180 text-[10px] uppercase tracking-wider font-medium" style="writing-mode: vertical-rl;">Copilot ⌘J</span>
     </button>
-    {#if $copilotState.messages.length > 0}
+    {#if chat.messages.length > 0}
       <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true"></span>
     {/if}
   {:else}
-    <header class="h-12 px-3 border-b border-white/10 flex items-center gap-2 shrink-0">
+    <header class="h-12 px-3 border-b border-white/10 flex items-center gap-2 shrink-0 relative">
       <Sparkles class="w-4 h-4 {accentClass}" />
       <h2 class="text-xs font-semibold text-foreground uppercase tracking-wide">Copilot</h2>
       <span class="text-[10px] {accentClass} font-mono">⌘J</span>
       <span class="flex-1"></span>
+      {#if conversations.length > 0}
+        <button
+          type="button"
+          onclick={() => (showHistory = !showHistory)}
+          class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+          title="Recent conversations"
+          aria-expanded={showHistory}
+        >
+          <History class="w-3 h-3" /> History
+        </button>
+      {/if}
       <button
         type="button"
         onclick={newChat}
@@ -169,10 +223,32 @@
       >
         <ChevronRight class="w-4 h-4" />
       </button>
+
+      {#if showHistory}
+        <!-- Conversation switcher: last 20 chats for this variant, most
+             recently updated first. Click → loadConversation(id) replaces
+             chat.messages with the restored UIMessage[]. -->
+        <div
+          class="absolute top-12 right-2 w-64 max-h-72 overflow-y-auto surface-2 border border-border/40 rounded-lg shadow-xl z-10 p-1 space-y-0.5"
+          role="menu"
+        >
+          {#each conversations as c (c.id)}
+            <button
+              type="button"
+              onclick={() => loadConversation(c.id)}
+              disabled={loadingConversation}
+              class="w-full text-left px-2 py-1.5 rounded hover:surface-3 disabled:opacity-50 text-xs {c.id === conversationId ? `${accentClass} font-medium` : 'text-foreground/90'}"
+            >
+              <div class="truncate">{c.title || 'Untitled'}</div>
+              <div class="text-[10px] text-muted-foreground">{relativeTime(c.updatedAt)} ago</div>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </header>
 
     <div bind:this={listEl} class="flex-1 overflow-y-auto p-3 space-y-2.5 min-h-0">
-      {#if $copilotState.messages.length === 0}
+      {#if chat.messages.length === 0}
         <div class="text-center text-muted-foreground text-xs space-y-2 py-8">
           <Sparkles class="w-5 h-5 {accentClass} mx-auto" />
           <p>Ask me anything about your {variant === 'admin' ? 'platform' : 'content'}.</p>
@@ -184,41 +260,65 @@
         </div>
       {/if}
 
-      {#each $copilotState.messages as m (m.id)}
+      {#each chat.messages as m (m.id)}
         {#if m.role === 'user'}
           <div class="flex justify-end" in:fly={{ y: 8, duration: 180 }}>
-            <div class="max-w-[85%] bg-primary text-primary-foreground text-xs rounded-lg px-2.5 py-1.5">{m.content}</div>
-          </div>
-        {:else if m.role === 'tool'}
-          <div class="surface-2 rounded-lg px-2.5 py-1.5 text-[11px]" in:fly={{ y: 8, duration: 180 }}>
-            <div class="text-[9px] uppercase tracking-wide {accentClass} mb-0.5">Tool: {m.toolName ?? '?'}</div>
-            <pre class="whitespace-pre-wrap text-foreground/80 max-h-24 overflow-y-auto">{m.content.length > 400 ? m.content.slice(0, 400) + '…' : m.content}</pre>
+            <div class="max-w-[85%] bg-primary text-primary-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line">
+              {#each m.parts as part (part)}
+                {#if part.type === 'text'}{part.text}{/if}
+              {/each}
+            </div>
           </div>
         {:else}
-          <div class="flex justify-start" in:fly={{ y: 8, duration: 180 }}>
-            <div class="max-w-[85%] surface-1 text-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line">{m.content}</div>
-          </div>
+          {#each m.parts as part, partIdx (partIdx)}
+            {#if part.type === 'text'}
+              <div class="flex justify-start" in:fly={{ y: 8, duration: 180 }}>
+                <div class="max-w-[85%] surface-1 text-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line">{part.text}</div>
+              </div>
+            {:else if part.type.startsWith('tool-')}
+              {@const toolName = part.type.slice('tool-'.length)}
+              {@const toolPart = part as { type: string; state?: string; input?: unknown; output?: unknown; errorText?: string }}
+              <div class="surface-2 rounded-lg px-2.5 py-1.5 text-[11px]" in:fly={{ y: 8, duration: 180 }}>
+                <div class="text-[9px] uppercase tracking-wide {accentClass} mb-0.5">Tool: {toolName}</div>
+                {#if toolPart.state === 'input-streaming' || toolPart.state === 'input-available'}
+                  <div class="text-[10px] text-muted-foreground italic">Running…</div>
+                {:else if toolPart.state === 'output-error'}
+                  <div class="text-[10px] text-red-300">Error: {toolPart.errorText ?? 'tool failed'}</div>
+                {:else if isApprovalRequired(toolPart.output)}
+                  {@const approval = toolPart.output}
+                  <div class="border border-yellow-500/40 bg-yellow-500/10 rounded-lg p-2 space-y-2 mt-1">
+                    <div class="flex items-center gap-1.5 text-[11px] text-yellow-200">
+                      <AlertTriangle class="w-3 h-3" />
+                      Approval required: {approval.tool ?? toolName}
+                    </div>
+                    <pre class="text-[10px] text-yellow-100 bg-black/30 rounded p-1.5 overflow-x-auto max-h-32">{JSON.stringify(approval.preview, null, 2)}</pre>
+                    <div class="flex gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onclick={() => approveAction(approval.actionId)}
+                        disabled={streaming}
+                        class="text-[11px] px-2 py-1 rounded bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-0.5"
+                      >
+                        <Check class="w-3 h-3" /> Confirm
+                      </button>
+                    </div>
+                  </div>
+                {:else if toolPart.output !== undefined}
+                  <pre class="whitespace-pre-wrap text-foreground/80 max-h-24 overflow-y-auto">{JSON.stringify(toolPart.output).slice(0, 400)}</pre>
+                {/if}
+              </div>
+            {/if}
+          {/each}
         {/if}
       {/each}
 
-      {#if $copilotState.pending}
-        <div class="border border-yellow-500/40 bg-yellow-500/10 rounded-lg p-2.5 space-y-2">
-          <div class="flex items-center gap-1.5 text-[11px] text-yellow-200">
-            <AlertTriangle class="w-3 h-3" />
-            Approval required: {$copilotState.pending.tool}
-          </div>
-          <pre class="text-[10px] text-yellow-100 bg-black/30 rounded p-1.5 overflow-x-auto max-h-32">{JSON.stringify($copilotState.pending.preview, null, 2)}</pre>
-          <div class="flex gap-1.5 justify-end">
-            <button type="button" onclick={decline} class="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-foreground">Decline</button>
-            <button type="button" onclick={approve} disabled={$copilotState.sending} class="text-[11px] px-2 py-1 rounded bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-0.5">
-              <Check class="w-3 h-3" /> Confirm
-            </button>
-          </div>
-        </div>
-      {/if}
-
-      {#if $copilotState.sending}
+      {#if chat.status === 'submitted'}
         <div class="text-[11px] text-muted-foreground italic">Thinking…</div>
+      {/if}
+      {#if chat.error}
+        <div class="text-[11px] text-red-300 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">
+          ⚠️ {chat.error.message}
+        </div>
       {/if}
     </div>
 
@@ -229,13 +329,34 @@
           onkeydown={onKeydown}
           rows="2"
           placeholder="Ask the Copilot…"
-          class="w-full surface-1 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground"
+          class="w-full surface-1 rounded-lg pl-2.5 pr-16 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground"
         ></textarea>
+        {#if streaming}
+          <button
+            type="button"
+            onclick={() => chat.stop()}
+            class="absolute right-8 bottom-1.5 text-muted-foreground hover:text-foreground"
+            aria-label="Stop"
+            title="Stop generating"
+          >
+            <StopCircle class="w-3.5 h-3.5" />
+          </button>
+        {:else if chat.messages.length > 0}
+          <button
+            type="button"
+            onclick={() => chat.regenerate()}
+            class="absolute right-8 bottom-1.5 text-muted-foreground hover:text-foreground"
+            aria-label="Regenerate"
+            title="Regenerate last response"
+          >
+            <RotateCw class="w-3.5 h-3.5" />
+          </button>
+        {/if}
         <button
           type="button"
           onclick={send}
-          disabled={$copilotState.sending || !input.trim()}
-          class="absolute right-1.5 bottom-1.5 {sendBtnClass} disabled:opacity-40"
+          disabled={!canSend}
+          class="absolute right-1.5 bottom-1.5 {sendBtnClass} disabled:opacity-40 disabled:cursor-not-allowed hover:scale-110 disabled:hover:scale-100 transition-transform"
           aria-label="Send"
         >
           <Send class="w-3.5 h-3.5" />

@@ -1,5 +1,5 @@
 import { n as public_env, t as private_env } from "./shared-server.js";
-import { F as notifications, P as notificationPreferences, W as pushSubscriptions, a as user, t as db } from "./drizzle.js";
+import { G as notificationPreferences, K as notifications, a as user, rt as pushSubscriptions, t as db } from "./drizzle.js";
 import { eq } from "drizzle-orm";
 import webpush from "web-push";
 //#region src/lib/server/push.ts
@@ -70,6 +70,25 @@ async function sendPushToUser(userId, payload) {
 }
 //#endregion
 //#region src/lib/server/notify.ts
+/**
+* Fan out an in-app notification to every admin. Useful when something
+* needs cross-team review (a creator's mediaType changed, a payout
+* dispute landed, a content scan flagged something). The per-admin
+* notifies are fire-and-forget — one failed insert never blocks the rest.
+*/
+async function notifyAdmins(args) {
+	try {
+		const admins = await db.select({ id: user.id }).from(user).where(eq(user.role, "admin"));
+		await Promise.all(admins.map((a) => notify({
+			...args,
+			userId: a.id
+		}).catch((err) => {
+			console.warn("[notifyAdmins] per-admin notify failed:", a.id, err);
+		})));
+	} catch (err) {
+		console.error("[notifyAdmins] admin lookup failed:", err);
+	}
+}
 async function notify(args) {
 	try {
 		await db.insert(notifications).values({
@@ -112,4 +131,4 @@ async function notify(args) {
 	}
 }
 //#endregion
-export { notify as t };
+export { notifyAdmins as n, notify as t };

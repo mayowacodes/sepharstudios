@@ -1,9 +1,10 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
 import { t as Mail } from "../../../../../chunks/mail.js";
 import { t as Shield_check } from "../../../../../chunks/shield-check.js";
 import { t as Triangle_alert } from "../../../../../chunks/triangle-alert.js";
 import { t as Button } from "../../../../../chunks/button.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 //#region src/routes/(creator)/creator/copyright/+page.svelte
 function _page($$renderer) {
 	const sections = [
@@ -71,10 +72,13 @@ agent: copyright@sepharstudios.com.`
 		});
 		$$renderer.push(`<meta name="description" content="Copyright, licensing and DMCA policy for Sephar Studios creators."/>`);
 	});
-	$$renderer.push(`<div class="px-4 py-10 max-w-3xl mx-auto space-y-8"><header class="space-y-3"><div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">`);
-	Shield_check($$renderer, { class: "w-4 h-4" });
-	$$renderer.push(`<!----> Creator Policy</div> <h1 class="text-3xl md:text-4xl font-bold">Copyright &amp; Licensing</h1> <p class="text-muted-foreground">Last updated 2026-05-27. This policy governs what you can upload, what you keep, and how we respond to
-      copyright complaints. Read it carefully before submitting work — by uploading you agree to every clause below.</p></header> <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">`);
+	$$renderer.push(`<div class="container mx-auto max-w-3xl py-6 px-4 space-y-6">`);
+	PageHeader($$renderer, {
+		icon: Shield_check,
+		title: "Copyright & Licensing",
+		subtitle: "Last updated 2026-05-27. By uploading you agree to every clause below."
+	});
+	$$renderer.push(`<!----> <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">`);
 	Triangle_alert($$renderer, { class: "w-5 h-5 text-yellow-300 shrink-0 mt-0.5" });
 	$$renderer.push(`<!----> <p class="text-sm">If you are unsure whether you have the rights to publish something, <strong>don't upload it.</strong> Email <a class="underline" href="mailto:copyright@sepharstudios.com">copyright@sepharstudios.com</a> first — pre-submission clearance is free and avoids strikes.</p></div> <ol class="space-y-6"><!--[-->`);
 	const each_array = ensure_array_like(sections);

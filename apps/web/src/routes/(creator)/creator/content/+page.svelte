@@ -263,47 +263,61 @@
           bind:value={searchTerm}
           oninput={onSearchInput}
           placeholder="Search by title or description..."
-          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+          class="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         />
       </div>
       
-      <!-- Status Filter -->
+      <!-- Status Filter. Explicit bg-background + dropdown chevron because
+           the previous `surface-2` tint rendered as a near-invisible
+           translucent overlay that looked like no select was there at
+           all on some themes; `option` gets explicit colors so the
+           native dropdown panel isn't unreadable. -->
       <div>
         <label for="status-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Status</label>
-        <select 
-          id="status-filter"
-          bind:value={selectedFilter}
-          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-        >
-          <option value="all">All Statuses</option>
-          <option value={ContentStatus.DRAFT}>Draft</option>
-          <option value={ContentStatus.SUBMITTED}>Submitted</option>
-          <option value={ContentStatus.THEOLOGICAL_REVIEW}>Theological Review</option>
-          <option value={ContentStatus.CONTENT_REVIEW}>Content Review</option>
-          <option value={ContentStatus.TECHNICAL_QA}>Technical QA</option>
-          <option value={ContentStatus.APPROVED}>Approved</option>
-          <option value={ContentStatus.PUBLISHED}>Published</option>
-          <option value={ContentStatus.REJECTED}>Rejected</option>
-        </select>
+        <div class="relative">
+          <select
+            id="status-filter"
+            bind:value={selectedFilter}
+            class="w-full appearance-none px-4 py-2 pr-10 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer"
+          >
+            <option value="all" class="bg-background text-foreground">All Statuses</option>
+            <option value={ContentStatus.DRAFT} class="bg-background text-foreground">Draft</option>
+            <option value={ContentStatus.SUBMITTED} class="bg-background text-foreground">Submitted</option>
+            <option value={ContentStatus.THEOLOGICAL_REVIEW} class="bg-background text-foreground">Theological Review</option>
+            <option value={ContentStatus.CONTENT_REVIEW} class="bg-background text-foreground">Content Review</option>
+            <option value={ContentStatus.TECHNICAL_QA} class="bg-background text-foreground">Technical QA</option>
+            <option value={ContentStatus.APPROVED} class="bg-background text-foreground">Approved</option>
+            <option value={ContentStatus.PUBLISHED} class="bg-background text-foreground">Published</option>
+            <option value={ContentStatus.REJECTED} class="bg-background text-foreground">Rejected</option>
+          </select>
+          <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
-      
+
       <!-- Type Filter -->
       <div>
         <label for="type-filter" class="block text-sm font-medium text-foreground mb-2">Filter by Type</label>
-        <select 
-          id="type-filter"
-          bind:value={selectedType}
-          class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-        >
-          <option value="all">All Types</option>
-          <option value={ContentType.MOVIE}>Movies</option>
-          <option value={ContentType.SERIES}>Series</option>
-          <option value={ContentType.DOCUMENTARY}>Documentaries</option>
-          <option value={ContentType.SHORT_FILM}>Short Films</option>
-          <option value={ContentType.SERMON}>Sermons</option>
-          <option value={ContentType.WORSHIP}>Worship</option>
-          <option value={ContentType.KIDS_CONTENT}>Kids Content</option>
-        </select>
+        <div class="relative">
+          <select
+            id="type-filter"
+            bind:value={selectedType}
+            class="w-full appearance-none px-4 py-2 pr-10 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer"
+          >
+            <option value="all" class="bg-background text-foreground">All Types</option>
+            <option value={ContentType.MOVIE} class="bg-background text-foreground">Movies</option>
+            <option value={ContentType.SERIES} class="bg-background text-foreground">Series</option>
+            <option value={ContentType.DOCUMENTARY} class="bg-background text-foreground">Documentaries</option>
+            <option value={ContentType.SHORT_FILM} class="bg-background text-foreground">Short Films</option>
+            <option value={ContentType.SERMON} class="bg-background text-foreground">Sermons</option>
+            <option value={ContentType.WORSHIP} class="bg-background text-foreground">Worship</option>
+            <option value={ContentType.KIDS_CONTENT} class="bg-background text-foreground">Kids Content</option>
+          </select>
+          <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
       
       <!-- Quick Stats -->
@@ -354,8 +368,7 @@
             <div class="flex-shrink-0 pt-2">
               <input
                 type="checkbox"
-                checked={!!selected[content.id]}
-                onchange={() => toggleOne(content.id)}
+                bind:checked={selected[content.id]}
                 class="w-4 h-4 accent-purple-500"
                 aria-label={`Select ${content.title}`}
               />

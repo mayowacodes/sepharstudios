@@ -69,7 +69,7 @@
     apiRateLimit: number;
   }
   
-  let platformSettings: PlatformSettings = {
+  let platformSettings = $state<PlatformSettings>({
     siteName: 'Sephar Studios',
     siteDescription: 'Faith-based content streaming platform',
     maintenanceMode: false,
@@ -81,9 +81,9 @@
     minContentDuration: 60,
     maxContentDuration: 7200,
     minVideoHeight: 1080
-  };
-  
-  let paymentSettings: PaymentSettings = {
+  });
+
+  let paymentSettings = $state<PaymentSettings>({
     stripePublishableKey: '',
     stripeWebhookSecret: '',
     paypalClientId: '',
@@ -91,9 +91,9 @@
     payoutSchedule: 'monthly',
     platformFee: 15,
     processingFee: 2.9
-  };
-  
-  let notificationSettings: NotificationSettings = {
+  });
+
+  let notificationSettings = $state<NotificationSettings>({
     emailNotifications: true,
     pushNotifications: true,
     smsNotifications: false,
@@ -101,9 +101,9 @@
     creatorAlerts: true,
     userAlerts: true,
     moderationAlerts: true
-  };
-  
-  let securitySettings: SecuritySettings = {
+  });
+
+  let securitySettings = $state<SecuritySettings>({
     twoFactorRequired: false,
     sessionTimeout: 3600,
     maxLoginAttempts: 5,
@@ -111,40 +111,40 @@
     contentEncryption: true,
     ipWhitelist: [],
     apiRateLimit: 1000
-  };
-  
-  let loading = false;
-  let saveSuccess = false;
-  let activeTab = 'platform';
-  let newIp = '';
-  let newFormat = '';
+  });
+
+  let loading = $state(false);
+  let saveSuccess = $state(false);
+  let activeTab = $state('platform');
+  let newIp = $state('');
+  let newFormat = $state('');
 
   // ── AI Models state ────────────────────────────────────────────────────────
-  let aiConfig: AIConfig = {
+  let aiConfig = $state<AIConfig>({
     chatModel: 'google/gemini-2.0-flash-001',
     agentModel: 'deepseek/deepseek-r1',
     ollamaChatModel: 'gemma4',
     ollamaAgentModel: 'hermes3',
     providerPreference: 'auto'
-  };
-  let allModels: OpenRouterModel[] = [];
-  let modelsLoading = false;
-  let modelsWarning = '';
-  let hasApiKey = false;
-  let aiSaving = false;
-  let aiSaveSuccess = false;
+  });
+  let allModels = $state<OpenRouterModel[]>([]);
+  let modelsLoading = $state(false);
+  let modelsWarning = $state('');
+  let hasApiKey = $state(false);
+  let aiSaving = $state(false);
+  let aiSaveSuccess = $state(false);
 
   // Model search filters
-  let chatSearch = '';
-  let agentSearch = '';
-  let showChatDropdown = false;
-  let showAgentDropdown = false;
+  let chatSearch = $state('');
+  let agentSearch = $state('');
+  let showChatDropdown = $state(false);
+  let showAgentDropdown = $state(false);
 
   // Test state
-  let testingChat = false;
-  let testingAgent = false;
-  let chatTestResult: { response?: string; latencyMs?: number; error?: string } | null = null;
-  let agentTestResult: { response?: string; latencyMs?: number; error?: string } | null = null;
+  let testingChat = $state(false);
+  let testingAgent = $state(false);
+  let chatTestResult = $state<{ response?: string; latencyMs?: number; error?: string } | null>(null);
+  let agentTestResult = $state<{ response?: string; latencyMs?: number; error?: string } | null>(null);
 
   const tabs = [
     { id: 'platform', label: 'Platform', icon: '⚙️' },
@@ -275,10 +275,12 @@
   }
 
   // Load AI config + models when tab is activated
-  $: if (activeTab === 'ai') {
-    loadAIConfig();
-    loadAIModels();
-  }
+  $effect(() => {
+    if (activeTab === 'ai') {
+      loadAIConfig();
+      loadAIModels();
+    }
+  });
   
   async function loadSettings() {
     loading = true;

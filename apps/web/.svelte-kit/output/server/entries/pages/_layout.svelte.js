@@ -1,4 +1,4 @@
-import { At as clsx, Ct as unsubscribe_stores, Ft as run, St as stringify, _t as head, bt as store_get, dt as attr_style, ft as attributes, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, ut as attr_class, wt as html, yt as spread_props } from "../../chunks/ui-libs.js";
+import { At as stringify, Dt as spread_props, Ht as run, Lt as attr, Mt as html, Ot as store_get, Rt as clsx, St as derived, Tt as head, bt as attributes, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../chunks/constants.js";
 /* empty css                */
 import { a as cn, i as sonnerContext, r as toastState, t as SonnerState } from "../../chunks/toast-state.svelte.js";
@@ -6,6 +6,7 @@ import { t as Mode_watcher } from "../../chunks/dist.js";
 import { t as page } from "../../chunks/state.js";
 import { t as PWAInstallPrompt } from "../../chunks/PWAInstallPrompt.js";
 import { n as copilotOpen, t as copilotContext } from "../../chunks/copilot.js";
+import { n as liveRegionBuffer } from "../../chunks/live-region.js";
 //#region ../../node_modules/svelte-sonner/dist/Loader.svelte
 var bars = Array(12).fill(0);
 function Loader($$renderer, $$props) {
@@ -600,11 +601,24 @@ function AICopilot($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region src/lib/components/LiveRegion.svelte
+function LiveRegion($$renderer) {
+	var $$store_subs;
+	$$renderer.push(`<span class="sr-only" aria-live="polite" aria-atomic="true" role="status">${escape_html(store_get($$store_subs ??= {}, "$liveRegionBuffer", liveRegionBuffer))}</span>`);
+	if ($$store_subs) unsubscribe_stores($$store_subs);
+	/**
+	* Singleton aria-live region. Mount once per portal layout.
+	* Listens to the live-region store and renders into a visually-hidden
+	* span; assistive tech reads it out as text changes.
+	*/
+}
+//#endregion
 //#region src/routes/+layout.svelte
 function _layout($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { data, children } = $$props;
-		let isLoggedIn = derived(() => !!data?.user);
+		let isPortalRoute = derived(() => page.url.pathname.startsWith("/admin") || page.url.pathname.startsWith("/creator"));
+		let isLoggedIn = derived(() => !!data?.user && !isPortalRoute());
 		let canonical = derived(() => () => {
 			return `${SiteMeta.link.replace(/\/$/, "")}${page.url.pathname.replace(/\/$/, "") || "/"}`;
 		});
@@ -626,10 +640,15 @@ function _layout($$renderer, $$props) {
 		$$renderer.push(`<!----> `);
 		PWAInstallPrompt($$renderer, {});
 		$$renderer.push(`<!----> `);
+		LiveRegion($$renderer, {});
+		$$renderer.push(`<!----> `);
 		children?.($$renderer);
 		$$renderer.push(`<!----> `);
-		AICopilot($$renderer, { isLoggedIn: isLoggedIn() });
-		$$renderer.push(`<!---->`);
+		if (!isPortalRoute()) {
+			$$renderer.push("<!--[0-->");
+			AICopilot($$renderer, { isLoggedIn: isLoggedIn() });
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->`);
 	});
 }
 //#endregion

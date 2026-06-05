@@ -1,4 +1,4 @@
-import { Nt as fallback, dt as attr_style, gt as ensure_array_like, jt as escape_html, kt as attr, pt as bind_props, ut as attr_class } from "../../../../chunks/ui-libs.js";
+import { Lt as attr, vt as attr_class, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/navigation.js";
 import "../../../../chunks/MovieCard.js";
 import { t as MediaGrid } from "../../../../chunks/MediaGrid.js";
@@ -7,24 +7,14 @@ import { t as faithDocumentaries } from "../../../../chunks/documentaries.js";
 import { t as faithTVShows } from "../../../../chunks/shows.js";
 //#region src/lib/components/widgets/SkeletonLoader.svelte
 function SkeletonLoader($$renderer, $$props) {
-	let width = fallback($$props["width"], "100%");
-	let height = fallback($$props["height"], "100px");
-	let rounded = fallback($$props["rounded"], true);
-	let className = fallback($$props["className"], "");
+	let { width = "100%", height = "100px", rounded = true, className = "" } = $$props;
 	$$renderer.push(`<div${attr_class(`bg-gray-300 animate-pulse ${rounded ? "rounded-lg" : ""} ${className}`)}${attr_style(`width: ${width}; height: ${height};`)}></div>`);
-	bind_props($$props, {
-		width,
-		height,
-		rounded,
-		className
-	});
 }
 //#endregion
 //#region src/lib/components/HeroCarousel.svelte
 function HeroCarousel($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let mediaItems = fallback($$props["mediaItems"], () => [], true);
-		let sectionTitle = fallback($$props["sectionTitle"], "Trending");
+		let { mediaItems = [], sectionTitle = "Trending" } = $$props;
 		$$renderer.push(`<div class="section"><h2 class="text-3xl font-bold mb-6">${escape_html(sectionTitle)}</h2> `);
 		{
 			$$renderer.push("<!--[-1-->");
@@ -47,10 +37,6 @@ function HeroCarousel($$renderer, $$props) {
 			$$renderer.push(`<!--]--></div>`);
 		}
 		$$renderer.push(`<!--]--></div>`);
-		bind_props($$props, {
-			mediaItems,
-			sectionTitle
-		});
 	});
 }
 //#endregion

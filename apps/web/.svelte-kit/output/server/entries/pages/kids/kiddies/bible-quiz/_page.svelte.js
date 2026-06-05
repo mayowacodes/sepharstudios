@@ -1,4 +1,4 @@
-import { _t as head, gt as ensure_array_like } from "../../../../../chunks/ui-libs.js";
+import { Tt as head, wt as ensure_array_like } from "../../../../../chunks/ui-libs.js";
 import { t as Book_open } from "../../../../../chunks/book-open.js";
 import "../../../../../chunks/star.js";
 //#region src/routes/kids/kiddies/bible-quiz/+page.svelte

@@ -1,4 +1,4 @@
-import { At as clsx, Ct as unsubscribe_stores, J as Accordion_content$1, Ot as writable, Q as Accordion$1, X as Accordion_header, Y as Accordion_trigger$1, Z as Accordion_item$1, _t as head, bt as store_get, gt as ensure_array_like, jt as escape_html, pt as bind_props, ut as attr_class, xt as store_set, yt as spread_props } from "../../../../chunks/ui-libs.js";
+import { Dt as spread_props, It as writable, Ot as store_get, Rt as clsx, St as derived, Tt as head, at as Accordion_item$1, it as Accordion_header, jt as unsubscribe_stores, kt as store_set, nt as Accordion_content$1, ot as Accordion$1, rt as Accordion_trigger$1, vt as attr_class, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
@@ -6,8 +6,8 @@ import { t as Circle_question_mark } from "../../../../chunks/circle-question-ma
 import { t as Mail } from "../../../../chunks/mail.js";
 import { t as Search } from "../../../../chunks/search.js";
 import { t as cn } from "../../../../chunks/utils2.js";
-import { t as Button } from "../../../../chunks/button.js";
 import { t as Input } from "../../../../chunks/input.js";
+import { t as Button } from "../../../../chunks/button.js";
 import { a as Card, i as Card_content } from "../../../../chunks/card.js";
 import { t as Textarea } from "../../../../chunks/textarea.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/message-circle.svelte
@@ -222,7 +222,6 @@ function Accordion_trigger($$renderer, $$props) {
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let filteredFaqs;
 		writable(null);
 		const activeAccordion = writable(void 0);
 		const faqs = [
@@ -282,10 +281,10 @@ function _page($$renderer, $$props) {
 			subject: "",
 			message: ""
 		};
-		$: filteredFaqs = faqs.map((category) => ({
+		let filteredFaqs = derived(() => faqs.map((category) => ({
 			...category,
 			items: category.items.filter((item) => item.question.toLowerCase().includes(searchQuery.toLowerCase()) || item.answer.toLowerCase().includes(searchQuery.toLowerCase()))
-		})).filter((category) => category.items.length > 0);
+		})).filter((category) => category.items.length > 0));
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -372,10 +371,10 @@ function _page($$renderer, $$props) {
 				$$slots: { default: true }
 			});
 			$$renderer.push(`<!----></section> <section class="text-center pb-24"><h2 class="text-3xl font-bold mb-6">Frequently Asked Questions</h2> `);
-			if (filteredFaqs.length > 0) {
+			if (filteredFaqs().length > 0) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<!--[-->`);
-				const each_array = ensure_array_like(filteredFaqs);
+				const each_array = ensure_array_like(filteredFaqs());
 				for (let $$index_1 = 0, $$length = each_array.length; $$index_1 < $$length; $$index_1++) {
 					let category = each_array[$$index_1];
 					$$renderer.push(`<div class="mb-8"><h3 class="text-xl font-semibold mb-4">${escape_html(category.category)}</h3> `);

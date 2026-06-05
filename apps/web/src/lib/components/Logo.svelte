@@ -12,11 +12,10 @@
     avatarUrl?: string;
   }
 
-  $: user = (page.data.user as UserType) || null;
-  $: isAuthenticated = !!user;
+  let user = $derived((page.data.user as UserType) || null);
+  let isAuthenticated = $derived(!!user);
 
-  let className: string | undefined = undefined;
-  export { className as class };
+  let { class: className }: { class?: string } = $props();
 </script>
 
 <a

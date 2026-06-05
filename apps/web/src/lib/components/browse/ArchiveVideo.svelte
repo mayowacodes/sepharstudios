@@ -22,9 +22,9 @@
   size: 'responsive',
 };
 
-  let videos: { identifier: string; title: string; description: string; year: string }[] = [];
-  let selectedVideo: { title: string; identifier: string } | null = null;
-  let loading = true;
+  let videos = $state<{ identifier: string; title: string; description: string; year: string }[]>([]);
+  let selectedVideo = $state<{ title: string; identifier: string } | null>(null);
+  let loading = $state(true);
 
   const fetchVideos = async () => {
     const query =
@@ -65,7 +65,7 @@
 {#if selectedVideo}
   <div class="space-y-4">
     <button
-      on:click={() => (selectedVideo = null)}
+      onclick={() => (selectedVideo = null)}
       class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition"
     >
       ⬅ Back to Video List
@@ -89,15 +89,15 @@
       {#each videos as video}
         <button
           role="link"
-          on:click={() => (selectedVideo = video)}
-          on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? (selectedVideo = video) : null}
+          onclick={() => (selectedVideo = video)}
+          onkeydown={(e) => e.key === 'Enter' || e.key === ' ' ? (selectedVideo = video) : null}
           class="rounded-xl overflow-hidden shadow-md hover:shadow-lg transition cursor-pointer bg-white border"
         >
           <img
             src={getThumbnailUrl(video.identifier)}
             alt={video.title}
             class="w-full h-48 object-cover"
-            on:error={(e) => {
+            onerror={(e) => {
               if (e.target) {
                 (e.target as HTMLImageElement).style.display = 'none';
               }

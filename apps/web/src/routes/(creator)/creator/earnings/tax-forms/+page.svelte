@@ -51,8 +51,21 @@
         fetch('/api/creator/tax-forms'),
         fetch('/api/creator/tax-1099-forms')
       ]);
-      forms = (await submittedRes.json()).forms ?? [];
-      forms1099 = generatedRes.ok ? ((await generatedRes.json()).forms ?? []) : [];
+      // Guard each .json() so a 500 returning HTML doesn't throw an
+      // unhandled rejection that blanks the page. forms1099 was already
+      // guarded by `generatedRes.ok` — mirror that for `submittedRes`.
+      if (submittedRes.ok) {
+        const body = await submittedRes.json().catch(() => ({}));
+        forms = body.forms ?? [];
+      } else {
+        console.error('[tax-forms] /api/creator/tax-forms HTTP', submittedRes.status);
+        forms = [];
+      }
+      forms1099 = generatedRes.ok ? (await generatedRes.json().catch(() => ({ forms: [] }))).forms ?? [] : [];
+    } catch (err) {
+      console.error('[tax-forms] load failed:', err);
+      forms = [];
+      forms1099 = [];
     } finally {
       loading = false;
     }

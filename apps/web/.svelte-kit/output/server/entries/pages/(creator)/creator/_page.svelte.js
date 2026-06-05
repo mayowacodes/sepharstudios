@@ -1,4 +1,16 @@
-import { gt as ensure_array_like, jt as escape_html, ut as attr_class } from "../../../../chunks/ui-libs.js";
+import { wt as ensure_array_like } from "../../../../chunks/ui-libs.js";
+import { n as Arrow_up_right, t as KpiCard } from "../../../../chunks/KpiCard.js";
+import { t as Chart_column } from "../../../../chunks/chart-column.js";
+import { t as Circle_check } from "../../../../chunks/circle-check.js";
+import { t as Clock } from "../../../../chunks/clock.js";
+import { t as Dollar_sign } from "../../../../chunks/dollar-sign.js";
+import { t as Eye } from "../../../../chunks/eye.js";
+import { t as House } from "../../../../chunks/house.js";
+import { t as Message_square } from "../../../../chunks/message-square.js";
+import { t as Sparkles } from "../../../../chunks/sparkles.js";
+import { t as Upload } from "../../../../chunks/upload.js";
+import { t as Video } from "../../../../chunks/video.js";
+import { t as PageHeader } from "../../../../chunks/PageHeader.js";
 //#region src/routes/(creator)/creator/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -9,22 +21,100 @@ function _page($$renderer, $$props) {
 			totalViews: 0,
 			monthlyEarnings: 0
 		};
-		let recentActivity = [];
-		$$renderer.push(`<div class="space-y-8"><div class="text-center"><h1 class="text-4xl font-bold text-white mb-2">Welcome to Creator Studio</h1> <p class="text-xl text-gray-300">Manage your faith-based content and reach believers worldwide</p></div> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"><div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-blue-400">${escape_html(creatorStats.totalContent)}</div> <div class="text-gray-300 text-sm">Total Content</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-yellow-400">${escape_html(creatorStats.pendingReview)}</div> <div class="text-gray-300 text-sm">Pending Review</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-green-400">${escape_html(creatorStats.published)}</div> <div class="text-gray-300 text-sm">Published</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-purple-400">${escape_html(creatorStats.totalViews.toLocaleString())}</div> <div class="text-gray-300 text-sm">Total Views</div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center"><div class="text-3xl font-bold text-pink-400">$${escape_html(creatorStats.monthlyEarnings.toFixed(2))}</div> <div class="text-gray-300 text-sm">This Month</div></div></div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6"><a href="/creator/upload" class="bg-linear-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-center hover:from-purple-700 hover:to-blue-700 transition-all"><div class="text-4xl mb-4">🎬</div> <h3 class="text-xl font-bold text-white mb-2">Upload New Content</h3> <p class="text-gray-200">Share your ministry with the world</p></a> <a href="/creator/content" class="bg-linear-to-r from-green-600 to-teal-600 rounded-xl p-8 text-center hover:from-green-700 hover:to-teal-700 transition-all"><div class="text-4xl mb-4">📚</div> <h3 class="text-xl font-bold text-white mb-2">Manage Content</h3> <p class="text-gray-200">Edit and organize your library</p></a> <a href="/creator/analytics" class="bg-linear-to-r from-orange-600 to-red-600 rounded-xl p-8 text-center hover:from-orange-700 hover:to-red-700 transition-all"><div class="text-4xl mb-4">📊</div> <h3 class="text-xl font-bold text-white mb-2">View Analytics</h3> <p class="text-gray-200">Track your impact and growth</p></a></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><h2 class="text-2xl font-bold text-white mb-4">Recent Activity</h2> <div class="space-y-4">`);
-		if (recentActivity.length === 0) {
-			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="text-gray-400 text-sm">No recent activity yet.</div>`);
-		} else {
-			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--[-->`);
-			const each_array = ensure_array_like(recentActivity);
-			for (let index = 0, $$length = each_array.length; index < $$length; index++) {
-				let activity = each_array[index];
-				$$renderer.push(`<div${attr_class(`flex items-center justify-between py-3 ${index < recentActivity.length - 1 ? "border-b border-gray-700" : ""}`)}><div><div class="text-white font-medium">"${escape_html(activity.title)}"</div> <div class="text-gray-400 text-sm">${escape_html(new Date(activity.createdAt).toLocaleString())}</div></div> <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">${escape_html((activity.status || "submitted").replace(/_/g, " "))}</span></div>`);
+		let loading = true;
+		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		{
+			function actions($$renderer) {
+				$$renderer.push(`<a href="/creator/upload" class="inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 bg-primary text-primary-foreground hover:opacity-90 transition-opacity">`);
+				Upload($$renderer, { class: "w-3.5 h-3.5" });
+				$$renderer.push(`<!----> Upload</a>`);
 			}
-			$$renderer.push(`<!--]-->`);
+			PageHeader($$renderer, {
+				icon: House,
+				title: "Creator Studio",
+				subtitle: "Manage your faith-based content and reach believers worldwide.",
+				actions,
+				$$slots: { actions: true }
+			});
 		}
-		$$renderer.push(`<!--]--></div></div></div>`);
+		$$renderer.push(`<!----> <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">`);
+		KpiCard($$renderer, {
+			label: "Total Content",
+			value: creatorStats.totalContent,
+			icon: Video,
+			accent: "blue",
+			href: "/creator/content",
+			loading,
+			index: 0
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Pending",
+			value: creatorStats.pendingReview,
+			icon: Clock,
+			accent: "yellow",
+			href: "/creator/content?status=pending",
+			loading,
+			index: 1
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Published",
+			value: creatorStats.published,
+			icon: Circle_check,
+			accent: "green",
+			href: "/creator/content?status=published",
+			loading,
+			index: 2
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Views",
+			value: creatorStats.totalViews.toLocaleString(),
+			icon: Eye,
+			accent: "purple",
+			href: "/creator/analytics",
+			loading,
+			index: 3
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "This Month",
+			value: `$${creatorStats.monthlyEarnings.toFixed(2)}`,
+			icon: Dollar_sign,
+			accent: "orange",
+			href: "/creator/earnings",
+			loading,
+			index: 4
+		});
+		$$renderer.push(`<!----></div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-3"><section class="lg:col-span-2 surface-1 rounded-xl p-5"><header class="flex items-center justify-between mb-4"><div class="flex items-center gap-2">`);
+		Sparkles($$renderer, { class: "w-4 h-4 text-primary" });
+		$$renderer.push(`<!----> <h2 class="text-sm font-semibold text-foreground">Recent activity</h2></div> <a href="/creator/content" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">All content `);
+		Arrow_up_right($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----></a></header> `);
+		{
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="space-y-2"><!--[-->`);
+			const each_array = ensure_array_like(Array(3));
+			for (let i = 0, $$length = each_array.length; i < $$length; i++) {
+				each_array[i];
+				$$renderer.push(`<div class="surface-2 rounded h-12 animate-pulse"></div>`);
+			}
+			$$renderer.push(`<!--]--></div>`);
+		}
+		$$renderer.push(`<!--]--></section> <section class="space-y-3"><a href="/creator/upload" class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex items-center gap-3 group"><div class="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">`);
+		Upload($$renderer, { class: "w-4 h-4" });
+		$$renderer.push(`<!----></div> <div class="min-w-0"><div class="text-sm font-medium text-foreground">Upload new content</div> <div class="text-xs text-muted-foreground truncate">Share your ministry with the world</div></div> `);
+		Arrow_up_right($$renderer, { class: "w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" });
+		$$renderer.push(`<!----></a> <a href="/creator/analytics" class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex items-center gap-3 group"><div class="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">`);
+		Chart_column($$renderer, { class: "w-4 h-4" });
+		$$renderer.push(`<!----></div> <div class="min-w-0"><div class="text-sm font-medium text-foreground">View analytics</div> <div class="text-xs text-muted-foreground truncate">Track your impact and growth</div></div> `);
+		Arrow_up_right($$renderer, { class: "w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" });
+		$$renderer.push(`<!----></a> <a href="/creator/inbox" class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex items-center gap-3 group"><div class="w-9 h-9 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">`);
+		Message_square($$renderer, { class: "w-4 h-4" });
+		$$renderer.push(`<!----></div> <div class="min-w-0"><div class="text-sm font-medium text-foreground">Inbox</div> <div class="text-xs text-muted-foreground truncate">Notes from admin team</div></div> `);
+		Arrow_up_right($$renderer, { class: "w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" });
+		$$renderer.push(`<!----></a></section></div></div>`);
 	});
 }
 //#endregion

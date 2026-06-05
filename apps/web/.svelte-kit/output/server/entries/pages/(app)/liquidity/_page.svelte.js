@@ -1,4 +1,4 @@
-import { Ct as unsubscribe_stores, _t as head, bt as store_get, jt as escape_html, kt as attr, ut as attr_class, yt as spread_props } from "../../../../chunks/ui-libs.js";
+import { Dt as spread_props, Lt as attr, Ot as store_get, Tt as head, jt as unsubscribe_stores, vt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Arrow_right } from "../../../../chunks/arrow-right.js";
 import { t as Coins } from "../../../../chunks/coins.js";
@@ -6,7 +6,7 @@ import { t as Trending_up } from "../../../../chunks/trending-up.js";
 import { t as Wallet } from "../../../../chunks/wallet.js";
 import { t as Button } from "../../../../chunks/button.js";
 import { a as isConnected, n as connectWallet, o as walletAddress } from "../../../../chunks/wallet2.js";
-import { l as tokenAMM, s as stcToken, u as usdcToken } from "../../../../chunks/contracts.js";
+import { l as tokenAMM, s as stcToken, u as usdcToken } from "../../../../chunks/contracts2.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/droplets.svelte
 function Droplets($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;

@@ -1,4 +1,4 @@
-import { a as user, g as creators, m as creatorApplications, t as db } from "../../../../../../../chunks/drizzle.js";
+import { C as creatorApplications, T as creators, a as user, t as db } from "../../../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../../../chunks/admin-auth.js";
 import { t as notify } from "../../../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
@@ -14,6 +14,7 @@ var defaultPreferences = {
 var PATCH = async ({ locals, params, request }) => {
 	const { error, session } = await requireAdmin(locals);
 	if (error || !session) return error;
+	if (!params.id) return json({ error: "Missing application id" }, { status: 400 });
 	const payload = await request.json();
 	if (!payload.status) return json({ error: "Missing status" }, { status: 400 });
 	const [application] = await db.select().from(creatorApplications).where(eq(creatorApplications.id, params.id));

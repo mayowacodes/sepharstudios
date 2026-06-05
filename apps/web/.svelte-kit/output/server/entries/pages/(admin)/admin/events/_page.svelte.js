@@ -1,13 +1,14 @@
-import { St as stringify, _t as head, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, ut as attr_class, yt as spread_props } from "../../../../../chunks/ui-libs.js";
+import { At as stringify, Dt as spread_props, Lt as attr, St as derived, Tt as head, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
 import { t as Calendar } from "../../../../../chunks/calendar.js";
 import { t as External_link } from "../../../../../chunks/external-link.js";
 import { t as Plus } from "../../../../../chunks/plus.js";
 import { t as Trash_2 } from "../../../../../chunks/trash-2.js";
 import { t as Users } from "../../../../../chunks/users.js";
-import { t as Button } from "../../../../../chunks/button.js";
 import { t as Input } from "../../../../../chunks/input.js";
+import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { a as Card, i as Card_content } from "../../../../../chunks/card.js";
 import { t as Label } from "../../../../../chunks/label.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/square-pen.svelte
@@ -124,7 +125,7 @@ function _page($$renderer, $$props) {
 		function statusColor(s) {
 			if (s === "scheduled") return "bg-blue-500/15 text-blue-300 border-blue-500/30";
 			if (s === "live") return "bg-green-500/15 text-green-300 border-green-500/30";
-			if (s === "completed") return "bg-gray-500/15 text-gray-300 border-gray-500/30";
+			if (s === "completed") return "bg-gray-500/15 text-foreground/80 border-gray-500/30";
 			return "bg-red-500/15 text-red-300 border-red-500/30";
 		}
 		let $$settled = true;
@@ -135,18 +136,29 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<title>Events · Admin</title>`);
 				});
 			});
-			$$renderer.push(`<div class="space-y-6"><div class="flex items-center justify-between flex-wrap gap-3"><div><h1 class="text-3xl font-bold flex items-center gap-2">`);
-			Calendar($$renderer, { class: "w-7 h-7" });
-			$$renderer.push(`<!----> Events</h1> <p class="text-sm text-muted-foreground">Create + manage webinars, workshops, conferences. Powers /webinars and /creator/events.</p></div> `);
-			Button($$renderer, {
-				onclick: openCreate,
-				children: ($$renderer) => {
-					Plus($$renderer, { class: "w-4 h-4 mr-2" });
-					$$renderer.push(`<!----> New event`);
-				},
-				$$slots: { default: true }
-			});
-			$$renderer.push(`<!----></div> `);
+			$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+			{
+				function actions($$renderer) {
+					Button($$renderer, {
+						onclick: openCreate,
+						size: "sm",
+						class: "rounded-full",
+						children: ($$renderer) => {
+							Plus($$renderer, { class: "w-3.5 h-3.5 mr-1" });
+							$$renderer.push(`<!----> New event`);
+						},
+						$$slots: { default: true }
+					});
+				}
+				PageHeader($$renderer, {
+					icon: Calendar,
+					title: "Events",
+					subtitle: "Webinars, workshops, conferences. Powers /webinars and /creator/events.",
+					actions,
+					$$slots: { actions: true }
+				});
+			}
+			$$renderer.push(`<!----> `);
 			if (message) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="rounded-md border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-200">${escape_html(message)}</div>`);

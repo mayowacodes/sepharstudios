@@ -3,7 +3,10 @@
   import { openMediaById } from '$lib/utils/openMediaById';
   import { resolveDataset } from '$lib/utils/mediaDatasetResolver';
 
-  $: id = page.params.id;
-  $: dataset = resolveDataset('kiddies', 'shows');
-  $: if (id) openMediaById(id, dataset);
+  let id = $derived(page.params.id);
+  let dataset = $derived(resolveDataset('kiddies', 'shows'));
+
+  $effect(() => {
+    if (id) openMediaById(id, dataset);
+  });
 </script>

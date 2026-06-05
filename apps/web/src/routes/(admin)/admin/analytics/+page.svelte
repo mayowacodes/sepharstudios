@@ -150,6 +150,9 @@
     // dynamic module + on-chain reads. Defer past the initial paint so the
     // dashboard becomes interactive before we kick off the slow web3 reads.
     if ($isConnected && $walletAddress) {
+      // Show loading skeleton immediately so users know data is being fetched,
+      // rather than showing a blank space during the 1500ms delay.
+      tokenomicsLoading = true;
       setTimeout(() => {
         loadContracts().then(() => {
           loadTokenomicsData();
@@ -231,18 +234,23 @@
     loading = true;
     try {
       const res = await fetch(`/api/admin/analytics?range=${selectedTimeRange}`);
-      if (res.ok) {
-        const data = await res.json();
-        platformMetrics = data.platformMetrics;
-        contentAnalytics = data.contentAnalytics;
-        userGrowthData = data.userGrowthData;
-        revenueData = data.revenueData;
-        geographicData = data.geographicData;
-        topCreators = data.topCreators;
-        topContent = data.topContent;
-        series = data.series ?? { users: [], revenue: [], content: [] };
-        deltas = data.deltas ?? { users: 0, revenue: 0, content: 0 };
+      if (!res.ok) {
+        console.error('[admin/analytics] load HTTP', res.status);
+        return;
       }
+      const data = await res.json().catch(() => null);
+      if (!data) return;
+      platformMetrics = data.platformMetrics;
+      contentAnalytics = data.contentAnalytics;
+      userGrowthData = data.userGrowthData;
+      revenueData = data.revenueData;
+      geographicData = data.geographicData;
+      topCreators = data.topCreators;
+      topContent = data.topContent;
+      series = data.series ?? { users: [], revenue: [], content: [] };
+      deltas = data.deltas ?? { users: 0, revenue: 0, content: 0 };
+    } catch (err) {
+      console.error('[admin/analytics] load failed:', err);
     } finally {
       loading = false;
     }

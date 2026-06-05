@@ -1,6 +1,6 @@
-import { At as clsx, ft as attributes, yt as spread_props } from "./ui-libs.js";
-import { t as Icon } from "./Icon.js";
+import { Rt as clsx, bt as attributes } from "./ui-libs.js";
 import { t as File_text } from "./file-text.js";
+import { t as House } from "./house.js";
 import { t as Layout_dashboard } from "./layout-dashboard.js";
 import { t as User } from "./user.js";
 import { t as Users } from "./users.js";
@@ -13,16 +13,6 @@ function Logo($$renderer, $$props) {
 		class: clsx(className || ""),
 		...rest
 	})} onload="this.__e=event" onerror="this.__e=event"/>`);
-}
-//#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/house.svelte
-function House($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "house" },
-		props,
-		{ iconNode: [["path", { "d": "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" }], ["path", { "d": "M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" }]] }
-	]));
 }
 //#endregion
 //#region src/lib/constants/index.ts
@@ -161,4 +151,4 @@ var emptyMetalist = {
 	data: []
 };
 //#endregion
-export { adminRoles as a, usersRoles as c, SiteMeta as i, House as l, Fields as n, emptyMetalist as o, Role as r, getNavigation as s, Constants as t };
+export { adminRoles as a, usersRoles as c, SiteMeta as i, Fields as n, emptyMetalist as o, Role as r, getNavigation as s, Constants as t };

@@ -43,15 +43,29 @@
       if (status !== 'all') params.set('status', status);
       if (processor !== 'all') params.set('processor', processor);
       const res = await fetch(`/api/admin/payouts?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[payouts] load HTTP', res.status);
+        rows = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       rows = body.payouts ?? [];
+    } catch (err) {
+      console.error('[payouts] load failed:', err);
+      rows = [];
     } finally {
       loading = false;
     }
   }
 
   $effect(() => { status; processor; void load(); });
-  onMount(load);
+  
+  onMount(() => {
+    // Initial load is handled by the $effect above, which fires immediately
+    // since status and processor are accessed in its dependency list. We don't
+    // need to call load() again here — doing so causes a double-fetch and
+    // race condition that causes page blinking.
+  });
 
   async function approve(r: PayoutRow) {
     busy[r.id] = true;

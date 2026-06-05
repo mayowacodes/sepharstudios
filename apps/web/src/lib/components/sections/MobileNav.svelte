@@ -11,7 +11,7 @@
     SheetTrigger
   } from '$lib/components/ui/sheet';
 
-  export let routes = [
+  let { routes = [
     {
       label: 'Home',
       icon: Home,
@@ -42,9 +42,9 @@
       href: '/downloads',
       match: /^\/downloads/
     }
-  ];
+  ] }: { routes?: Array<{ label: string; icon: any; href: string; match: RegExp }> } = $props();
 
-  let open = false;
+  let open = $state(false);
 </script>
 
 <Sheet bind:open>
@@ -63,13 +63,14 @@
     <nav class="mt-4">
       <ul class="space-y-2">
         {#each routes as route}
+          {@const RouteIcon = route.icon}
           <li>
             <Button
               href={route.href}
-              class="flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg" 
+              class="flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
               onclick={() => open = false}
             >
-            <svelte:component this={route.icon} className="h-4 w-4" /> 
+            <RouteIcon class="h-4 w-4" />
             {route.label}
             </Button>
           </li>

@@ -1,7 +1,7 @@
 import { a as extractJsonObject, n as callAgent, t as SEPHAR_SYSTEM_PROMPT } from "./ai-provider.js";
 //#region src/lib/server/ai-token-scoring.ts
 async function scoreWatchEngagement(opts) {
-	const { completionPercent, watchTimeSeconds, totalDurationSeconds, leftReview, leftComment, sharedContent, addedToWatchlist, baseStcReward } = opts;
+	const { completionPercent, watchTimeSeconds, totalDurationSeconds, leftReview, sharedContent, addedToWatchlist, baseStcReward } = opts;
 	if (completionPercent < 10) return {
 		tokenMultiplier: 0,
 		isSuspicious: false,
@@ -21,7 +21,6 @@ Session data:
 - Completion: ${completionPercent}%
 - Watch time: ${watchTimeSeconds}s out of ${totalDurationSeconds}s total
 - Left a review: ${leftReview}
-- Left a comment: ${leftComment}
 - Shared content: ${sharedContent}
 - Added to watchlist: ${addedToWatchlist}
 - Base STC reward: ${baseStcReward} STC
@@ -37,14 +36,14 @@ Return ONLY this JSON:
 
 Multiplier rules:
 - < 25% completion: 0.0 | 25–49%: 0.3 | 50–74%: 0.6 | 75–89%: 0.8 | 90–100%: 1.0
-- +0.1 for review, +0.1 for comment, +0.1 for share (max 1.5x total)
+- +0.15 for review, +0.15 for share, +0.1 for watchlist (max 1.5x total)
 - isSuspicious=true if watch time is implausibly fast vs duration`
 	}], {
 		temperature: .1,
 		maxTokens: 256
 	});
 	if (!result) {
-		const finalMultiplier = Math.min(1.5, (completionPercent >= 90 ? 1 : completionPercent >= 75 ? .8 : completionPercent >= 50 ? .6 : completionPercent >= 25 ? .3 : 0) + ((leftReview ? .1 : 0) + (leftComment ? .1 : 0) + (sharedContent ? .1 : 0)));
+		const finalMultiplier = Math.min(1.5, (completionPercent >= 90 ? 1 : completionPercent >= 75 ? .8 : completionPercent >= 50 ? .6 : completionPercent >= 25 ? .3 : 0) + ((leftReview ? .15 : 0) + (sharedContent ? .15 : 0) + (addedToWatchlist ? .1 : 0)));
 		return {
 			tokenMultiplier: finalMultiplier,
 			isSuspicious: false,
@@ -74,7 +73,6 @@ async function analyzeUserEngagementPattern(opts) {
 - Avg session duration: ${opts.avgSessionDurationSeconds}s
 - Avg completion: ${opts.avgCompletionPercent}%
 - Reviews left: ${opts.reviewsLeft}
-- Comments: ${opts.commentsLeft}
 - Unique titles watched: ${opts.uniqueContentsWatched}
 - STC earned: ${opts.stcEarned30Days}
 - Account age: ${opts.accountAgedays} days
@@ -87,7 +85,7 @@ Return ONLY this JSON:
   "recommendation": "reward"
 }
 
-Risk indicators: very short sessions with high completion, rewatching same content, new account with disproportionate STC, review/comment volume out of proportion with watch time.
+Risk indicators: very short sessions with high completion, rewatching same content, new account with disproportionate STC, review volume out of proportion with watch time.
 recommendation options: "reward" | "reduce" | "hold" | "ban"`
 	}], {
 		temperature: .1,

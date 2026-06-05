@@ -520,7 +520,7 @@
               <input 
                 type="checkbox" 
                 checked={selectedContent.includes(content.id)}
-                onchange={(e) => selectContent(content.id, e)}
+                onchange={(e) => { selectContent(content.id, e); return (e.target as HTMLInputElement).checked; }}
                 class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
               />
             </div>
@@ -639,8 +639,8 @@
               <div class="flex items-center">
                 <input 
                   type="checkbox" 
-                  checked={selectedContent.includes(content.id)}
-                  onchange={(e) => selectContent(content.id, e)}
+checked={selectedContent.includes(content.id)}
+                onchange={(e) => { selectContent(content.id, e); return (e.target as HTMLInputElement).checked; }}
                   class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 mr-4"
                 />
                 <div class="flex-1 grid grid-cols-12 gap-4 items-center">

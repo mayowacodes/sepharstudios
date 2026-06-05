@@ -1,5 +1,6 @@
-import { _t as head } from "../../../../chunks/ui-libs.js";
-import { i as Arrow_left, n as LazySTCTokenDashboard } from "../../../../chunks/web3-lazy.js";
+import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
+import { n as LazySTCTokenDashboard } from "../../../../chunks/web3-lazy.js";
 //#region src/routes/(web3)/tokens/+page.svelte
 function _page($$renderer) {
 	head("1fv98rq", $$renderer, ($$renderer) => {

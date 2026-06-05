@@ -1,10 +1,10 @@
-import { Ct as unsubscribe_stores, Nt as fallback, Ot as writable, Tt as derived, bt as store_get, gt as ensure_array_like, jt as escape_html, kt as attr, pt as bind_props, xt as store_set } from "./ui-libs.js";
+import { It as writable, Lt as attr, Nt as derived, Ot as store_get, jt as unsubscribe_stores, kt as store_set, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "./ui-libs.js";
 import "./index-server.js";
 import "./navigation.js";
 //#region src/lib/components/kids/KidsMovieCard.svelte
 function KidsMovieCard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let movie = $$props["movie"];
+		let { movie } = $$props;
 		$$renderer.push(`<div class="relative rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 border-4 border-yellow-300 bg-white text-center cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2" role="button" tabindex="0"${attr("aria-label", `Watch ${movie.title}`)}>`);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<img${attr("src", movie.thumbnailUrl)}${attr("alt", movie.title)} width="320" height="192" loading="lazy" decoding="async" class="w-full h-48 object-cover"/>`);
@@ -14,37 +14,34 @@ function KidsMovieCard($$renderer, $$props) {
 			$$renderer.push(`<p class="text-xs text-gray-600">${escape_html(movie.genres.join(", "))}</p>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div></div>`);
-		bind_props($$props, { movie });
 	});
 }
 //#endregion
 //#region src/lib/components/kids/CategoryFilter.svelte
 function CategoryFilter($$renderer, $$props) {
-	let categories = fallback($$props["categories"], () => [], true);
-	let selected = $$props["selected"];
-	$$renderer.push(`<div class="text-center mb-6"><label for="genre-select" class="text-md font-semibold mr-2">🎬 Choose a Genre:</label> `);
-	$$renderer.select({
-		id: "genre-select",
-		value: selected,
-		class: "p-2 border border-yellow-400 rounded bg-white text-gray-800"
-	}, ($$renderer) => {
-		$$renderer.option({ value: null }, ($$renderer) => {
-			$$renderer.push(`All`);
-		});
-		$$renderer.push(`<!--[-->`);
-		const each_array = ensure_array_like(categories);
-		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-			let cat = each_array[$$index];
-			$$renderer.option({ value: cat }, ($$renderer) => {
-				$$renderer.push(`${escape_html(cat)}`);
+	$$renderer.component(($$renderer) => {
+		let { categories = [], selected = null } = $$props;
+		$$renderer.push(`<div class="text-center mb-6"><label for="genre-select" class="text-md font-semibold mr-2">🎬 Choose a Genre:</label> `);
+		$$renderer.select({
+			id: "genre-select",
+			value: selected,
+			class: "p-2 border border-yellow-400 rounded bg-white text-gray-800"
+		}, ($$renderer) => {
+			$$renderer.option({ value: null }, ($$renderer) => {
+				$$renderer.push(`All`);
 			});
-		}
-		$$renderer.push(`<!--]-->`);
-	});
-	$$renderer.push(`</div>`);
-	bind_props($$props, {
-		categories,
-		selected
+			$$renderer.push(`<!--[-->`);
+			const each_array = ensure_array_like(categories);
+			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+				let cat = each_array[$$index];
+				$$renderer.option({ value: cat }, ($$renderer) => {
+					$$renderer.push(`${escape_html(cat)}`);
+				});
+			}
+			$$renderer.push(`<!--]-->`);
+		});
+		$$renderer.push(`</div>`);
+		bind_props($$props, { selected });
 	});
 }
 //#endregion
@@ -52,8 +49,7 @@ function CategoryFilter($$renderer, $$props) {
 function KidsMediaPage($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let title = $$props["title"];
-		let mediaData = $$props["mediaData"];
+		let { title, mediaData } = $$props;
 		const selectedCategory = writable(null);
 		const filteredMedia = derived(selectedCategory, ($selectedCategory) => mediaData.filter((item) => !$selectedCategory || item.genres?.includes($selectedCategory)));
 		const allCategories = [...new Set(mediaData.flatMap((m) => m.genres ?? []))].sort();
@@ -94,10 +90,6 @@ function KidsMediaPage($$renderer, $$props) {
 		} while (!$$settled);
 		$$renderer.subsume($$inner_renderer);
 		if ($$store_subs) unsubscribe_stores($$store_subs);
-		bind_props($$props, {
-			title,
-			mediaData
-		});
 	});
 }
 //#endregion

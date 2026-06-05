@@ -1,6 +1,5 @@
 <script lang="ts">
-  export let categories: string[] = [];
-  export let selected: string | null;
+  let { categories = [], selected = $bindable(null) }: { categories?: string[]; selected?: string | null } = $props();
 </script>
 
 <div class="text-center mb-6">

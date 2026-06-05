@@ -1,4 +1,4 @@
-import { F as notifications, P as notificationPreferences, a as user, j as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
+import { G as notificationPreferences, H as mediaLibrary, K as notifications, a as user, t as db } from "../../../../../../../chunks/drizzle.js";
 import { n as sendNewReleaseNotification } from "../../../../../../../chunks/notifications.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -42,20 +42,32 @@ var POST = async ({ params, locals }) => {
 		message: `A new ${content.mediaType ?? "release"} just dropped on Sephar Studios. Tap to watch.`,
 		actionUrl: `/watch/${contentId}`
 	}))).catch((err) => console.error("publish in-app notification batch failed:", err));
-	const emailPromises = recipients.map(async (r) => {
+	const emailResults = await Promise.allSettled(recipients.map(async (r) => {
 		try {
 			await sendNewReleaseNotification(r.email, r.name, content.title, content.mediaType ?? "content", contentId);
-		} catch {
-			console.error(`Failed to notify ${r.email} for content ${contentId}`);
+			return {
+				email: r.email,
+				ok: true
+			};
+		} catch (err) {
+			console.error(`Failed to notify ${r.email} for content ${contentId}:`, err);
+			return {
+				email: r.email,
+				ok: false,
+				error: err instanceof Error ? err.message : "unknown"
+			};
 		}
-	});
-	Promise.all(emailPromises).catch((err) => {
-		console.error("publish notification batch failed unexpectedly:", err);
-	});
+	}));
+	let delivered = 0;
+	let failed = 0;
+	for (const r of emailResults) if (r.status === "fulfilled" && r.value.ok) delivered++;
+	else failed++;
 	return json({
 		success: true,
 		contentId,
-		notifying: recipients.length
+		recipients: recipients.length,
+		delivered,
+		failed
 	});
 };
 //#endregion

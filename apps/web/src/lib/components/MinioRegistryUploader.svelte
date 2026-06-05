@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Progress } from "$lib/components/ui/progress";
   import { toast } from "svelte-sonner";
   import { Upload, X, FileVideo, FileImage, File as FileIcon } from "@lucide/svelte";
 
-  export let bucket: string = "uploads";
-  export let accept: string = "*/*";
-  export let label: string = "Upload File";
-  export let maxFiles: number = 1;
+  let { bucket = "uploads", accept = "*/*", label = "Upload File", maxFiles = 1, onuploadComplete }: {
+    bucket?: string;
+    accept?: string;
+    label?: string;
+    maxFiles?: number;
+    onuploadComplete?: (results: any[]) => void;
+  } = $props();
 
-  const dispatch = createEventDispatcher();
-
-  let files: File[] = [];
-  let uploading = false;
-  let progress = 0;
-  let uploadResults: any[] = [];
+  let files = $state<File[]>([]);
+  let uploading = $state(false);
+  let progress = $state(0);
+  let uploadResults = $state<any[]>([]);
 
   function handleFileSelect(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -50,7 +50,7 @@
 
       progress = 100;
       toast.success("Upload completed successfully!");
-      dispatch('uploadComplete', uploadResults);
+      onuploadComplete?.(uploadResults);
       
       // Cleanup
       setTimeout(() => {
@@ -96,9 +96,10 @@
     <div class="space-y-2">
       <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Selected Files</p>
       {#each files as file}
+        {@const Icon = getFileIcon(file.type)}
         <div class="flex items-center justify-between p-2 rounded-lg bg-secondary/50 border border-border">
           <div class="flex items-center space-x-3">
-            <svelte:component this={getFileIcon(file.type)} class="w-4 h-4 text-muted-foreground" />
+            <Icon class="w-4 h-4 text-muted-foreground" />
             <div class="flex flex-col">
               <span class="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
               <span class="text-[10px] text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</span>

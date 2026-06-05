@@ -24,9 +24,6 @@
     <section class="relative">
       <HeroCarousel 
       mediaItems={featuredContent} 
-        on:play={e => { /* handle play action */ }}
-        on:moreInfo={e => activeModal = e.detail}
-        on:showScripture={e => activeScripture = e.detail}
       />
     </section>
     

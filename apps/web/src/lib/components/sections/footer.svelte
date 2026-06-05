@@ -3,8 +3,7 @@
   import Logo from '$lib/components/Logo.svelte';
   import { goto } from '$app/navigation';
 
-  let className: string = '';
-  export { className as class };
+  let { class: className = '' }: { class?: string } = $props();
 
   const links = {
     'About Us': [
@@ -40,7 +39,7 @@
         </p>
         <a
          href="/sponsorships"
-          on:click={(e) => {
+          onclick={(e) => {
           e.preventDefault();
           goto('/sponsorships');
          }}

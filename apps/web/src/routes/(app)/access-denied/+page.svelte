@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Button } from '$lib/components/ui/button';
   import { ShieldX, UserPlus, ArrowLeft } from '@lucide/svelte';
 
-  const reason = $derived($page.url.searchParams.get('reason') ?? 'unknown');
+  const reason = $derived(page.url.searchParams.get('reason') ?? 'unknown');
   const portal = $derived(reason === 'admin' ? 'Admin portal' : reason === 'creator' ? 'Creator portal' : 'this area');
 </script>
 

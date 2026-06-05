@@ -18,13 +18,12 @@ var POST = async ({ request, locals }) => {
 	if (!type) throw error(400, "type is required");
 	switch (type) {
 		case "watch": {
-			const { completionPercent = 0, watchTimeSeconds = 0, totalDurationSeconds = 0, leftReview = false, leftComment = false, sharedContent = false, addedToWatchlist = false, baseStcReward = 10 } = body;
+			const { completionPercent = 0, watchTimeSeconds = 0, totalDurationSeconds = 0, leftReview = false, sharedContent = false, addedToWatchlist = false, baseStcReward = 10 } = body;
 			const result = await scoreWatchEngagement({
 				completionPercent,
 				watchTimeSeconds,
 				totalDurationSeconds,
 				leftReview,
-				leftComment,
 				sharedContent,
 				addedToWatchlist,
 				baseStcReward
@@ -33,14 +32,13 @@ var POST = async ({ request, locals }) => {
 			return json(result);
 		}
 		case "pattern": {
-			const { last30DaysWatchSessions = 0, avgSessionDurationSeconds = 0, avgCompletionPercent = 0, reviewsLeft = 0, commentsLeft = 0, uniqueContentsWatched = 0, stcEarned30Days = 0, accountAgedays = 0 } = body;
+			const { last30DaysWatchSessions = 0, avgSessionDurationSeconds = 0, avgCompletionPercent = 0, reviewsLeft = 0, uniqueContentsWatched = 0, stcEarned30Days = 0, accountAgedays = 0 } = body;
 			const result = await analyzeUserEngagementPattern({
 				userId: locals.user.id,
 				last30DaysWatchSessions,
 				avgSessionDurationSeconds,
 				avgCompletionPercent,
 				reviewsLeft,
-				commentsLeft,
 				uniqueContentsWatched,
 				stcEarned30Days,
 				accountAgedays

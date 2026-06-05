@@ -1,14 +1,35 @@
 // Sephar Studios Service Worker — handles offline HLS segment caching for downloads
 
+// Bump these cache names whenever the SW logic itself changes (not just the
+// shell assets) — the bump forces `install` to re-run on every client and
+// the `activate` handler below to clean up the old caches. Without a bump,
+// the browser keeps using the old SW until it naturally expires (~24h), so
+// fixes like "stop intercepting /api/*" don't reach users until tomorrow.
 const DOWNLOAD_CACHE = 'sephar-downloads-v1';
-const SHELL_CACHE = 'sephar-shell-v1';
+const SHELL_CACHE = 'sephar-shell-v2';
 
 // App shell assets to cache on install
 const SHELL_ASSETS = ['/', '/offline', '/favicon-96x96.png'];
 
 self.addEventListener('install', (event) => {
+  // Cache each shell asset INDEPENDENTLY. `cache.addAll(SHELL_ASSETS)` is
+  // atomic — if any URL fails (e.g. `/` cross-origin-redirects, network
+  // hiccup, 404), the whole install rejects and the service worker never
+  // activates. Using Promise.allSettled means a single bad asset only
+  // skips itself; the SW still installs and the navigation handler can
+  // fall through to the network on the missing entry.
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)).then(() => self.skipWaiting())
+    caches.open(SHELL_CACHE)
+      .then(async (cache) => {
+        const results = await Promise.allSettled(
+          SHELL_ASSETS.map((asset) => cache.add(asset))
+        );
+        const failed = results.filter((r) => r.status === 'rejected').length;
+        if (failed > 0) {
+          console.warn(`[sw] ${failed}/${SHELL_ASSETS.length} shell assets failed to cache; SW still installing.`);
+        }
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -25,6 +46,23 @@ self.addEventListener('activate', (event) => {
 // Intercept fetch — serve HLS segments from download cache when offline
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // CRITICAL: Do NOT intercept API requests. Two reasons:
+  //   1. `fetch()` inside a service worker does not proxy `xhr.upload.onprogress`
+  //      back to the original XMLHttpRequest, so XHR uploads through the SW
+  //      appear stuck at 0% the entire time even though bytes are transferring.
+  //      This was breaking the asset-upload progress bar in the creator wizard.
+  //   2. POST/PUT requests with bodies (e.g. multipart FormData for image
+  //      uploads) can fail unpredictably when the SW reads + replays the body.
+  // Letting /api/* go straight to the network removes the SW from a path
+  // where it adds zero value (we never cache /api responses anyway) and
+  // surfaces the real server response to the browser unfiltered.
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Don't intercept non-GET requests on any other path either. Caches are
+  // GET-only, and intercepting POST/PUT/DELETE just adds a useless detour
+  // that can break body streams.
+  if (event.request.method !== 'GET') return;
 
   // Only intercept HLS segments (.ts) and manifests (.m3u8) for offline playback
   if (url.pathname.endsWith('.ts') || url.pathname.endsWith('.m3u8')) {

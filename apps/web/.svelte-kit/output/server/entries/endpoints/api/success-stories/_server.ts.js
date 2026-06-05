@@ -1,16 +1,31 @@
-import { Q as successStories, t as db } from "../../../../chunks/drizzle.js";
+import { ft as successStories, t as db } from "../../../../chunks/drizzle.js";
 import { a as take } from "../../../../chunks/rate-limit.js";
 import { json } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";
 //#region src/routes/api/success-stories/+server.ts
 /**
-* GET  /api/success-stories — public list (approved only)
-* POST /api/success-stories — submit a new story (pending moderation)
+* GET  /api/success-stories         — public list (approved only)
+* GET  /api/success-stories?mine=1  — current user's submissions (any status)
+* POST /api/success-stories         — submit a new story (pending moderation)
 *
 * Submission is rate-limited per IP because anonymous submits are allowed
 * (signed-in users get the rate-limit bucket keyed by userId too).
 */
-var GET = async () => {
+var GET = async ({ url, locals }) => {
+	if (url.searchParams.get("mine") === "1") {
+		const session = await locals.auth.getSession();
+		if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+		return json({ stories: await db.select({
+			id: successStories.id,
+			name: successStories.name,
+			channel: successStories.channel,
+			story: successStories.story,
+			status: successStories.status,
+			moderationNote: successStories.moderationNote,
+			reviewedAt: successStories.reviewedAt,
+			createdAt: successStories.createdAt
+		}).from(successStories).where(eq(successStories.userId, session.user.id)).orderBy(desc(successStories.createdAt)).limit(100) });
+	}
 	return json({ stories: await db.select({
 		id: successStories.id,
 		name: successStories.name,

@@ -1,5 +1,5 @@
-import { It as getContext } from "./ui-libs.js";
-import { i as navigating$1, r as stores } from "./client.js";
+import { Ut as getContext } from "./ui-libs.js";
+import { a as navigating$1, i as stores } from "./client.js";
 Object.defineProperty({
 	get from() {
 		return navigating$1.current ? navigating$1.current.from : null;

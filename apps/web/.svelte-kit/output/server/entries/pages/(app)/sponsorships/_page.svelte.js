@@ -1,50 +1,14 @@
-import { A as Command_input$1, C as Popover_trigger$1, K as Portal, M as Command$1, Nt as fallback, O as Command_list$1, gt as ensure_array_like, h as Popover$1, j as Command_empty$1, jt as escape_html, k as Command_item$1, kt as attr, pt as bind_props, ut as attr_class, w as Popover_content$1, yt as spread_props } from "../../../../chunks/ui-libs.js";
-import { t as Check } from "../../../../chunks/check.js";
+import { C as Popover_trigger$1, Dt as spread_props, Lt as attr, Tt as head, et as Portal, h as Popover$1, w as Popover_content$1, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
-import { t as Circle_alert } from "../../../../chunks/circle-alert.js";
-import { t as Search } from "../../../../chunks/search.js";
+import { t as Upload } from "../../../../chunks/upload.js";
 import { t as X } from "../../../../chunks/x.js";
 import "../../../../chunks/client.js";
 import "../../../../chunks/navigation.js";
 import { t as cn } from "../../../../chunks/utils2.js";
-import { t as Button } from "../../../../chunks/button.js";
 import { t as Input } from "../../../../chunks/input.js";
+import { t as Button } from "../../../../chunks/button.js";
+import { c as Command, i as Command_item, n as Command_list, o as Command_empty, r as Command_input } from "../../../../chunks/command.js";
 import { t as Textarea } from "../../../../chunks/textarea.js";
-import "../../../../chunks/dialog.js";
-//#region src/lib/components/Notifications.svelte
-function Notifications($$renderer, $$props) {
-	let type = fallback($$props["type"], "success");
-	let message = $$props["message"];
-	let duration = fallback($$props["duration"], 5e3);
-	let visible = true;
-	if (duration > 0) setTimeout(() => {
-		visible = false;
-	}, duration);
-	if (visible) {
-		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<div class="fixed top-4 right-4 z-50"><div${attr_class("flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg", void 0, {
-			"bg-green-500": type === "success",
-			"bg-red-500": type === "error"
-		})}>`);
-		if (type === "success") {
-			$$renderer.push("<!--[0-->");
-			Check($$renderer, { class: "w-5 h-5 text-white" });
-		} else {
-			$$renderer.push("<!--[-1-->");
-			Circle_alert($$renderer, { class: "w-5 h-5 text-white" });
-		}
-		$$renderer.push(`<!--]--> <p class="text-white">${escape_html(message)}</p> <button class="ml-2 text-white hover:text-white/80">`);
-		X($$renderer, { class: "w-4 h-4" });
-		$$renderer.push(`<!----></button></div></div>`);
-	} else $$renderer.push("<!--[-1-->");
-	$$renderer.push(`<!--]-->`);
-	bind_props($$props, {
-		type,
-		message,
-		duration
-	});
-}
-//#endregion
 //#region src/lib/components/ui/popover/popover.svelte
 function Popover($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -181,305 +145,16 @@ function Popover_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region src/lib/components/ui/command/command.svelte
-function Command($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { api = null, ref = null, value = "", class: className, $$slots, $$events, ...restProps } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			if (Command$1) {
-				$$renderer.push("<!--[-->");
-				Command$1($$renderer, spread_props([
-					{
-						"data-slot": "command",
-						class: cn("bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md", className)
-					},
-					restProps,
-					{
-						get value() {
-							return value;
-						},
-						set value($$value) {
-							value = $$value;
-							$$settled = false;
-						},
-						get ref() {
-							return ref;
-						},
-						set ref($$value) {
-							ref = $$value;
-							$$settled = false;
-						}
-					}
-				]));
-				$$renderer.push("<!--]-->");
-			} else {
-				$$renderer.push("<!--[!-->");
-				$$renderer.push("<!--]-->");
-			}
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			api,
-			ref,
-			value
-		});
-	});
-}
-//#endregion
-//#region src/lib/components/ui/command/command-empty.svelte
-function Command_empty($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { ref = null, class: className, $$slots, $$events, ...restProps } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			if (Command_empty$1) {
-				$$renderer.push("<!--[-->");
-				Command_empty$1($$renderer, spread_props([
-					{
-						"data-slot": "command-empty",
-						class: cn("py-6 text-center text-sm", className)
-					},
-					restProps,
-					{
-						get ref() {
-							return ref;
-						},
-						set ref($$value) {
-							ref = $$value;
-							$$settled = false;
-						}
-					}
-				]));
-				$$renderer.push("<!--]-->");
-			} else {
-				$$renderer.push("<!--[!-->");
-				$$renderer.push("<!--]-->");
-			}
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, { ref });
-	});
-}
-//#endregion
-//#region src/lib/components/ui/command/command-item.svelte
-function Command_item($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { ref = null, class: className, $$slots, $$events, ...restProps } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			if (Command_item$1) {
-				$$renderer.push("<!--[-->");
-				Command_item$1($$renderer, spread_props([
-					{
-						"data-slot": "command-item",
-						class: cn("aria-selected:bg-accent aria-selected:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4", className)
-					},
-					restProps,
-					{
-						get ref() {
-							return ref;
-						},
-						set ref($$value) {
-							ref = $$value;
-							$$settled = false;
-						}
-					}
-				]));
-				$$renderer.push("<!--]-->");
-			} else {
-				$$renderer.push("<!--[!-->");
-				$$renderer.push("<!--]-->");
-			}
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, { ref });
-	});
-}
-//#endregion
-//#region src/lib/components/ui/command/command-input.svelte
-function Command_input($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { ref = null, class: className, value = "", $$slots, $$events, ...restProps } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="flex h-9 items-center gap-2 border-b ps-3 pe-8" data-slot="command-input-wrapper">`);
-			Search($$renderer, { class: "size-4 shrink-0 opacity-50" });
-			$$renderer.push(`<!----> `);
-			if (Command_input$1) {
-				$$renderer.push("<!--[-->");
-				Command_input$1($$renderer, spread_props([
-					{
-						"data-slot": "command-input",
-						class: cn("placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50", className)
-					},
-					restProps,
-					{
-						get ref() {
-							return ref;
-						},
-						set ref($$value) {
-							ref = $$value;
-							$$settled = false;
-						},
-						get value() {
-							return value;
-						},
-						set value($$value) {
-							value = $$value;
-							$$settled = false;
-						}
-					}
-				]));
-				$$renderer.push("<!--]-->");
-			} else {
-				$$renderer.push("<!--[!-->");
-				$$renderer.push("<!--]-->");
-			}
-			$$renderer.push(`</div>`);
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			ref,
-			value
-		});
-	});
-}
-//#endregion
-//#region src/lib/components/ui/command/command-list.svelte
-function Command_list($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { ref = null, class: className, $$slots, $$events, ...restProps } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			if (Command_list$1) {
-				$$renderer.push("<!--[-->");
-				Command_list$1($$renderer, spread_props([
-					{
-						"data-slot": "command-list",
-						class: cn("max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto", className)
-					},
-					restProps,
-					{
-						get ref() {
-							return ref;
-						},
-						set ref($$value) {
-							ref = $$value;
-							$$settled = false;
-						}
-					}
-				]));
-				$$renderer.push("<!--]-->");
-			} else {
-				$$renderer.push("<!--[!-->");
-				$$renderer.push("<!--]-->");
-			}
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, { ref });
-	});
-}
-//#endregion
-//#region src/lib/components/FileUpload.svelte
-function FileUpload($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let label = $$props["label"];
-		let name = $$props["name"];
-		let accept = fallback($$props["accept"], "*");
-		let required = fallback($$props["required"], false);
-		let file = fallback($$props["file"], null);
-		const dispatchChange = () => {
-			dispatchEvent(new CustomEvent("change", { detail: { file } }));
-		};
-		function handleFileChange(event) {
-			const input = event.target;
-			if (input.files?.length) {
-				file = input.files[0];
-				dispatchChange();
-			}
-		}
-		function removeFile() {
-			file = null;
-			dispatchChange();
-		}
-		$$renderer.push(`<div class="space-y-2"><label${attr("for", name)} class="text-sm font-medium">${escape_html(label)}</label> <div class="flex items-center gap-2">`);
-		Input($$renderer, {
-			id: name,
-			type: "file",
-			name,
-			accept,
-			required,
-			onchange: handleFileChange
-		});
-		$$renderer.push(`<!----> `);
-		if (file) {
-			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="flex items-center gap-2 text-sm border rounded-md p-2">${escape_html(file.name)} `);
-			Button($$renderer, {
-				size: "icon",
-				variant: "ghost",
-				onclick: removeFile,
-				children: ($$renderer) => {
-					X($$renderer, { size: 16 });
-				},
-				$$slots: { default: true }
-			});
-			$$renderer.push(`<!----></div>`);
-		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div></div>`);
-		bind_props($$props, {
-			label,
-			name,
-			accept,
-			required,
-			file
-		});
-	});
-}
-//#endregion
 //#region src/routes/(app)/sponsorships/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let data = $$props["data"];
-		let form = $$props["form"];
+		let { data, form } = $$props;
 		let isSubmitting = false;
-		let files = {
-			script: null,
-			budget_breakdown: null,
-			storyboard: null
-		};
+		let scriptFile = null;
+		let budgetFile = null;
+		let storyboardFile = null;
 		let selectedGenre = "";
+		let genrePopoverOpen = false;
 		const genres = [
 			"Drama",
 			"Documentary",
@@ -491,19 +166,28 @@ function _page($$renderer, $$props) {
 		];
 		function selectGenre(genre) {
 			selectedGenre = genre;
+			genrePopoverOpen = false;
+		}
+		function pickFile(setter) {
+			return (e) => {
+				const input = e.currentTarget;
+				setter(input.files?.[0] ?? null);
+			};
+		}
+		function clearFile(setter, inputId) {
+			setter(null);
+			const el = document.getElementById(inputId);
+			if (el) el.value = "";
 		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="container mx-auto py-12 px-4"><div class="max-w-4xl mx-auto space-y-8"><div class="text-center space-y-4"><h1 class="text-4xl font-bold">Movie Production Sponsorship</h1> <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p></div> `);
-			if (form) {
-				$$renderer.push("<!--[0-->");
-				Notifications($$renderer, {
-					type: form.success ? "success" : "error",
-					message: form.message
+			head("2rmv4b", $$renderer, ($$renderer) => {
+				$$renderer.title(($$renderer) => {
+					$$renderer.push(`<title>Movie Production Sponsorship — Sephar Studios</title>`);
 				});
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> <form method="POST" action="?/submit" class="space-y-8" enctype="multipart/form-data"><div class="space-y-4"><h2 class="text-2xl font-semibold">Contact Information</h2> <div class="grid gap-4 md:grid-cols-2">`);
+			});
+			$$renderer.push(`<div class="container mx-auto py-12 px-4"><div class="max-w-4xl mx-auto space-y-8"><div class="text-center space-y-4"><h1 class="text-4xl font-bold">Movie Production Sponsorship</h1> <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p></div> <form method="POST" action="?/submit" class="space-y-8" enctype="multipart/form-data"><div class="space-y-4"><h2 class="text-2xl font-semibold">Contact Information</h2> <div class="grid gap-4 md:grid-cols-2">`);
 			if (!data?.user) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="space-y-2"><label for="name" class="text-sm font-medium">Full Name</label> `);
@@ -529,14 +213,22 @@ function _page($$renderer, $$props) {
 			});
 			$$renderer.push(`<!----></div> <div class="space-y-2"><label for="genre" class="text-sm font-medium">Genre</label> `);
 			Popover($$renderer, {
+				get open() {
+					return genrePopoverOpen;
+				},
+				set open($$value) {
+					genrePopoverOpen = $$value;
+					$$settled = false;
+				},
 				children: ($$renderer) => {
 					Popover_trigger($$renderer, {
 						children: ($$renderer) => {
 							Button($$renderer, {
 								class: "w-full justify-between",
+								type: "button",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->${escape_html(selectedGenre || "Select genre")} `);
-									Chevron_down($$renderer, { size: 16 });
+									Chevron_down($$renderer, { class: "w-4 h-4" });
 									$$renderer.push(`<!---->`);
 								},
 								$$slots: { default: true }
@@ -548,38 +240,72 @@ function _page($$renderer, $$props) {
 					Popover_content($$renderer, {
 						class: "w-50 p-2",
 						children: ($$renderer) => {
-							Command($$renderer, {
-								children: ($$renderer) => {
-									Command_input($$renderer, { placeholder: "Search genre..." });
-									$$renderer.push(`<!----> `);
-									Command_list($$renderer, {
-										children: ($$renderer) => {
-											Command_empty($$renderer, {
+							if (Command) {
+								$$renderer.push("<!--[-->");
+								Command($$renderer, {
+									children: ($$renderer) => {
+										if (Command_input) {
+											$$renderer.push("<!--[-->");
+											Command_input($$renderer, { placeholder: "Search genre..." });
+											$$renderer.push("<!--]-->");
+										} else {
+											$$renderer.push("<!--[!-->");
+											$$renderer.push("<!--]-->");
+										}
+										$$renderer.push(` `);
+										if (Command_list) {
+											$$renderer.push("<!--[-->");
+											Command_list($$renderer, {
 												children: ($$renderer) => {
-													$$renderer.push(`<!---->No genres found.`);
+													if (Command_empty) {
+														$$renderer.push("<!--[-->");
+														Command_empty($$renderer, {
+															children: ($$renderer) => {
+																$$renderer.push(`<!---->No genres found.`);
+															},
+															$$slots: { default: true }
+														});
+														$$renderer.push("<!--]-->");
+													} else {
+														$$renderer.push("<!--[!-->");
+														$$renderer.push("<!--]-->");
+													}
+													$$renderer.push(` <!--[-->`);
+													const each_array = ensure_array_like(genres);
+													for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+														let g = each_array[$$index];
+														if (Command_item) {
+															$$renderer.push("<!--[-->");
+															Command_item($$renderer, {
+																onSelect: () => selectGenre(g),
+																children: ($$renderer) => {
+																	$$renderer.push(`<!---->${escape_html(g)}`);
+																},
+																$$slots: { default: true }
+															});
+															$$renderer.push("<!--]-->");
+														} else {
+															$$renderer.push("<!--[!-->");
+															$$renderer.push("<!--]-->");
+														}
+													}
+													$$renderer.push(`<!--]-->`);
 												},
 												$$slots: { default: true }
 											});
-											$$renderer.push(`<!----> <!--[-->`);
-											const each_array = ensure_array_like(genres);
-											for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-												let genre = each_array[$$index];
-												Command_item($$renderer, {
-													onclick: () => selectGenre(genre),
-													children: ($$renderer) => {
-														$$renderer.push(`<!---->${escape_html(genre)}`);
-													},
-													$$slots: { default: true }
-												});
-											}
-											$$renderer.push(`<!--]-->`);
-										},
-										$$slots: { default: true }
-									});
-									$$renderer.push(`<!---->`);
-								},
-								$$slots: { default: true }
-							});
+											$$renderer.push("<!--]-->");
+										} else {
+											$$renderer.push("<!--[!-->");
+											$$renderer.push("<!--]-->");
+										}
+									},
+									$$slots: { default: true }
+								});
+								$$renderer.push("<!--]-->");
+							} else {
+								$$renderer.push("<!--[!-->");
+								$$renderer.push("<!--]-->");
+							}
 						},
 						$$slots: { default: true }
 					});
@@ -593,50 +319,89 @@ function _page($$renderer, $$props) {
 				name: "synopsis",
 				rows: 4,
 				required: true,
-				placeholder: "Provide a brief overview of your project..."
+				placeholder: "Provide a brief overview of your project (40+ characters)..."
 			});
-			$$renderer.push(`<!----></div></div> <div class="space-y-4"><h2 class="text-2xl font-semibold">Supporting Documents</h2> <div class="grid gap-6">`);
-			FileUpload($$renderer, {
-				label: "Script or Treatment",
+			$$renderer.push(`<!----></div></div> <div class="space-y-4"><h2 class="text-2xl font-semibold">Supporting Documents</h2> <div class="grid gap-6"><div class="space-y-2"><label for="script-input" class="text-sm font-medium">Script or Treatment</label> <div class="flex items-center gap-2">`);
+			Input($$renderer, {
+				id: "script-input",
+				type: "file",
 				name: "script",
 				accept: ".pdf,.doc,.docx",
 				required: true,
-				get file() {
-					return files.script;
-				},
-				set file($$value) {
-					files.script = $$value;
-					$$settled = false;
-				}
+				onchange: pickFile((f) => scriptFile = f)
 			});
 			$$renderer.push(`<!----> `);
-			FileUpload($$renderer, {
-				label: "Budget Breakdown",
+			if (scriptFile) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="flex items-center gap-2 text-sm border rounded-md p-2">`);
+				Upload($$renderer, { class: "w-4 h-4" });
+				$$renderer.push(`<!----> <span class="truncate max-w-40">${escape_html(scriptFile.name)}</span> `);
+				Button($$renderer, {
+					type: "button",
+					size: "icon",
+					variant: "ghost",
+					onclick: () => clearFile((f) => scriptFile = f, "script-input"),
+					children: ($$renderer) => {
+						X($$renderer, { class: "w-4 h-4" });
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div></div> <div class="space-y-2"><label for="budget-input" class="text-sm font-medium">Budget Breakdown</label> <div class="flex items-center gap-2">`);
+			Input($$renderer, {
+				id: "budget-input",
+				type: "file",
 				name: "budget_breakdown",
 				accept: ".pdf,.xls,.xlsx",
 				required: true,
-				get file() {
-					return files.budget_breakdown;
-				},
-				set file($$value) {
-					files.budget_breakdown = $$value;
-					$$settled = false;
-				}
+				onchange: pickFile((f) => budgetFile = f)
 			});
 			$$renderer.push(`<!----> `);
-			FileUpload($$renderer, {
-				label: "Storyboard/Visual References",
+			if (budgetFile) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="flex items-center gap-2 text-sm border rounded-md p-2">`);
+				Upload($$renderer, { class: "w-4 h-4" });
+				$$renderer.push(`<!----> <span class="truncate max-w-40">${escape_html(budgetFile.name)}</span> `);
+				Button($$renderer, {
+					type: "button",
+					size: "icon",
+					variant: "ghost",
+					onclick: () => clearFile((f) => budgetFile = f, "budget-input"),
+					children: ($$renderer) => {
+						X($$renderer, { class: "w-4 h-4" });
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div></div> <div class="space-y-2"><label for="storyboard-input" class="text-sm font-medium">Storyboard / Visual References</label> <div class="flex items-center gap-2">`);
+			Input($$renderer, {
+				id: "storyboard-input",
+				type: "file",
 				name: "storyboard",
 				accept: ".pdf,.zip,.jpg,.png",
-				get file() {
-					return files.storyboard;
-				},
-				set file($$value) {
-					files.storyboard = $$value;
-					$$settled = false;
-				}
+				onchange: pickFile((f) => storyboardFile = f)
 			});
-			$$renderer.push(`<!----></div></div> <div class="flex justify-end gap-4">`);
+			$$renderer.push(`<!----> `);
+			if (storyboardFile) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="flex items-center gap-2 text-sm border rounded-md p-2">`);
+				Upload($$renderer, { class: "w-4 h-4" });
+				$$renderer.push(`<!----> <span class="truncate max-w-40">${escape_html(storyboardFile.name)}</span> `);
+				Button($$renderer, {
+					type: "button",
+					size: "icon",
+					variant: "ghost",
+					onclick: () => clearFile((f) => storyboardFile = f, "storyboard-input"),
+					children: ($$renderer) => {
+						X($$renderer, { class: "w-4 h-4" });
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div></div></div></div> <div class="flex justify-end gap-4">`);
 			Button($$renderer, {
 				type: "reset",
 				variant: "outline",
@@ -662,10 +427,6 @@ function _page($$renderer, $$props) {
 			$$render_inner($$inner_renderer);
 		} while (!$$settled);
 		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			data,
-			form
-		});
 	});
 }
 //#endregion

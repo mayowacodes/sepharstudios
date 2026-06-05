@@ -1,5 +1,5 @@
 import { n as __reExport, t as __exportAll } from "./rolldown-runtime.js";
-import { It as getContext, Rt as setContext, mt as derived, nt as createSubscriber, ot as onDestroy, tt as SvelteSet } from "./ui-libs.js";
+import { Gt as setContext, St as derived, Ut as getContext, lt as SvelteSet, mt as onDestroy, ut as createSubscriber } from "./ui-libs.js";
 import { r as Role } from "./constants.js";
 import { InfiniteQueryObserver, MutationObserver, QueriesObserver, QueryClient, QueryObserver, hydrate, noop } from "@tanstack/query-core";
 //#region ../../node_modules/@tanstack/svelte-query/dist/context.js
@@ -311,7 +311,7 @@ var infiniteScroll = class InfiniteScroll {
 	}
 	listQuery(searchTerm, host = "", field = "") {
 		const self = this;
-		return createInfiniteQuery({
+		return createInfiniteQuery(() => ({
 			queryKey: [field, searchTerm],
 			staleTime: 3e4,
 			initialPageParam: 1,
@@ -342,7 +342,7 @@ var infiniteScroll = class InfiniteScroll {
 					total
 				};
 			}
-		});
+		}));
 	}
 	get queryClient() {
 		return this.#queryClient;

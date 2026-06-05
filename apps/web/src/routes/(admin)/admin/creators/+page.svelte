@@ -479,7 +479,7 @@
                 <input
                   type="checkbox"
                   checked={selectedCreators.length === getPaginatedCreators().length && getPaginatedCreators().length > 0}
-                  onchange={selectAllCreators}
+                  onchange={(e) => { selectAllCreators(); return (e.target as HTMLInputElement).checked; }}
                   class="rounded surface-2 border-gray-600"
                 >
               </th>
@@ -501,8 +501,8 @@
                 <td class="p-4">
                   <input
                     type="checkbox"
-                    checked={selectedCreators.includes(creator.id)}
-                    onchange={() => toggleCreatorSelection(creator.id)}
+checked={selectedCreators.includes(creator.id)}
+                    onchange={(e) => { toggleCreatorSelection(creator.id); return (e.target as HTMLInputElement).checked; }}
                     class="rounded surface-2 border-gray-600"
                   >
                 </td>

@@ -5,9 +5,9 @@
   import { page } from '$app/state';
   import { navigateToMainSite } from '$lib/utils/portal-navigation';
 
-  let avatar = '';
-  let avatarType = '';
-  let mounted = false;
+  let avatar = $state('');
+  let avatarType = $state('');
+  let mounted = $state(false);
 
   const avatars = [
     { name: 'Lambie', emoji: '🐑' },
@@ -23,7 +23,7 @@
   });
 
   // Get current age group from the URL path
-  $: currentAgeGroup = page.url.pathname.includes('/teens') ? 'teens' : 'kiddies';
+  let currentAgeGroup = $derived(page.url.pathname.includes('/teens') ? 'teens' : 'kiddies');
 
   function navigateTo(section: string) {
     goto(`/kids/${currentAgeGroup}/${section}`);
@@ -57,32 +57,32 @@
     }
   }
   
-  $: avatarDisplay = mounted ? getAvatarDisplay() : { type: 'emoji', data: '😊', name: 'Profile' };
+  let avatarDisplay = $derived(mounted ? getAvatarDisplay() : { type: 'emoji', data: '😊', name: 'Profile' });
 </script>
 
 {#if mounted}
 <nav class="bg-linear-to-r from-pink-100 to-yellow-100 border-b-4 border-yellow-300 shadow-sm">
   <div class="container flex items-center justify-between py-3">
   <div class="flex items-center gap-4">
-    <button on:click={goToMain} class="flex items-center gap-2 text-purple-700 hover:text-purple-600 transition-colors" aria-label="Back to Sephar Studios main site">
+    <button onclick={goToMain} class="flex items-center gap-2 text-purple-700 hover:text-purple-600 transition-colors" aria-label="Back to Sephar Studios main site">
       <img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-6 w-auto object-contain" />
       <span class="font-bold text-sm hidden sm:inline">Sephar Studios</span>
     </button>
     <span class="text-pink-300 hidden sm:inline" aria-hidden="true">|</span>
-    <button on:click={goHome} class="text-2xl font-bold text-pink-700 hover:text-pink-600 transition-colors">
+    <button onclick={goHome} class="text-2xl font-bold text-pink-700 hover:text-pink-600 transition-colors">
       Faith Kids
     </button>
     
     <!-- Age Group Switcher -->
     <div class="flex items-center gap-1 bg-white/60 rounded-lg p-1">
       <button 
-        on:click={() => switchAgeGroup('kiddies')}
+        onclick={() => switchAgeGroup('kiddies')}
         class="px-3 py-1 text-sm font-semibold rounded-md transition-all {currentAgeGroup === 'kiddies' ? 'bg-yellow-300 text-pink-700 shadow-sm' : 'text-pink-600 hover:bg-yellow-100'}"
       >
         👶 Kiddies
       </button>
       <button 
-        on:click={() => switchAgeGroup('teens')}
+        onclick={() => switchAgeGroup('teens')}
         class="px-3 py-1 text-sm font-semibold rounded-md transition-all {currentAgeGroup === 'teens' ? 'bg-blue-300 text-purple-700 shadow-sm' : 'text-purple-600 hover:bg-blue-100'}"
       >
         👦👧 Teens
@@ -94,19 +94,19 @@
   <div class="flex items-center gap-4">
     <div class="hidden md:flex items-center gap-2">
       <button 
-        on:click={() => navigateTo('movies')}
+        onclick={() => navigateTo('movies')}
         class="px-3 py-1 text-sm font-medium text-pink-700 hover:bg-pink-200 rounded-lg transition-colors"
       >
         🎬 Movies
       </button>
       <button 
-        on:click={() => navigateTo('shows')}
+        onclick={() => navigateTo('shows')}
         class="px-3 py-1 text-sm font-medium text-pink-700 hover:bg-pink-200 rounded-lg transition-colors"
       >
         📺 Shows  
       </button>
       <button 
-        on:click={() => navigateTo('documentaries')}
+        onclick={() => navigateTo('documentaries')}
         class="px-3 py-1 text-sm font-medium text-pink-700 hover:bg-pink-200 rounded-lg transition-colors"
       >
         📚 Docs
@@ -115,7 +115,7 @@
     
     <!-- Profile Section -->
     <button 
-      on:click={changeProfile}
+      onclick={changeProfile}
       class="flex items-center gap-2 bg-white/80 hover:bg-white px-3 py-2 rounded-lg transition-colors border border-pink-200"
       title="Change Profile"
     >
@@ -135,7 +135,7 @@
     
     <!-- Back to Main Site Button -->
     <button 
-      on:click={goToMain}
+      onclick={goToMain}
       class="flex items-center gap-1 px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
       title="Back to Main Site"
     >

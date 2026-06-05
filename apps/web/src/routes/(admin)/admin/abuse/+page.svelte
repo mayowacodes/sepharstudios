@@ -37,8 +37,16 @@
       params.set('status', statusFilter);
       if (filter !== 'all') params.set('targetType', filter);
       const res = await fetch(`/api/admin/abuse?${params}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[abuse] load HTTP', res.status);
+        reports = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       reports = body.reports ?? [];
+    } catch (err) {
+      console.error('[abuse] load failed:', err);
+      reports = [];
     } finally {
       loading = false;
     }

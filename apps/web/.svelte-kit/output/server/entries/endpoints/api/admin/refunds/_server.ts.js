@@ -1,9 +1,9 @@
-import { I as paymentIntents, K as refunds, R as paystackSubscriptions, t as db } from "../../../../../chunks/drizzle.js";
+import { Z as paystackSubscriptions, a as user, at as refunds, q as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { a as createRefund } from "../../../../../chunks/paystack.js";
 import { json } from "@sveltejs/kit";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or } from "drizzle-orm";
 //#region src/routes/api/admin/refunds/+server.ts
 /**
 * POST /api/admin/refunds
@@ -23,8 +23,57 @@ var POST = async ({ locals, request }) => {
 	const body = await request.json();
 	if (!body.reference) return json({ error: "reference is required" }, { status: 400 });
 	if (body.amountCents !== void 0 && body.amountCents <= 0) return json({ error: "amountCents must be positive" }, { status: 400 });
+	const processor = body.processor ?? "paystack";
+	if (!["paystack", "stripe"].includes(processor)) return json({ error: `Unknown processor: ${processor}` }, { status: 400 });
 	const [intent] = await db.select().from(paymentIntents).where(eq(paymentIntents.reference, body.reference)).limit(1);
 	if (!intent) return json({ error: "No payment_intent matches this reference" }, { status: 404 });
+	if (processor === "stripe") {
+		const { getStripe, isStripeConfigured } = await import("../../../../../chunks/stripe.js");
+		if (!isStripeConfigured()) return json({ error: "Stripe not configured" }, { status: 503 });
+		const amountCents = body.amountCents ?? intent.amountCents;
+		const [auditRow] = await db.insert(refunds).values({
+			userId: intent.userId,
+			reference: body.reference,
+			amountCents,
+			reason: body.reason ?? null,
+			issuedBy: session.user.id,
+			status: "pending"
+		}).returning();
+		try {
+			const stripe = getStripe();
+			const refundPayload = { amount: amountCents };
+			if (body.reference.startsWith("pi_")) refundPayload.payment_intent = body.reference;
+			else refundPayload.charge = body.reference;
+			if (body.reason) refundPayload.reason = "requested_by_customer";
+			const refund = await stripe.refunds.create(refundPayload);
+			await db.update(refunds).set({
+				status: refund.status === "succeeded" ? "success" : "pending",
+				paystackResponse: refund
+			}).where(eq(refunds.id, auditRow.id));
+			await notify({
+				userId: intent.userId,
+				kind: "subscription",
+				title: "Refund issued",
+				message: `A refund of $${(amountCents / 100).toFixed(2)} has been processed via Stripe. Allow 5–10 business days.`,
+				actionUrl: "/settings"
+			});
+			return json({
+				success: true,
+				refundId: auditRow.id,
+				stripe: refund
+			});
+		} catch (err) {
+			await db.update(refunds).set({
+				status: "failed",
+				paystackResponse: { error: err.message }
+			}).where(eq(refunds.id, auditRow.id));
+			console.error("[admin/refunds] Stripe refund failed:", err);
+			return json({
+				error: "Stripe refund failed — see audit row for details",
+				refundId: auditRow.id
+			}, { status: 502 });
+		}
+	}
 	const amountCents = body.amountCents ?? intent.amountCents;
 	const [auditRow] = await db.insert(refunds).values({
 		userId: intent.userId,
@@ -37,7 +86,7 @@ var POST = async ({ locals, request }) => {
 	try {
 		const paystackResult = await createRefund({
 			transactionReference: body.reference,
-			amountKobo: body.amountCents,
+			amountKobo: amountCents,
 			merchantNote: body.reason
 		});
 		await db.update(refunds).set({
@@ -68,22 +117,47 @@ var POST = async ({ locals, request }) => {
 		}).where(eq(refunds.id, auditRow.id));
 		console.error("[admin/refunds] Paystack refund failed:", err);
 		return json({
-			error: "Paystack refund failed",
-			refundId: auditRow.id,
-			detail: err.message
+			error: "Paystack refund failed — see audit row for details",
+			refundId: auditRow.id
 		}, { status: 502 });
 	}
 };
 /**
 * GET /api/admin/refunds
 *
-* List recent refunds, most recent first. Admin-only.
+* List refunds (filterable + searchable). Admin-only.
+* Query: ?status=&q=&limit=&offset=
+*   - status: 'pending' | 'success' | 'failed'
+*   - q: matches refund reference or user email/name (case-insensitive)
 */
 var GET = async ({ locals, url }) => {
 	const { error } = await requireAdmin(locals);
 	if (error) return error;
 	const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 200);
-	return json({ refunds: await db.select().from(refunds).orderBy(desc(refunds.createdAt)).limit(limit) });
+	const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
+	const status = url.searchParams.get("status");
+	const q = url.searchParams.get("q")?.trim() ?? "";
+	const conditions = [];
+	if (status && [
+		"pending",
+		"success",
+		"failed"
+	].includes(status)) conditions.push(eq(refunds.status, status));
+	if (q) conditions.push(or(ilike(refunds.reference, `%${q}%`), ilike(user.email, `%${q}%`), ilike(user.name, `%${q}%`)));
+	const where = conditions.length > 0 ? and(...conditions) : void 0;
+	return json({ refunds: await db.select({
+		id: refunds.id,
+		userId: refunds.userId,
+		reference: refunds.reference,
+		amountCents: refunds.amountCents,
+		currency: refunds.currency,
+		reason: refunds.reason,
+		status: refunds.status,
+		createdAt: refunds.createdAt,
+		issuedBy: refunds.issuedBy,
+		userEmail: user.email,
+		userName: user.name
+	}).from(refunds).leftJoin(user, eq(refunds.userId, user.id)).where(where).orderBy(desc(refunds.createdAt)).limit(limit).offset(offset) });
 };
 //#endregion
 export { GET, POST };

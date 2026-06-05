@@ -1,4 +1,4 @@
-import { C as forumLikes, T as forumThreads, a as user, t as db, w as forumReplies } from "../../../../../../chunks/drizzle.js";
+import { M as forumLikes, N as forumReplies, P as forumThreads, a as user, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, asc, eq, inArray } from "drizzle-orm";
 //#region src/routes/api/forum/threads/[id]/+server.ts

@@ -1,7 +1,8 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, wt as html, yt as spread_props } from "../../../../../chunks/ui-libs.js";
+import { Dt as spread_props, Lt as attr, Mt as html, St as derived, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../../../../chunks/constants.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
 import { t as External_link } from "../../../../../chunks/external-link.js";
+import { t as Heart } from "../../../../../chunks/heart.js";
 import { n as goto } from "../../../../../chunks/client.js";
 import "../../../../../chunks/navigation.js";
 import { t as Button } from "../../../../../chunks/button.js";
@@ -28,16 +29,6 @@ function Heart_off($$renderer, $$props) {
 			["path", { "d": "m16.967 16.967-3.459 3.346a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5a5.5 5.5 0 0 1 2.747-4.761" }],
 			["path", { "d": "m2 2 20 20" }]
 		] }
-	]));
-}
-//#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/heart.svelte
-function Heart($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "heart" },
-		props,
-		{ iconNode: [["path", { "d": "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" }]] }
 	]));
 }
 //#endregion

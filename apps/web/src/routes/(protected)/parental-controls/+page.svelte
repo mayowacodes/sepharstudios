@@ -194,8 +194,8 @@
                     type="radio"
                     name="contentRating"
                     value={rating.value}
-                    checked={selected.contentRating === rating.value}
-                    onchange={() => updateSetting(selected.id, 'contentRating', rating.value)}
+                    bind:group={selected.contentRating}
+                    onchange={() => { updateSetting(selected.id, 'contentRating', rating.value); }}
                     class="accent-primary"
                   />
                   <span class="text-sm">{rating.label}</span>

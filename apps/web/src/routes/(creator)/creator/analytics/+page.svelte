@@ -67,12 +67,17 @@
     try {
       const res = await fetch(`/api/creator/analytics?period=${period}`);
       if (!res.ok) {
+        console.error('[creator/analytics] load HTTP', res.status);
         analyticsData = emptyAnalytics();
         return;
       }
-      analyticsData = await res.json();
+      // Guard json parse so a transient empty response or HTML body
+      // doesn't throw and blank the page during the (await res.json())
+      // microtask after hydration.
+      const data = await res.json().catch(() => null);
+      analyticsData = data ?? emptyAnalytics();
     } catch (err) {
-      console.error('Error loading analytics:', err);
+      console.error('[creator/analytics] load failed:', err);
       analyticsData = emptyAnalytics();
     } finally {
       isLoading = false;

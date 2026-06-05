@@ -1,4 +1,4 @@
-import { j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { i as enforceRateLimit, t as AI_AGENT_LIMIT } from "../../../../../chunks/rate-limit.js";
 import { n as generateContentMetadata } from "../../../../../chunks/ai-tagging.js";
 import { error, json } from "@sveltejs/kit";

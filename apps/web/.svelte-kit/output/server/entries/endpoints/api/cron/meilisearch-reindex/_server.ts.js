@@ -1,6 +1,6 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { g as creators, j as mediaLibrary, t as db, v as episodes } from "../../../../../chunks/drizzle.js";
-import { i as isMeiliConfigured, n as indexEpisodes, r as indexMedia, t as indexCreators } from "../../../../../chunks/meilisearch.js";
+import { D as episodes, H as mediaLibrary, T as creators, t as db } from "../../../../../chunks/drizzle.js";
+import { a as isMeiliConfigured, i as indexMedia, n as indexCreators, r as indexEpisodes } from "../../../../../chunks/meilisearch2.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/cron/meilisearch-reindex/+server.ts
@@ -49,8 +49,10 @@ var POST = async ({ request }) => {
 			thumbnail: mediaLibrary.thumbnail,
 			posterUrl: mediaLibrary.posterUrl,
 			viewCount: mediaLibrary.viewCount,
-			createdAt: mediaLibrary.createdAt
-		}).from(mediaLibrary).where(and(eq(mediaLibrary.isActive, true), eq(mediaLibrary.status, "approved")))).map((r) => ({
+			createdAt: mediaLibrary.createdAt,
+			cast: mediaLibrary.cast,
+			crew: mediaLibrary.crew
+		}).from(mediaLibrary).where(and(eq(mediaLibrary.isActive, true), eq(mediaLibrary.status, "approved"), eq(mediaLibrary.visibility, "public")))).map((r) => ({
 			id: r.id,
 			title: r.title,
 			description: r.description,
@@ -65,7 +67,9 @@ var POST = async ({ request }) => {
 			thumbnail: r.thumbnail,
 			posterUrl: r.posterUrl,
 			viewCount: Number(r.viewCount ?? 0),
-			createdAt: r.createdAt.getTime()
+			createdAt: r.createdAt.getTime(),
+			castNames: Array.isArray(r.cast) ? r.cast.map((c) => c.name).filter(Boolean) : [],
+			crewNames: Array.isArray(r.crew) ? r.crew.map((c) => c.name).filter(Boolean) : []
 		}));
 		for (let i = 0; i < docs.length; i += BATCH) await indexMedia(docs.slice(i, i + BATCH));
 		result.media = docs.length;

@@ -74,7 +74,7 @@
   }
 </script>
 
-<svelte:window on:keydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} />
 
 <CommandPaletteAI bind:open={paletteOpen} variant={portal} onAskCopilot={() => (copilotOpen = true)} />
 

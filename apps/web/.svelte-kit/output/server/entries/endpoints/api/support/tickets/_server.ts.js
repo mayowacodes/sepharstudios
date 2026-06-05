@@ -1,17 +1,36 @@
-import { $ as supportTickets, t as db } from "../../../../../chunks/drizzle.js";
+import { pt as supportTickets, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
+import { t as Constants } from "../../../../../chunks/constants.js";
 import { t as sendEmailAction } from "../../../../../chunks/server2.js";
 import { a as take } from "../../../../../chunks/rate-limit.js";
-import { t as Constants } from "../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
+import { desc, eq } from "drizzle-orm";
 //#region src/routes/api/support/tickets/+server.ts
 /**
-* POST /api/support/tickets — submit a tech-support ticket.
+* GET  /api/support/tickets?mine=1 — list the current user's tickets.
+* POST /api/support/tickets        — submit a tech-support ticket.
 *
 * Auth optional. Rate-limited 3/hr per user/IP. Inserts a `support_tickets`
 * row, emails Constants.SUPPORTEMAIL, and fires an in-app `notify()` so the
 * submitter sees confirmation in their notification center.
 */
+var GET = async ({ url, locals }) => {
+	if (url.searchParams.get("mine") !== "1") return json({ error: "Only ?mine=1 listing is supported" }, { status: 400 });
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	return json({ tickets: await db.select({
+		id: supportTickets.id,
+		subject: supportTickets.subject,
+		category: supportTickets.category,
+		priority: supportTickets.priority,
+		description: supportTickets.description,
+		status: supportTickets.status,
+		adminResponse: supportTickets.adminResponse,
+		attachments: supportTickets.attachments,
+		createdAt: supportTickets.createdAt,
+		updatedAt: supportTickets.updatedAt
+	}).from(supportTickets).where(eq(supportTickets.userId, session.user.id)).orderBy(desc(supportTickets.createdAt)).limit(100) });
+};
 var ALLOWED_CATEGORIES = new Set([
 	"video-playback",
 	"audio-issues",
@@ -90,4 +109,4 @@ var POST = async ({ request, locals, getClientAddress }) => {
 	});
 };
 //#endregion
-export { POST };
+export { GET, POST };

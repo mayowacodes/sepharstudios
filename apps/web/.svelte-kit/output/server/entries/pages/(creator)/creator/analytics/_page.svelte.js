@@ -1,51 +1,59 @@
-import { jt as escape_html, kt as attr } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import "../../../../../chunks/KpiCard.js";
+import { t as Chart_column } from "../../../../../chunks/chart-column.js";
+import { t as Skeleton } from "../../../../../chunks/skeleton.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import "../../../../../chunks/TrendChart.js";
+import "../../../../../chunks/EmptyState.js";
 //#region src/routes/(creator)/creator/analytics/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let selectedPeriod = "30d";
-		let selectedContent = "all";
 		let aiLoading = false;
-		$$renderer.push(`<div class="space-y-6"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between"><div><h1 class="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1> <p class="text-gray-300">Track your content performance and audience engagement</p></div> <div class="mt-4 sm:mt-0 flex space-x-3">`);
-		$$renderer.select({
-			value: selectedPeriod,
-			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-		}, ($$renderer) => {
-			$$renderer.option({ value: "7d" }, ($$renderer) => {
-				$$renderer.push(`Last 7 days`);
+		$$renderer.push(`<div class="space-y-6">`);
+		{
+			function actions($$renderer) {
+				$$renderer.select({
+					value: selectedPeriod,
+					class: "px-3 py-1.5 surface-2 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-purple-600"
+				}, ($$renderer) => {
+					$$renderer.option({ value: "7d" }, ($$renderer) => {
+						$$renderer.push(`Last 7 days`);
+					});
+					$$renderer.option({ value: "30d" }, ($$renderer) => {
+						$$renderer.push(`Last 30 days`);
+					});
+					$$renderer.option({ value: "90d" }, ($$renderer) => {
+						$$renderer.push(`Last 90 days`);
+					});
+					$$renderer.option({ value: "1y" }, ($$renderer) => {
+						$$renderer.push(`Last year`);
+					});
+				});
+			}
+			PageHeader($$renderer, {
+				icon: Chart_column,
+				title: "Analytics",
+				subtitle: "Track your content performance and audience engagement.",
+				actions,
+				$$slots: { actions: true }
 			});
-			$$renderer.option({ value: "30d" }, ($$renderer) => {
-				$$renderer.push(`Last 30 days`);
-			});
-			$$renderer.option({ value: "90d" }, ($$renderer) => {
-				$$renderer.push(`Last 90 days`);
-			});
-			$$renderer.option({ value: "1y" }, ($$renderer) => {
-				$$renderer.push(`Last year`);
-			});
-		});
-		$$renderer.push(` `);
-		$$renderer.select({
-			value: selectedContent,
-			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-		}, ($$renderer) => {
-			$$renderer.option({ value: "all" }, ($$renderer) => {
-				$$renderer.push(`All Content`);
-			});
-			$$renderer.option({ value: "3" }, ($$renderer) => {
-				$$renderer.push(`Worship Night Live`);
-			});
-			$$renderer.option({ value: "1" }, ($$renderer) => {
-				$$renderer.push(`Faith in Action`);
-			});
-			$$renderer.option({ value: "2" }, ($$renderer) => {
-				$$renderer.push(`Sunday Sermon Series`);
-			});
-		});
-		$$renderer.push(`</div></div> <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6"><div class="flex items-start justify-between gap-4 mb-4"><div><div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1"><span>✨</span> AI Insights</div> <h2 class="text-xl font-bold text-white">What your data is telling us</h2></div> <button type="button"${attr("disabled", aiLoading, true)} class="text-xs text-purple-200 hover:text-white border border-purple-500/40 hover:border-purple-400 rounded-md px-3 py-1.5 transition-colors disabled:opacity-40">${escape_html("Refresh")}</button></div> `);
+		}
+		$$renderer.push(`<!----> <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6"><div class="flex items-start justify-between gap-4 mb-4"><div><div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1"><span>✨</span> AI Insights</div> <h2 class="text-xl font-bold text-foreground">What your data is telling us</h2></div> <button type="button"${attr("disabled", aiLoading, true)} class="text-xs text-purple-200 hover:text-foreground border border-purple-500/40 hover:border-purple-400 rounded-md px-3 py-1.5 transition-colors disabled:opacity-40">${escape_html("Refresh")}</button></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div> `);
-		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-white ml-4">Loading analytics...</p></div>`);
+		{
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><!--[-->`);
+			const each_array_4 = ensure_array_like(Array(4));
+			for (let $$index_4 = 0, $$length = each_array_4.length; $$index_4 < $$length; $$index_4++) {
+				each_array_4[$$index_4];
+				Skeleton($$renderer, { class: "h-28 rounded-xl" });
+			}
+			$$renderer.push(`<!--]--></div> `);
+			Skeleton($$renderer, { class: "h-64 rounded-xl" });
+			$$renderer.push(`<!---->`);
+		}
 		$$renderer.push(`<!--]--></div>`);
 	});
 }

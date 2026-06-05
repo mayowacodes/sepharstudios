@@ -1,4 +1,21 @@
-import { _t as head, gt as ensure_array_like, jt as escape_html, kt as attr } from "../../../../../../chunks/ui-libs.js";
+import { Dt as spread_props, Lt as attr, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { t as Icon } from "../../../../../../chunks/Icon.js";
+import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+//#region ../../node_modules/@lucide/svelte/dist/icons/file-plus-corner.svelte
+function File_plus_corner($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "file-plus-corner" },
+		props,
+		{ iconNode: [
+			["path", { "d": "M11.35 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5.35" }],
+			["path", { "d": "M14 2v5a1 1 0 0 0 1 1h5" }],
+			["path", { "d": "M14 19h6" }],
+			["path", { "d": "M17 16v6" }]
+		] }
+	]));
+}
+//#endregion
 //#region src/lib/components/admin/governance/GuardrailValidator.svelte
 function GuardrailValidator($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -47,10 +64,16 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Create Governance Proposal - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 max-w-3xl space-y-4"><h1 class="text-2xl font-bold text-white">Create Governance Proposal</h1> <div class="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4"><div><label for="proposal-title" class="text-xs text-gray-300">Title</label> <input id="proposal-title" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-white"${attr("value", title)}/></div> <div><label for="proposal-type" class="text-xs text-gray-300">Type</label> `);
+		$$renderer.push(`<div class="container mx-auto px-4 py-8 max-w-3xl space-y-4">`);
+		PageHeader($$renderer, {
+			icon: File_plus_corner,
+			title: "Create Proposal",
+			subtitle: "Draft a new governance proposal for the DAO."
+		});
+		$$renderer.push(`<!----> <div class="rounded-xl border border-border/40 surface-1 p-5 space-y-4"><div><label for="proposal-title" class="text-xs text-foreground/80">Title</label> <input id="proposal-title" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground"${attr("value", title)}/></div> <div><label for="proposal-type" class="text-xs text-foreground/80">Type</label> `);
 		$$renderer.select({
 			id: "proposal-type",
-			class: "mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-white",
+			class: "mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground",
 			value: type
 		}, ($$renderer) => {
 			$$renderer.option({ value: "parameter_update" }, ($$renderer) => {
@@ -66,15 +89,15 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`emergency_action`);
 			});
 		});
-		$$renderer.push(`</div> <div><label for="proposal-description" class="text-xs text-gray-300">Description</label> <textarea id="proposal-description" class="mt-1 w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-white">`);
+		$$renderer.push(`</div> <div><label for="proposal-description" class="text-xs text-foreground/80">Description</label> <textarea id="proposal-description" class="mt-1 w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground">`);
 		const $$body = escape_html(description);
 		if ($$body) $$renderer.push(`${$$body}`);
-		$$renderer.push(`</textarea></div> <div><label for="proposal-payload" class="text-xs text-gray-300">Payload (JSON)</label> <textarea id="proposal-payload" class="mt-1 w-full min-h-32 bg-black/40 border border-white/15 rounded px-3 py-2 text-white font-mono text-xs">`);
+		$$renderer.push(`</textarea></div> <div><label for="proposal-payload" class="text-xs text-foreground/80">Payload (JSON)</label> <textarea id="proposal-payload" class="mt-1 w-full min-h-32 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground font-mono text-xs">`);
 		const $$body_1 = escape_html(payloadText);
 		if ($$body_1) $$renderer.push(`${$$body_1}`);
 		$$renderer.push(`</textarea></div> `);
 		GuardrailValidator($$renderer, { warnings: evaluateGuardrails() });
-		$$renderer.push(`<!----> <div class="flex items-center gap-3"><button class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50"${attr("disabled", saving, true)}>${escape_html("Create Proposal")}</button> <a href="/admin/governance/proposals" class="text-sm text-gray-300 hover:text-white">Back to proposals</a></div> `);
+		$$renderer.push(`<!----> <div class="flex items-center gap-3"><button class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50"${attr("disabled", saving, true)}>${escape_html("Create Proposal")}</button> <a href="/admin/governance/proposals" class="text-sm text-foreground/80 hover:text-foreground">Back to proposals</a></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");

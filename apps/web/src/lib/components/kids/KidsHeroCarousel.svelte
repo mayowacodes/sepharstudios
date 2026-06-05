@@ -1,6 +1,6 @@
 <!-- src/lib/components/kids/KidsHeroCarousel.svelte -->
 <script lang="ts">
-  export let mediaData: any[];
+  let { mediaData }: { mediaData: any[] } = $props();
 </script>
 
 <div class="w-full overflow-x-auto whitespace-nowrap p-4 space-x-4">

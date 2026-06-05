@@ -98,6 +98,7 @@ declare module '$env/static/private' {
 	export const POSTGRES_PASSWORD: string;
 	export const POSTGRES_USERNAME: string;
 	export const REDIRECT_URI: string;
+	export const REDIS_URL: string;
 	export const SEPHAR_BACKEND_TOKEN: string;
 	export const SERVER_URL: string;
 	export const TARGET_LANGUAGES: string;
@@ -121,6 +122,7 @@ declare module '$env/static/private' {
 	export const CLAUDE_CODE_ENTRYPOINT: string;
 	export const CLAUDE_CODE_EXECPATH: string;
 	export const CLAUDE_CODE_SESSION_ID: string;
+	export const CLAUDE_CODE_TMPDIR: string;
 	export const CLAUDE_EFFORT: string;
 	export const COMMONPROGRAMFILES: string;
 	export const CommonProgramW6432: string;
@@ -184,6 +186,8 @@ declare module '$env/static/private' {
 	export const TEMP: string;
 	export const TERM: string;
 	export const TMP: string;
+	export const TMPDIR: string;
+	export const TMPPREFIX: string;
 	export const USERDOMAIN: string;
 	export const USERDOMAIN_ROAMINGPROFILE: string;
 	export const USERNAME: string;
@@ -199,7 +203,6 @@ declare module '$env/static/private' {
 	export const VSCODE_PID: string;
 	export const WINDIR: string;
 	export const _: string;
-	export const __COMPAT_LAYER: string;
 }
 
 /**
@@ -349,6 +352,7 @@ declare module '$env/dynamic/private' {
 		POSTGRES_PASSWORD: string;
 		POSTGRES_USERNAME: string;
 		REDIRECT_URI: string;
+		REDIS_URL: string;
 		SEPHAR_BACKEND_TOKEN: string;
 		SERVER_URL: string;
 		TARGET_LANGUAGES: string;
@@ -372,6 +376,7 @@ declare module '$env/dynamic/private' {
 		CLAUDE_CODE_ENTRYPOINT: string;
 		CLAUDE_CODE_EXECPATH: string;
 		CLAUDE_CODE_SESSION_ID: string;
+		CLAUDE_CODE_TMPDIR: string;
 		CLAUDE_EFFORT: string;
 		COMMONPROGRAMFILES: string;
 		CommonProgramW6432: string;
@@ -435,6 +440,8 @@ declare module '$env/dynamic/private' {
 		TEMP: string;
 		TERM: string;
 		TMP: string;
+		TMPDIR: string;
+		TMPPREFIX: string;
 		USERDOMAIN: string;
 		USERDOMAIN_ROAMINGPROFILE: string;
 		USERNAME: string;
@@ -450,7 +457,6 @@ declare module '$env/dynamic/private' {
 		VSCODE_PID: string;
 		WINDIR: string;
 		_: string;
-		__COMPAT_LAYER: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}

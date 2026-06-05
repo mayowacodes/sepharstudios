@@ -1,16 +1,5 @@
-import { At as clsx, ut as attr_class, yt as spread_props } from "./ui-libs.js";
-import { t as Icon } from "./Icon.js";
+import { Rt as clsx, vt as attr_class } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/arrow-left.svelte
-function Arrow_left($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "arrow-left" },
-		props,
-		{ iconNode: [["path", { "d": "m12 19-7-7 7-7" }], ["path", { "d": "M19 12H5" }]] }
-	]));
-}
-//#endregion
 //#region src/lib/components/ui/spin-loader/spin-loader.svelte
 function Spin_loader($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -52,4 +41,4 @@ function LazySubscriptionNFT($$renderer, $$props) {
 	});
 }
 //#endregion
-export { Arrow_left as i, LazySTCTokenDashboard as n, LazyWalletConnect as r, LazySubscriptionNFT as t };
+export { LazySTCTokenDashboard as n, LazyWalletConnect as r, LazySubscriptionNFT as t };

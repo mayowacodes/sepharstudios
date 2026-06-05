@@ -1,5 +1,5 @@
 import { t as private_env } from "./shared-server.js";
-import { S as files, t as db } from "./drizzle.js";
+import { j as files, t as db } from "./drizzle.js";
 import { t as BUCKETS } from "./minio.js";
 import "drizzle-orm";
 import { Client } from "minio";

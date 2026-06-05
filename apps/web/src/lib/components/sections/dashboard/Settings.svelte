@@ -30,7 +30,7 @@
     <div class="flex items-center justify-between p-4 bg-muted/30 border rounded shadow-sm">
       <span class="font-medium">Notifications</span>
       <label class="switch">
-        <input type="checkbox" checked={settings.notificationsEnabled} onchange={toggleNotifications} />
+        <input type="checkbox" bind:checked={settings.notificationsEnabled} onchange={toggleNotifications} />
         <span class="slider round"></span>
       </label>
     </div>

@@ -1,4 +1,4 @@
-import { jt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
 import { t as Circle_alert } from "../../../../../chunks/circle-alert.js";
 import { t as Coins } from "../../../../../chunks/coins.js";
@@ -8,9 +8,10 @@ import { t as Refresh_cw } from "../../../../../chunks/refresh-cw.js";
 import { t as Settings } from "../../../../../chunks/settings.js";
 import { t as Trending_up } from "../../../../../chunks/trending-up.js";
 import { t as Users } from "../../../../../chunks/users.js";
-import { t as Button } from "../../../../../chunks/button.js";
 import { t as Input } from "../../../../../chunks/input.js";
+import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../../chunks/card.js";
 import { t as Label } from "../../../../../chunks/label.js";
 //#region src/routes/(admin)/admin/tokenomics/+page.svelte
@@ -70,7 +71,7 @@ function _page($$renderer, $$props) {
 		async function loadTokenomicsData() {
 			try {
 				if (!stcToken || !tokenAMM) {
-					const mod = await import("../../../../../chunks/contracts2.js");
+					const mod = await import("../../../../../chunks/contracts.js");
 					stcToken = mod.stcToken;
 					tokenAMM = mod.tokenAMM;
 				}
@@ -172,14 +173,20 @@ function _page($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="space-y-8"><div class="text-center"><h1 class="text-4xl font-bold text-white mb-2">Tokenomics Control Panel</h1> <p class="text-xl text-gray-300">Manage STC token economics and revenue distribution</p></div> `);
+			$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+			PageHeader($$renderer, {
+				icon: Coins,
+				title: "Tokenomics",
+				subtitle: "STC token economics and revenue distribution."
+			});
+			$$renderer.push(`<!----> `);
 			Card($$renderer, {
 				class: "bg-linear-to-r from-primary/20 to-secondary/20",
 				children: ($$renderer) => {
 					Card_header($$renderer, {
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-white flex items-center",
+								class: "text-foreground flex items-center",
 								children: ($$renderer) => {
 									Coins($$renderer, { class: "h-5 w-5 mr-2" });
 									$$renderer.push(`<!----> STC Token Supply Information`);
@@ -192,7 +199,7 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<!----> `);
 					Card_content($$renderer, {
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(parseFloat(tokenomicsData.totalSupply).toLocaleString())}</div> <div class="text-sm text-gray-300">Total Supply</div> <div class="text-xs text-gray-400">Maximum STC tokens</div></div> <div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(parseFloat(tokenomicsData.circulatingSupply).toLocaleString())}</div> <div class="text-sm text-gray-300">Circulating Supply</div> <div class="text-xs text-gray-400">${escape_html((parseFloat(tokenomicsData.circulatingSupply) / parseFloat(tokenomicsData.totalSupply) * 100).toFixed(1))}% of total</div></div> <div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(parseFloat(tokenomicsData.totalStaked).toLocaleString())}</div> <div class="text-sm text-gray-300">Total Staked</div> <div class="text-xs text-gray-400">${escape_html((parseFloat(tokenomicsData.totalStaked) / parseFloat(tokenomicsData.circulatingSupply) * 100).toFixed(1))}% of circulating</div></div></div> <div class="mt-4 flex justify-center">`);
+							$$renderer.push(`<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(parseFloat(tokenomicsData.totalSupply).toLocaleString())}</div> <div class="text-sm text-foreground/80">Total Supply</div> <div class="text-xs text-muted-foreground">Maximum STC tokens</div></div> <div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(parseFloat(tokenomicsData.circulatingSupply).toLocaleString())}</div> <div class="text-sm text-foreground/80">Circulating Supply</div> <div class="text-xs text-muted-foreground">${escape_html((parseFloat(tokenomicsData.circulatingSupply) / parseFloat(tokenomicsData.totalSupply) * 100).toFixed(1))}% of total</div></div> <div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(parseFloat(tokenomicsData.totalStaked).toLocaleString())}</div> <div class="text-sm text-foreground/80">Total Staked</div> <div class="text-xs text-muted-foreground">${escape_html((parseFloat(tokenomicsData.totalStaked) / parseFloat(tokenomicsData.circulatingSupply) * 100).toFixed(1))}% of circulating</div></div></div> <div class="mt-4 flex justify-center">`);
 							Button($$renderer, {
 								onclick: refreshAllData,
 								disabled: adminActions.isAdjusting,
@@ -226,7 +233,7 @@ function _page($$renderer, $$props) {
 					Card_header($$renderer, {
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-white flex items-center",
+								class: "text-foreground flex items-center",
 								children: ($$renderer) => {
 									Users($$renderer, { class: "h-5 w-5 mr-2" });
 									$$renderer.push(`<!----> Staking Tiers Distribution`);
@@ -239,7 +246,7 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<!----> `);
 					Card_content($$renderer, {
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-yellow-500">${escape_html(tokenomicsData.stakingTiers.bronze.toLocaleString())}</div> <div class="text-sm text-gray-300">Bronze Tier</div> <div class="text-xs text-gray-400">1K+ STC • 10% discount</div></div> <div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-gray-400">${escape_html(tokenomicsData.stakingTiers.silver.toLocaleString())}</div> <div class="text-sm text-gray-300">Silver Tier</div> <div class="text-xs text-gray-400">5K+ STC • 25% discount</div></div> <div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-amber-500">${escape_html(tokenomicsData.stakingTiers.gold.toLocaleString())}</div> <div class="text-sm text-gray-300">Gold Tier</div> <div class="text-xs text-gray-400">25K+ STC • 40% discount</div></div> <div class="text-center p-4 bg-white/10 rounded-lg"><div class="text-2xl font-bold text-purple-400">${escape_html(tokenomicsData.stakingTiers.platinum.toLocaleString())}</div> <div class="text-sm text-gray-300">Platinum Tier</div> <div class="text-xs text-gray-400">100K+ STC • 50% discount</div></div></div> <div class="mt-4 text-center"><div class="text-sm text-gray-300">Total Stakers: ${escape_html((tokenomicsData.stakingTiers.bronze + tokenomicsData.stakingTiers.silver + tokenomicsData.stakingTiers.gold + tokenomicsData.stakingTiers.platinum).toLocaleString())}</div> <div class="text-xs text-gray-400 mt-1">Distribution drives subscription discount utilization and platform loyalty</div></div>`);
+							$$renderer.push(`<div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-yellow-500">${escape_html(tokenomicsData.stakingTiers.bronze.toLocaleString())}</div> <div class="text-sm text-foreground/80">Bronze Tier</div> <div class="text-xs text-muted-foreground">1K+ STC • 10% discount</div></div> <div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-muted-foreground">${escape_html(tokenomicsData.stakingTiers.silver.toLocaleString())}</div> <div class="text-sm text-foreground/80">Silver Tier</div> <div class="text-xs text-muted-foreground">5K+ STC • 25% discount</div></div> <div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-amber-500">${escape_html(tokenomicsData.stakingTiers.gold.toLocaleString())}</div> <div class="text-sm text-foreground/80">Gold Tier</div> <div class="text-xs text-muted-foreground">25K+ STC • 40% discount</div></div> <div class="text-center p-4 surface-2 rounded-lg"><div class="text-2xl font-bold text-purple-400">${escape_html(tokenomicsData.stakingTiers.platinum.toLocaleString())}</div> <div class="text-sm text-foreground/80">Platinum Tier</div> <div class="text-xs text-muted-foreground">100K+ STC • 50% discount</div></div></div> <div class="mt-4 text-center"><div class="text-sm text-foreground/80">Total Stakers: ${escape_html((tokenomicsData.stakingTiers.bronze + tokenomicsData.stakingTiers.silver + tokenomicsData.stakingTiers.gold + tokenomicsData.stakingTiers.platinum).toLocaleString())}</div> <div class="text-xs text-muted-foreground mt-1">Distribution drives subscription discount utilization and platform loyalty</div></div>`);
 						},
 						$$slots: { default: true }
 					});
@@ -255,7 +262,7 @@ function _page($$renderer, $$props) {
 						class: "pb-2",
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-sm font-medium text-gray-300 flex items-center",
+								class: "text-sm font-medium text-foreground/80 flex items-center",
 								children: ($$renderer) => {
 									Dollar_sign($$renderer, { class: "h-4 w-4 mr-2" });
 									$$renderer.push(`<!----> STC Price`);
@@ -269,7 +276,7 @@ function _page($$renderer, $$props) {
 					Card_content($$renderer, {
 						class: "pt-0",
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html(tokenomicsData.stcPrice.slice(0, 8))}</div> `);
+							$$renderer.push(`<div class="text-2xl font-bold text-foreground">$${escape_html(tokenomicsData.stcPrice.slice(0, 8))}</div> `);
 							Badge($$renderer, {
 								class: "text-xs mt-1",
 								variant: "secondary",
@@ -294,7 +301,7 @@ function _page($$renderer, $$props) {
 						class: "pb-2",
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-sm font-medium text-gray-300 flex items-center",
+								class: "text-sm font-medium text-foreground/80 flex items-center",
 								children: ($$renderer) => {
 									Coins($$renderer, { class: "h-4 w-4 mr-2" });
 									$$renderer.push(`<!----> Total Staked`);
@@ -308,7 +315,7 @@ function _page($$renderer, $$props) {
 					Card_content($$renderer, {
 						class: "pt-0",
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">${escape_html(parseFloat(tokenomicsData.totalStaked).toLocaleString())}</div> `);
+							$$renderer.push(`<div class="text-2xl font-bold text-foreground">${escape_html(parseFloat(tokenomicsData.totalStaked).toLocaleString())}</div> `);
 							Badge($$renderer, {
 								class: "text-xs mt-1",
 								variant: "secondary",
@@ -333,7 +340,7 @@ function _page($$renderer, $$props) {
 						class: "pb-2",
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-sm font-medium text-gray-300 flex items-center",
+								class: "text-sm font-medium text-foreground/80 flex items-center",
 								children: ($$renderer) => {
 									Trending_up($$renderer, { class: "h-4 w-4 mr-2" });
 									$$renderer.push(`<!----> Monthly Revenue`);
@@ -347,7 +354,7 @@ function _page($$renderer, $$props) {
 					Card_content($$renderer, {
 						class: "pt-0",
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html(parseFloat(tokenomicsData.monthlyRevenue).toLocaleString())}</div> `);
+							$$renderer.push(`<div class="text-2xl font-bold text-foreground">$${escape_html(parseFloat(tokenomicsData.monthlyRevenue).toLocaleString())}</div> `);
 							Badge($$renderer, {
 								class: "text-xs mt-1",
 								variant: "secondary",
@@ -372,7 +379,7 @@ function _page($$renderer, $$props) {
 						class: "pb-2",
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-sm font-medium text-gray-300 flex items-center",
+								class: "text-sm font-medium text-foreground/80 flex items-center",
 								children: ($$renderer) => {
 									Activity($$renderer, { class: "h-4 w-4 mr-2" });
 									$$renderer.push(`<!----> Monthly Buyback`);
@@ -386,7 +393,7 @@ function _page($$renderer, $$props) {
 					Card_content($$renderer, {
 						class: "pt-0",
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="text-2xl font-bold text-white">$${escape_html(parseFloat(tokenomicsData.buybackAmount).toLocaleString())}</div> `);
+							$$renderer.push(`<div class="text-2xl font-bold text-foreground">$${escape_html(parseFloat(tokenomicsData.buybackAmount).toLocaleString())}</div> `);
 							Badge($$renderer, {
 								class: "text-xs mt-1",
 								variant: "secondary",
@@ -405,12 +412,12 @@ function _page($$renderer, $$props) {
 			});
 			$$renderer.push(`<!----></div> `);
 			Card($$renderer, {
-				class: "bg-white/5",
+				class: "surface-1",
 				children: ($$renderer) => {
 					Card_header($$renderer, {
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-white flex items-center",
+								class: "text-foreground flex items-center",
 								children: ($$renderer) => {
 									Settings($$renderer, { class: "h-5 w-5 mr-2" });
 									$$renderer.push(`<!----> Revenue Distribution Settings`);
@@ -424,9 +431,9 @@ function _page($$renderer, $$props) {
 					Card_content($$renderer, {
 						class: "space-y-6",
 						children: ($$renderer) => {
-							$$renderer.push(`<div><h4 class="text-lg font-medium text-white mb-4">Current Distribution</h4> <div class="grid grid-cols-1 md:grid-cols-5 gap-4"><div class="text-center p-4 bg-blue-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(revenueDistribution.platformOperations)}%</div> <div class="text-sm text-gray-300">Platform Operations</div> <div class="text-xs text-gray-400">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformOperations / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-green-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(revenueDistribution.creatorRevenue)}%</div> <div class="text-sm text-gray-300">Creator Revenue</div> <div class="text-xs text-gray-400">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.creatorRevenue / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-orange-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(revenueDistribution.stcBuyback)}%</div> <div class="text-sm text-gray-300">STC Buyback</div> <div class="text-xs text-gray-400">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.stcBuyback / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-purple-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(revenueDistribution.userRewards)}%</div> <div class="text-sm text-gray-300">User Rewards</div> <div class="text-xs text-gray-400">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.userRewards / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-gray-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(revenueDistribution.platformReserve)}%</div> <div class="text-sm text-gray-300">Platform Reserve</div> <div class="text-xs text-gray-400">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformReserve / 100).toLocaleString())}</div></div></div></div> <div class="border-t border-gray-600 pt-6"><h4 class="text-lg font-medium text-white mb-4">Adjust Distribution</h4> <div class="grid grid-cols-1 md:grid-cols-5 gap-4"><div>`);
+							$$renderer.push(`<div><h4 class="text-lg font-medium text-foreground mb-4">Current Distribution</h4> <div class="grid grid-cols-1 md:grid-cols-5 gap-4"><div class="text-center p-4 bg-blue-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(revenueDistribution.platformOperations)}%</div> <div class="text-sm text-foreground/80">Platform Operations</div> <div class="text-xs text-muted-foreground">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformOperations / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-green-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(revenueDistribution.creatorRevenue)}%</div> <div class="text-sm text-foreground/80">Creator Revenue</div> <div class="text-xs text-muted-foreground">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.creatorRevenue / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-orange-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(revenueDistribution.stcBuyback)}%</div> <div class="text-sm text-foreground/80">STC Buyback</div> <div class="text-xs text-muted-foreground">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.stcBuyback / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-purple-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(revenueDistribution.userRewards)}%</div> <div class="text-sm text-foreground/80">User Rewards</div> <div class="text-xs text-muted-foreground">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.userRewards / 100).toLocaleString())}</div></div> <div class="text-center p-4 bg-gray-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(revenueDistribution.platformReserve)}%</div> <div class="text-sm text-foreground/80">Platform Reserve</div> <div class="text-xs text-muted-foreground">$${escape_html((parseFloat(tokenomicsData.monthlyRevenue) * revenueDistribution.platformReserve / 100).toLocaleString())}</div></div></div></div> <div class="border-t border-gray-600 pt-6"><h4 class="text-lg font-medium text-foreground mb-4">Adjust Distribution</h4> <div class="grid grid-cols-1 md:grid-cols-5 gap-4"><div>`);
 							Label($$renderer, {
-								class: "text-gray-300",
+								class: "text-foreground/80",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->Platform Operations (%)`);
 								},
@@ -448,7 +455,7 @@ function _page($$renderer, $$props) {
 							});
 							$$renderer.push(`<!----></div> <div>`);
 							Label($$renderer, {
-								class: "text-gray-300",
+								class: "text-foreground/80",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->Creator Revenue (%)`);
 								},
@@ -470,7 +477,7 @@ function _page($$renderer, $$props) {
 							});
 							$$renderer.push(`<!----></div> <div>`);
 							Label($$renderer, {
-								class: "text-gray-300",
+								class: "text-foreground/80",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->STC Buyback (%)`);
 								},
@@ -492,7 +499,7 @@ function _page($$renderer, $$props) {
 							});
 							$$renderer.push(`<!----></div> <div>`);
 							Label($$renderer, {
-								class: "text-gray-300",
+								class: "text-foreground/80",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->User Rewards (%)`);
 								},
@@ -514,7 +521,7 @@ function _page($$renderer, $$props) {
 							});
 							$$renderer.push(`<!----></div> <div>`);
 							Label($$renderer, {
-								class: "text-gray-300",
+								class: "text-foreground/80",
 								children: ($$renderer) => {
 									$$renderer.push(`<!---->Platform Reserve (%)`);
 								},
@@ -534,7 +541,7 @@ function _page($$renderer, $$props) {
 									$$settled = false;
 								}
 							});
-							$$renderer.push(`<!----></div></div> <div class="mt-4 flex items-center space-x-4"><div class="text-sm text-gray-300">Total: ${escape_html(Object.values(adminActions.newDistribution).reduce((sum, val) => sum + Number(val), 0).toFixed(1))}%</div> `);
+							$$renderer.push(`<!----></div></div> <div class="mt-4 flex items-center space-x-4"><div class="text-sm text-foreground/80">Total: ${escape_html(Object.values(adminActions.newDistribution).reduce((sum, val) => sum + Number(val), 0).toFixed(1))}%</div> `);
 							if (Math.abs(Object.values(adminActions.newDistribution).reduce((sum, val) => sum + Number(val), 0) - 100) > .1) {
 								$$renderer.push("<!--[0-->");
 								Badge($$renderer, {
@@ -578,7 +585,7 @@ function _page($$renderer, $$props) {
 							$$renderer.push(`<!----></div> `);
 							if (adminActions.actionResult) {
 								$$renderer.push("<!--[0-->");
-								$$renderer.push(`<div class="mt-4 p-3 bg-gray-800 border rounded-lg"><p class="text-sm text-white">${escape_html(adminActions.actionResult)}</p></div>`);
+								$$renderer.push(`<div class="mt-4 p-3 bg-gray-800 border rounded-lg"><p class="text-sm text-foreground">${escape_html(adminActions.actionResult)}</p></div>`);
 							} else $$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--></div>`);
 						},
@@ -590,12 +597,12 @@ function _page($$renderer, $$props) {
 			});
 			$$renderer.push(`<!----> `);
 			Card($$renderer, {
-				class: "bg-white/5",
+				class: "surface-1",
 				children: ($$renderer) => {
 					Card_header($$renderer, {
 						children: ($$renderer) => {
 							Card_title($$renderer, {
-								class: "text-white flex items-center",
+								class: "text-foreground flex items-center",
 								children: ($$renderer) => {
 									Users($$renderer, { class: "h-5 w-5 mr-2" });
 									$$renderer.push(`<!----> Creator Revenue Analytics`);
@@ -608,7 +615,7 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<!----> `);
 					Card_content($$renderer, {
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="text-center p-4 bg-green-500/20 rounded-lg"><div class="text-2xl font-bold text-white">${escape_html(creatorStats.totalCreators)}</div> <div class="text-sm text-gray-300">Active Creators</div></div> <div class="text-center p-4 bg-blue-500/20 rounded-lg"><div class="text-2xl font-bold text-white">$${escape_html(creatorStats.averageRevenue.toLocaleString())}</div> <div class="text-sm text-gray-300">Average Monthly Revenue</div></div> <div class="text-center p-4 bg-yellow-500/20 rounded-lg"><div class="text-2xl font-bold text-white">$${escape_html(creatorStats.topCreatorEarnings.toLocaleString())}</div> <div class="text-sm text-gray-300">Top Creator Earnings</div></div> <div class="text-center p-4 bg-purple-500/20 rounded-lg"><div class="text-2xl font-bold text-white">$${escape_html(creatorStats.totalPayments.toLocaleString())}</div> <div class="text-sm text-gray-300">Total Monthly Payouts</div></div></div> <div class="mt-6 flex space-x-3">`);
+							$$renderer.push(`<div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="text-center p-4 bg-green-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">${escape_html(creatorStats.totalCreators)}</div> <div class="text-sm text-foreground/80">Active Creators</div></div> <div class="text-center p-4 bg-blue-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">$${escape_html(creatorStats.averageRevenue.toLocaleString())}</div> <div class="text-sm text-foreground/80">Average Monthly Revenue</div></div> <div class="text-center p-4 bg-yellow-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">$${escape_html(creatorStats.topCreatorEarnings.toLocaleString())}</div> <div class="text-sm text-foreground/80">Top Creator Earnings</div></div> <div class="text-center p-4 bg-purple-500/20 rounded-lg"><div class="text-2xl font-bold text-foreground">$${escape_html(creatorStats.totalPayments.toLocaleString())}</div> <div class="text-sm text-foreground/80">Total Monthly Payouts</div></div></div> <div class="mt-6 flex space-x-3">`);
 							Button($$renderer, {
 								href: "/admin/creators",
 								class: "bg-secondary hover:bg-secondary/90",

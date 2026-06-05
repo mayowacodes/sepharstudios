@@ -21,6 +21,9 @@ export const GET: RequestHandler = async ({ locals }) => {
   const session = await locals.auth.getSession();
   if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Defensive: the deployed `transactions` table may be missing columns
+  // the migration declares — return zero balance instead of 500'ing the
+  // STC widget on every wallet/profile page.
   const rows = await db
     .select({
       status: transactions.status,
@@ -32,7 +35,11 @@ export const GET: RequestHandler = async ({ locals }) => {
       eq(transactions.currency, 'STC'),
       eq(transactions.type, 'earn')
     ))
-    .groupBy(transactions.status);
+    .groupBy(transactions.status)
+    .catch((err) => {
+      console.warn('[stc-balance] transactions query failed:', err instanceof Error ? err.message : err);
+      return [] as Array<{ status: string; total: number }>;
+    });
 
   const balance = { pending: 0, completed: 0, failed: 0 };
   for (const row of rows) {

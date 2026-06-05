@@ -1,4 +1,4 @@
-import { a as user, j as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, a as user, t as db } from "../../../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../../../chunks/admin-auth.js";
 import { t as notify } from "../../../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
@@ -27,6 +27,7 @@ var POST = async ({ params, request, locals }) => {
 	const now = /* @__PURE__ */ new Date();
 	const [updated] = await db.update(mediaLibrary).set({
 		assignedTo: adminId,
+		assignedBy: session.user.id,
 		assignedAt: now,
 		updatedAt: now
 	}).where(eq(mediaLibrary.id, params.id)).returning({
@@ -52,6 +53,7 @@ var DELETE = async ({ params, locals }) => {
 	if (error) return error;
 	const [updated] = await db.update(mediaLibrary).set({
 		assignedTo: null,
+		assignedBy: null,
 		assignedAt: null,
 		updatedAt: /* @__PURE__ */ new Date()
 	}).where(eq(mediaLibrary.id, params.id)).returning({ id: mediaLibrary.id });

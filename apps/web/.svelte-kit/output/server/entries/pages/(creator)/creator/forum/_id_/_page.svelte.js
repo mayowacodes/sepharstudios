@@ -1,6 +1,12 @@
-import { Ct as unsubscribe_stores, bt as store_get, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, ut as attr_class } from "../../../../../../chunks/ui-libs.js";
+import { Lt as attr, St as derived, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { t as Arrow_left } from "../../../../../../chunks/arrow-left.js";
+import { t as Heart } from "../../../../../../chunks/heart.js";
+import { t as Lock } from "../../../../../../chunks/lock.js";
+import { t as Message_square } from "../../../../../../chunks/message-square.js";
+import { t as Pin } from "../../../../../../chunks/pin.js";
+import { t as page } from "../../../../../../chunks/state.js";
 import "../../../../../../chunks/navigation.js";
-import { t as page } from "../../../../../../chunks/stores.js";
+import { t as ReportButton } from "../../../../../../chunks/ReportButton.js";
 //#region src/routes/(creator)/creator/forum/[id]/ForumReply.svelte
 function ForumReply($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -12,17 +18,23 @@ function ForumReply($$renderer, $$props) {
 			if (diff < 864e5) return `${Math.floor(diff / 36e5)}h`;
 			return `${Math.floor(diff / 864e5)}d`;
 		}
-		$$renderer.push(`<div${attr_class(`bg-white/5 border border-white/10 rounded-lg p-3 ${depth > 0 ? "ml-6" : ""}`)}><div class="flex items-start gap-3"><div class="bg-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-white text-sm font-bold shrink-0">${escape_html((reply.authorName ?? "?").charAt(0).toUpperCase())}</div> <div class="flex-1 min-w-0"><div class="flex items-center gap-2 text-xs text-gray-400 mb-1"><strong class="text-purple-300">${escape_html(reply.authorName ?? "unknown")}</strong> <span>·</span> <span>${escape_html(relativeTime(reply.createdAt))}</span> `);
+		$$renderer.push(`<div${attr_class(`surface-1 border border-border/40 rounded-lg p-3 ${depth > 0 ? "ml-6" : ""}`)}><div class="flex items-start gap-3"><div class="bg-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-white text-sm font-bold shrink-0">${escape_html((reply.authorName ?? "?").charAt(0).toUpperCase())}</div> <div class="flex-1 min-w-0"><div class="flex items-center gap-2 text-xs text-muted-foreground mb-1"><strong class="text-purple-300">${escape_html(reply.authorName ?? "unknown")}</strong> <span>·</span> <span>${escape_html(relativeTime(reply.createdAt))}</span> `);
 		if (reply.status === "hidden") {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<span class="text-yellow-400">(pending review)</span>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div> <p class="text-gray-100 text-sm whitespace-pre-line">${escape_html(reply.body)}</p> <div class="flex items-center gap-4 mt-2 text-xs"><button type="button"${attr_class(`flex items-center gap-1 hover:text-pink-300 transition-colors ${reply.likedByMe ? "text-pink-400" : "text-gray-400"}`)}><span>❤️</span><span>${escape_html(reply.likeCount)}</span></button> <button type="button" class="text-gray-400 hover:text-white">Reply</button> `);
+		$$renderer.push(`<!--]--></div> <p class="text-foreground text-sm whitespace-pre-line">${escape_html(reply.body)}</p> <div class="flex items-center gap-4 mt-2 text-xs"><button type="button"${attr_class(`flex items-center gap-1 hover:text-pink-300 transition-colors ${reply.likedByMe ? "text-pink-400" : "text-muted-foreground"}`)}><span>❤️</span><span>${escape_html(reply.likeCount)}</span></button> <button type="button" class="text-muted-foreground hover:text-foreground">Reply</button> `);
 		if (isAdmin || reply.status === "published") {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<button type="button" class="text-red-300 hover:text-red-100">Delete</button>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div> `);
+		$$renderer.push(`<!--]--> `);
+		ReportButton($$renderer, {
+			targetType: "forum_reply",
+			targetId: reply.id,
+			variant: "button"
+		});
+		$$renderer.push(`<!----></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
 		if (reply.children.length > 0) {
@@ -47,14 +59,13 @@ function ForumReply($$renderer, $$props) {
 //#region src/routes/(creator)/creator/forum/[id]/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		var $$store_subs;
 		let thread = null;
 		let replies = [];
 		let isAuthor = false;
 		let isAdmin = false;
 		let loading = true;
 		let newReply = "";
-		const threadId = derived(() => store_get($$store_subs ??= {}, "$page", page).params.id);
+		const threadId = derived(() => page.params.id);
 		async function load() {
 			loading = true;
 			try {
@@ -80,34 +91,55 @@ function _page($$renderer, $$props) {
 			if (diff < 6048e5) return `${Math.floor(diff / 864e5)}d ago`;
 			return new Date(iso).toLocaleDateString();
 		}
-		$$renderer.push(`<div class="max-w-4xl mx-auto py-6 space-y-6"><a href="/creator/forum" class="text-purple-400 hover:text-purple-300 text-sm">← Back to forum</a> `);
+		$$renderer.push(`<div class="container mx-auto max-w-4xl py-6 px-4 space-y-6"><a href="/creator/forum" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">`);
+		Arrow_left($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----> Back to forum</a> `);
 		if (loading) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="text-center text-gray-400 py-12">Loading…</div>`);
+			$$renderer.push(`<div class="text-center text-muted-foreground py-12">Loading…</div>`);
 		} else if (!thread) {
 			$$renderer.push("<!--[1-->");
 			$$renderer.push(`<div class="bg-red-600/20 border border-red-600 text-red-100 rounded-lg p-6 text-center">Thread not found or has been removed.</div>`);
 		} else {
 			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-4"><div class="flex items-start justify-between gap-4"><div class="flex-1"><div class="flex items-center gap-2 flex-wrap mb-2">`);
+			$$renderer.push(`<header class="surface-1 rounded-xl p-5 space-y-4"><div class="flex items-start justify-between gap-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-1.5 flex-wrap mb-1">`);
 			if (thread.isSticky) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span class="text-yellow-400">📌</span>`);
+				Pin($$renderer, {
+					class: "w-3.5 h-3.5 text-yellow-500",
+					"aria-label": "Pinned"
+				});
 			} else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--> `);
 			if (thread.isLocked) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span class="text-red-400">🔒</span>`);
+				Lock($$renderer, {
+					class: "w-3.5 h-3.5 text-red-500",
+					"aria-label": "Locked"
+				});
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> <h1 class="text-2xl font-bold text-white">${escape_html(thread.title)}</h1></div> <div class="flex items-center gap-3 text-xs text-gray-400"><span>by <strong class="text-purple-400">${escape_html(thread.authorName ?? "unknown")}</strong></span> <span>•</span> <span>${escape_html(relativeTime(thread.createdAt))}</span> <span>•</span> <span class="capitalize">${escape_html(thread.category.replace("-", " "))}</span></div></div> `);
+			$$renderer.push(`<!--]--></div> <h1 class="text-2xl font-semibold tracking-tight text-foreground">${escape_html(thread.title)}</h1> <div class="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap"><span>by <strong class="text-foreground">${escape_html(thread.authorName ?? "unknown")}</strong></span> <span>·</span> <span>${escape_html(relativeTime(thread.createdAt))}</span> <span>·</span> <span class="capitalize rounded-full surface-2 px-2 py-0.5">${escape_html(thread.category.replace("-", " "))}</span></div></div> <div class="flex items-center gap-2 shrink-0">`);
+			if (!isAuthor) {
+				$$renderer.push("<!--[0-->");
+				ReportButton($$renderer, {
+					targetType: "forum_thread",
+					targetId: thread.id,
+					variant: "button"
+				});
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
 			if (isAuthor || isAdmin) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<button type="button" class="text-red-300 hover:text-red-100 text-sm">Delete</button>`);
+				$$renderer.push(`<button type="button" class="text-xs text-red-400 hover:text-red-300">Delete</button>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div> <p class="text-gray-200 whitespace-pre-line">${escape_html(thread.body)}</p> <div class="flex items-center gap-4 text-sm"><button type="button"${attr_class(`flex items-center gap-1 hover:text-pink-300 transition-colors ${thread.likedByMe ? "text-pink-400" : "text-gray-300"}`)}><span>❤️</span> <span>${escape_html(thread.likeCount)}</span></button> <span class="text-gray-400 flex items-center gap-1"><span>💬</span><span>${escape_html(thread.replyCount)} ${escape_html(thread.replyCount === 1 ? "reply" : "replies")}</span></span></div></div> `);
+			$$renderer.push(`<!--]--></div></div> <p class="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">${escape_html(thread.body)}</p> <div class="flex items-center gap-4 text-xs"><button type="button"${attr_class(`inline-flex items-center gap-1 hover:opacity-80 transition-opacity ${thread.likedByMe ? "text-pink-500" : "text-muted-foreground"}`)}>`);
+			Heart($$renderer, { class: "w-3.5 h-3.5" });
+			$$renderer.push(`<!----> ${escape_html(thread.likeCount)}</button> <span class="text-muted-foreground inline-flex items-center gap-1">`);
+			Message_square($$renderer, { class: "w-3.5 h-3.5" });
+			$$renderer.push(`<!----> ${escape_html(thread.replyCount)} ${escape_html(thread.replyCount === 1 ? "reply" : "replies")}</span></div></header> `);
 			if (!thread.isLocked) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<form class="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3"><label for="reply-body" class="text-sm font-medium text-white">Add a reply</label> <textarea id="reply-body" rows="3" minlength="3" maxlength="5000" required="" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500" placeholder="Share your thoughts…">`);
+				$$renderer.push(`<form class="surface-2 backdrop-blur-sm rounded-xl p-4 space-y-3"><label for="reply-body" class="text-sm font-medium text-foreground">Add a reply</label> <textarea id="reply-body" rows="3" minlength="3" maxlength="5000" required="" class="w-full px-3 py-2 surface-2 border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-purple-500" placeholder="Share your thoughts…">`);
 				const $$body = escape_html(newReply);
 				if ($$body) $$renderer.push(`${$$body}`);
 				$$renderer.push(`</textarea> `);
@@ -120,7 +152,7 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]--> `);
 			if (replies.length === 0) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<div class="text-center text-gray-400 py-6">No replies yet — be the first.</div>`);
+				$$renderer.push(`<div class="text-center text-muted-foreground py-6">No replies yet — be the first.</div>`);
 			} else {
 				$$renderer.push("<!--[-1-->");
 				$$renderer.push(`<div class="space-y-3"><!--[-->`);
@@ -138,7 +170,6 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]-->`);
 		}
 		$$renderer.push(`<!--]--></div>`);
-		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
 //#endregion

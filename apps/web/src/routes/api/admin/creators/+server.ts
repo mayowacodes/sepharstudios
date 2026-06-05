@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { creators as creatorsTable, mediaLibrary, transactions } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, eq, gte, ilike, or, sql } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/admin-auth';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -56,14 +56,25 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	const now = new Date();
 	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+	// The deployed `transactions` table was created out-of-band with an
+	// older shape that's missing the `amount` / `type` columns the migration
+	// declares — `CREATE TABLE IF NOT EXISTS` happily skipped over it. Until
+	// a follow-up `ALTER TABLE` migration aligns the deployed schema, this
+	// query 500s and blanks every admin page that loads /admin/creators.
+	// Catch + return zeros so the page renders; the per-creator monthly
+	// earnings column simply shows 0 instead of dropping the whole list.
 	const earningsAgg = await db
 		.select({
 			userId: transactions.userId,
 			monthlyEarnings: sql<number>`coalesce(sum(${transactions.amount}), 0)`
 		})
 		.from(transactions)
-		.where(and(eq(transactions.type, 'earn'), sql`${transactions.createdAt} >= ${monthStart}`))
-		.groupBy(transactions.userId);
+		.where(and(eq(transactions.type, 'earn'), gte(transactions.createdAt, monthStart)))
+		.groupBy(transactions.userId)
+		.catch((err) => {
+			console.error('[admin/creators] transactions aggregate failed; defaulting earnings to zero:', err instanceof Error ? err.message : err);
+			return [] as Array<{ userId: string; monthlyEarnings: number }>;
+		});
 
 	const profileByUser = new Map(creatorProfiles.map(p => [p.userId, p]));
 	const contentByUser = new Map(contentAgg.map(c => [c.creatorId, c]));

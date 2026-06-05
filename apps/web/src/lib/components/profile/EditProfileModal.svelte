@@ -2,19 +2,27 @@
   import type { Profile } from '$lib/types/types';
   import { tick } from 'svelte';
 
-  export let isOpen = false;
-  export let profile: Pick<Profile, 'id' | 'name' | 'avatarUrl'>;
-  export let onSave: (updatedProfile: Pick<Profile, 'id' | 'name' | 'avatarUrl'>) => void;
-  export let onClose: () => void;
+  let { isOpen = false, profile, onSave, onClose }: { isOpen?: boolean; profile: Pick<Profile, 'id' | 'name' | 'avatarUrl'>; onSave: (updatedProfile: Pick<Profile, 'id' | 'name' | 'avatarUrl'>) => void; onClose: () => void } = $props();
 
-  let newName = profile.name;
-  let newAvatarUrl = profile.avatarUrl ?? '';
-  let dialogEl: HTMLDivElement;
-  let firstFocusable: HTMLInputElement;
+  // Mirror the incoming profile into editable local state. The previous
+  // `$state(profile.name)` only captured the value at component creation,
+  // so re-opening the modal for a different profile would keep showing
+  // the first profile's name.
+  let newName = $state('');
+  let newAvatarUrl = $state('');
+  let dialogEl: HTMLDivElement | undefined = $state();
+  let firstFocusable: HTMLInputElement | undefined = $state();
 
-  $: if (isOpen && firstFocusable) {
-    tick().then(() => firstFocusable?.focus());
-  }
+  $effect(() => {
+    newName = profile.name;
+    newAvatarUrl = profile.avatarUrl ?? '';
+  });
+
+  $effect(() => {
+    if (isOpen && firstFocusable) {
+      tick().then(() => firstFocusable?.focus());
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -52,14 +60,14 @@
   };
 </script>
 
-<svelte:window on:keydown={isOpen ? handleKeydown : undefined} />
+<svelte:window onkeydown={isOpen ? handleKeydown : undefined} />
 
 {#if isOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    on:click={onClose}
+          onclick={onClose}
   >
     <div
       bind:this={dialogEl}
@@ -68,7 +76,7 @@
       aria-modal="true"
       aria-labelledby="edit-profile-title"
       class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm"
-      on:click|stopPropagation
+      onclick={(e) => e.stopPropagation()}
     >
       <h2 id="edit-profile-title" class="text-xl font-semibold mb-4">Edit Profile</h2>
 
@@ -98,13 +106,13 @@
       <div class="flex justify-end gap-4">
         <button
           class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-          on:click={onClose}
+    onclick={onClose}
         >
           Cancel
         </button>
         <button
           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          on:click={saveProfile}
+          onclick={saveProfile}
         >
           Save
         </button>

@@ -1,9 +1,7 @@
 <script lang="ts">
   import { Search, X } from '@lucide/svelte';
 
-  // Props
-  export let placeholder: string = 'Search...';
-  export let value: string = '';
+  let { placeholder = 'Search...', value = '' }: { placeholder?: string; value?: string } = $props();
 
   // Create an event handler for search
   const createSearchEvent = (term: string) => {

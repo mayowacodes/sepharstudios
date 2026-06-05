@@ -1,4 +1,4 @@
-import { _t as head, gt as ensure_array_like } from "../../../../chunks/ui-libs.js";
+import { Tt as head, wt as ensure_array_like } from "../../../../chunks/ui-libs.js";
 import { t as Coins } from "../../../../chunks/coins.js";
 //#region src/routes/(protected)/milestones/+page.svelte
 function _page($$renderer, $$props) {

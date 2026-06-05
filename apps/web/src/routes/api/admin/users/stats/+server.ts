@@ -20,8 +20,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 			admins: sql<number>`sum(case when ${user.role} = 'admin' then 1 else 0 end)`,
 			editors: sql<number>`sum(case when ${user.role} = 'editor' then 1 else 0 end)`,
 			banned: sql<number>`sum(case when ${user.banned} = true then 1 else 0 end)`,
-			newToday: sql<number>`sum(case when ${user.createdAt} >= ${startOfToday} then 1 else 0 end)`,
-			newWeek: sql<number>`sum(case when ${user.createdAt} >= ${startOfWeek} then 1 else 0 end)`
+			newToday: sql<number>`sum(case when ${user.createdAt} >= ${startOfToday.toISOString()} then 1 else 0 end)`,
+			newWeek: sql<number>`sum(case when ${user.createdAt} >= ${startOfWeek.toISOString()} then 1 else 0 end)`
 		})
 		.from(user);
 

@@ -46,8 +46,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 		[applicationStats] = await db
 			.select({
 				pendingApplications: sql<number>`sum(case when ${creatorApplications.status} = 'pending' then 1 else 0 end)`,
-				approved7: sql<number>`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf7} then 1 else 0 end)`,
-				approved30: sql<number>`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf30} then 1 else 0 end)`,
+				approved7: sql<number>`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf7.toISOString()} then 1 else 0 end)`,
+				approved30: sql<number>`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf30.toISOString()} then 1 else 0 end)`,
 				avgApprovalHours: sql<number>`avg(extract(epoch from (${creatorApplications.reviewedAt} - ${creatorApplications.createdAt})))/3600`
 			})
 			.from(creatorApplications);

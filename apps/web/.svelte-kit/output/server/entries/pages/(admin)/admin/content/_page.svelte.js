@@ -1,4 +1,12 @@
-import { jt as escape_html, kt as attr, mt as derived, ut as attr_class } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr, St as derived, vt as attr_class } from "../../../../../chunks/ui-libs.js";
+import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
+import { t as Circle_check } from "../../../../../chunks/circle-check.js";
+import { t as Circle_x } from "../../../../../chunks/circle-x.js";
+import { t as Clock } from "../../../../../chunks/clock.js";
+import { t as File_text } from "../../../../../chunks/file-text.js";
+import { t as Video } from "../../../../../chunks/video.js";
+import "../../../../../chunks/navigation.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { n as ContentStatus, r as ContentType } from "../../../../../chunks/creator.js";
 //#region src/routes/(admin)/admin/content/+page.svelte
 function _page($$renderer, $$props) {
@@ -48,10 +56,52 @@ function _page($$renderer, $$props) {
 			return filtered.slice(startIndex, 12);
 		});
 		derived(() => Math.ceil(totalItems / itemsPerPage));
-		$$renderer.push(`<div class="space-y-6"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between"><div><h1 class="text-3xl font-bold text-white mb-2">Content Management</h1> <p class="text-gray-300">Manage all submitted content across the platform</p></div> <div class="mt-4 lg:mt-0 grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-blue-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-blue-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length)}</div> <div class="text-blue-200 text-xs">Pending Review</div></div> <div class="bg-green-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-green-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length)}</div> <div class="text-green-200 text-xs">Published</div></div> <div class="bg-red-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-red-400">${escape_html(allContent.filter((c) => c.status === ContentStatus.REJECTED).length)}</div> <div class="text-red-200 text-xs">Rejected</div></div> <div class="bg-purple-600/20 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-purple-400">${escape_html(allContent.length)}</div> <div class="text-purple-200 text-xs">Total Content</div></div></div></div> <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4 mb-4"><div class="flex-1"><input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/></div> <div class="flex flex-wrap gap-3">`);
+		$$renderer.push(`<div class="container mx-auto px-4 py-4 space-y-6">`);
+		PageHeader($$renderer, {
+			icon: Video,
+			title: "Content Management",
+			subtitle: "Manage all submitted content across the platform."
+		});
+		$$renderer.push(`<!----> <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">`);
+		KpiCard($$renderer, {
+			label: "Pending Review",
+			value: allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length,
+			icon: Clock,
+			accent: "blue",
+			variant: "compact",
+			index: 0
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Published",
+			value: allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length,
+			icon: Circle_check,
+			accent: "green",
+			variant: "compact",
+			index: 1
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Rejected",
+			value: allContent.filter((c) => c.status === ContentStatus.REJECTED).length,
+			icon: Circle_x,
+			accent: "red",
+			variant: "compact",
+			index: 2
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Total Content",
+			value: allContent.length,
+			icon: File_text,
+			accent: "purple",
+			variant: "compact",
+			index: 3
+		});
+		$$renderer.push(`<!----></div> <div class="surface-2 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4 mb-4"><div class="flex-1"><input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/></div> <div class="flex flex-wrap gap-3">`);
 		$$renderer.select({
 			value: selectedStatus,
-			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+			class: "px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Statuses`);
@@ -81,7 +131,7 @@ function _page($$renderer, $$props) {
 		$$renderer.push(` `);
 		$$renderer.select({
 			value: selectedType,
-			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+			class: "px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Types`);
@@ -108,7 +158,7 @@ function _page($$renderer, $$props) {
 		$$renderer.push(` `);
 		$$renderer.select({
 			value: sortBy,
-			class: "px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-600"
+			class: "px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "newest" }, ($$renderer) => {
 				$$renderer.push(`Newest First`);
@@ -126,12 +176,14 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`Priority`);
 			});
 		});
-		$$renderer.push(`</div> <div class="flex rounded-lg overflow-hidden"><button${attr_class(`px-4 py-2 bg-red-600 text-white`)}>📊</button> <button${attr_class(`px-4 py-2 bg-white/10 text-gray-300`)}>📄</button></div></div> `);
+		$$renderer.push(`</div> <div class="flex rounded-lg overflow-hidden"><button${attr_class(`px-4 py-2 bg-red-600 text-foreground`)}>📊</button> <button${attr_class(`px-4 py-2 surface-2 text-white/80`)}>📄</button></div></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div> `);
 		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-white ml-4">Loading content...</p></div>`);
+		$$renderer.push(`<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div> <p class="text-foreground ml-4">Loading content...</p></div>`);
 		$$renderer.push(`<!--]--></div> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
 	});

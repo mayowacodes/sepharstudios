@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { creators, transactions, mediaLibrary, mediaWatchProgress, ppvPurchases } from '$lib/db/schema/sepharstudios';
-import { and, eq, desc, sql, inArray, gte } from 'drizzle-orm';
+import { and, eq, desc, sql, inArray, gte, lt } from 'drizzle-orm';
 import { resolveCreatorTier } from '$lib/server/creator-tier';
 
 /**
@@ -34,12 +34,16 @@ export const GET: RequestHandler = async ({ locals }) => {
 	// Aggregate any completed payment transactions credited to this creator.
 	// `type='creator_payout'` is the convention used by the (forthcoming) payout
 	// worker. Existing `type='earn'` rows belong to viewers, not creators.
+	//
+	// Defensive: deployed `transactions` table may be missing columns
+	// (older schema; migration's IF NOT EXISTS skipped). Each query
+	// catches and returns empty so /creator/earnings still renders.
 	const aggregates = await db
 		.select({
 			currency: transactions.currency,
 			total: sql<number>`coalesce(sum(${transactions.amount}), 0)`,
-			month: sql<number>`coalesce(sum(case when ${transactions.createdAt} >= ${monthStart} then ${transactions.amount} else 0 end), 0)`,
-			year: sql<number>`coalesce(sum(case when ${transactions.createdAt} >= ${yearStart} then ${transactions.amount} else 0 end), 0)`
+			month: sql<number>`coalesce(sum(case when ${transactions.createdAt} >= ${monthStart.toISOString()} then ${transactions.amount} else 0 end), 0)`,
+			year: sql<number>`coalesce(sum(case when ${transactions.createdAt} >= ${yearStart.toISOString()} then ${transactions.amount} else 0 end), 0)`
 		})
 		.from(transactions)
 		.where(and(
@@ -47,7 +51,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 			eq(transactions.type, 'creator_payout'),
 			eq(transactions.status, 'completed')
 		))
-		.groupBy(transactions.currency);
+		.groupBy(transactions.currency)
+		.catch((err) => {
+			console.warn('[creator/earnings] aggregates failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ currency: string; total: number; month: number; year: number }>;
+		});
 
 	const totals = { monthCents: 0, yearCents: 0, lifetimeCents: 0 };
 	const byCurrency: Record<string, { month: number; year: number; lifetime: number }> = {};
@@ -77,7 +85,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 			eq(transactions.type, 'creator_payout')
 		))
 		.orderBy(desc(transactions.createdAt))
-		.limit(20);
+		.limit(20)
+		.catch((err) => {
+			console.warn('[creator/earnings] recentPayments failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ id: string; amountCents: number; currency: string; status: string; createdAt: Date; metadata: unknown }>;
+		});
 
 	// Aggregate content stats from the live tables — also honest zero when the
 	// creator hasn't published anything yet.
@@ -122,7 +134,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.select({
 				contentId: ppvPurchases.contentId,
 				lifetimeCents: sql<number>`coalesce(sum(${ppvPurchases.amountPaidCents}), 0)::int`,
-				last30dCents: sql<number>`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
+				last30dCents: sql<number>`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo.toISOString()} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
 				purchaseCount: sql<number>`count(*)::int`
 			})
 			.from(ppvPurchases)
@@ -167,7 +179,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 			eq(transactions.type, 'creator_payout'),
 			gte(transactions.createdAt, sinceDate)
 		))
-		.groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+		.groupBy(sql`date_trunc('day', ${transactions.createdAt})`)
+		.catch((err) => {
+			console.warn('[creator/earnings] dailyRows failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ day: string; cents: number }>;
+		});
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
 	for (const r of dailyRows) {
@@ -190,8 +206,12 @@ export const GET: RequestHandler = async ({ locals }) => {
 			eq(transactions.type, 'creator_payout'),
 			eq(transactions.status, 'completed'),
 			gte(transactions.createdAt, lastMonthStart),
-			sql`${transactions.createdAt} < ${lastMonthEnd}`
-		));
+			lt(transactions.createdAt, lastMonthEnd)
+		))
+		.catch((err) => {
+			console.warn('[creator/earnings] lastMonthAgg failed:', err instanceof Error ? err.message : err);
+			return [{ total: 0 }];
+		});
 	const lastMonthCents = Number(lastMonthAgg?.total ?? 0);
 	const earningsDelta = lastMonthCents > 0
 		? Math.round(((totals.monthCents - lastMonthCents) / lastMonthCents) * 1000) / 10

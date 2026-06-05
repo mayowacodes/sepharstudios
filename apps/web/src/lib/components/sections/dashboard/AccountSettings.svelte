@@ -1,13 +1,21 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button'; // Import the Button component
 
-  export let accountSettings = {
+  let { accountSettings = {
     email: 'user@example.com',
     password: '••••••••',
-  };
+  } }: { accountSettings?: { email: string; password: string } } = $props();
 
-  let newEmail = accountSettings.email;
-  let newPassword = accountSettings.password;
+  // Sync the editable fields whenever the parent passes a different
+  // accountSettings prop (e.g. after a save round-trip). The previous
+  // `$state(accountSettings.email)` captured only the initial mount
+  // value and ignored subsequent prop updates.
+  let newEmail = $state('');
+  let newPassword = $state('');
+  $effect(() => {
+    newEmail = accountSettings.email;
+    newPassword = accountSettings.password;
+  });
 
   // Simulate updating account details
   const updateAccountDetails = () => {

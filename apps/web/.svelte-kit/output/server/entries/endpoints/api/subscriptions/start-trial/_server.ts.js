@@ -1,8 +1,8 @@
-import { R as paystackSubscriptions, t as db, tt as trialBlacklist } from "../../../../../chunks/drizzle.js";
+import { Z as paystackSubscriptions, _t as trialBlacklist, t as db } from "../../../../../chunks/drizzle.js";
 import { i as createCustomer, n as PLAN_PRICES_CENTS } from "../../../../../chunks/paystack.js";
 import { i as verifyOtp, r as getPhoneHash } from "../../../../../chunks/otp.js";
 import { json } from "@sveltejs/kit";
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 //#region src/routes/api/subscriptions/start-trial/+server.ts
 /**
 * POST /api/subscriptions/start-trial
@@ -22,7 +22,7 @@ var POST = async ({ request, locals }) => {
 		id: paystackSubscriptions.id,
 		status: paystackSubscriptions.status
 	}).from(paystackSubscriptions).where(eq(paystackSubscriptions.userId, session.user.id)).limit(1).then((r) => r[0] ?? null);
-	if (existingSub && inArray(existingSub.status, ["trial", "active"])) return json({ error: "You already have an active subscription" }, { status: 409 });
+	if (existingSub && ["trial", "active"].includes(existingSub.status)) return json({ error: "You already have an active subscription" }, { status: 409 });
 	const phoneHash = getPhoneHash(phone);
 	const blacklistConditions = [eq(trialBlacklist.phoneHash, phoneHash)];
 	if (deviceFingerprint) blacklistConditions.push(eq(trialBlacklist.deviceFingerprint, deviceFingerprint));

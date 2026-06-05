@@ -1,7 +1,8 @@
-import { B as playlists, J as reviews, M as mediaWatchProgress, Z as streaks, et as transactions, it as watchSessionMeta, nt as userAchievements, o as achievements, t as db, z as playlistItems } from "../../../../../chunks/drizzle.js";
+import { $ as playlists, Q as playlistItems, U as mediaWatchProgress, bt as watchSessionMeta, gt as transactions, s as achievements, st as reviews, t as db, ut as streaks, vt as userAchievements } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { n as scoreWatchEngagement } from "../../../../../chunks/ai-token-scoring.js";
 import { t as track } from "../../../../../chunks/analytics.js";
+import { t as fingerprintFromHeaders } from "../../../../../chunks/ua-country.js";
 import { json } from "@sveltejs/kit";
 import { and, count, eq } from "drizzle-orm";
 //#region src/lib/server/achievements.ts
@@ -83,50 +84,6 @@ async function updateStreak(userId, profileId) {
 	return newStreak;
 }
 //#endregion
-//#region src/lib/server/ua-country.ts
-function fingerprintFromHeaders(headers) {
-	const ua = headers.get("user-agent") ?? "";
-	const country = (headers.get("cf-ipcountry") ?? headers.get("x-vercel-ip-country") ?? headers.get("x-country-code") ?? null)?.toUpperCase() ?? null;
-	if (!ua) return {
-		deviceType: null,
-		browser: null,
-		osName: null,
-		country
-	};
-	const lower = ua.toLowerCase();
-	const isBot = /bot|crawl|spider|slurp|facebookexternalhit|googlebot|bingbot/.test(lower);
-	const isTv = /smart-tv|smarttv|appletv|googletv|roku|hbbtv|netcast/.test(lower);
-	const isTablet = /ipad|tablet|playbook|silk|kindle/.test(lower);
-	const isMobile = !isTablet && /mobi|iphone|ipod|android(?!.*tablet)|blackberry|iemobile|opera m(ob|in)i/.test(lower);
-	return {
-		deviceType: isBot ? "bot" : isTv ? "tv" : isTablet ? "tablet" : isMobile ? "mobile" : "desktop",
-		browser: matchFirst(lower, [
-			["edg/", "Edge"],
-			["chrome/", "Chrome"],
-			["firefox/", "Firefox"],
-			["safari/", "Safari"],
-			["opera/", "Opera"],
-			["msie ", "IE"],
-			["trident/", "IE"]
-		]),
-		osName: matchFirst(lower, [
-			["windows nt 10", "Windows 10"],
-			["windows nt 11", "Windows 11"],
-			["windows nt", "Windows"],
-			["mac os x", "macOS"],
-			["android", "Android"],
-			["iphone os", "iOS"],
-			["ipad; cpu os", "iPadOS"],
-			["linux", "Linux"]
-		]),
-		country
-	};
-}
-function matchFirst(haystack, pairs) {
-	for (const [needle, label] of pairs) if (haystack.includes(needle)) return label;
-	return null;
-}
-//#endregion
 //#region src/routes/api/watch/progress/+server.ts
 var POST = async ({ request, locals }) => {
 	const session = await locals.auth.getSession();
@@ -200,7 +157,6 @@ var POST = async ({ request, locals }) => {
 			watchTimeSeconds: positionSeconds,
 			totalDurationSeconds: durationSeconds ?? 0,
 			leftReview: !!existingReview,
-			leftComment: false,
 			sharedContent: false,
 			addedToWatchlist,
 			baseStcReward: 10

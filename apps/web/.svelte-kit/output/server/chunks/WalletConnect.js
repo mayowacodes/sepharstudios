@@ -1,6 +1,7 @@
-import { Ct as unsubscribe_stores, bt as store_get, jt as escape_html, yt as spread_props } from "./ui-libs.js";
+import { Dt as spread_props, Ot as store_get, jt as unsubscribe_stores, zt as escape_html } from "./ui-libs.js";
 import { t as Icon } from "./Icon.js";
 import { t as Coins } from "./coins.js";
+import { t as Copy } from "./copy.js";
 import { t as External_link } from "./external-link.js";
 import { t as Wallet } from "./wallet.js";
 import { t as Zap } from "./zap.js";
@@ -8,7 +9,7 @@ import { t as Button } from "./button.js";
 import { t as Badge } from "./badge.js";
 import { a as Card, i as Card_content } from "./card.js";
 import { a as isConnected, i as formatAddress, n as connectWallet, o as walletAddress, r as disconnectWallet, t as account } from "./wallet2.js";
-import "./contracts.js";
+import "./contracts2.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/check-check.svelte
 function Check_check($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -16,23 +17,6 @@ function Check_check($$renderer, $$props) {
 		{ name: "check-check" },
 		props,
 		{ iconNode: [["path", { "d": "M18 6 7 17l-5-5" }], ["path", { "d": "m22 10-7.5 7.5L13 16" }]] }
-	]));
-}
-//#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/copy.svelte
-function Copy($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "copy" },
-		props,
-		{ iconNode: [["rect", {
-			"width": "14",
-			"height": "14",
-			"x": "8",
-			"y": "8",
-			"rx": "2",
-			"ry": "2"
-		}], ["path", { "d": "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" }]] }
 	]));
 }
 //#endregion

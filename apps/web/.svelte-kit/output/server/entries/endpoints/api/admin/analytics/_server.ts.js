@@ -1,7 +1,7 @@
-import { a as user, et as transactions, j as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { H as mediaLibrary, a as user, gt as transactions, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 //#region src/routes/api/admin/analytics/+server.ts
 function formatMonth(date) {
 	return date.toLocaleDateString("en-US", { month: "short" });
@@ -86,6 +86,44 @@ var GET = async ({ locals, url }) => {
 		views: mediaLibrary.viewCount,
 		mediaType: mediaLibrary.mediaType
 	}).from(mediaLibrary).orderBy(desc(mediaLibrary.viewCount)).limit(5);
+	const SERIES_DAYS = 30;
+	const since = /* @__PURE__ */ new Date(Date.now() - SERIES_DAYS * 864e5);
+	const priorSince = /* @__PURE__ */ new Date(Date.now() - SERIES_DAYS * 2 * 864e5);
+	const dailyUsers = await db.select({
+		day: sql`to_char(date_trunc('day', ${user.createdAt}), 'YYYY-MM-DD')`,
+		count: sql`count(*)::int`
+	}).from(user).where(gte(user.createdAt, since)).groupBy(sql`date_trunc('day', ${user.createdAt})`);
+	const dailyRevenue = await db.select({
+		day: sql`to_char(date_trunc('day', ${transactions.createdAt}), 'YYYY-MM-DD')`,
+		amount: sql`coalesce(sum(${transactions.amount}), 0)::int`
+	}).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, since))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+	const dailyContent = await db.select({
+		day: sql`to_char(date_trunc('day', ${mediaLibrary.createdAt}), 'YYYY-MM-DD')`,
+		count: sql`count(*)::int`
+	}).from(mediaLibrary).where(gte(mediaLibrary.createdAt, since)).groupBy(sql`date_trunc('day', ${mediaLibrary.createdAt})`);
+	const seriesUsers = new Array(SERIES_DAYS).fill(0);
+	const seriesRevenue = new Array(SERIES_DAYS).fill(0);
+	const seriesContent = new Array(SERIES_DAYS).fill(0);
+	const today = /* @__PURE__ */ new Date();
+	today.setHours(0, 0, 0, 0);
+	const bucket = (day, val, target) => {
+		const ago = Math.floor((today.getTime() - new Date(day).getTime()) / 864e5);
+		const idx = SERIES_DAYS - 1 - ago;
+		if (idx >= 0 && idx < SERIES_DAYS) target[idx] = val;
+	};
+	for (const r of dailyUsers) bucket(r.day, Number(r.count), seriesUsers);
+	for (const r of dailyRevenue) bucket(r.day, Number(r.amount), seriesRevenue);
+	for (const r of dailyContent) bucket(r.day, Number(r.count), seriesContent);
+	const [priorUsers] = await db.select({ count: sql`count(*)::int` }).from(user).where(and(gte(user.createdAt, priorSince), lt(user.createdAt, since)));
+	const [priorRevenue] = await db.select({ amount: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, priorSince), lt(transactions.createdAt, since)));
+	const [priorContent] = await db.select({ count: sql`count(*)::int` }).from(mediaLibrary).where(and(gte(mediaLibrary.createdAt, priorSince), lt(mediaLibrary.createdAt, since)));
+	const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+	const pct = (cur, prior) => prior > 0 ? Math.round((cur - prior) / prior * 1e3) / 10 : cur > 0 ? 100 : 0;
+	const deltas = {
+		users: pct(sum(seriesUsers), Number(priorUsers?.count ?? 0)),
+		revenue: pct(sum(seriesRevenue), Number(priorRevenue?.amount ?? 0)),
+		content: pct(sum(seriesContent), Number(priorContent?.count ?? 0))
+	};
 	return json({
 		platformMetrics: {
 			totalUsers: Number(usersAgg?.totalUsers ?? 0),
@@ -97,6 +135,12 @@ var GET = async ({ locals, url }) => {
 			contentPublishedToday: Number(contentAgg?.publishedToday ?? 0),
 			viewsToday: 0
 		},
+		series: {
+			users: seriesUsers,
+			revenue: seriesRevenue,
+			content: seriesContent
+		},
+		deltas,
 		contentAnalytics: categories.map((c) => ({
 			category: c.category ?? "content",
 			count: Number(c.count ?? 0),

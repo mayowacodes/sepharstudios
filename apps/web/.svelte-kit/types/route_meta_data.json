@@ -375,6 +375,12 @@
 	"/api/ai/copilot": [
 		"src/routes/api/ai/copilot/+server.ts"
 	],
+	"/api/ai/copilot/approve": [
+		"src/routes/api/ai/copilot/approve/+server.ts"
+	],
+	"/api/ai/copilot/conversations": [
+		"src/routes/api/ai/copilot/conversations/+server.ts"
+	],
 	"/api/ai/creator-insights": [
 		"src/routes/api/ai/creator-insights/+server.ts"
 	],
@@ -650,6 +656,12 @@
 	],
 	"/api/files": [
 		"src/routes/api/files/+server.ts"
+	],
+	"/api/files/commit": [
+		"src/routes/api/files/commit/+server.ts"
+	],
+	"/api/files/sign": [
+		"src/routes/api/files/sign/+server.ts"
 	],
 	"/api/forum/replies/[id]": [
 		"src/routes/api/forum/replies/[id]/+server.ts"
@@ -977,6 +989,7 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/kids": [
+		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/kids/kiddies": [

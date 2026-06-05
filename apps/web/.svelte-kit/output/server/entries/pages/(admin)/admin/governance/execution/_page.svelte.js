@@ -1,4 +1,34 @@
-import { _t as head, dt as attr_style, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived } from "../../../../../../chunks/ui-libs.js";
+import { Dt as spread_props, Lt as attr, St as derived, Tt as head, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { t as Icon } from "../../../../../../chunks/Icon.js";
+import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+//#region ../../node_modules/@lucide/svelte/dist/icons/timer.svelte
+function Timer($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "timer" },
+		props,
+		{ iconNode: [
+			["line", {
+				"x1": "10",
+				"x2": "14",
+				"y1": "2",
+				"y2": "2"
+			}],
+			["line", {
+				"x1": "12",
+				"x2": "15",
+				"y1": "14",
+				"y2": "11"
+			}],
+			["circle", {
+				"cx": "12",
+				"cy": "14",
+				"r": "8"
+			}]
+		] }
+	]));
+}
+//#endregion
 //#region src/lib/components/admin/governance/TimelockQueueTable.svelte
 function TimelockQueueTable($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -63,25 +93,31 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Execution - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6"><h1 class="text-2xl font-bold text-white">Timelock Queue &amp; Execution</h1> `);
+		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
+		PageHeader($$renderer, {
+			icon: Timer,
+			title: "Timelock & Execution",
+			subtitle: "Queued proposals awaiting execution windows."
+		});
+		$$renderer.push(`<!----> `);
 		if (message) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<p class="text-sm text-cyan-300">${escape_html(message)}</p>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> <div class="rounded-xl border border-white/10 bg-white/5 p-4"><h2 class="text-lg font-semibold text-white mb-3">Submitted Proposals</h2> `);
+		$$renderer.push(`<!--]--> <div class="rounded-xl border border-border/40 surface-1 p-4"><h2 class="text-lg font-semibold text-foreground mb-3">Submitted Proposals</h2> `);
 		if (loading) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<p class="text-sm text-gray-400">Loading...</p>`);
+			$$renderer.push(`<p class="text-sm text-muted-foreground">Loading...</p>`);
 		} else if (submitted.length === 0) {
 			$$renderer.push("<!--[1-->");
-			$$renderer.push(`<p class="text-sm text-gray-400">No submitted proposals awaiting queue.</p>`);
+			$$renderer.push(`<p class="text-sm text-muted-foreground">No submitted proposals awaiting queue.</p>`);
 		} else {
 			$$renderer.push("<!--[-1-->");
 			$$renderer.push(`<div class="space-y-2"><!--[-->`);
 			const each_array = ensure_array_like(submitted);
 			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 				let p = each_array[$$index];
-				$$renderer.push(`<div class="rounded-lg bg-black/30 border border-white/10 px-3 py-2"><div class="flex items-center justify-between gap-3"><div class="space-y-1"><p class="text-white text-sm">${escape_html(p.title)}</p> <p class="text-xs text-gray-400">${escape_html(p.type)}</p> `);
+				$$renderer.push(`<div class="rounded-lg bg-black/30 border border-border/40 px-3 py-2"><div class="flex items-center justify-between gap-3"><div class="space-y-1"><p class="text-foreground text-sm">${escape_html(p.title)}</p> <p class="text-xs text-muted-foreground">${escape_html(p.type)}</p> `);
 				if ((p.guardrailWarnings?.length ?? 0) > 0) {
 					$$renderer.push("<!--[0-->");
 					$$renderer.push(`<p class="text-xs text-amber-300">Has guardrail warnings</p>`);
@@ -95,7 +131,7 @@ function _page($$renderer, $$props) {
 			}
 			$$renderer.push(`<!--]--></div>`);
 		}
-		$$renderer.push(`<!--]--></div> <div><h2 class="text-lg font-semibold text-white mb-3">Queued Actions</h2> `);
+		$$renderer.push(`<!--]--></div> <div><h2 class="text-lg font-semibold text-foreground mb-3">Queued Actions</h2> `);
 		TimelockQueueTable($$renderer, {
 			items: queue,
 			onExecute: execute

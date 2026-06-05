@@ -1,4 +1,4 @@
-import { yt as spread_props } from "../../../../../../chunks/ui-libs.js";
+import { Dt as spread_props } from "../../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../../chunks/Icon.js";
 import { t as Button } from "../../../../../../chunks/button.js";
 import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../../../chunks/card.js";

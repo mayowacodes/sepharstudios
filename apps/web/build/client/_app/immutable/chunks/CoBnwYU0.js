@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`rect`,{width:`20`,height:`12`,x:`2`,y:`6`,rx:`2`}],[`circle`,{cx:`12`,cy:`12`,r:`2`}],[`path`,{d:`M6 12h.01M18 12h.01`}]];n(r,e({name:`banknote`},()=>a,{get iconNode(){return o}}))}export{r as t};

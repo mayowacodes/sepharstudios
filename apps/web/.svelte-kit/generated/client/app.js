@@ -128,7 +128,8 @@ export const nodes = [
 	() => import('./nodes/124'),
 	() => import('./nodes/125'),
 	() => import('./nodes/126'),
-	() => import('./nodes/127')
+	() => import('./nodes/127'),
+	() => import('./nodes/128')
 ];
 
 export const server_loads = [0,8,9];
@@ -217,13 +218,14 @@ export const dictionary = {
 		"/(app)/features": [58,[4]],
 		"/(app)/guidelines": [59,[4]],
 		"/(app)/help": [60,[4]],
-		"/kids/kiddies": [~119,[11]],
-		"/kids/kiddies/bible-quiz": [120,[11]],
-		"/kids/kiddies/documentaries": [121,[11]],
-		"/kids/kiddies/movies": [122,[11]],
-		"/kids/kiddies/profile": [123,[11]],
-		"/kids/kiddies/shows": [124,[11]],
-		"/kids/teens": [~125,[10]],
+		"/kids": [119,[10]],
+		"/kids/kiddies": [~120,[11]],
+		"/kids/kiddies/bible-quiz": [121,[11]],
+		"/kids/kiddies/documentaries": [122,[11]],
+		"/kids/kiddies/movies": [123,[11]],
+		"/kids/kiddies/profile": [124,[11]],
+		"/kids/kiddies/shows": [125,[11]],
+		"/kids/teens": [~126,[10]],
 		"/(app)/liquidity": [61,[4]],
 		"/(protected)/milestones": [109,[8]],
 		"/(app)/movies": [~62,[4]],
@@ -247,8 +249,8 @@ export const dictionary = {
 		"/(protected)/users": [~114,[8]],
 		"/(web3)/wallet": [118,[9]],
 		"/(protected)/watchlist": [115,[8]],
-		"/watch/live/[id]": [~126],
-		"/watch/[id]": [~127],
+		"/watch/live/[id]": [~127],
+		"/watch/[id]": [~128],
 		"/(app)/webinars": [74,[4]]
 	};
 

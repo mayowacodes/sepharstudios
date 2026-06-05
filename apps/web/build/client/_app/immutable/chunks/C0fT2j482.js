@@ -1,0 +1,1 @@
+import{Ht as e,Xt as t,Yt as n,wn as r}from"./CocL4akC.js";function i(i,a){var o=t();e(r(o),()=>a.children),n(i,o)}export{i as t};

@@ -1,5 +1,6 @@
-import { _t as head } from "../../../../chunks/ui-libs.js";
-import { i as Arrow_left, r as LazyWalletConnect } from "../../../../chunks/web3-lazy.js";
+import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
+import { r as LazyWalletConnect } from "../../../../chunks/web3-lazy.js";
 //#region src/routes/(web3)/wallet/+page.svelte
 function _page($$renderer) {
 	head("vb5o55", $$renderer, ($$renderer) => {

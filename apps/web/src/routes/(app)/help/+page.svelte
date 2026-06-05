@@ -74,21 +74,21 @@
     }
   ];
 
-  let searchQuery = '';
-  let contactForm = {
+  let searchQuery = $state('');
+  let contactForm = $state({
     name: '',
     email: '',
     subject: '',
     message: ''
-  };
+  });
 
-  $: filteredFaqs = faqs.map(category => ({
+  let filteredFaqs = $derived(faqs.map(category => ({
     ...category,
     items: category.items.filter(item => 
       item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.answer.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  })).filter(category => category.items.length > 0);
+  })).filter(category => category.items.length > 0));
 
   async function handleContactSubmit() {
     console.log('Submitting contact form:', contactForm);

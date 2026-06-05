@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary, transactions } from '$lib/db/schema/sepharstudios';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, gte, sql } from 'drizzle-orm';
 import { Role } from '$lib/constants';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -41,7 +41,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 			})
 			.from(transactions)
 			.where(
-				sql`${transactions.userId} = ${creatorId} and ${transactions.type} = 'earn' and ${transactions.createdAt} >= ${monthStart}`
+				and(
+					eq(transactions.userId, creatorId),
+					eq(transactions.type, 'earn'),
+					gte(transactions.createdAt, monthStart)
+				)
 			);
 		monthlyEarnings = Number(earningsRow?.monthlyEarnings ?? 0);
 	} catch (err) {

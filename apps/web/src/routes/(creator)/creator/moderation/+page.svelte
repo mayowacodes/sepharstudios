@@ -46,27 +46,48 @@
   let threads = $state<ForumThread[]>([]);
   let replies = $state<ForumReply[]>([]);
   let loading = $state(true);
+  let initialLoad = $state(true);
 
   async function loadReviews() {
-    loading = true;
+    if (initialLoad) loading = true;
     try {
       const res = await fetch(`/api/creator/moderation/reviews?filter=${reviewFilter}`);
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[moderation] loadReviews HTTP', res.status);
+        reviews = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       reviews = body.reviews ?? [];
+    } catch (err) {
+      console.error('[moderation] loadReviews failed:', err);
+      reviews = [];
     } finally {
       loading = false;
+      initialLoad = false;
     }
   }
 
   async function loadForum() {
-    loading = true;
+    if (initialLoad) loading = true;
     try {
       const res = await fetch('/api/creator/moderation/forum');
-      const body = await res.json();
+      if (!res.ok) {
+        console.error('[moderation] loadForum HTTP', res.status);
+        threads = [];
+        replies = [];
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
       threads = body.threads ?? [];
       replies = body.replies ?? [];
+    } catch (err) {
+      console.error('[moderation] loadForum failed:', err);
+      threads = [];
+      replies = [];
     } finally {
       loading = false;
+      initialLoad = false;
     }
   }
 
@@ -75,7 +96,13 @@
     else void loadForum();
   });
 
-  onMount(loadReviews);
+  onMount(() => {
+    // Ensure initial load happens immediately on mount.
+    // The $effect above depends on tab/reviewFilter which are already set,
+    // but we explicitly trigger here to guarantee no blank page on first render.
+    if (tab === 'reviews') void loadReviews();
+    else void loadForum();
+  });
 
   async function actOnReview(id: string, action: 'approve' | 'hide') {
     const res = await fetch(`/api/creator/moderation/reviews/${id}`, {

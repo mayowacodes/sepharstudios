@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { onDestroy } from 'svelte';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import PPVPaywall from '$lib/components/widgets/PPVPaywall.svelte';
@@ -58,7 +58,7 @@
 
   // Resume position from ?t= query param
   const startAt = $derived(() => {
-    const t = $page.url.searchParams.get('t');
+    const t = page.url.searchParams.get('t');
     return t ? parseInt(t, 10) : 0;
   });
 

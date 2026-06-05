@@ -20,8 +20,21 @@ function buildClient() {
 		retryStrategy: (times) => Math.min(times * 200, 2e3),
 		lazyConnect: false
 	});
+	let lastLogged = /* @__PURE__ */ new Map();
+	const THROTTLE_MS = 6e4;
 	c.on("error", (err) => {
-		console.warn("[redis] error:", err.message);
+		const key = err.message ?? "unknown";
+		const now = Date.now();
+		const prior = lastLogged.get(key);
+		if (!prior || now - prior.at > THROTTLE_MS) {
+			const suppressed = prior?.suppressed ?? 0;
+			const suffix = suppressed > 0 ? ` (${suppressed} suppressed in the last ${Math.round(THROTTLE_MS / 1e3)}s)` : "";
+			console.warn(`[redis] error: ${key}${suffix}`);
+			lastLogged.set(key, {
+				at: now,
+				suppressed: 0
+			});
+		} else prior.suppressed += 1;
 	});
 	return c;
 }

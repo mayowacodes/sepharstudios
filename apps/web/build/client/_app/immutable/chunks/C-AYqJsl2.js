@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`line`,{x1:`12`,x2:`12`,y1:`2`,y2:`22`}],[`path`,{d:`M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6`}]];n(r,e({name:`dollar-sign`},()=>a,{get iconNode(){return o}}))}export{r as t};

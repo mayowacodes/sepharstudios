@@ -1,12 +1,16 @@
-import { St as stringify, dt as attr_style, gt as ensure_array_like, jt as escape_html, mt as derived } from "../../../../../chunks/ui-libs.js";
+import { At as stringify, St as derived, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
 import { t as Clock } from "../../../../../chunks/clock.js";
-import { n as Tablet, r as Monitor, t as Tv } from "../../../../../chunks/tv.js";
+import { t as Monitor } from "../../../../../chunks/monitor.js";
 import { t as Shield_check } from "../../../../../chunks/shield-check.js";
 import { t as Smartphone } from "../../../../../chunks/smartphone.js";
+import { t as Tablet } from "../../../../../chunks/tablet.js";
+import { t as Tv } from "../../../../../chunks/tv.js";
 import { t as Users } from "../../../../../chunks/users.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../../chunks/card.js";
+import { t as StatChip } from "../../../../../chunks/StatChip.js";
 //#region src/routes/(admin)/admin/dashboard/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -28,11 +32,27 @@ function _page($$renderer, $$props) {
 			}
 		};
 		const totalSessions = derived(() => data.deviceStats.reduce((acc, curr) => acc + curr.count, 0));
-		$$renderer.push(`<div class="p-8 max-w-7xl mx-auto space-y-10"><div class="flex flex-col md:flex-row md:items-center justify-between gap-4"><div class="space-y-1"><div class="flex items-center gap-2 text-orange-500 font-medium">`);
-		Shield_check($$renderer, { class: "w-4 h-4" });
-		$$renderer.push(`<!----> <span>Admin Security Console</span></div> <h1 class="text-4xl font-bold tracking-tight">Platform Pulse</h1> <p class="text-muted-foreground text-lg">Real-time device monitoring and session oversight.</p></div> <div class="flex items-center gap-4 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10"><div class="flex flex-col items-end"><span class="text-sm text-muted-foreground">Active Sessions</span> <span class="text-2xl font-bold font-mono tracking-tighter">${escape_html(totalSessions())}</span></div> <div class="h-8 w-px bg-muted-foreground/20"></div> `);
-		Activity($$renderer, { class: "w-8 h-8 text-green-500 animate-pulse" });
-		$$renderer.push(`<!----></div></div> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><!--[-->`);
+		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		{
+			function actions($$renderer) {
+				StatChip($$renderer, {
+					label: "active sessions",
+					value: totalSessions(),
+					tone: "green"
+				});
+				$$renderer.push(`<!----> `);
+				Activity($$renderer, { class: "w-4 h-4 text-green-500 animate-pulse" });
+				$$renderer.push(`<!---->`);
+			}
+			PageHeader($$renderer, {
+				icon: Shield_check,
+				title: "Platform Pulse",
+				subtitle: "Real-time device monitoring and session oversight.",
+				actions,
+				$$slots: { actions: true }
+			});
+		}
+		$$renderer.push(`<!----> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><!--[-->`);
 		const each_array = ensure_array_like(data.deviceStats);
 		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 			let stat = each_array[$$index];

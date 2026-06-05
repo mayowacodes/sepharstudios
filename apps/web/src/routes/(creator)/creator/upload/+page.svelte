@@ -63,21 +63,56 @@
    *  must still be uploaded fresh (existing rows keep their video URL until
    *  the submit flow swaps in the new one). */
   let editId: string | null = $state(null);
+  // IMPORTANT: every bindable field used in a child step's `bind:` must be
+  // initialized to a defined value here. Empty objects (`{}`) for stepData
+  // entries leave the inner fields as `undefined`, which Svelte 5 treats as
+  // an invalid value when the child declares the prop with `$bindable()` —
+  // it throws `props_invalid_value` during the upload page's first paint
+  // and the whole route blanks. Initialize each field explicitly to its
+  // empty form (string, null, array, object) instead.
   let wizardState = $state<UploadWizardState>({
     currentStep: UploadStep.BASIC_INFO,
     stepData: {
-      [UploadStep.BASIC_INFO]: {},
-      [UploadStep.VIDEO_UPLOAD]: {},
+      [UploadStep.BASIC_INFO]: {
+        title: '',
+        description: '',
+        contentType: '',
+        ageRating: ''
+      },
+      [UploadStep.VIDEO_UPLOAD]: {
+        videoFile: null,
+        trailerFile: null,
+        videoProgress: null,
+        trailerProgress: null
+      },
       [UploadStep.ASSET_MANAGEMENT]: {
         uploadedAssets: {},
         assetProgress: []
       },
-      [UploadStep.METADATA]: {},
+      [UploadStep.METADATA]: {
+        bibleReferences: [],
+        themes: [],
+        ministryAffiliation: '',
+        duration: '',
+        language: 'English',
+        hasSubtitles: false,
+        hasClosedCaptions: false,
+        tags: [],
+        keywords: [],
+        genre: []
+      },
       [UploadStep.REVIEW_SUBMIT]: {
         termsAccepted: false,
         guidelinesAccepted: false
       }
     },
+    // Kept on the state object for shape compatibility with UploadWizardState
+    // and the localStorage draft, but the SOURCE OF TRUTH for Next-button
+    // enablement is the `stepValidity` $derived below. The previous
+    // imperative `validateStep()` write was unreliable — Svelte 5 didn't
+    // always re-trigger downstream `disabled={…}` reads after the nested
+    // proxy mutation, so the button stayed dim even when every field was
+    // filled in. A $derived eliminates the race entirely.
     isValid: {
       [UploadStep.BASIC_INFO]: false,
       [UploadStep.VIDEO_UPLOAD]: false,
@@ -87,58 +122,133 @@
     }
   });
   
+  // StepIndicator's StepConfig expects `{ id, label }`. We keep id as the
+  // UploadStep number stringified so it stays stable across migrations.
   const steps = [
-    { step: UploadStep.BASIC_INFO, title: 'Basic Info', description: 'Content details and type' },
-    { step: UploadStep.VIDEO_UPLOAD, title: 'Video Upload', description: 'Upload your content files' },
-    { step: UploadStep.ASSET_MANAGEMENT, title: 'Images & Assets', description: 'Upload promotional images' },
-    { step: UploadStep.METADATA, title: 'Metadata', description: 'Additional details and tags' },
-    { step: UploadStep.REVIEW_SUBMIT, title: 'Review & Submit', description: 'Final review and submission' }
+    { id: String(UploadStep.BASIC_INFO), label: 'Basic Info' },
+    { id: String(UploadStep.VIDEO_UPLOAD), label: 'Video Upload' },
+    { id: String(UploadStep.ASSET_MANAGEMENT), label: 'Images & Assets' },
+    { id: String(UploadStep.METADATA), label: 'Metadata' },
+    { id: String(UploadStep.REVIEW_SUBMIT), label: 'Review & Submit' }
   ];
   
+  let isTransitioningStep = $state(false);
+
   function goToStep(step: UploadStep) {
-    wizardState.currentStep = step;
+    if (isTransitioningStep || isSubmitting) return;
+    isTransitioningStep = true;
+    setTimeout(() => {
+      wizardState.currentStep = step;
+      isTransitioningStep = false;
+    }, 300);
   }
-  
+
   function nextStep() {
+    if (isTransitioningStep || isSubmitting) return;
     if (wizardState.currentStep < UploadStep.REVIEW_SUBMIT) {
-      wizardState.currentStep++;
+      isTransitioningStep = true;
+      setTimeout(() => {
+        wizardState.currentStep++;
+        isTransitioningStep = false;
+      }, 300);
     }
   }
-  
+
   function previousStep() {
+    if (isTransitioningStep || isSubmitting) return;
     if (wizardState.currentStep > UploadStep.BASIC_INFO) {
-      wizardState.currentStep--;
+      isTransitioningStep = true;
+      setTimeout(() => {
+        wizardState.currentStep--;
+        isTransitioningStep = false;
+      }, 300);
     }
   }
   
-  function updateStepData(step: UploadStep, data: any) {
-    wizardState.stepData[step] = { ...wizardState.stepData[step], ...data };
-    validateStep(step);
-  }
-  
-  function validateStep(step: UploadStep) {
+  // Returns the list of missing/invalid fields for the given step from any
+  // wizard state. Pure — does NOT read `wizardState` directly — so the
+  // draft-rehydration path in `sanitizeWizardState` can call it against a
+  // freshly-loaded state to find the lowest still-invalid step and clamp
+  // `currentStep` there. The thin wrapper below is what the Next button +
+  // tooltip use against the live `wizardState`.
+  function missingFieldsInState(state: UploadWizardState, step: UploadStep): string[] {
+    const missing: string[] = [];
     switch (step) {
-      case UploadStep.BASIC_INFO:
-        const basicData = wizardState.stepData[step];
-        wizardState.isValid[step] = !!(basicData.title && basicData.description && basicData.contentType && basicData.ageRating);
+      case UploadStep.BASIC_INFO: {
+        const d = state.stepData[step];
+        if (!d.title || d.title.trim().length < 5) missing.push('Title (at least 5 characters)');
+        if (!d.description || d.description.trim().length < 50) missing.push('Description (at least 50 characters)');
+        if (!d.contentType) missing.push('Content type');
+        if (!d.ageRating) missing.push('Age rating');
         break;
-      case UploadStep.VIDEO_UPLOAD:
-        const videoData = wizardState.stepData[step];
-        wizardState.isValid[step] = !!(videoData.videoProgress?.isCompleted);
+      }
+      case UploadStep.VIDEO_UPLOAD: {
+        // Two-part check. `videoFile` must be an actual File object in
+        // memory (Files do NOT survive `JSON.stringify`, so a rehydrated
+        // draft will fail this and force the user back to Step 2 even if
+        // a prior session marked it complete). `uploadUrl` must be the
+        // sentinel `staged-for-encoding` value that `performActualUpload`
+        // assigns when the user drops a video — `isCompleted` alone is
+        // too loose, since it can be a stale draft remnant.
+        const d = state.stepData[step];
+        if (!(d.videoFile instanceof File)) missing.push('Video file');
+        else if (d.videoProgress?.uploadUrl !== 'staged-for-encoding') missing.push('Video upload');
         break;
-      case UploadStep.ASSET_MANAGEMENT:
-        const assetData = wizardState.stepData[step];
-        wizardState.isValid[step] = Object.keys(assetData.uploadedAssets).length > 0;
+      }
+      case UploadStep.ASSET_MANAGEMENT: {
+        // AssetManagementStep marks `posterPortrait` and `backdropHero`
+        // as REQUIRED in its own UI — but the wizard previously only
+        // checked Object.keys().length > 0, which let a single optional
+        // asset (e.g. the thumbnail) satisfy the gate. Make the
+        // validator match the UI: both required assets must be present.
+        const d = state.stepData[step];
+        if (!d.uploadedAssets?.posterPortrait) missing.push('Portrait poster');
+        if (!d.uploadedAssets?.backdropHero) missing.push('Hero background');
         break;
+      }
       case UploadStep.METADATA:
-        wizardState.isValid[step] = true; // Metadata is optional
+        // Optional step — never blocks Next.
         break;
-      case UploadStep.REVIEW_SUBMIT:
-        const reviewData = wizardState.stepData[step];
-        wizardState.isValid[step] = reviewData.termsAccepted && reviewData.guidelinesAccepted;
+      case UploadStep.REVIEW_SUBMIT: {
+        const d = state.stepData[step];
+        if (!d.termsAccepted) missing.push('Terms acceptance');
+        if (!d.guidelinesAccepted) missing.push('Guidelines acceptance');
         break;
+      }
     }
+    return missing;
   }
+
+  // Live-state wrapper used by the Next button, tooltip, and `stepValidity`
+  // derivation. Always reads the current reactive `wizardState`.
+  function missingFieldsForStep(step: UploadStep): string[] {
+    return missingFieldsInState(wizardState, step);
+  }
+
+  // Single source of truth for which steps are complete. Recomputes
+  // automatically whenever stepData changes, so the Next button can never
+  // get out of sync with the user's actual input. Each step's entry is
+  // also mirrored back into wizardState.isValid via the $effect below so
+  // the localStorage draft + StepIndicator prop stay consistent with the
+  // legacy shape.
+  const stepValidity = $derived({
+    [UploadStep.BASIC_INFO]: missingFieldsForStep(UploadStep.BASIC_INFO).length === 0,
+    [UploadStep.VIDEO_UPLOAD]: missingFieldsForStep(UploadStep.VIDEO_UPLOAD).length === 0,
+    [UploadStep.ASSET_MANAGEMENT]: missingFieldsForStep(UploadStep.ASSET_MANAGEMENT).length === 0,
+    [UploadStep.METADATA]: missingFieldsForStep(UploadStep.METADATA).length === 0,
+    [UploadStep.REVIEW_SUBMIT]: missingFieldsForStep(UploadStep.REVIEW_SUBMIT).length === 0,
+  });
+
+  // Mirror back into wizardState.isValid so the StepIndicator and the
+  // localStorage draft both see the freshest validity.
+  $effect(() => {
+    wizardState.isValid = { ...stepValidity };
+  });
+
+  // Derived blocker list for the CURRENT step so the Next button can show
+  // a tooltip / inline message about what's missing in real time.
+  const currentStepBlockers = $derived(missingFieldsForStep(wizardState.currentStep));
+  const isCurrentStepValid = $derived(stepValidity[wizardState.currentStep]);
   
   /**
    * Probe the source video's height (client-side) and choose the matching
@@ -355,33 +465,45 @@
 
   async function prefillFromExistingContent(contentId: string) {
     try {
-      const res = await fetch(`/api/creator/content?id=${contentId}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const item = Array.isArray(data) ? data[0] : data;
+      // Use the by-id endpoint that returns `{ content, analytics }`. The
+      // older `?id=` query against the list endpoint was ignored by the
+      // server and ended up grabbing `data[0]` — i.e. whichever content
+      // happened to be sorted first, not the one being edited.
+      const res = await fetch(`/api/creator/content/${contentId}`);
+      if (!res.ok) {
+        toast.error('Could not load the content you wanted to edit.');
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      const item = body.content;
       if (!item) return;
 
       // Pre-fill Basic Info + Metadata only. Video / assets must be uploaded
       // fresh — we don't reuse the old URLs since edit may include replacing
       // the actual media file.
+      // Reassignments below MUST keep every bindable field defined —
+      // any undefined slot reaches a $bindable child as undefined and
+      // crashes the page with Svelte 5's props_invalid_value error.
       wizardState.stepData[UploadStep.BASIC_INFO] = {
-        title: item.title,
+        title: item.title ?? '',
         description: item.description ?? '',
-        contentType: item.mediaType,
-        ageRating: item.ageRating
+        contentType: item.mediaType ?? '',
+        ageRating: item.ageRating ?? ''
       };
       wizardState.stepData[UploadStep.METADATA] = {
-        // Schema uses plural `genres`; wizard type uses singular `genre`.
-        // Take the first as the primary genre; full list goes to `tags`.
-        genre: Array.isArray(item.genres) && item.genres.length > 0 ? item.genres[0] : undefined,
+        bibleReferences: item.bibleReference ? [item.bibleReference] : [],
+        themes: item.topics ?? [],
+        ministryAffiliation: '',
+        duration: '',
+        language: item.language ?? 'English',
+        hasSubtitles: false,
+        hasClosedCaptions: false,
         tags: item.genres ?? [],
         keywords: item.keywords ?? [],
-        themes: item.topics ?? [],
-        language: item.language,
-        bibleReferences: item.bibleReference ? [item.bibleReference] : []
+        // Schema uses plural `genres`; wizard's `genre` is an array of
+        // genre strings. Mirror the full list here.
+        genre: Array.isArray(item.genres) ? item.genres : []
       };
-      validateStep(UploadStep.BASIC_INFO);
-      validateStep(UploadStep.METADATA);
       editPrefillBanner = {
         title: item.title,
         existingThumb: item.thumbnail ?? item.posterUrl ?? null
@@ -389,6 +511,97 @@
     } catch (err) {
       console.error('Failed to prefill from existing content:', err);
     }
+  }
+
+  function sanitizeWizardState(draft: any): UploadWizardState {
+    const defaultState: UploadWizardState = {
+      currentStep: UploadStep.BASIC_INFO,
+      stepData: {
+        [UploadStep.BASIC_INFO]: {
+          title: '',
+          description: '',
+          contentType: '',
+          ageRating: ''
+        },
+        [UploadStep.VIDEO_UPLOAD]: {
+          videoFile: null,
+          trailerFile: null,
+          videoProgress: null,
+          trailerProgress: null
+        },
+        [UploadStep.ASSET_MANAGEMENT]: {
+          uploadedAssets: {},
+          assetProgress: []
+        },
+        [UploadStep.METADATA]: {
+          bibleReferences: [],
+          themes: [],
+          ministryAffiliation: '',
+          duration: '',
+          language: 'English',
+          hasSubtitles: false,
+          hasClosedCaptions: false,
+          tags: [],
+          keywords: [],
+          genre: []
+        },
+        [UploadStep.REVIEW_SUBMIT]: {
+          termsAccepted: false,
+          guidelinesAccepted: false
+        }
+      },
+      isValid: {
+        [UploadStep.BASIC_INFO]: false,
+        [UploadStep.VIDEO_UPLOAD]: false,
+        [UploadStep.ASSET_MANAGEMENT]: false,
+        [UploadStep.METADATA]: false,
+        [UploadStep.REVIEW_SUBMIT]: false
+      }
+    };
+
+    if (!draft) return defaultState;
+
+    // Safely copy stepData fields to prevent undefined properties crashing `$bindable` bindings
+    for (const stepKey of Object.keys(defaultState.stepData)) {
+      const step = Number(stepKey) as UploadStep;
+      if (draft.stepData?.[step]) {
+        const draftStepData = draft.stepData[step];
+        const defaultStepData = defaultState.stepData[step] as any;
+        for (const key of Object.keys(defaultStepData)) {
+          if (draftStepData[key] !== undefined && draftStepData[key] !== null) {
+            defaultStepData[key] = draftStepData[key];
+          }
+        }
+      }
+    }
+
+    // Clamp `currentStep` to the lowest still-invalid step. Previously we
+    // restored `draft.currentStep` verbatim — that was the root cause of
+    // "Step 2 is not loading, jumping to Step 3": a draft saved on Step 3
+    // would skip the user past Step 2 on reload, even though Step 2's
+    // `videoFile` (a File object) had been dropped by JSON serialization
+    // and the wizard had nothing to encode. Walk steps in order and stop
+    // at the first one missing required input. Fall through to the saved
+    // step only if every earlier step is complete.
+    const orderedSteps = [
+      UploadStep.BASIC_INFO,
+      UploadStep.VIDEO_UPLOAD,
+      UploadStep.ASSET_MANAGEMENT,
+      UploadStep.METADATA,
+      UploadStep.REVIEW_SUBMIT,
+    ];
+    const firstInvalid = orderedSteps.find(
+      (s) => missingFieldsInState(defaultState, s).length > 0
+    );
+    const savedStep =
+      draft.currentStep && Object.values(UploadStep).includes(draft.currentStep)
+        ? (draft.currentStep as UploadStep)
+        : UploadStep.BASIC_INFO;
+    defaultState.currentStep = firstInvalid
+      ? (Math.min(savedStep, firstInvalid) as UploadStep)
+      : savedStep;
+
+    return defaultState;
   }
 
   onMount(() => {
@@ -413,7 +626,8 @@
           // wizard's actual state shape.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _version, ...payload } = parsed;
-          wizardState = { ...wizardState, ...payload };
+          const sanitized = sanitizeWizardState(payload);
+          wizardState = sanitized;
         } else {
           localStorage.removeItem('upload_draft');
           toast.info('Earlier draft was discarded because the upload form has changed.');
@@ -429,7 +643,11 @@
   // any UploadStep payload. Mismatched versions in onMount trigger a clean
   // reset so the creator never sees fields populated from an obsolete
   // schema.
-  const DRAFT_SCHEMA_VERSION = 2;
+  // v3: stricter Step 2 validator + sanitize-time clamp of currentStep to
+  // the first invalid step. Older v2 drafts had a saved currentStep that
+  // could land users past Step 2 even though their videoFile (a File
+  // object) was lost on rehydration. Bumping to 3 flushes those drafts.
+  const DRAFT_SCHEMA_VERSION = 3;
 
   // Auto-save draft data (excluding File objects). In runes mode, $: is no
   // longer reactive — use $effect to track wizardState changes.
@@ -445,7 +663,7 @@
   <PageHeader icon={Upload} title="Upload" subtitle="Submit a new video for review and encoding." />
 
   {#if editPrefillBanner}
-    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start">
+    <div class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start">
       {#if editPrefillBanner.existingThumb}
         <img src={editPrefillBanner.existingThumb} alt="" class="w-20 h-12 object-cover rounded shrink-0" />
       {/if}
@@ -462,54 +680,74 @@
     </div>
   {/if}
   
-  <!-- Step Indicator -->
-  <StepIndicator 
-    {steps} 
-    currentStep={wizardState.currentStep} 
-    isStepValid={wizardState.isValid}
-    onStepClick={goToStep}
+  <!-- Step Indicator. UploadStep is 1-indexed but StepIndicator expects
+       0-based indices, so we shift in both directions at the boundary. -->
+  <StepIndicator
+    {steps}
+    currentStep={wizardState.currentStep - 1}
+    onStepClick={(index) => goToStep((index + 1) as UploadStep)}
   />
   
   <!-- Step Content -->
-  <div class="bg-card border rounded-xl p-8 max-w-4xl mx-auto shadow-sm">
+  <div class="surface-glass border border-border/80 rounded-2xl p-8 max-w-4xl mx-auto shadow-lg">
     {#if wizardState.currentStep === UploadStep.BASIC_INFO}
-      <BasicInfoStep 
-        data={wizardState.stepData[UploadStep.BASIC_INFO]}
-        onUpdate={(data) => updateStepData(UploadStep.BASIC_INFO, data)}
+      <BasicInfoStep
+        bind:title={wizardState.stepData[UploadStep.BASIC_INFO].title}
+        bind:description={wizardState.stepData[UploadStep.BASIC_INFO].description}
+        bind:contentType={wizardState.stepData[UploadStep.BASIC_INFO].contentType}
+        bind:ageRating={wizardState.stepData[UploadStep.BASIC_INFO].ageRating}
       />
     {:else if wizardState.currentStep === UploadStep.VIDEO_UPLOAD}
-      <VideoUploadStep 
-        data={wizardState.stepData[UploadStep.VIDEO_UPLOAD]}
-        onUpdate={(data) => updateStepData(UploadStep.VIDEO_UPLOAD, data)}
+      <VideoUploadStep
+        bind:videoFile={wizardState.stepData[UploadStep.VIDEO_UPLOAD].videoFile}
+        bind:trailerFile={wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerFile}
+        bind:videoProgress={wizardState.stepData[UploadStep.VIDEO_UPLOAD].videoProgress}
+        bind:trailerProgress={wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress}
       />
     {:else if wizardState.currentStep === UploadStep.ASSET_MANAGEMENT}
-      <AssetManagementStep 
-        data={wizardState.stepData[UploadStep.ASSET_MANAGEMENT]}
-        onUpdate={(data) => updateStepData(UploadStep.ASSET_MANAGEMENT, data)}
+      <AssetManagementStep
+        bind:uploadedAssets={wizardState.stepData[UploadStep.ASSET_MANAGEMENT].uploadedAssets}
+        bind:assetProgress={wizardState.stepData[UploadStep.ASSET_MANAGEMENT].assetProgress}
       />
     {:else if wizardState.currentStep === UploadStep.METADATA}
-      <MetadataStep 
-        data={wizardState.stepData[UploadStep.METADATA]}
-        onUpdate={(data) => updateStepData(UploadStep.METADATA, data)}
+      <MetadataStep
+        bind:bibleReferences={wizardState.stepData[UploadStep.METADATA].bibleReferences}
+        bind:themes={wizardState.stepData[UploadStep.METADATA].themes}
+        bind:ministryAffiliation={wizardState.stepData[UploadStep.METADATA].ministryAffiliation}
+        bind:duration={wizardState.stepData[UploadStep.METADATA].duration}
+        bind:language={wizardState.stepData[UploadStep.METADATA].language}
+        bind:hasSubtitles={wizardState.stepData[UploadStep.METADATA].hasSubtitles}
+        bind:hasClosedCaptions={wizardState.stepData[UploadStep.METADATA].hasClosedCaptions}
+        bind:tags={wizardState.stepData[UploadStep.METADATA].tags}
+        bind:keywords={wizardState.stepData[UploadStep.METADATA].keywords}
+        bind:genre={wizardState.stepData[UploadStep.METADATA].genre}
       />
     {:else if wizardState.currentStep === UploadStep.REVIEW_SUBMIT}
-      <ReviewSubmitStep 
-        data={wizardState.stepData[UploadStep.REVIEW_SUBMIT]}
+      <ReviewSubmitStep
+        bind:termsAccepted={wizardState.stepData[UploadStep.REVIEW_SUBMIT].termsAccepted}
+        bind:guidelinesAccepted={wizardState.stepData[UploadStep.REVIEW_SUBMIT].guidelinesAccepted}
         allStepData={wizardState}
-        onUpdate={(data) => updateStepData(UploadStep.REVIEW_SUBMIT, data)}
-        onSubmit={submitContent}
+        submitting={isSubmitting}
       />
     {/if}
   </div>
   
   <!-- Navigation Buttons -->
   <div class="flex justify-between items-center max-w-4xl mx-auto pt-4">
-    <button 
+    <button
       onclick={previousStep}
-      disabled={wizardState.currentStep === UploadStep.BASIC_INFO || isSubmitting}
-      class="bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground px-6 py-3 rounded-lg font-medium transition-colors"
+      disabled={wizardState.currentStep === UploadStep.BASIC_INFO || isSubmitting || isTransitioningStep}
+      class="bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
     >
-      ← Previous
+      {#if isTransitioningStep}
+        <svg class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Loading...
+      {:else}
+        ← Previous
+      {/if}
     </button>
     
     <div class="text-center text-muted-foreground font-medium">
@@ -517,21 +755,53 @@
     </div>
     
     {#if wizardState.currentStep < UploadStep.REVIEW_SUBMIT}
-      <button 
-        onclick={nextStep}
-        disabled={!wizardState.isValid[wizardState.currentStep] || isSubmitting}
-        class="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-6 py-3 rounded-lg font-medium transition-colors"
-      >
-        Next →
-      </button>
+      <div class="flex flex-col items-end gap-1">
+        <button
+          onclick={nextStep}
+          disabled={!isCurrentStepValid || isSubmitting || isTransitioningStep}
+          title={currentStepBlockers.length > 0 ? `Still needed: ${currentStepBlockers.join(', ')}` : undefined}
+          class="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground disabled:text-muted-foreground px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+        >
+          {#if isTransitioningStep}
+            <svg class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading...
+          {:else}
+            Next →
+          {/if}
+        </button>
+        {#if currentStepBlockers.length > 0}
+          <p class="text-xs text-muted-foreground max-w-xs text-right">
+            Still needed: <span class="text-foreground">{currentStepBlockers.join(', ')}</span>
+          </p>
+        {/if}
+      </div>
     {:else}
-      <button
-        onclick={submitContent}
-        disabled={!wizardState.isValid[wizardState.currentStep] || isSubmitting}
-        class="bg-primary hover:opacity-90 disabled:opacity-50 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-opacity"
-      >
-        {isSubmitting ? 'Processing…' : 'Submit for review'}
-      </button>
+      <div class="flex flex-col items-end gap-1">
+        <button
+          onclick={submitContent}
+          disabled={!isCurrentStepValid || isSubmitting || isTransitioningStep}
+          title={currentStepBlockers.length > 0 ? `Still needed: ${currentStepBlockers.join(', ')}` : undefined}
+          class="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground disabled:text-muted-foreground px-8 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2"
+        >
+          {#if isSubmitting}
+            <svg class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing…
+          {:else}
+            Submit for review
+          {/if}
+        </button>
+        {#if currentStepBlockers.length > 0}
+          <p class="text-xs text-muted-foreground max-w-xs text-right">
+            Still needed: <span class="text-foreground">{currentStepBlockers.join(', ')}</span>
+          </p>
+        {/if}
+      </div>
     {/if}
   </div>
 

@@ -1,7 +1,15 @@
-import { n as signIn } from "./auth-client.js";
 import { t as Constants } from "./constants.js";
+import { n as signIn } from "./auth-client.js";
 import { n as toast } from "./toast-state.svelte.js";
-//#region src/lib/authentication/client.ts
+new Set([
+	"sepharstudios.com",
+	"www.sepharstudios.com",
+	"admin.sepharstudios.com",
+	"creators.sepharstudios.com",
+	"creator.sepharstudios.com",
+	"kids.sepharstudios.com",
+	"localhost"
+]);
 var getRedirectUrl = () => {
 	return Constants.AFTERAUTH;
 };

@@ -60,18 +60,25 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	// Open reports keyed by review id — used to tag rows + to drive the
 	// "flagged" filter without joining (the reports table can be sparse).
-	const reportRows = await db
-		.select({
-			targetId: abuseReports.targetId,
-			count: sql<number>`count(*)::int`
-		})
-		.from(abuseReports)
-		.where(and(
-			eq(abuseReports.targetType, 'review'),
-			eq(abuseReports.status, 'open'),
-			inArray(abuseReports.targetId, rows.map((r) => r.id))
-		))
-		.groupBy(abuseReports.targetId);
+	// Drizzle's `inArray()` THROWS on empty input lists, so guard the
+	// no-reviews case explicitly — that was crashing this endpoint with
+	// 500 the moment a creator with no reviews loaded the moderation
+	// page, which then blanked the SPA.
+	const reviewIds = rows.map((r) => r.id);
+	const reportRows = reviewIds.length === 0
+		? []
+		: await db
+			.select({
+				targetId: abuseReports.targetId,
+				count: sql<number>`count(*)::int`
+			})
+			.from(abuseReports)
+			.where(and(
+				eq(abuseReports.targetType, 'review'),
+				eq(abuseReports.status, 'open'),
+				inArray(abuseReports.targetId, reviewIds)
+			))
+			.groupBy(abuseReports.targetId);
 	const reportMap = new Map(reportRows.map((r) => [r.targetId, Number(r.count)]));
 
 	const enriched = rows.map((r) => ({

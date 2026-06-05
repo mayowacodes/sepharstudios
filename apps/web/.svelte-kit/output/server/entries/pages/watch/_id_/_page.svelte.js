@@ -1,8 +1,13 @@
-import { Ct as unsubscribe_stores, St as stringify, _t as head, bt as store_get, dt as attr_style, gt as ensure_array_like, jt as escape_html, kt as attr, mt as derived, ot as onDestroy, ut as attr_class, wt as html, yt as spread_props } from "../../../../chunks/ui-libs.js";
+import { At as stringify, Dt as spread_props, Lt as attr, Mt as html, St as derived, Tt as head, mt as onDestroy, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../../../chunks/constants.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
+import { r as invalidateAll } from "../../../../chunks/client.js";
+import { t as page } from "../../../../chunks/state.js";
 import { t as copilotContext } from "../../../../chunks/copilot.js";
-import { t as page } from "../../../../chunks/stores.js";
+import "../../../../chunks/navigation.js";
+import { t as VideoPlayer } from "../../../../chunks/VideoPlayer.js";
+import { t as ReportButton } from "../../../../chunks/ReportButton.js";
+import { n as sectionLabel, r as translateRole } from "../../../../chunks/role-labels.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/share-2.svelte
 function Share_2($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -41,88 +46,28 @@ function Share_2($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region src/lib/components/widgets/VideoPlayer.svelte
-function VideoPlayer($$renderer, $$props) {
+//#region src/lib/components/widgets/PPVPaywall.svelte
+function PPVPaywall($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		/**
-		* Audio descriptions (WCAG 1.2.5 / SC 1.2.7). Each entry is a separate
-		* description track rendered as `<track kind="descriptions">`. Browsers
-		* surface them via a media-controls picker; assistive tech reads them
-		* out alongside the video soundtrack.
-		*/
-		let { src, poster, contentId, startAt = 0, title, subtitles = [], descriptions = [], onEnded } = $$props;
-		let playing = false;
-		let currentTime = 0;
-		let duration = 0;
-		let volume = 1;
-		let muted = false;
-		let fullscreen = false;
-		let controlsTimer;
-		let levels = [];
-		let speed = 1;
-		let progressInterval;
-		let activeInterval;
-		async function reportProgress() {}
-		function formatTime(s) {
-			if (!s || isNaN(s)) return "0:00";
-			const h = Math.floor(s / 3600);
-			const m = Math.floor(s % 3600 / 60);
-			const sec = Math.floor(s % 60);
-			return h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}` : `${m}:${sec.toString().padStart(2, "0")}`;
-		}
-		const progressPct = derived(() => 0);
-		const bufferedPct = derived(() => 0);
-		const qualityLabel = derived(() => "Auto");
-		onDestroy(() => {
-			reportProgress();
-			clearInterval(progressInterval);
-			clearInterval(activeInterval);
-			clearTimeout(controlsTimer);
-		});
-		$$renderer.push(`<div class="relative bg-black w-full aspect-video select-none group" role="application" aria-label="Video player" tabindex="0"><video${attr("poster", poster)} class="w-full h-full" playsinline=""><!--[-->`);
-		const each_array = ensure_array_like(subtitles);
-		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-			let sub = each_array[$$index];
-			$$renderer.push(`<track kind="subtitles"${attr("label", sub.label)}${attr("src", sub.src)}${attr("srclang", sub.srclang)}/>`);
-		}
-		$$renderer.push(`<!--]--> <!--[-->`);
-		const each_array_1 = ensure_array_like(descriptions);
-		for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
-			let d = each_array_1[$$index_1];
-			$$renderer.push(`<track kind="descriptions"${attr("label", d.label)}${attr("src", d.src)}${attr("srclang", d.srclang)}/>`);
-		}
-		$$renderer.push(`<!--]--></video>  <div${attr_class(`absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 opacity-100`)} role="presentation">`);
-		if (title) {
+		/** Fallback display when /api/content/[id]/price is unreachable. */
+		let { contentId, contentTitle, priceCents, onPurchased } = $$props;
+		let loading = false;
+		const fallbackDisplay = derived(() => `$${(priceCents / 100).toFixed(2)}`);
+		const canonicalDisplay = derived(() => fallbackDisplay());
+		const localized = derived(() => null);
+		$$renderer.push(`<div class="flex flex-col items-center justify-center gap-6 p-8 text-center max-w-md mx-auto"><div class="w-16 h-16 rounded-full bg-[#FFBF00]/10 flex items-center justify-center text-3xl">🎬</div> <div><h2 class="text-xl font-bold text-white mb-2">Premium Content</h2> <p class="text-gray-400 text-sm"><strong class="text-white">${escape_html(contentTitle)}</strong> is available as pay-per-view. Purchase once and watch anytime.</p></div> <div class="bg-white/5 border border-white/10 rounded-xl p-6 w-full"><div class="text-4xl font-bold text-[#FFBF00] mb-1">${escape_html(canonicalDisplay())}</div> `);
+		if (localized()) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="absolute top-4 left-4 text-white text-sm font-medium drop-shadow">${escape_html(title)}</div>`);
+			$$renderer.push(`<div class="text-sm text-gray-300 mt-1">≈ <span class="font-medium text-white">${escape_html(localized().display)}</span> <span class="text-gray-500">(${escape_html(localized().currency)})</span></div>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]-->  <div class="mx-4 mb-2 h-1.5 bg-white/20 rounded-full cursor-pointer group/bar hover:h-3 transition-all relative" role="slider" aria-label="Video progress" aria-valuemin="0" aria-valuemax="100"${attr("aria-valuenow", Math.round(progressPct()))} tabindex="0"><div class="absolute inset-y-0 left-0 bg-white/30 rounded-full"${attr_style(`width: ${stringify(bufferedPct())}%`)}></div> <div class="absolute inset-y-0 left-0 bg-[#FF5E0E] rounded-full"${attr_style(`width: ${stringify(progressPct())}%`)}><div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover/bar:opacity-100 transition-opacity shadow"></div></div></div> <div class="flex items-center gap-3 px-4 pb-4"><button${attr("aria-label", "Play")}${attr("aria-pressed", playing)} class="text-white hover:text-[#FF5E0E] transition-colors">`);
+		$$renderer.push(`<!--]--> <div class="text-gray-400 text-sm mt-2">One-time purchase · Watch anytime</div></div> `);
 		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"></polygon></svg>`);
-		$$renderer.push(`<!--]--></button> <button aria-label="Skip backward 10 seconds" class="text-white hover:text-[#FF5E0E] transition-colors text-xs font-bold">↺10</button> <button aria-label="Skip forward 10 seconds" class="text-white hover:text-[#FF5E0E] transition-colors text-xs font-bold">10↻</button> <span class="text-white text-xs tabular-nums">${escape_html(formatTime(currentTime))} / ${escape_html(formatTime(duration))}</span> <div class="flex-1"></div> <div class="flex items-center gap-2"><button${attr("aria-label", "Mute")}${attr("aria-pressed", muted)} class="text-white hover:text-[#FF5E0E] transition-colors">`);
-		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>`);
-		$$renderer.push(`<!--]--></button> <input type="range" min="0" max="1" step="0.05"${attr("value", volume)} aria-label="Volume" aria-valuemin="0" aria-valuemax="100"${attr("aria-valuenow", Math.round(volume * 100))} class="w-20 h-1 accent-[#FF5E0E] cursor-pointer"/></div> <div class="relative"><button class="text-white text-xs font-bold hover:text-[#FF5E0E] transition-colors px-1">${escape_html(speed)}x</button> `);
-		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div> `);
-		if (levels.length > 0) {
+		$$renderer.push(`<!--]--> <button${attr("disabled", loading, true)} class="w-full bg-[#FFBF00] hover:bg-[#FFBF00]/90 disabled:opacity-50 text-black font-semibold py-3 px-6 rounded-xl transition-colors">${escape_html(`Buy for ${canonicalDisplay()}`)}</button> `);
+		if (localized()) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="relative"><button class="text-white text-xs font-bold hover:text-[#FF5E0E] transition-colors px-1">${escape_html(qualityLabel())}</button> `);
-			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div>`);
+			$$renderer.push(`<p class="text-[10px] text-gray-500">Charged in ${escape_html(void 0)}. Local currency shown for reference; final amount may vary by your card's FX.</p>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
-		if (subtitles.length > 0) {
-			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<button class="text-white text-xs font-bold hover:text-[#FF5E0E] transition-colors" aria-label="Toggle closed captions">CC</button>`);
-		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> <button${attr("aria-label", "Enter fullscreen")}${attr("aria-pressed", fullscreen)} class="text-white hover:text-[#FF5E0E] transition-colors">`);
-		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg>`);
-		$$renderer.push(`<!--]--></button></div></div> `);
-		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<button type="button" aria-label="Play video" class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-16 h-16 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white"><svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"></polygon></svg></div></button>`);
-		$$renderer.push(`<!--]--></div>`);
+		$$renderer.push(`<!--]--> <p class="text-gray-500 text-xs">Upgrade to <a href="/plans" class="text-[#FFBF00] underline">Premium</a> for unlimited access to all content.</p></div>`);
 	});
 }
 //#endregion
@@ -195,7 +140,6 @@ function ShareButton($$renderer, $$props) {
 //#region src/routes/watch/[id]/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		var $$store_subs;
 		const { data } = $$props;
 		const content = derived(() => data.content);
 		const videoSchema = derived(() => {
@@ -222,7 +166,7 @@ function _page($$renderer, $$props) {
 		});
 		onDestroy(() => copilotContext.set(null));
 		const startAt = derived(() => () => {
-			const t = store_get($$store_subs ??= {}, "$page", page).url.searchParams.get("t");
+			const t = page.url.searchParams.get("t");
 			return t ? parseInt(t, 10) : 0;
 		});
 		const src = derived(() => () => {
@@ -244,14 +188,31 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]-->`);
 		});
 		$$renderer.push(`<div class="min-h-screen bg-[#0b0c10] text-white"><div class="w-full bg-black">`);
-		if (src()()) {
+		if (data.paywall?.required) {
 			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="aspect-video flex items-center justify-center bg-zinc-900">`);
+			PPVPaywall($$renderer, {
+				contentId: content().id,
+				contentTitle: content().title,
+				priceCents: data.paywall.priceCents,
+				onPurchased: () => void invalidateAll()
+			});
+			$$renderer.push(`<!----></div>`);
+		} else if (src()()) {
+			$$renderer.push("<!--[1-->");
 			VideoPlayer($$renderer, {
 				src: src()(),
-				poster: content().backdropUrl ?? content().thumbnail ?? void 0,
+				poster: content().backdropUrl ?? content().thumbnail ?? content().posterAutoUrl ?? void 0,
 				contentId: content().id,
 				startAt: startAt()(),
 				title: content().title,
+				subtitles: data.subtitles,
+				descriptions: data.descriptions,
+				chapters: content().chapters ?? [],
+				endScreen: data.nextUp ?? [],
+				previewVtt: content().previewThumbnailsVtt ?? void 0,
+				previewSprites: content().previewSpriteUrls ?? [],
+				enableAds: true,
 				onEnded: handleEnded
 			});
 		} else {
@@ -263,6 +224,11 @@ function _page($$renderer, $$props) {
 			contentId: content().id,
 			title: content().title,
 			description: content().description ?? ""
+		});
+		$$renderer.push(`<!----> `);
+		ReportButton($$renderer, {
+			targetType: "content",
+			targetId: content().id
 		});
 		$$renderer.push(`<!----></div> <div class="flex flex-wrap gap-3 mt-2 text-sm text-zinc-400">`);
 		if (content().year) {
@@ -310,13 +276,47 @@ function _page($$renderer, $$props) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<div class="flex items-center gap-2 mb-6 text-sm text-amber-400"><span>📖</span> <span>${escape_html(content().bibleReference)}</span></div>`);
 		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
+		if (content().cast && content().cast.length > 0 || content().crew && content().crew.length > 0) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<details class="mb-6 surface-1 rounded-xl"><summary class="cursor-pointer px-4 py-3 text-sm font-medium text-white">${escape_html(sectionLabel("castAndCrew", data.viewerLocale))}</summary> <div class="px-4 pb-4 space-y-4">`);
+			if (content().cast && content().cast.length > 0) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div><div class="text-xs uppercase tracking-wide text-gray-400 mb-2">${escape_html(sectionLabel("cast", data.viewerLocale))}</div> <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"><!--[-->`);
+				const each_array_1 = ensure_array_like(content().cast);
+				for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
+					let p = each_array_1[$$index_1];
+					$$renderer.push(`<li class="flex items-center gap-2">`);
+					if (p.photoUrl) {
+						$$renderer.push("<!--[0-->");
+						$$renderer.push(`<img${attr("src", p.photoUrl)} alt="" class="w-8 h-8 rounded-full object-cover"/>`);
+					} else {
+						$$renderer.push("<!--[-1-->");
+						$$renderer.push(`<div class="w-8 h-8 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">${escape_html((p.name ?? "?").charAt(0).toUpperCase())}</div>`);
+					}
+					$$renderer.push(`<!--]--> <div class="min-w-0"><div class="text-sm text-white truncate">${escape_html(p.name)}</div> <div class="text-xs text-gray-400 truncate">${escape_html(p.characterName ? `${sectionLabel("as", data.viewerLocale)} ${p.characterName}` : translateRole(p.role, data.viewerLocale))}</div></div></li>`);
+				}
+				$$renderer.push(`<!--]--></ul></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (content().crew && content().crew.length > 0) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div><div class="text-xs uppercase tracking-wide text-gray-400 mb-2">${escape_html(sectionLabel("crew", data.viewerLocale))}</div> <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm"><!--[-->`);
+				const each_array_2 = ensure_array_like(content().crew);
+				for (let $$index_2 = 0, $$length = each_array_2.length; $$index_2 < $$length; $$index_2++) {
+					let p = each_array_2[$$index_2];
+					$$renderer.push(`<li class="flex justify-between text-gray-200"><span>${escape_html(p.name)}</span> <span class="text-gray-400">${escape_html(translateRole(p.role, data.viewerLocale))}</span></li>`);
+				}
+				$$renderer.push(`<!--]--></ul></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div></details>`);
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> <hr class="border-zinc-800 mb-8"/> `);
 		ReviewSection($$renderer, {
 			contentId: content().id,
 			contentType: content().mediaType
 		});
 		$$renderer.push(`<!----></div></div>`);
-		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
 //#endregion

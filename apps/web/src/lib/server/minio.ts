@@ -7,19 +7,90 @@ import { eq } from 'drizzle-orm';
 
 import { BUCKETS } from '$lib/constants/minio';
 
-// Configuration from environment
-const ENDPOINT = env.MINIO_ENDPOINT || 's3.sepharstudios.com'; // Use internal service name in production, or external in dev
+// Configuration from environment.
+//
+// MinIO has TWO addresses in a typical deploy:
+//   • INTERNAL — `minio:9000` (Docker service name, HTTP). Used by the
+//     SvelteKit container for server-to-server operations: putObject,
+//     listObjects, makeBucket, etc. Fast, doesn't leave the host.
+//   • PUBLIC  — `s3.sepharstudios.com:443` (HTTPS via Traefik). Used by
+//     the BROWSER. The browser cannot resolve `minio:9000`, and even if
+//     it could, an HTTPS page cannot XHR to an http:// endpoint (mixed
+//     content). Anything signed for browser use MUST point here.
+//
+// The MinIO SDK bakes the configured endpoint into every presigned URL,
+// so we keep two clients: `minioClient` for server-side calls and
+// `minioPublicClient` exclusively for generating presigned URLs that the
+// browser will hit. The presign signature is independent of which
+// client signs it — it's a function of (host header, path, headers,
+// secret) — so as long as we sign with the public host and the browser
+// hits the public host, the signature matches and MinIO accepts the PUT.
+const ENDPOINT = env.MINIO_ENDPOINT || 's3.sepharstudios.com';
 const PORT = Number(env.MINIO_PORT) || 443;
 const USE_SSL = env.MINIO_USE_SSL === 'true' || PORT === 443;
-const PUBLIC_BASE_URL = 's3.sepharstudios.com';
+const PUBLIC_BASE_URL = env.MINIO_PUBLIC_ENDPOINT || 's3.sepharstudios.com';
+const PUBLIC_PORT = Number(env.MINIO_PUBLIC_PORT) || 443;
+// Default to SSL for the public endpoint; only disable if explicitly
+// set to 'false' (the public endpoint is browser-facing, and modern
+// browsers refuse mixed-content even for development).
+const PUBLIC_USE_SSL = env.MINIO_PUBLIC_USE_SSL !== 'false';
 
-// Initialize Main MinIO Client
+// Credentials. The conventional S3-compatible env-var names are
+// MINIO_ACCESS_KEY and MINIO_SECRET_KEY (or AWS_ACCESS_KEY_ID /
+// AWS_SECRET_ACCESS_KEY). This repo historically used MINIO_ROOT_USER /
+// MINIO_ROOT_PASSWORD, which double as the access-key pair when MinIO
+// is configured with default root credentials but are misnamed if a
+// dedicated service account is used. Accept either; prefer the
+// conventional names so operators can set them without thinking about
+// our legacy naming.
+const ACCESS_KEY = env.MINIO_ACCESS_KEY || env.MINIO_ROOT_USER || '';
+const SECRET_KEY = env.MINIO_SECRET_KEY || env.MINIO_ROOT_PASSWORD || '';
+
+// Boot diagnostic — print which endpoints + access key (first 4 chars
+// only) are being used on container start. This makes it trivial to
+// confirm at a glance whether Dokploy actually plumbed the env vars
+// into the SvelteKit container. Without it, debugging "InvalidAccessKeyId"
+// errors requires guessing whether the key is wrong or unset. Never log
+// the secret itself.
+const ACCESS_KEY_PREVIEW = ACCESS_KEY
+	? `${ACCESS_KEY.slice(0, 4)}…(${ACCESS_KEY.length} chars)`
+	: '(empty — env var not set)';
+const SECRET_KEY_PREVIEW = SECRET_KEY
+	? `***(${SECRET_KEY.length} chars)`
+	: '(empty — env var not set)';
+console.log(
+	`[minio] internal=${USE_SSL ? 'https' : 'http'}://${ENDPOINT}:${PORT} ` +
+	`public=${PUBLIC_USE_SSL ? 'https' : 'http'}://${PUBLIC_BASE_URL}:${PUBLIC_PORT} ` +
+	`accessKey=${ACCESS_KEY_PREVIEW} secretKey=${SECRET_KEY_PREVIEW}`
+);
+if (!ACCESS_KEY || !SECRET_KEY) {
+	console.error(
+		'[minio] MISSING CREDENTIALS — set MINIO_ACCESS_KEY and MINIO_SECRET_KEY ' +
+		'(or legacy MINIO_ROOT_USER / MINIO_ROOT_PASSWORD) on the SvelteKit container. ' +
+		'All bucketExists/makeBucket/putObject calls will fail with InvalidAccessKeyId until these are present.'
+	);
+}
+
+// Initialize Main MinIO Client (internal, server-to-server).
 const minioClient = new Client({
 	endPoint: ENDPOINT,
 	port: PORT,
 	useSSL: USE_SSL,
-	accessKey: env.MINIO_ROOT_USER,
-	secretKey: env.MINIO_ROOT_PASSWORD
+	accessKey: ACCESS_KEY,
+	secretKey: SECRET_KEY
+});
+
+// Initialize Public-facing MinIO Client. Used ONLY to generate presigned
+// URLs that the browser will hit directly. Never use it for server-side
+// putObject etc — that would route writes back out through the public
+// network, which is slower and pointless when the container can reach
+// MinIO over the Docker network.
+const minioPublicClient = new Client({
+	endPoint: PUBLIC_BASE_URL,
+	port: PUBLIC_PORT,
+	useSSL: PUBLIC_USE_SSL,
+	accessKey: ACCESS_KEY,
+	secretKey: SECRET_KEY
 });
 
 // Initialize Encoder MinIO Client (for Direct Upload)
@@ -75,6 +146,49 @@ export async function getEncoderPresignedUploadUrl(
 		return await encoderMinioClient.presignedPutObject(bucketName, objectName, expirySeconds);
 	} catch (error) {
 		console.error('Error generating encoder presigned PUT URL:', error);
+		throw error;
+	}
+}
+
+/**
+ * Generate a presigned PUT URL for the MAIN MinIO.
+ *
+ * Lets the browser upload directly to MinIO without round-tripping the file
+ * through SvelteKit. Used for creator-wizard image assets (posters,
+ * backdrops, thumbnails, logos) so a 5 MB hero background never has to fit
+ * inside the adapter's BODY_SIZE_LIMIT and never gets caught by an
+ * upstream reverse-proxy body cap.
+ *
+ * Caller flow:
+ *   1. POST /api/files/sign → returns { uploadUrl, objectName }
+ *   2. Browser PUTs the file bytes directly to `uploadUrl` (XHR with
+ *      `upload.onprogress` for the progress bar; bytes go straight to
+ *      MinIO, not through us).
+ *   3. POST /api/files/commit { objectName, ... } → records the row in
+ *      filesTable and returns the durable directUrl.
+ *
+ * The 15-minute expiry is comfortably longer than any real upload but
+ * short enough that a leaked URL can't be reused indefinitely.
+ */
+export async function getMainPresignedUploadUrl(
+	bucketName: string,
+	objectName: string,
+	expirySeconds: number = 900
+): Promise<string> {
+	try {
+		// `createBucket` uses the internal client (cheap + reliable inside
+		// Docker), so we don't pay any public-network round-trip just to
+		// ensure the bucket exists.
+		await createBucket(bucketName);
+		// The presign itself must come from the PUBLIC client. If we
+		// signed with the internal `minio:9000` endpoint, the URL would
+		// be `http://minio:9000/...` — unreachable from the browser AND
+		// blocked by mixed-content on an HTTPS page. The public client
+		// signs against `https://s3.sepharstudios.com`, which the browser
+		// can actually hit.
+		return await minioPublicClient.presignedPutObject(bucketName, objectName, expirySeconds);
+	} catch (error) {
+		console.error('Error generating main presigned PUT URL:', error);
 		throw error;
 	}
 }

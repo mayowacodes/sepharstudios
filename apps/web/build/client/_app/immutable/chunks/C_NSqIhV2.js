@@ -1,0 +1,1 @@
+import{_t as e,gt as t}from"./CocL4akC.js";import{t as n}from"./j5L7JOaG.js";function r(r,i){let a=t(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`rect`,{width:`20`,height:`14`,x:`2`,y:`5`,rx:`2`}],[`line`,{x1:`2`,x2:`22`,y1:`10`,y2:`10`}]];n(r,e({name:`credit-card`},()=>a,{get iconNode(){return o}}))}export{r as t};

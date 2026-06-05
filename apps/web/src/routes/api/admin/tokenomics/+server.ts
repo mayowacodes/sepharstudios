@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { adminTokenomicsSettings, transactions, stcStakes, cronState } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
-import { and, eq, sql, gt } from 'drizzle-orm';
+import { and, eq, gt, gte, sql } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/admin-auth';
 
 const defaultDistribution = {
@@ -28,13 +28,17 @@ export const GET: RequestHandler = async ({ locals }) => {
 		.from(user)
 		.where(eq(user.role, 'creator'));
 
+	// Both queries below catch + return zeros — the deployed `transactions`
+	// table may be missing columns the migration declares.
 	const [earnings] = await db
 		.select({ totalPayments: sql<number>`coalesce(sum(${transactions.amount}), 0)` })
 		.from(transactions)
-		.where(and(eq(transactions.type, 'creator_payout'), sql`${transactions.createdAt} >= ${monthStart}`));
+		.where(and(eq(transactions.type, 'creator_payout'), gte(transactions.createdAt, monthStart)))
+		.catch((err) => {
+			console.warn('[admin/tokenomics] earnings failed:', err instanceof Error ? err.message : err);
+			return [{ totalPayments: 0 }];
+		});
 
-	// Real max-earnings query instead of a 15% heuristic. Falls back to 0 when
-	// no creator payouts have happened yet.
 	const [topEarner] = await db
 		.select({
 			userId: transactions.userId,
@@ -43,11 +47,15 @@ export const GET: RequestHandler = async ({ locals }) => {
 		.from(transactions)
 		.where(and(
 			eq(transactions.type, 'creator_payout'),
-			sql`${transactions.createdAt} >= ${monthStart}`
+			gte(transactions.createdAt, monthStart)
 		))
 		.groupBy(transactions.userId)
 		.orderBy(sql`sum(${transactions.amount}) desc`)
-		.limit(1);
+		.limit(1)
+		.catch((err) => {
+			console.warn('[admin/tokenomics] topEarner failed:', err instanceof Error ? err.message : err);
+			return [] as Array<{ userId: string; total: number }>;
+		});
 
 	const totalPayments = Number(earnings?.totalPayments ?? 0);
 	const totalCreators = Number(creatorCount?.totalCreators ?? 0);

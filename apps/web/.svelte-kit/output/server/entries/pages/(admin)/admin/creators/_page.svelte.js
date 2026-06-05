@@ -1,13 +1,34 @@
-import { jt as escape_html, kt as attr } from "../../../../../chunks/ui-libs.js";
+import { Dt as spread_props, Lt as attr, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { t as Icon } from "../../../../../chunks/Icon.js";
+import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
+import { t as Clock } from "../../../../../chunks/clock.js";
 import "../../../../../chunks/coins.js";
 import "../../../../../chunks/credit-card.js";
-import "../../../../../chunks/dollar-sign.js";
+import { t as Dollar_sign } from "../../../../../chunks/dollar-sign.js";
+import { t as File_text } from "../../../../../chunks/file-text.js";
+import { t as User_plus } from "../../../../../chunks/user-plus.js";
+import { t as Users } from "../../../../../chunks/users.js";
 import "../../../../../chunks/wallet.js";
-import "../../../../../chunks/button.js";
 import "../../../../../chunks/input.js";
+import "../../../../../chunks/button.js";
 import "../../../../../chunks/badge.js";
+import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
 import "../../../../../chunks/card.js";
 import "../../../../../chunks/label.js";
+//#region ../../node_modules/@lucide/svelte/dist/icons/megaphone.svelte
+function Megaphone($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "megaphone" },
+		props,
+		{ iconNode: [
+			["path", { "d": "M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" }],
+			["path", { "d": "M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" }],
+			["path", { "d": "M8 6v8" }]
+		] }
+	]));
+}
+//#endregion
 //#region src/routes/(admin)/admin/creators/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -52,11 +73,64 @@ function _page($$renderer, $$props) {
 				return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
 			});
 		}
-		$$renderer.push(`<div class="space-y-6"><div class="flex items-center justify-between"><div><h1 class="text-3xl font-bold text-white">Creator Management</h1> <p class="text-gray-300">Manage creators and their content on the platform</p></div> <div class="flex items-center space-x-4"><button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">📧 Send Broadcast</button> <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">➕ Invite Creator</button></div></div> <div class="grid grid-cols-1 md:grid-cols-4 gap-6"><div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><div class="text-2xl font-bold text-white">${escape_html(creators.filter((c) => c.status === "active").length)}</div> <div class="text-gray-300 text-sm">Active Creators</div></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><div class="text-2xl font-bold text-yellow-400">${escape_html(creators.filter((c) => c.status === "pending").length)}</div> <div class="text-gray-300 text-sm">Pending Approval</div></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><div class="text-2xl font-bold text-blue-400">${escape_html(creators.reduce((sum, c) => sum + c.contentCount, 0))}</div> <div class="text-gray-300 text-sm">Total Content</div></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><div class="text-2xl font-bold text-green-400">$${escape_html(creators.reduce((sum, c) => sum + c.monthlyEarnings, 0).toFixed(0))}</div> <div class="text-gray-300 text-sm">Monthly Payouts</div></div></div> <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4"><div class="flex-1"><input type="text" placeholder="Search creators, email, or ministry..."${attr("value", searchQuery)} class="w-full bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-500"/></div> <div class="flex gap-4">`);
+		$$renderer.push(`<div class="container mx-auto px-4 py-4 space-y-6">`);
+		{
+			function actions($$renderer) {
+				$$renderer.push(`<button class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors">`);
+				Megaphone($$renderer, { class: "w-3 h-3" });
+				$$renderer.push(`<!----> Send broadcast</button> <button class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">`);
+				User_plus($$renderer, { class: "w-3 h-3" });
+				$$renderer.push(`<!----> Invite creator</button>`);
+			}
+			PageHeader($$renderer, {
+				icon: Users,
+				title: "Creator Management",
+				subtitle: "Manage creators and their content on the platform.",
+				actions,
+				$$slots: { actions: true }
+			});
+		}
+		$$renderer.push(`<!----> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">`);
+		KpiCard($$renderer, {
+			label: "Active Creators",
+			value: creators.filter((c) => c.status === "active").length,
+			icon: Users,
+			accent: "green",
+			variant: "compact",
+			index: 0
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Pending Approval",
+			value: creators.filter((c) => c.status === "pending").length,
+			icon: Clock,
+			accent: "yellow",
+			variant: "compact",
+			index: 1
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Total Content",
+			value: creators.reduce((sum, c) => sum + c.contentCount, 0),
+			icon: File_text,
+			accent: "blue",
+			variant: "compact",
+			index: 2
+		});
+		$$renderer.push(`<!----> `);
+		KpiCard($$renderer, {
+			label: "Monthly Payouts",
+			value: `$${creators.reduce((sum, c) => sum + c.monthlyEarnings, 0).toFixed(0)}`,
+			icon: Dollar_sign,
+			accent: "orange",
+			variant: "compact",
+			index: 3
+		});
+		$$renderer.push(`<!----></div> <div class="surface-1 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4"><div class="flex-1"><input type="text" placeholder="Search creators, email, or ministry..."${attr("value", searchQuery)} class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:border-red-500"/></div> <div class="flex gap-4">`);
 		$$renderer.select({
 			value: statusFilter,
 			onchange: applyFilters,
-			class: "bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+			class: "surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Status`);
@@ -75,7 +149,7 @@ function _page($$renderer, $$props) {
 		$$renderer.select({
 			value: verificationFilter,
 			onchange: applyFilters,
-			class: "bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+			class: "surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "all" }, ($$renderer) => {
 				$$renderer.push(`All Verification`);
@@ -94,7 +168,7 @@ function _page($$renderer, $$props) {
 		$$renderer.select({
 			value: sortBy,
 			onchange: applyFilters,
-			class: "bg-white/10 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
+			class: "surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
 		}, ($$renderer) => {
 			$$renderer.option({ value: "joinDate" }, ($$renderer) => {
 				$$renderer.push(`Join Date`);
@@ -112,15 +186,21 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`Monthly Earnings`);
 			});
 		});
-		$$renderer.push(` <button class="bg-white/10 hover:bg-white/20 border border-gray-600 rounded-lg px-3 py-2 text-white transition-colors">${escape_html("↓")}</button></div></div></div> `);
+		$$renderer.push(` <button class="surface-2 hover:surface-3 border border-gray-600 rounded-lg px-3 py-2 text-foreground transition-colors">${escape_html("↓")}</button></div></div></div> `);
 		if (selectedCreators.length > 0) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4"><div class="flex items-center justify-between"><span class="text-blue-400">${escape_html(selectedCreators.length)} creator(s) selected</span> <div class="flex gap-3"><button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Approve</button> <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Suspend</button> <button class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Clear</button></div></div></div>`);
+			$$renderer.push(`<div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4"><div class="flex items-center justify-between"><span class="text-blue-400">${escape_html(selectedCreators.length)} creator(s) selected</span> <div class="flex gap-3"><button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Approve</button> <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">Suspend</button> <button class="bg-gray-600 hover:bg-gray-700 text-foreground px-4 py-2 rounded-lg text-sm transition-colors">Clear</button></div></div></div>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> <div class="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden">`);
+		$$renderer.push(`<!--]--> <div class="surface-1 backdrop-blur-sm rounded-xl overflow-hidden">`);
 		$$renderer.push("<!--[0-->");
-		$$renderer.push(`<div class="p-12 text-center"><div class="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div> <p class="text-gray-300">Loading creators...</p></div>`);
+		$$renderer.push(`<div class="p-12 text-center"><div class="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div> <p class="text-foreground/80">Loading creators...</p></div>`);
 		$$renderer.push(`<!--]--></div></div> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
 	});
