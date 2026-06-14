@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { Play, Bookmark } from '@lucide/svelte';
+  import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
+  import { myList } from '$lib/stores/myList';
 
   let { show, onClick = () => {}, onHover = () => {} }: {
     show: {
@@ -21,6 +22,9 @@
       slug?: string;
       language?: string;
       isNew?: boolean;
+      category?: 'kids' | 'teens' | string | null;
+      progressPercent?: number;
+      positionSeconds?: number;
     };
     onClick?: () => void;
     onHover?: () => void;
@@ -46,8 +50,14 @@
   };
 
   const navigate = () => {
-    if (show.id) goto(`/watch/${show.id}`);
-    else onClick();
+    // Card click goes to the show's detail page first (description +
+    // episodes + preview); the detail page's Watch CTA hops to /watch.
+    // Kids/teens-categorized shows route through the audience portal.
+    if (!show.id) { onClick(); return; }
+    const slug = show.slug || show.id;
+    if (show.category === 'kids') goto(`/kids/kiddies/${slug}`);
+    else if (show.category === 'teens') goto(`/kids/teens/${slug}`);
+    else goto(`/shows/${slug}`);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -90,6 +100,14 @@
       />
     {/if}
     <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+    {#if typeof show.progressPercent === 'number' && show.progressPercent > 0 && show.progressPercent < 95}
+      <div class="absolute inset-x-0 bottom-0 h-1 bg-black/40 z-20">
+        <div
+          class="h-full bg-[#FF5E0E]"
+          style="width: {Math.max(2, Math.min(100, show.progressPercent))}%"
+        ></div>
+      </div>
+    {/if}
   </div>
 
   {#if show.isNew}
@@ -117,12 +135,26 @@
         Play
       </button>
       <button
-        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"
-        onclick={(e) => e.stopPropagation()}
-        aria-label={`Add ${show.title} to My List`}
+        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition disabled:opacity-60 disabled:cursor-not-allowed"
+        onclick={(e) => {
+          e.stopPropagation();
+          if (!show.id) return;
+          void myList.toggle({
+            contentId: show.id,
+            contentTitle: show.title,
+            contentType: 'show'
+          });
+        }}
+        disabled={!show.id || (!!show.id && $myList.pending.has(show.id))}
+        aria-label={show.id && $myList.ids.has(show.id) ? `Remove ${show.title} from My List` : `Add ${show.title} to My List`}
       >
-        <Bookmark class="h-3.5 w-3.5" />
-        My List
+        {#if show.id && $myList.ids.has(show.id)}
+          <BookmarkCheck class="h-3.5 w-3.5" />
+          In My List
+        {:else}
+          <Bookmark class="h-3.5 w-3.5" />
+          My List
+        {/if}
       </button>
     </div>
   </div>

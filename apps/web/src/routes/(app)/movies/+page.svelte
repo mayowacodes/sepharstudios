@@ -87,15 +87,36 @@
               {#if featuredMovie.quality}<span>{featuredMovie.quality}</span>{/if}
             </div>
             <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredMovie.id}">
+              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredMovie.slug || featuredMovie.id}">
                 <PlayCircle class="mr-2 h-5 w-5" />
                 Watch Now
               </Button>
             </div>
           </div>
           <div class="hidden lg:block">
-            <div class="h-full w-full rounded-2xl overflow-hidden border border-[#FFBF00]/40 halo-ring">
-              <img src={featuredMovie.thumbnail} alt={featuredMovie.title} class="h-full w-full object-cover" />
+            <div class="h-full w-full rounded-2xl overflow-hidden border border-[#FFBF00]/40 halo-ring relative bg-black">
+              <!-- Featured trailer playback. Muted + looped so the panel
+                   reads as a "vibe" preview rather than a full play; the
+                   real Watch action lives on the Watch Now CTA. Poster is
+                   the thumbnail so the panel still looks good for content
+                   without a trailer. preload="metadata" keeps the page
+                   fast — the browser only fetches enough to seek + start.
+                   playsinline stops iOS from auto-fullscreening. -->
+              {#if featuredMovie.trailerUrl}
+                <!-- svelte-ignore a11y_media_has_caption -->
+                <video
+                  src={featuredMovie.trailerUrl}
+                  poster={featuredMovie.thumbnail ?? undefined}
+                  class="h-full w-full object-cover"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                ></video>
+              {:else}
+                <img src={featuredMovie.thumbnail} alt={featuredMovie.title} class="h-full w-full object-cover" />
+              {/if}
             </div>
           </div>
         </div>

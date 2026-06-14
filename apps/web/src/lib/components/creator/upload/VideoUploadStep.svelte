@@ -1,6 +1,7 @@
 <!-- Video Upload Step -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { toast } from 'svelte-sonner';
   import type { VideoUploadProgress } from '$lib/types/creator';
 
@@ -23,8 +24,10 @@
   let trailerDragOver = $state(false);
 
   // Minimum vertical resolution accepted. Sourced from /api/platform-settings
-  // so admins can raise the floor without a code change. Falls back to 1080
-  // (the recommended default) if the fetch fails — never lower than that.
+  // so admins can raise (or lower, for need-based overrides) the floor
+  // without a code change. Falls back to 1080 (the recommended default) if
+  // the fetch fails. Floor of the clamp is 360 so an admin choosing 360p
+  // in /admin/settings actually takes effect.
   let minVideoHeight = $state(1080);
 
   onMount(async () => {
@@ -33,7 +36,7 @@
       if (res.ok) {
         const body = await res.json();
         if (Number.isFinite(body.minVideoHeight)) {
-          minVideoHeight = Math.max(720, Math.min(2160, Number(body.minVideoHeight)));
+          minVideoHeight = Math.max(360, Math.min(2160, Number(body.minVideoHeight)));
         }
       }
     } catch {
@@ -47,6 +50,14 @@
   }
 
   const minResolutionLabel = $derived(`${minVideoHeight}p (${minResolutionWidth(minVideoHeight)}x${minVideoHeight})`);
+
+  // Admin-role users always pass the resolution gate. Lets QA staff test
+  // low-res clips end-to-end without changing the platform-wide policy.
+  // Reads the role from `page.data.user`, which the (creator) layout's
+  // server load function already populates (see (creator)/+layout.server.ts).
+  // Non-admins see the admin-set threshold (360 / 720 / 1080 / 1440 / 2160)
+  // exactly as before.
+  const isAdmin = $derived(page.data?.user?.role === 'admin');
 
   // No client-side size cap on video or trailer. 4K + HDR sources routinely
   // run above 5 GB; high-quality trailers can exceed 500 MB. The encoder
@@ -111,6 +122,10 @@
   // gate cannot be evaluated, in which case server-side encoder validation
   // catches it later).
   async function passesResolutionGate(file: File): Promise<boolean> {
+    if (isAdmin) {
+      console.warn('[upload] admin role — resolution gate bypassed');
+      return true;
+    }
     const height = await readVideoHeight(file);
     if (height === null) return true; // can't measure → defer to server
     if (height < minVideoHeight) {

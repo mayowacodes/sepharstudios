@@ -1,6 +1,15 @@
 // src/lib/types/media.ts
 export type MediaItem = {
   id: string;
+  // Audience category set by the upload wizard / admin. `null` (or
+  // absent) means general-audience. `kids` and `teens` route through
+  // the audience-specific detail pages instead of /movies/<slug>.
+  category?: 'kids' | 'teens' | string | null;
+  // Watch-progress overlay set by `attachCatalogProgress` on the
+  // server side. When present + sub-95%, catalog cards render a small
+  // orange strip across the bottom of the artwork ("you started this").
+  progressPercent?: number;
+  positionSeconds?: number;
   title: string;
   description?: string | null;
   thumbnail?: string | null;

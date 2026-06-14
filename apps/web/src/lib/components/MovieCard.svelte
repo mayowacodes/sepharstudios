@@ -2,12 +2,27 @@
   import { onMount } from 'svelte';
   import type { MediaItem } from '$lib/types/media';
   import { mediaModalStore } from '$lib/stores/mediaModalStore';
+  import { myList } from '$lib/stores/myList';
   import { goto } from '$app/navigation';
-  import { Play, Bookmark } from '@lucide/svelte';
+  import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
+
+  // Click on a card opens the audience-specific detail page (description
+  // + preview + Watch CTA). The kids/teens portals reuse this same
+  // catalog component, so the card detects the row's `category` and
+  // routes through `/kids/kiddies/<slug>` or `/kids/teens/<slug>` for
+  // those audiences instead of the general `/movies/<slug>`. General-
+  // audience rows (no category or anything outside the kids/teens
+  // taxonomy) keep going to /movies.
+  const detailPath = (media: MediaItem) => {
+    const slug = media.slug || media.id;
+    if (media.category === 'kids') return `/kids/kiddies/${slug}`;
+    if (media.category === 'teens') return `/kids/teens/${slug}`;
+    return `/movies/${slug}`;
+  };
 
   const openModal = (media: MediaItem) => {
     mediaModalStore.open(media);
-    goto(`/watch/${media.id}`, { replaceState: false });
+    goto(detailPath(media), { replaceState: false });
   };
 
   let { movie, onClick = () => {}, onHover = () => {} }: { movie: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
@@ -79,6 +94,18 @@
       />
     {/if}
     <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+    <!-- "You started this" strip — only renders when the catalog
+         server-load attached a progress overlay for the current
+         viewer. Burned into the artwork's bottom edge so it reads
+         as an indicator, not a UI control. -->
+    {#if typeof movie.progressPercent === 'number' && movie.progressPercent > 0 && movie.progressPercent < 95}
+      <div class="absolute inset-x-0 bottom-0 h-1 bg-black/40 z-20">
+        <div
+          class="h-full bg-[#FF5E0E]"
+          style="width: {Math.max(2, Math.min(100, movie.progressPercent))}%"
+        ></div>
+      </div>
+    {/if}
   </div>
 
   {#if movie.isNew}
@@ -106,11 +133,23 @@
         Play
       </button>
       <button
-        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"
-        onclick={(e) => e.stopPropagation()}
-        aria-label={`Add ${movie.title} to My List`}
+        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition disabled:opacity-60 disabled:cursor-not-allowed"
+        onclick={(e) => {
+          e.stopPropagation();
+          void myList.toggle({
+            contentId: movie.id,
+            contentTitle: movie.title,
+            contentType: 'movie'
+          });
+        }}
+        disabled={$myList.pending.has(movie.id)}
+        aria-label={$myList.ids.has(movie.id) ? `Remove ${movie.title} from My List` : `Add ${movie.title} to My List`}
       >
-        <Bookmark class="h-3.5 w-3.5" />
+        {#if $myList.ids.has(movie.id)}
+          <BookmarkCheck class="h-3.5 w-3.5" />
+        {:else}
+          <Bookmark class="h-3.5 w-3.5" />
+        {/if}
         My List
       </button>
     </div>

@@ -1,15 +1,48 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { createEncoderJob } from '$lib/server/encoder-orchestrator';
+import { getEncoderPresignedUploadUrl } from '$lib/server/minio';
+import { randomBytes } from 'node:crypto';
+
+/**
+ * POST /api/encoder/jobs
+ *
+ * Stage-1 of the upload flow: mint a jobId and return a presigned PUT URL
+ * the browser can use to push the source video straight into the encoder
+ * MinIO. No orchestrator call — we own presign now.
+ *
+ * Object key convention: `${jobId}/source`. The Temporal workflow + worker
+ * read from `inputBucket=encoder-input` / `inputObject=${jobId}/source`.
+ * Extension is omitted; ffmpeg sniffs the container.
+ *
+ * jobId format: `job_${YYYYMMDD}_${10 hex}` — same shape the legacy
+ * orchestrator emitted, so downstream tooling (Temporal Web UI, logs,
+ * webhook handler) doesn't need to learn a new pattern.
+ *
+ * The actual encode is kicked off at /commit (stage-2) once the browser
+ * has finished the PUT.
+ */
+
+const INPUT_BUCKET = env.ENCODER_INPUT_BUCKET || env.MINIO_INPUT_BUCKET || 'encoder-input';
+const PRESIGN_TTL_SECONDS = 3600;
+
+function newJobId(): string {
+	const d = new Date();
+	const yyyymmdd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+	const hex = randomBytes(5).toString('hex');
+	return `job_${yyyymmdd}_${hex}`;
+}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
 	const body = await request.json();
-	const { contentId, filename, profile = 'vod-multi', durationHint } = body;
+	const { contentId, filename } = body;
+	// profile + durationHint kept for telemetry / future per-job overrides;
+	// the worker reads the profile off the workflow input at /commit.
 
 	if (!contentId || !filename) {
 		return json({ error: 'contentId and filename are required' }, { status: 400 });
@@ -22,21 +55,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		.limit(1);
 
 	if (!content) return json({ error: 'Content not found' }, { status: 404 });
-
 	if (content.creatorId && content.creatorId !== session.user.id) {
 		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
+	const jobId = newJobId();
+	const objectKey = `${jobId}/source`;
+
 	try {
-		// Pass mediaId so the orchestrator echoes it on every webhook —
-		// progress + scan-ready handlers can then resolve the row in O(1)
-		// without a jobId → mediaId lookup.
-		const encoderJob = await createEncoderJob({ filename, profile, durationHint, mediaId: contentId });
+		const uploadUrl = await getEncoderPresignedUploadUrl(INPUT_BUCKET, objectKey, PRESIGN_TTL_SECONDS);
 
 		await db
 			.update(mediaLibrary)
 			.set({
-				encoderJobId: encoderJob.jobId,
+				encoderJobId: jobId,
 				processingStatus: 'created',
 				processingError: null,
 				updatedAt: new Date()
@@ -46,8 +78,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json(
 			{
 				contentId,
-				jobId: encoderJob.jobId,
-				upload: encoderJob.upload
+				jobId,
+				upload: {
+					url: uploadUrl,
+					method: 'PUT',
+					expiresAt: new Date(Date.now() + PRESIGN_TTL_SECONDS * 1000).toISOString()
+				}
 			},
 			{ status: 201 }
 		);
@@ -56,4 +92,3 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Failed to create encoder job' }, { status: 500 });
 	}
 };
-

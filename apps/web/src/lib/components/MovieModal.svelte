@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte';
   import { X, Play, Bookmark } from '@lucide/svelte';
   import { mediaModalStore } from '$lib/stores/mediaModalStore';
-  import EnhancedVideoPlayer from '$lib/components/widgets/EnhancedVideoPlayer.svelte';
+  import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import type { MediaItem } from '../types/media';
 
   let media: MediaItem | null = $state(null);
@@ -52,13 +52,31 @@
 
       <div class="relative z-10 grid gap-6 p-6 lg:grid-cols-[1.2fr_1fr]">
         <div class="space-y-4">
-          <div class="aspect-video w-full rounded-xl overflow-hidden border border-white/10">
-            <EnhancedVideoPlayer
-              videoId={$mediaModalStore.media.id}
-              videoUrl={$mediaModalStore.media.trailerUrl || $mediaModalStore.media.link}
-              title={$mediaModalStore.media.title}
-              thumbnailUrl={$mediaModalStore.media.backdrop_url ?? undefined}
-            />
+          <div class="aspect-video w-full rounded-xl overflow-hidden border border-white/10 bg-black">
+            <!--
+              Migrated from EnhancedVideoPlayer to the single VideoPlayer per
+              TECHDEBT consolidation. Prop translation:
+                videoId      → contentId  (used for watch-progress reporting)
+                videoUrl     → src
+                thumbnailUrl → poster
+              When neither trailerUrl nor link is set we render a placeholder
+              instead of mounting the player with an empty src (VideoPlayer
+              requires a non-undefined src). The {@const} guard has to live
+              inside a control-flow block per Svelte 5 — using {#if} with
+              an inline `||` does the same job and keeps the layout 16:9.
+            -->
+            {#if $mediaModalStore.media.trailerUrl || $mediaModalStore.media.link}
+              <VideoPlayer
+                contentId={$mediaModalStore.media.id}
+                src={($mediaModalStore.media.trailerUrl || $mediaModalStore.media.link) as string}
+                title={$mediaModalStore.media.title}
+                poster={$mediaModalStore.media.backdrop_url ?? undefined}
+              />
+            {:else}
+              <div class="w-full h-full flex items-center justify-center text-xs text-white/60">
+                No playable source for this title yet.
+              </div>
+            {/if}
           </div>
           <div class="flex items-center gap-3">
             <button class="tap-target inline-flex items-center gap-2 rounded-full bg-[#FF5E0E] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition" aria-label="Play">

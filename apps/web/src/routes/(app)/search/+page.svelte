@@ -2,8 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { Search, Sparkles, Play, Loader2 } from '@lucide/svelte';
+  import { Search, Sparkles, Play, Loader2, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
+  import { myList } from '$lib/stores/myList';
 
   interface SearchResult {
     id: string;
@@ -15,6 +16,7 @@
     topics: string[];
     ageRating: string | null;
     mediaType: string;
+    category?: string | null;
     year: string | null;
     link: string;
   }
@@ -181,31 +183,50 @@
         </h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {#each results as r (r.id)}
-            <a href={r.link || `/watch/${r.id}`} class="group space-y-2">
-              <div class="aspect-2/3 rounded-lg overflow-hidden bg-card relative">
-                {#if r.posterUrl || r.thumbnail}
-                  <img
-                    src={r.posterUrl ?? r.thumbnail ?? ''}
-                    alt={r.title}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                {:else}
-                  <div class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                    No image
-                  </div>
-                {/if}
-                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white">
-                    <Play class="w-5 h-5 fill-white" />
+            <div class="group space-y-2 relative">
+              <a href={r.link || `/watch/${r.id}`} class="block space-y-2">
+                <div class="aspect-2/3 rounded-lg overflow-hidden bg-card relative">
+                  {#if r.posterUrl || r.thumbnail}
+                    <img
+                      src={r.posterUrl ?? r.thumbnail ?? ''}
+                      alt={r.title}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  {:else}
+                    <div class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                      No image
+                    </div>
+                  {/if}
+                  <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white">
+                      <Play class="w-5 h-5 fill-white" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <p class="text-sm font-semibold text-white truncate" title={r.title}>{r.title}</p>
-              <p class="text-xs text-muted-foreground capitalize">
-                {r.mediaType ?? 'content'}{r.year ? ` · ${r.year}` : ''}
-              </p>
-            </a>
+                <p class="text-sm font-semibold text-white truncate" title={r.title}>{r.title}</p>
+                <p class="text-xs text-muted-foreground capitalize">
+                  {r.mediaType ?? 'content'}{r.year ? ` · ${r.year}` : ''}
+                </p>
+              </a>
+              <!-- Bookmark button sits over the poster, top-right. Only
+                   reveals on hover/focus so the grid stays clean by
+                   default. Click-to-toggle uses the shared myList store
+                   so this stays in sync with detail pages + catalog cards. -->
+              <button
+                type="button"
+                onclick={() => void myList.toggle({ contentId: r.id, contentTitle: r.title, contentType: r.mediaType ?? 'movie' })}
+                disabled={$myList.pending.has(r.id)}
+                aria-label={$myList.ids.has(r.id) ? `Remove ${r.title} from My List` : `Add ${r.title} to My List`}
+                class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center justify-center hover:bg-black/80 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {#if $myList.ids.has(r.id)}
+                  <BookmarkCheck class="w-4 h-4" />
+                {:else}
+                  <Bookmark class="w-4 h-4" />
+                {/if}
+              </button>
+            </div>
           {/each}
         </div>
       </section>

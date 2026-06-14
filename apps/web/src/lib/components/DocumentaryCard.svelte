@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { MediaItem } from '$lib/types/media';
-  import { Play, Bookmark } from '@lucide/svelte';
+  import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
+  import { myList } from '$lib/stores/myList';
 
   let { documentary, onClick = () => {}, onHover = () => {} }: { documentary: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
 
@@ -25,8 +26,15 @@
   };
 
   const navigate = () => {
-    if (documentary.id) goto(`/watch/${documentary.id}`);
-    else onClick();
+    // Card click goes to the documentary's detail page first; the
+    // Watch CTA there is what jumps to /watch. Kids/teens-categorized
+    // rows route through the audience portal so they stay inside the
+    // age-appropriate detail variant.
+    if (!documentary.id) { onClick(); return; }
+    const slug = documentary.slug || documentary.id;
+    if (documentary.category === 'kids') goto(`/kids/kiddies/${slug}`);
+    else if (documentary.category === 'teens') goto(`/kids/teens/${slug}`);
+    else goto(`/documentaries/${slug}`);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -69,6 +77,14 @@
       />
     {/if}
     <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+    {#if typeof documentary.progressPercent === 'number' && documentary.progressPercent > 0 && documentary.progressPercent < 95}
+      <div class="absolute inset-x-0 bottom-0 h-1 bg-black/40 z-20">
+        <div
+          class="h-full bg-[#FF5E0E]"
+          style="width: {Math.max(2, Math.min(100, documentary.progressPercent))}%"
+        ></div>
+      </div>
+    {/if}
   </div>
 
   {#if documentary.isNew}
@@ -96,12 +112,26 @@
         Play
       </button>
       <button
-        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"
-        onclick={(e) => e.stopPropagation()}
-        aria-label={`Add ${documentary.title} to My List`}
+        class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition disabled:opacity-60 disabled:cursor-not-allowed"
+        onclick={(e) => {
+          e.stopPropagation();
+          if (!documentary.id) return;
+          void myList.toggle({
+            contentId: documentary.id,
+            contentTitle: documentary.title,
+            contentType: 'documentary'
+          });
+        }}
+        disabled={!documentary.id || (!!documentary.id && $myList.pending.has(documentary.id))}
+        aria-label={documentary.id && $myList.ids.has(documentary.id) ? `Remove ${documentary.title} from My List` : `Add ${documentary.title} to My List`}
       >
-        <Bookmark class="h-3.5 w-3.5" />
-        My List
+        {#if documentary.id && $myList.ids.has(documentary.id)}
+          <BookmarkCheck class="h-3.5 w-3.5" />
+          In My List
+        {:else}
+          <Bookmark class="h-3.5 w-3.5" />
+          My List
+        {/if}
       </button>
     </div>
   </div>

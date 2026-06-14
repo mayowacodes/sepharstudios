@@ -85,7 +85,7 @@
               {#if featuredShow.quality}<span>{featuredShow.quality}</span>{/if}
             </div>
             <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredShow.id}">
+              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredShow.slug || featuredShow.id}">
                 <PlayCircle class="mr-2 h-5 w-5" />
                 Watch Now
               </Button>

@@ -36,10 +36,31 @@
     const allSelected = ids.every((id: string) => selected[id]);
     selected = allSelected ? {} : Object.fromEntries(ids.map((id: string) => [id, true]));
   }
-  async function bulkAction(action: 'publish' | 'unlist' | 'private' | 'archive' | 'delete') {
+  async function bulkAction(action: 'publish' | 'unlist' | 'private' | 'archive' | 'delete-permanent') {
     if (selectedIds.length === 0) return;
-    const destructive = action === 'archive' || action === 'delete';
-    if (destructive && !confirm(`${action === 'delete' ? 'Delete' : 'Archive'} ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}? This will hide them from viewers.`)) return;
+    const n = selectedIds.length;
+    const plural = n > 1 ? 's' : '';
+
+    // Two destructive options with honest, distinct confirmations.
+    // The old "Delete" button was a lie — it was identical to Archive
+    // (soft delete, hides from viewers, keeps the row). Now there are
+    // two separate actions:
+    //   - archive          → soft, reversible, the safe default
+    //   - delete-permanent → hard, requires typing the count to confirm,
+    //                         server-side refuses if any PPV purchases exist
+    if (action === 'archive') {
+      if (!confirm(
+        `Archive ${n} item${plural}? This hides them from viewers but keeps the file in your library so you can restore later. Nothing is deleted from the database.`
+      )) return;
+    } else if (action === 'delete-permanent') {
+      const typed = prompt(
+        `PERMANENT DELETE — this removes ${n} item${plural} from the database. ` +
+        `This cannot be undone. Past PPV purchases (if any) will block the delete.\n\n` +
+        `Type ${n} to confirm:`
+      );
+      if (typed !== String(n)) return;
+    }
+
     bulkBusy = true;
     try {
       const res = await fetch('/api/creator/content/bulk', {
@@ -353,8 +374,20 @@
           <button type="button" onclick={() => bulkAction('publish')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white">Make public</button>
           <button type="button" onclick={() => bulkAction('unlist')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white">Unlist</button>
           <button type="button" onclick={() => bulkAction('private')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-foreground">Make private</button>
-          <button type="button" onclick={() => bulkAction('archive')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white">Archive</button>
-          <button type="button" onclick={() => bulkAction('delete')} disabled={bulkBusy} class="px-3 py-1.5 rounded text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white">Delete</button>
+          <button
+            type="button"
+            onclick={() => bulkAction('archive')}
+            disabled={bulkBusy}
+            title="Hide from viewers but keep in your library. Reversible."
+            class="px-3 py-1.5 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white"
+          >Archive</button>
+          <button
+            type="button"
+            onclick={() => bulkAction('delete-permanent')}
+            disabled={bulkBusy}
+            title="Permanently remove from the database. Cannot be undone. Blocked if any PPV purchases exist."
+            class="px-3 py-1.5 rounded text-xs bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white border border-red-400/40"
+          >Delete permanently</button>
         </div>
       </div>
     {/if}

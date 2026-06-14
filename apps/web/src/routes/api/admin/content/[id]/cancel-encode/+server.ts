@@ -3,20 +3,23 @@ import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
 import { Role } from '$lib/constants';
-import { cancelEncoderJob } from '$lib/server/encoder-orchestrator';
+import { cancelEncoderWorkflow } from '$lib/server/temporal-client';
 
 /**
  * POST /api/admin/content/[id]/cancel-encode
  *
- * Admin cancels an in-flight encode. We call the orchestrator's cancel
- * endpoint (gateway model — only the platform talks to the orchestrator);
- * it flips state to CANCELLED and the worker tears down FFmpeg on its next
- * /control poll. A `cancelled` progress webhook then arrives here and
- * settles the row.
+ * Admin cancels an in-flight encode. The workflowId IS the encoderJobId
+ * (we set it explicitly when starting the workflow at /commit), so
+ * cancellation is direct.
  *
- * We optimistically mark `processingStatus='cancelled'` immediately so
- * the UI doesn't spin while the worker poll round-trip plays out, BUT we
- * preserve the existing encoderJobId so the webhook can still match.
+ * Temporal raises CancelledFailure inside the running workflow. The
+ * encode-hls activity wires that to ffmpeg SIGTERM (see the
+ * `ctx.cancellationSignal` handler in encode-hls.activity.ts), so the
+ * worker tears down cleanly. The workflow then emits a `cancelled`
+ * progress webhook which settles `processing_status` on this row.
+ *
+ * We optimistically set 'cancelled' here so the UI doesn't spin while the
+ * webhook round-trip plays out.
  */
 
 export const POST: RequestHandler = async ({ params, locals }) => {
@@ -47,17 +50,15 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	}
 
 	try {
-		await cancelEncoderJob(row.encoderJobId);
+		await cancelEncoderWorkflow(row.encoderJobId);
 	} catch (err) {
-		console.error(`[admin cancel-encode] orchestrator cancel failed for ${contentId}:`, err);
+		console.error(`[admin cancel-encode] Temporal cancel failed for ${contentId}:`, err);
 		return json({
-			error: 'Orchestrator cancel failed',
+			error: 'Temporal cancel failed',
 			detail: err instanceof Error ? err.message : 'unknown'
 		}, { status: 502 });
 	}
 
-	// Optimistic update — the real terminal state will come back via the
-	// `cancelled` progress webhook.
 	await db.update(mediaLibrary)
 		.set({
 			processingStatus: 'cancelled',

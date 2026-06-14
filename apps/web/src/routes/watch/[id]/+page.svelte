@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { onDestroy } from 'svelte';
+  import { fade } from 'svelte/transition';
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import PPVPaywall from '$lib/components/widgets/PPVPaywall.svelte';
   import { invalidateAll } from '$app/navigation';
@@ -13,6 +14,14 @@
 
   const { data } = $props();
   const content = $derived(data.content);
+  const activeEpisode = $derived(data.activeEpisode);
+  // Composite title — when an episode is active, show "Show · S1 E3:
+  // Episode Title" so the page header reflects what's actually playing.
+  const displayTitle = $derived(
+    activeEpisode
+      ? `${content.title} · S${activeEpisode.seasonNumber} E${activeEpisode.episodeNumber}: ${activeEpisode.title}`
+      : content.title
+  );
 
   // schema.org VideoObject — surfaces this title in Google Video search +
   // rich-result carousels. Required fields per Google's docs: name,
@@ -20,7 +29,7 @@
   // playback is auth/subscription-gated; we expose the watch page URL only.
   const videoSchema = $derived.by(() => {
     if (!content) return null;
-    const watchUrl = `${SiteMeta.link}/watch/${content.id}`;
+    const watchUrl = `${SiteMeta.link}/watch/${content.slug || content.id}`;
     return {
       '@context': 'https://schema.org',
       '@type': 'VideoObject',
@@ -73,10 +82,16 @@
   function handleEnded() {
     // Mark completed — progress endpoint handles this via completionPercent >= 95
   }
+
+  // Description expand/collapse — most descriptions are long; we render
+  // the first 2 lines (line-clamp-2) with a "Show more" toggle. Pattern
+  // matches MovieCard's line-clamp usage so the visual language is
+  // consistent across the platform.
+  let descExpanded = $state(false);
 </script>
 
 <svelte:head>
-  <title>{content.title} — Sephar Studios</title>
+  <title>{displayTitle} — Sephar Studios</title>
   <meta name="description" content={content.description ?? ''} />
 
   <!-- Per-page OG override — share images get the actual poster, not the
@@ -116,11 +131,15 @@
         poster={content.backdropUrl ?? content.thumbnail ?? content.posterAutoUrl ?? undefined}
         contentId={content.id}
         startAt={startAt()}
-        title={content.title}
+        title={displayTitle}
+        ageRating={content.ageRating ?? undefined}
+        genres={(content.genres ?? []) as string[]}
         subtitles={data.subtitles}
         descriptions={data.descriptions}
         chapters={content.chapters ?? []}
         endScreen={data.nextUp ?? []}
+        endOfSeries={data.endOfSeries ?? false}
+        nextEpisodeHref={data.nextEpisodeHref ?? undefined}
         previewVtt={content.previewThumbnailsVtt ?? undefined}
         previewSprites={content.previewSpriteUrls ?? []}
         enableAds={true}
@@ -141,8 +160,35 @@
     <div class="flex flex-wrap items-start gap-4 mb-4">
       <div class="flex-1 min-w-0">
         <div class="flex items-start gap-3">
-          <h1 class="text-3xl font-bold leading-tight flex-1">{content.title}</h1>
-          <ShareButton contentId={content.id} title={content.title} description={content.description ?? ''} />
+          <div class="flex-1 min-w-0">
+            <h1 class="text-3xl font-bold leading-tight">{content.title}</h1>
+            <!-- Episode badge — `{#key activeEpisode.id}` makes this
+                 element remount with a fade on every episode change.
+                 The container reserves space so the page layout
+                 doesn't jump as the badge fades in/out. -->
+            {#if activeEpisode}
+              <!-- Relative wrapper + absolute keyed child = a true
+                   cross-fade: the outgoing badge fades out while the
+                   incoming one fades in over the same span. 200ms is
+                   long enough to feel intentional, short enough to
+                   not delay perceived navigation. -->
+              <div class="relative mt-1 min-h-5">
+                {#key activeEpisode.id}
+                  <div
+                    in:fade={{ duration: 200 }}
+                    out:fade={{ duration: 200 }}
+                    class="absolute inset-0 inline-flex items-center gap-1.5 text-sm text-zinc-400"
+                  >
+                    <span class="px-2 py-0.5 rounded bg-zinc-800/80 text-zinc-200 text-xs font-medium">
+                      S{activeEpisode.seasonNumber} E{activeEpisode.episodeNumber}
+                    </span>
+                    <span class="truncate">{activeEpisode.title}</span>
+                  </div>
+                {/key}
+              </div>
+            {/if}
+          </div>
+          <ShareButton contentId={content.slug || content.id} title={content.title} description={content.description ?? ''} />
           <ReportButton targetType="content" targetId={content.id} />
         </div>
         <div class="flex flex-wrap gap-3 mt-2 text-sm text-zinc-400">
@@ -179,9 +225,24 @@
       </div>
     {/if}
 
-    <!-- Description -->
+    <!-- Description with expand/collapse. Defaults to 2 lines (line-clamp-2);
+         clicking the toggle reveals the full text. The toggle hides itself
+         on very short descriptions where clamping wouldn't change anything. -->
     {#if content.description}
-      <p class="text-zinc-300 leading-relaxed mb-6 max-w-3xl">{content.description}</p>
+      <div class="mb-6 max-w-3xl">
+        <p class="text-zinc-300 leading-relaxed {descExpanded ? '' : 'line-clamp-2'}">
+          {content.description}
+        </p>
+        {#if content.description.length > 140}
+          <button
+            type="button"
+            class="text-xs text-zinc-400 hover:text-white mt-1 underline-offset-2 hover:underline"
+            onclick={() => (descExpanded = !descExpanded)}
+          >
+            {descExpanded ? 'Show less' : 'Show more'}
+          </button>
+        {/if}
+      </div>
     {/if}
 
     <!-- Bible Reference -->

@@ -543,6 +543,9 @@
 	"/api/creator/payouts/stripe/status": [
 		"src/routes/api/creator/payouts/stripe/status/+server.ts"
 	],
+	"/api/creator/people/lookup": [
+		"src/routes/api/creator/people/lookup/+server.ts"
+	],
 	"/api/creator/profile": [
 		"src/routes/api/creator/profile/+server.ts"
 	],
@@ -554,6 +557,12 @@
 	],
 	"/api/creator/tax-forms": [
 		"src/routes/api/creator/tax-forms/+server.ts"
+	],
+	"/api/creator/trailer-upload/commit": [
+		"src/routes/api/creator/trailer-upload/commit/+server.ts"
+	],
+	"/api/creator/trailer-upload/sign": [
+		"src/routes/api/creator/trailer-upload/sign/+server.ts"
 	],
 	"/api/cron/ab-auto-promote": [
 		"src/routes/api/cron/ab-auto-promote/+server.ts"
@@ -704,6 +713,9 @@
 	],
 	"/api/milestones": [
 		"src/routes/api/milestones/+server.ts"
+	],
+	"/api/my-list/[contentId]": [
+		"src/routes/api/my-list/[contentId]/+server.ts"
 	],
 	"/api/notifications": [
 		"src/routes/api/notifications/+server.ts"
@@ -969,6 +981,10 @@
 		"src/routes/(app)/documentaries/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/documentaries/[slug]": [
+		"src/routes/(app)/documentaries/[slug]/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(protected)/documentation": [
 		"src/routes/(protected)/+layout.server.ts",
 		"src/routes/+layout.server.ts"
@@ -1019,8 +1035,17 @@
 		"src/routes/kids/kiddies/+layout.ts",
 		"src/routes/+layout.server.ts"
 	],
+	"/kids/kiddies/[slug]": [
+		"src/routes/kids/kiddies/[slug]/+page.server.ts",
+		"src/routes/kids/kiddies/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/kids/teens": [
 		"src/routes/kids/teens/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/kids/teens/[slug]": [
+		"src/routes/kids/teens/[slug]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/liquidity": [
@@ -1032,6 +1057,10 @@
 	],
 	"/(app)/movies": [
 		"src/routes/(app)/movies/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/movies/[slug]": [
+		"src/routes/(app)/movies/[slug]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/(app)/my-studios": [
@@ -1072,6 +1101,10 @@
 	],
 	"/(app)/shows": [
 		"src/routes/(app)/shows/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(app)/shows/[slug]": [
+		"src/routes/(app)/shows/[slug]/+page.server.ts",
 		"src/routes/+layout.server.ts"
 	],
 	"/sitemap.xml": [

@@ -99,7 +99,9 @@
         hasClosedCaptions: false,
         tags: [],
         keywords: [],
-        genre: []
+        genre: [],
+        cast: [],
+        crew: []
       },
       [UploadStep.REVIEW_SUBMIT]: {
         termsAccepted: false,
@@ -332,7 +334,15 @@
           posterSquareUrl: assets.posterSquare,
           logoTitleUrl: assets.logoTitle,
           backdropUrl: assets.backdropHero,
-          trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl
+          // Cast/crew live on the row as jsonb arrays. Send through PATCH
+          // so edits can revise the people list without re-uploading.
+          cast: Array.isArray(meta.cast) ? meta.cast : [],
+          crew: Array.isArray(meta.crew) ? meta.crew : [],
+          // Trailer URL is written later by /api/creator/trailer-upload/commit
+          // after the real file is uploaded direct to encoder MinIO. We
+          // explicitly send `null` here so the row doesn't keep the bogus
+          // "staged-for-encoding" sentinel from the wizard's progress state.
+          trailerUrl: null
         };
         const patchRes = await fetch(`/api/creator/content/${editId}`, {
           method: 'PATCH',
@@ -354,12 +364,16 @@
         }
         // New video was provided — fall through to encoder job below.
       } else {
-        // POST a brand-new row.
+        // POST a brand-new row. Trailer URL is written later by
+        // /api/creator/trailer-upload/commit after the real file is
+        // uploaded direct to encoder MinIO (step 5 below). We send `null`
+        // here so the row doesn't carry the bogus "staged-for-encoding"
+        // sentinel from the wizard's progress state.
         const submissionData = {
             ...basic,
             ...meta,
             assets,
-            trailerUrl: wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerProgress?.uploadUrl,
+            trailerUrl: null,
         };
         const res = await fetch('/api/creator/content', {
             method: 'POST',
@@ -422,6 +436,53 @@
       });
 
       if (!commitRes.ok) throw new Error('Failed to queue encoder job');
+
+      // 5. Upload the trailer (if provided) directly to encoder MinIO.
+      // Trailers are stored as-is — no transcoding — because most creators
+      // upload MP4/h264 which every browser plays natively in <video src>.
+      // The robust-pipeline path (single 720p MP4 encoder job) is tracked
+      // in TECHDEBT.md. This step is best-effort: if it fails, the main
+      // submission still succeeded and we toast a soft warning so the
+      // creator can re-attach the trailer later from /creator/content.
+      const trailerFile = wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerFile;
+      if (trailerFile && contentId) {
+        try {
+          const trailerSignRes = await fetch('/api/creator/trailer-upload/sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contentId,
+              filename: trailerFile.name,
+              contentType: trailerFile.type || 'video/mp4'
+            })
+          });
+          const signBody = await trailerSignRes.json().catch(() => ({}));
+          if (!trailerSignRes.ok) {
+            throw new Error(signBody.detail ?? signBody.error ?? `Trailer presign failed (HTTP ${trailerSignRes.status}).`);
+          }
+          const { uploadUrl, objectKey } = signBody as { uploadUrl: string; objectKey: string };
+
+          // Reuse the same XHR-with-progress uploader the main video used —
+          // it surfaces a real progress bar and handles network errors
+          // consistently.
+          await uploadVideoWithProgress(uploadUrl, 'PUT', trailerFile);
+
+          const trailerCommitRes = await fetch('/api/creator/trailer-upload/commit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contentId, objectKey })
+          });
+          if (!trailerCommitRes.ok) {
+            const body = await trailerCommitRes.json().catch(() => ({}));
+            throw new Error(body.detail ?? body.error ?? `Trailer commit failed (HTTP ${trailerCommitRes.status}).`);
+          }
+        } catch (trailerErr) {
+          console.warn('Trailer upload failed (non-blocking):', trailerErr);
+          toast.warning('Trailer was not attached', {
+            description: 'Your main video submitted successfully. You can re-upload the trailer from your content library.'
+          });
+        }
+      }
 
       toast.success('Content submitted successfully', {
         description: 'Your video is now in the encoding queue. We\'ll notify you when it\'s ready.'
@@ -502,7 +563,9 @@
         keywords: item.keywords ?? [],
         // Schema uses plural `genres`; wizard's `genre` is an array of
         // genre strings. Mirror the full list here.
-        genre: Array.isArray(item.genres) ? item.genres : []
+        genre: Array.isArray(item.genres) ? item.genres : [],
+        cast: Array.isArray(item.cast) ? item.cast : [],
+        crew: Array.isArray(item.crew) ? item.crew : []
       };
       editPrefillBanner = {
         title: item.title,
@@ -543,7 +606,9 @@
           hasClosedCaptions: false,
           tags: [],
           keywords: [],
-          genre: []
+          genre: [],
+          cast: [],
+          crew: []
         },
         [UploadStep.REVIEW_SUBMIT]: {
           termsAccepted: false,
@@ -721,6 +786,8 @@
         bind:tags={wizardState.stepData[UploadStep.METADATA].tags}
         bind:keywords={wizardState.stepData[UploadStep.METADATA].keywords}
         bind:genre={wizardState.stepData[UploadStep.METADATA].genre}
+        bind:cast={wizardState.stepData[UploadStep.METADATA].cast}
+        bind:crew={wizardState.stepData[UploadStep.METADATA].crew}
       />
     {:else if wizardState.currentStep === UploadStep.REVIEW_SUBMIT}
       <ReviewSubmitStep

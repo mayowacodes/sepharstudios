@@ -146,6 +146,34 @@ export interface AssetUploadProgress {
   url?: string;
 }
 
+// Cast and crew row shapes — written to `media_library.cast` (jsonb) and
+// `media_library.crew` (jsonb) by the content-submit endpoint. The shapes
+// match what the watch-page cast/crew accordion renders today.
+export type CastRole = 'Actor' | 'Voice' | 'Narrator' | 'Host';
+export type CrewRole =
+  | 'Director'
+  | 'Producer'
+  | 'Writer'
+  | 'Cinematographer'
+  | 'Editor'
+  | 'Composer'
+  | 'Sound Designer';
+
+export interface CastMember {
+  name: string;
+  role: CastRole;
+  /** The character the actor portrays — only present for cast, not crew. */
+  characterName?: string;
+  /** Public URL of an avatar uploaded via /api/files/sign (bucket=avatars). */
+  photoUrl?: string;
+}
+
+export interface CrewMember {
+  name: string;
+  role: CrewRole;
+  photoUrl?: string;
+}
+
 // Upload wizard steps
 export enum UploadStep {
   BASIC_INFO = 1,
@@ -192,6 +220,15 @@ export interface UploadWizardState {
       tags: string[];
       keywords: string[];
       genre: string[];
+      // Cast and crew get persisted to `media_library.cast` / `crew` as
+      // JSONB arrays. `characterName` only makes sense for cast (the
+      // person the actor portrays); crew uses `name + role + photoUrl?`.
+      // Photo upload is optional — when the creator types a name we
+      // already recognize (matches a prior upload's cast/crew), the
+      // frontend auto-fills the photoUrl from the lookup. Override is
+      // possible by uploading a fresh image.
+      cast: CastMember[];
+      crew: CrewMember[];
     };
     [UploadStep.REVIEW_SUBMIT]: {
       termsAccepted: boolean;

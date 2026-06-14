@@ -41,6 +41,29 @@ button, a, [role="button"], input[type="checkbox"], input[type="radio"], select 
   display: none;
 }
 
+/* Select dropdown contrast — the <option> elements inside a native <select>
+ * inherit styling from the browser, not from page CSS. On dark themes this
+ * makes the expanded dropdown render with system defaults: white background
+ * + low-contrast text, which is what you'd see as "dropdowns invisible
+ * unless I hover." Force theme-aware colours on both the closed select
+ * surface and the open option list so every admin/creator filter dropdown
+ * stays readable in both modes. Tailwind utility classes can override these
+ * when a specific select needs a different palette. */
+select {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+}
+select option {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+}
+select option:hover,
+select option:checked,
+select option:focus {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
 /* Sephar Studios Brand Colors - Faith-Based Streaming Platform
  *
  * Theme convention (shadcn-standard): :root holds the LIGHT palette;

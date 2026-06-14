@@ -20,6 +20,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			sortOrder: playlistItems.sortOrder,
 			content: {
 				id: mediaLibrary.id,
+				slug: mediaLibrary.slug,
+				category: mediaLibrary.category,
 				title: mediaLibrary.title,
 				thumbnail: mediaLibrary.thumbnail,
 				posterUrl: mediaLibrary.posterUrl,

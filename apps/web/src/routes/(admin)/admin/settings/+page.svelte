@@ -495,12 +495,17 @@
                 bind:value={platformSettings.minVideoHeight}
                 class="w-full surface-2 border border-gray-600 rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-red-500"
               >
+                <option value={360}>360p — SD (need-based override only)</option>
                 <option value={720}>720p — HD (legacy, not recommended)</option>
                 <option value={1080}>1080p — Full HD (recommended)</option>
                 <option value={1440}>1440p — 2K</option>
                 <option value={2160}>2160p — 4K (premium)</option>
               </select>
-              <p class="text-xs text-muted-foreground mt-1">Creators are blocked from uploading below this threshold.</p>
+              <p class="text-xs text-muted-foreground mt-1">
+                Creators are blocked from uploading below this threshold. Choose
+                360p only for short-term need-based overrides — remember to
+                raise it back to 1080p afterwards. Admins always bypass this gate.
+              </p>
             </div>
           </div>
 

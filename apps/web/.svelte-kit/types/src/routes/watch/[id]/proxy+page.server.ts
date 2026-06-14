@@ -1,23 +1,36 @@
 // @ts-nocheck
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary, contentSubtitleTracks, ppvContent, ppvPurchases } from '$lib/db/schema/sepharstudios';
-import { and, desc, eq, ne, sql } from 'drizzle-orm';
+import { mediaLibrary, contentSubtitleTracks, ppvContent, ppvPurchases, episodes, mediaWatchProgress } from '$lib/db/schema/sepharstudios';
+import { and, desc, eq, ne, or, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
-import { getEncoderPlayback } from '$lib/server/encoder-orchestrator';
+import { resolvePlaybackUrl } from '$lib/server/encoder-playback';
 import { fingerprintFromHeaders } from '$lib/server/ua-country';
 import { isRegionAllowed } from '$lib/server/region-gate';
 import { normalizeLocale } from '$lib/i18n/role-labels';
 
-export const load = async ({ params, locals, request }: Parameters<PageServerLoad>[0]) => {
+export const load = async ({ params, locals, request, url }: Parameters<PageServerLoad>[0]) => {
 	const session = await locals.auth.getSession();
 	if (!session) {
 		error(401, 'Please sign in to watch content');
 	}
 
+	// `?episode=<id>` lets the TV-series detail page deep-link into a
+	// specific episode's video. The episode's own videoUrl overrides the
+	// show row's playback source; the page title gets augmented with the
+	// season/episode label so the user knows what they're watching.
+	const requestedEpisodeId = url.searchParams.get('episode');
+
+	// The [id] param accepts either the raw UUID (legacy + server-internal
+	// links from notifications/cron/etc.) OR the human-readable slug
+	// (`title-kebab-case-xxxxx`). Slugs and UUIDs can't collide — slugs are
+	// ascii-lowercased with hyphens, UUIDs are hex with dashes at fixed
+	// positions — so a single `OR` lookup is safe and lets old URLs keep
+	// working while new outbound links use the slug.
 	const content = await db
 		.select({
 			id: mediaLibrary.id,
+			slug: mediaLibrary.slug,
 			title: mediaLibrary.title,
 			description: mediaLibrary.description,
 			thumbnail: mediaLibrary.thumbnail,
@@ -53,7 +66,7 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 			posterAutoUrl: mediaLibrary.posterAutoUrl
 		})
 		.from(mediaLibrary)
-		.where(eq(mediaLibrary.id, params.id))
+		.where(or(eq(mediaLibrary.id, params.id), eq(mediaLibrary.slug, params.id)))
 		.then((r) => r[0]);
 
 	if (!content || !content.isActive) {
@@ -120,25 +133,187 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 		.filter((t) => t.kind === 'descriptions')
 		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
 
-	let playbackUrl = content.videoUrl;
-	if (!playbackUrl && content.encoderJobId && content.processingStatus === 'ready') {
-		try {
-			const playback = await getEncoderPlayback(content.encoderJobId);
-			playbackUrl = playback.playback.master;
-		} catch (err) {
-			console.error(`Failed to sign playback URL for ${content.id}:`, err);
+	// Single source of truth for picking the playback URL — see
+	// $lib/server/encoder-playback.ts for the resolution order. Used to
+	// call the orchestrator's /playback endpoint here, but that signs
+	// Bunny-CDN URLs and prod isn't fronted by Bunny yet. The helper
+	// composes the direct encoder-MinIO URL instead — the same path the
+	// trailer pipeline already uses successfully.
+	let playbackUrl = resolvePlaybackUrl({
+		videoUrl: content.videoUrl,
+		encoderJobId: content.encoderJobId,
+		processingStatus: content.processingStatus
+	});
+
+	// Episode-deep-link path. We fetch the requested episode, confirm it
+	// belongs to this show (defence against guessable IDs from a sibling
+	// row), then override the playback URL + title with the episode's
+	// values. If the episode has its own encoder job we'd resolve through
+	// `resolvePlaybackUrl` for it too — for now episodes carry a direct
+	// `videoUrl`, mirroring how the legacy upload form set them.
+	let activeEpisode: {
+		id: string;
+		seasonNumber: number;
+		episodeNumber: number;
+		title: string;
+		description: string | null;
+		thumbnail: string | null;
+		duration: string | null;
+		videoUrl: string | null;
+	} | null = null;
+	if (requestedEpisodeId) {
+		const [ep] = await db
+			.select({
+				id: episodes.id,
+				showId: episodes.showId,
+				seasonNumber: episodes.seasonNumber,
+				episodeNumber: episodes.episodeNumber,
+				title: episodes.title,
+				description: episodes.description,
+				thumbnail: episodes.thumbnail,
+				duration: episodes.duration,
+				videoUrl: episodes.videoUrl
+			})
+			.from(episodes)
+			.where(eq(episodes.id, requestedEpisodeId))
+			.limit(1);
+		// Silently fall through to the show's main URL if the episode
+		// doesn't belong to this show — surface as a soft demotion
+		// rather than a 404 so a stale link still plays *something*.
+		if (ep && ep.showId === content.id) {
+			activeEpisode = {
+				id: ep.id,
+				seasonNumber: ep.seasonNumber,
+				episodeNumber: ep.episodeNumber,
+				title: ep.title,
+				description: ep.description,
+				thumbnail: ep.thumbnail,
+				duration: ep.duration,
+				videoUrl: ep.videoUrl
+			};
+			if (ep.videoUrl) playbackUrl = ep.videoUrl;
 		}
 	}
 
-	// Next-up cards for the VideoPlayer end-screen overlay. If the creator
-	// curated a list (nextUpContentIds), it ALWAYS wins (in the order they
-	// chose). Otherwise: same-creator first, then same-genre fillers. Cap
-	// at 3 (overlay slots).
-	const nextUp: Array<{ id: string; title: string; thumbnail: string | null; duration: string | null }> = [];
+	// Watch-progress fetch — drives the detail-page Resume CTA and a
+	// "resume here" affordance the player can pick up via the `?t=` URL
+	// param. We pull both the show-level and (when episode is active) the
+	// episode-level row so the player can decide which one to resume.
+	let watchProgress: { positionSeconds: number; durationSeconds: number | null; completionPercent: number } | null = null;
+	if (session.user.id) {
+		const [row] = await db
+			.select({
+				positionSeconds: mediaWatchProgress.positionSeconds,
+				durationSeconds: mediaWatchProgress.durationSeconds,
+				completionPercent: mediaWatchProgress.completionPercent
+			})
+			.from(mediaWatchProgress)
+			.where(and(
+				eq(mediaWatchProgress.userId, session.user.id),
+				eq(mediaWatchProgress.contentId, content.id),
+				activeEpisode
+					? eq(mediaWatchProgress.episodeId, activeEpisode.id)
+					: sql`${mediaWatchProgress.episodeId} IS NULL`
+			))
+			.orderBy(desc(mediaWatchProgress.updatedAt))
+			.limit(1);
+		if (row) {
+			watchProgress = {
+				positionSeconds: row.positionSeconds ?? 0,
+				durationSeconds: row.durationSeconds,
+				completionPercent: row.completionPercent ?? 0
+			};
+		}
+	}
+
+	// Next-up cards for the VideoPlayer end-screen overlay. Order:
+	//   1. For TV titles with an active episode, the NEXT episode in
+	//      (season, number) order — wins the first slot so the
+	//      "auto-play next" countdown takes the viewer straight into
+	//      it. Carries an explicit `href` with `?episode=<id>` so the
+	//      watch route deep-links correctly, and a `kind: "Next
+	//      episode"` chip so the card is self-explanatory.
+	//   2. Creator-curated nextUpContentIds (if any).
+	//   3. Same-creator + same-genre fillers up to 3 total.
+	const nextUp: Array<{
+		id: string;
+		slug: string | null;
+		title: string;
+		thumbnail: string | null;
+		duration: string | null;
+		href?: string;
+		kind?: string;
+	}> = [];
+
+	// `endOfSeries` becomes true when this is a TV title AND the active
+	// episode is the very last one in (season, number) order — i.e.
+	// there's no "next episode" to advance into. The player shows a
+	// finale-style "You've reached the end" banner above the genre
+	// filler cards so viewers know the journey is done.
+	let endOfSeries = false;
+	// Direct URL to the next episode (when it exists). Surfaced to
+	// VideoPlayer so the inline "Next Episode" button + the keyboard
+	// `n` shortcut + the 95% auto-advance can all use the same href.
+	let nextEpisodeHref: string | null = null;
+
+	// Path 1 — next episode for TV titles. We need both `activeEpisode`
+	// (the one currently playing) AND the show's full episode list. We
+	// fetch episodes only for TV titles to avoid the extra query for
+	// movies + docs.
+	const isTvLike = content.mediaType === 'tv' || content.mediaType === 'series';
+	if (isTvLike) {
+		const allEpisodes = await db
+			.select({
+				id: episodes.id,
+				seasonNumber: episodes.seasonNumber,
+				episodeNumber: episodes.episodeNumber,
+				title: episodes.title,
+				thumbnail: episodes.thumbnail,
+				duration: episodes.duration
+			})
+			.from(episodes)
+			.where(eq(episodes.showId, content.id))
+			.orderBy(episodes.seasonNumber, episodes.episodeNumber);
+
+		if (allEpisodes.length > 0) {
+			// If we know which episode is active, the "next" is the row
+			// after it. If no episode is active (e.g. viewer hit the
+			// show URL without an ?episode=), default to the FIRST
+			// episode so the auto-advance still does something useful.
+			let nextEp: typeof allEpisodes[number] | undefined = allEpisodes[0];
+			if (activeEpisode) {
+				const idx = allEpisodes.findIndex((e) =>
+					e.seasonNumber === activeEpisode!.seasonNumber
+						&& e.episodeNumber === activeEpisode!.episodeNumber
+				);
+				nextEp = idx >= 0 ? allEpisodes[idx + 1] : undefined;
+				// Active episode was found but there's no next row →
+				// last episode of the series. Filler cards still render
+				// (the genre/creator picks below) but the end-screen
+				// header switches to a finale message.
+				if (idx >= 0 && !nextEp) endOfSeries = true;
+			}
+			if (nextEp) {
+				const showSlug = content.slug || content.id;
+				const href = `/watch/${showSlug}?episode=${nextEp.id}`;
+				nextEpisodeHref = href;
+				nextUp.push({
+					id: nextEp.id,
+					slug: null,
+					title: `S${nextEp.seasonNumber} E${nextEp.episodeNumber}: ${nextEp.title}`,
+					thumbnail: nextEp.thumbnail,
+					duration: nextEp.duration,
+					href,
+					kind: 'Next episode'
+				});
+			}
+		}
+	}
 	const curatedIds = Array.isArray(content.nextUpContentIds) ? content.nextUpContentIds : [];
 	if (curatedIds.length > 0) {
 		const curatedRows = await db.select({
 			id: mediaLibrary.id,
+			slug: mediaLibrary.slug,
 			title: mediaLibrary.title,
 			thumbnail: mediaLibrary.thumbnail,
 			duration: mediaLibrary.duration
@@ -154,13 +329,17 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 		for (const cid of curatedIds) {
 			const r = byId.get(cid);
 			if (!r) continue;
-			nextUp.push({ id: r.id, title: r.title, thumbnail: r.thumbnail ?? null, duration: r.duration ?? null });
+			nextUp.push({ id: r.id, slug: r.slug ?? null, title: r.title, thumbnail: r.thumbnail ?? null, duration: r.duration ?? null });
 			if (nextUp.length >= 3) break;
 		}
 	}
-	if (nextUp.length === 0 && content.creatorId) {
+	// Fill any remaining slots (after next-episode + curated) with
+	// same-creator picks. The `< 3` gate lets the next-episode card
+	// keep slot 0 while creator content fills 1 + 2.
+	if (nextUp.length < 3 && content.creatorId) {
 		const sameCreator = await db.select({
 			id: mediaLibrary.id,
+			slug: mediaLibrary.slug,
 			title: mediaLibrary.title,
 			thumbnail: mediaLibrary.thumbnail,
 			duration: mediaLibrary.duration
@@ -173,20 +352,24 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 				eq(mediaLibrary.visibility, 'public')
 			))
 			.orderBy(desc(mediaLibrary.viewCount))
-			.limit(3);
+			.limit(3 - nextUp.length);
 		for (const r of sameCreator) {
+			if (nextUp.find((x) => x.id === r.id)) continue;
 			nextUp.push({
 				id: r.id,
+				slug: r.slug ?? null,
 				title: r.title,
 				thumbnail: r.thumbnail ?? null,
 				duration: r.duration ?? null
 			});
+			if (nextUp.length >= 3) break;
 		}
 	}
 	if (nextUp.length < 3 && Array.isArray(content.genres) && content.genres.length > 0) {
 		const genres = content.genres;
 		const sameGenre = await db.select({
 			id: mediaLibrary.id,
+			slug: mediaLibrary.slug,
 			title: mediaLibrary.title,
 			thumbnail: mediaLibrary.thumbnail,
 			duration: mediaLibrary.duration
@@ -204,6 +387,7 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 			if (!nextUp.find((x) => x.id === r.id)) {
 				nextUp.push({
 					id: r.id,
+					slug: r.slug ?? null,
 					title: r.title,
 					thumbnail: r.thumbnail ?? null,
 					duration: r.duration ?? null
@@ -220,9 +404,13 @@ export const load = async ({ params, locals, request }: Parameters<PageServerLoa
 
 	return {
 		content: { ...content, playbackUrl },
+		activeEpisode,
+		watchProgress,
 		subtitles,
 		descriptions,
 		nextUp,
+		endOfSeries,
+		nextEpisodeHref,
 		viewerLocale,
 		paywall,
 		activeProfileId: locals.activeProfileId

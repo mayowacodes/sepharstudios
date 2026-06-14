@@ -5,8 +5,10 @@ import { mediaCardColumns } from '$lib/db/projections';
 import { faithDocumentaries } from '$lib/data/documentaries';
 import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
+import { attachCatalogProgress } from '$lib/server/catalog-progress';
 
-export const load = async () => {
+export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
+    const session = await locals.auth.getSession();
     try {
         const documentaries = await db.select(mediaCardColumns)
             .from(mediaLibrary)
@@ -18,7 +20,7 @@ export const load = async () => {
             );
 
         return {
-            documentaries
+            documentaries: await attachCatalogProgress(documentaries, session?.user.id)
         };
     } catch (error) {
         console.error('Documentaries load failed, using fallback data:', error);
@@ -27,4 +29,3 @@ export const load = async () => {
         };
     }
 };
-;null as any as PageServerLoad;

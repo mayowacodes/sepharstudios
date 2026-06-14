@@ -1,26 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import EnhancedVideoPlayer from '$lib/components/widgets/EnhancedVideoPlayer.svelte';
-  import type { PlayerSettings } from '$lib/types';
+  import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
 
-  const defaultSettings: PlayerSettings = {
-  autoplay: false,
-  muted: false,
-  loop: false,
-  controls: true,
-  showControls: true,
-  enableDownload: false,
-  enableThumbnailPreview: false,
-  enableSpeedControls: true,
-  enableSeekButtons: true,
-  enablePictureInPicture: false,
-  enableCasting: false,
-  skin: {
-    color: '#ffcc00',
-    theme: 'dark'
-  },
-  size: 'responsive',
-};
+  // Migrated from EnhancedVideoPlayer to the single VideoPlayer per the
+  // TECHDEBT consolidation. The old `defaultSettings` bag of flags
+  // (autoplay/muted/loop/controls/showControls/etc.) is no longer needed —
+  // VideoPlayer's built-in defaults match what we used to pass (controls
+  // shown, autoplay off, muted off, no download, native speed + seek
+  // controls available through the standard control surface).
 
   let videos = $state<{ identifier: string; title: string; description: string; year: string }[]>([]);
   let selectedVideo = $state<{ title: string; identifier: string } | null>(null);
@@ -71,10 +58,9 @@
       ⬅ Back to Video List
     </button>
 
-    <EnhancedVideoPlayer
-      videoUrl={getMp4Url(selectedVideo.identifier)}  
+    <VideoPlayer
+      src={getMp4Url(selectedVideo.identifier)}
       title={selectedVideo.title}
-      settings={defaultSettings}
     />
   </div>
 {:else}

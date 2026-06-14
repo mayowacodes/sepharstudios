@@ -2,9 +2,21 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { getEncoderPlayback } from '$lib/server/encoder-orchestrator';
+import { resolvePlaybackUrl } from '$lib/server/encoder-playback';
 
-export const POST: RequestHandler = async ({ params, request, locals }) => {
+/**
+ * POST /api/encoder/jobs/[jobId]/playback
+ *
+ * Returns the master.m3u8 URL for a completed encoder job.
+ *
+ * Old behaviour signed Bunny-CDN URLs via the orchestrator. With Temporal
+ * we compose the public encoder-MinIO URL directly through
+ * `resolvePlaybackUrl` — same helper the watch route uses. The TTL
+ * argument is kept on the request shape for callers that still pass it,
+ * but it's a no-op (we serve a stable URL).
+ */
+
+export const POST: RequestHandler = async ({ params, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -12,7 +24,13 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	if (!jobId) return json({ error: 'jobId is required' }, { status: 400 });
 
 	const [content] = await db
-		.select({ id: mediaLibrary.id, isActive: mediaLibrary.isActive })
+		.select({
+			id: mediaLibrary.id,
+			isActive: mediaLibrary.isActive,
+			videoUrl: mediaLibrary.videoUrl,
+			encoderJobId: mediaLibrary.encoderJobId,
+			processingStatus: mediaLibrary.processingStatus
+		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.encoderJobId, jobId))
 		.limit(1);
@@ -21,14 +39,24 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'Content is not available' }, { status: 404 });
 	}
 
-	const body = await request.json().catch(() => ({}));
-	const ttlSeconds = Number(body.ttlSeconds || 3600);
+	const url = resolvePlaybackUrl({
+		videoUrl: content.videoUrl,
+		encoderJobId: content.encoderJobId,
+		processingStatus: content.processingStatus
+	});
 
-	try {
-		const playback = await getEncoderPlayback(jobId, ttlSeconds);
-		return json({ contentId: content.id, ...playback });
-	} catch (error) {
-		console.error(`Failed to create playback URL for encoder job ${jobId}:`, error);
-		return json({ error: 'Failed to create playback URL' }, { status: 500 });
+	if (!url) {
+		return json({ error: 'Playback is not ready yet' }, { status: 409 });
 	}
+
+	return json({
+		contentId: content.id,
+		jobId,
+		playback: {
+			master: url,
+			renditions: {},
+			expiresAt: null,
+			drmReady: false
+		}
+	});
 };

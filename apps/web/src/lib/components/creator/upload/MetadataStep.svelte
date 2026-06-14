@@ -1,5 +1,13 @@
 <!-- Metadata Step -->
 <script lang="ts">
+  import PersonRow from './PersonRow.svelte';
+  import type {
+    CastMember,
+    CrewMember,
+    CastRole,
+    CrewRole
+  } from '$lib/types/creator';
+
   // Each field is a $bindable prop — parent owns wizardState, bind: writes
   // through. Eliminates the manual sync-and-propagate dance that raced
   // itself and wiped user input.
@@ -13,7 +21,9 @@
     hasClosedCaptions = $bindable<boolean>(false),
     tags = $bindable<string[]>([]),
     keywords = $bindable<string[]>([]),
-    genre = $bindable<string[]>([])
+    genre = $bindable<string[]>([]),
+    cast = $bindable<CastMember[]>([]),
+    crew = $bindable<CrewMember[]>([])
   }: {
     bibleReferences?: string[];
     themes?: string[];
@@ -25,7 +35,59 @@
     tags?: string[];
     keywords?: string[];
     genre?: string[];
+    cast?: CastMember[];
+    crew?: CrewMember[];
   } = $props();
+
+  // Role option lists exposed to the PersonRow children. Kept here so
+  // both lists live alongside the other taxonomies in this step.
+  const castRoles = ['Actor', 'Voice', 'Narrator', 'Host'] as const satisfies readonly CastRole[];
+  const crewRoles = [
+    'Director',
+    'Producer',
+    'Writer',
+    'Cinematographer',
+    'Editor',
+    'Composer',
+    'Sound Designer'
+  ] as const satisfies readonly CrewRole[];
+
+  // Soft cap so a runaway repeater can't push thousands of entries
+  // through validation. Surfaces an alert rather than silently dropping.
+  const MAX_CAST = 30;
+  const MAX_CREW = 20;
+
+  function addCast(): void {
+    if (cast.length >= MAX_CAST) {
+      alert(`Up to ${MAX_CAST} cast members can be added.`);
+      return;
+    }
+    cast = [...cast, { name: '', role: 'Actor' as CastRole }];
+  }
+
+  function addCrew(): void {
+    if (crew.length >= MAX_CREW) {
+      alert(`Up to ${MAX_CREW} crew members can be added.`);
+      return;
+    }
+    crew = [...crew, { name: '', role: 'Director' as CrewRole }];
+  }
+
+  function updateCastAt(i: number, next: CastMember | CrewMember): void {
+    cast = cast.map((row, idx) => (idx === i ? (next as CastMember) : row));
+  }
+
+  function updateCrewAt(i: number, next: CastMember | CrewMember): void {
+    crew = crew.map((row, idx) => (idx === i ? (next as CrewMember) : row));
+  }
+
+  function removeCastAt(i: number): void {
+    cast = cast.filter((_, idx) => idx !== i);
+  }
+
+  function removeCrewAt(i: number): void {
+    crew = crew.filter((_, idx) => idx !== i);
+  }
 
   // Caps so a malicious or careless paste can't push thousands of strings
   // through validation; surface the limit as a toast instead of silently
@@ -188,6 +250,65 @@
         </label>
       {/each}
     </div>
+  </div>
+
+  <!-- Cast -->
+  <div role="group" aria-labelledby="cast-label">
+    <div id="cast-label" class="flex items-center justify-between mb-3">
+      <span class="block text-sm font-medium text-white">Cast</span>
+      <span class="text-xs text-gray-400">Optional — adds an avatar list on the watch page</span>
+    </div>
+    {#if cast.length > 0}
+      <div class="space-y-2 mb-3">
+        {#each cast as member, i (i)}
+          <PersonRow
+            kind="cast"
+            value={member}
+            roleOptions={castRoles}
+            onChange={(next) => updateCastAt(i, next)}
+            onRemove={() => removeCastAt(i)}
+          />
+        {/each}
+      </div>
+    {/if}
+    <button
+      type="button"
+      onclick={addCast}
+      class="px-4 py-2 border border-dashed border-border/80 hover:border-primary/50 text-gray-300 hover:text-white rounded-lg text-sm font-medium transition-colors w-full"
+    >
+      + Add cast member
+    </button>
+    <div class="text-xs text-gray-400 mt-1">
+      Type a name we've seen before and the photo auto-fills. Override anytime by uploading a new image.
+    </div>
+  </div>
+
+  <!-- Crew -->
+  <div role="group" aria-labelledby="crew-label">
+    <div id="crew-label" class="flex items-center justify-between mb-3">
+      <span class="block text-sm font-medium text-white">Crew</span>
+      <span class="text-xs text-gray-400">Optional — director, producer, etc.</span>
+    </div>
+    {#if crew.length > 0}
+      <div class="space-y-2 mb-3">
+        {#each crew as member, i (i)}
+          <PersonRow
+            kind="crew"
+            value={member}
+            roleOptions={crewRoles}
+            onChange={(next) => updateCrewAt(i, next)}
+            onRemove={() => removeCrewAt(i)}
+          />
+        {/each}
+      </div>
+    {/if}
+    <button
+      type="button"
+      onclick={addCrew}
+      class="px-4 py-2 border border-dashed border-border/80 hover:border-secondary/50 text-gray-300 hover:text-white rounded-lg text-sm font-medium transition-colors w-full"
+    >
+      + Add crew member
+    </button>
   </div>
 
   <!-- Ministry Affiliation -->

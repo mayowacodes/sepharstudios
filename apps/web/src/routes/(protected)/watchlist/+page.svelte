@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { Trash2, Play, List } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
+  import { myList } from '$lib/stores/myList';
 
   interface PlaylistItem {
     itemId: string;
@@ -13,6 +14,21 @@
     thumbnail: string | null;
     posterUrl: string | null;
     mediaType: string;
+    slug: string | null;
+    category: string | null;
+  }
+
+  // Build the audience-appropriate detail-page URL for a watchlist
+  // item — same routing rules MovieCard / TVShowCard use so the
+  // /watchlist surface lands on the same detail pages as everything
+  // else (instead of bypassing them with a direct /watch URL).
+  function detailHref(item: PlaylistItem): string {
+    const slug = item.slug || item.contentId;
+    if (item.category === 'kids') return `/kids/kiddies/${slug}`;
+    if (item.category === 'teens') return `/kids/teens/${slug}`;
+    if (item.mediaType === 'tv' || item.mediaType === 'series') return `/shows/${slug}`;
+    if (item.mediaType === 'documentary') return `/documentaries/${slug}`;
+    return `/movies/${slug}`;
   }
 
   interface Playlist {
@@ -42,6 +58,8 @@
                 sortOrder: number;
                 content: {
                   id: string;
+                  slug: string | null;
+                  category: string | null;
                   title: string;
                   thumbnail: string | null;
                   posterUrl: string | null;
@@ -59,7 +77,9 @@
             title: r.content.title,
             thumbnail: r.content.thumbnail,
             posterUrl: r.content.posterUrl,
-            mediaType: r.content.mediaType
+            mediaType: r.content.mediaType,
+            slug: r.content.slug ?? null,
+            category: r.content.category ?? null
           }));
 
           return { ...pl, items };
@@ -67,20 +87,41 @@
       );
 
       playlists = withItems;
+      // Seed the shared store so cards / detail pages elsewhere
+      // reflect this user's bookmark state without a fresh fetch.
+      const ids = withItems.flatMap((pl) => pl.items.map((i) => i.contentId));
+      if (ids.length > 0) myList.seedIds(ids);
     } finally {
       loading = false;
     }
   });
 
+  // Removing from the watchlist now goes through the shared myList
+  // store so every other surface (catalog cards, detail pages, search)
+  // sees the change live + the user gets a "Removed from My List" toast.
+  // We still prune the local `playlists` array so the row disappears
+  // from THIS view immediately (the store doesn't carry the full
+  // PlaylistItem with thumbnail etc, only contentIds).
   async function removeItem(playlistId: string, contentId: string) {
+    const item = playlists.flatMap((pl) => pl.items).find((i) => i.contentId === contentId);
     removing = contentId;
     try {
-      await fetch(`/api/playlists/${playlistId}/items?contentId=${contentId}`, { method: 'DELETE' });
-      playlists = playlists.map(pl =>
-        pl.id === playlistId
-          ? { ...pl, items: pl.items.filter(i => i.contentId !== contentId) }
-          : pl
-      );
+      const becameOut = await myList.toggle({
+        contentId,
+        contentTitle: item?.title ?? 'this title',
+        contentType: item?.mediaType ?? 'movie'
+      });
+      // Toggle returns the new membership. If it flipped to false the
+      // remove succeeded; prune the card. If it stayed true (API
+      // failure), leave the row visible so the user can retry — the
+      // store has already shown an error toast.
+      if (becameOut === false) {
+        playlists = playlists.map((pl) =>
+          pl.id === playlistId
+            ? { ...pl, items: pl.items.filter((i) => i.contentId !== contentId) }
+            : pl
+        );
+      }
     } finally {
       removing = null;
     }
@@ -114,17 +155,39 @@
         {/each}
       </div>
     {:else if allItems.length === 0}
-      <div class="text-center py-24">
-        <List class="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h2 class="text-lg font-semibold mb-2">Your list is empty</h2>
-        <p class="text-muted-foreground text-sm mb-6">Browse content and tap + to save titles here.</p>
-        <Button href="/browse">Browse Content</Button>
+      <!-- Friendly empty state: oversized bookmark glyph, copy that
+           explains the mechanic (look for the bookmark icon, save for
+           later), and three jumping-off points so a fresh user finds
+           something quickly instead of having to figure out where to
+           start. The whole panel sits inside a soft glass card so the
+           emptiness has a visual frame. -->
+      <div class="text-center py-12 px-6 max-w-xl mx-auto rounded-2xl border border-white/10 bg-white/2 backdrop-blur-sm">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
+          <List class="w-7 h-7 text-primary" />
+        </div>
+        <h2 class="text-xl font-bold mb-2">Your list is empty</h2>
+        <p class="text-muted-foreground text-sm mb-6 leading-relaxed">
+          Tap the <span class="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded border border-white/15 bg-white/5 align-middle text-xs">🔖</span>
+          bookmark on any title's detail page or card to save it here.
+          Pick something to start with:
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <Button href="/movies" variant="outline" class="border-[#FF5E0E]/40 text-white hover:bg-[#FF5E0E]/10">
+            Browse Movies
+          </Button>
+          <Button href="/shows" variant="outline" class="border-[#FF5E0E]/40 text-white hover:bg-[#FF5E0E]/10">
+            Browse Shows
+          </Button>
+          <Button href="/documentaries" variant="outline" class="border-[#FF5E0E]/40 text-white hover:bg-[#FF5E0E]/10">
+            Documentaries
+          </Button>
+        </div>
       </div>
     {:else}
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {#each allItems as item (item.contentId)}
           <div class="group relative space-y-2">
-            <a href="/watch/{item.contentId}" class="block">
+            <a href={detailHref(item)} class="block">
               <div class="aspect-2/3 rounded-lg overflow-hidden bg-white/5 relative">
                 {#if item.thumbnail || item.posterUrl}
                   <img

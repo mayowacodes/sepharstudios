@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { mediaLibrary, contentSubtitleTracks } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { resolvePlaybackUrl } from '$lib/server/encoder-playback';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const session = await locals.auth.getSession();
@@ -73,7 +74,17 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		.filter((t) => t.kind === 'descriptions')
 		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
 
-	return json({ ...item, subtitles, descriptions });
+	// Legacy-row fallback: for media whose encoder job finished BEFORE the
+	// webhook learned to persist videoUrl, compute the URL from encoderJobId
+	// on the fly. New rows already have videoUrl set on the ready webhook,
+	// so this is just a transparent rescue for old completed jobs.
+	const videoUrl = resolvePlaybackUrl({
+		videoUrl: item.videoUrl,
+		encoderJobId: item.encoderJobId,
+		processingStatus: item.processingStatus
+	});
+
+	return json({ ...item, videoUrl, subtitles, descriptions });
 };
 
 /**

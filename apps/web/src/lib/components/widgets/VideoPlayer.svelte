@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { fade } from 'svelte/transition';
   import type HlsType from 'hls.js';
 
   // hls.js is ~120 KB minified — only loaded when an .m3u8 source is actually
@@ -19,6 +20,14 @@
     contentId?: string;    // for progress reporting
     startAt?: number;      // seconds to resume from
     title?: string;
+    /**
+     * Cinematic metadata shown in the player's hover overlay. `ageRating`
+     * renders as a small bordered pill in the top strip; `genres` render
+     * as glass chips next to it (first 3 only — anything more clutters
+     * the player and is already on the page below).
+     */
+    ageRating?: string;
+    genres?: string[];
     subtitles?: Array<{ label: string; src: string; srclang: string }>;
     /**
      * Audio descriptions (WCAG 1.2.5 / SC 1.2.7). Each entry is a separate
@@ -33,7 +42,39 @@
      */
     chapters?: Array<{ start: number; title: string }>;
     /** Slots for the end-screen overlay (Item 3). */
-    endScreen?: Array<{ id: string; title: string; thumbnail: string | null; duration: string | null }>;
+    /**
+     * End-screen cards shown in the final ~10% of playback. `href`
+     * (when present) wins over the default `/watch/<slug-or-id>` —
+     * useful for next-episode cards that need `?episode=<id>`
+     * appended. `kind` labels the card with a small chip ("NEXT
+     * EPISODE", "UP NEXT", etc.) for context.
+     */
+    endScreen?: Array<{
+      id: string;
+      slug?: string | null;
+      title: string;
+      thumbnail: string | null;
+      duration: string | null;
+      href?: string;
+      kind?: string;
+    }>;
+    /**
+     * When true, the end-screen header swaps to a "You've reached the
+     * end of the series" finale message and the auto-advance
+     * countdown is suppressed. Filler cards (genre / creator picks)
+     * still render below.
+     */
+    endOfSeries?: boolean;
+    /**
+     * Direct URL to the next episode (when watching a TV title and
+     * there is one). Two pieces of UX hang off this:
+     *   - A small "Next Episode" button next to the play controls so
+     *     viewers can skip ahead without waiting for the end-screen.
+     *   - Automatic navigation at 95% playback (Netflix-style "skip
+     *     credits"). Suppresses the end-screen countdown for that case
+     *     so the auto-advance fires once, not twice.
+     */
+    nextEpisodeHref?: string;
     /**
      * Scrubbing-preview VTT URL produced by the encoder orchestrator's
      * scan-ready webhook. Cues encode a sprite-sheet region in the cue
@@ -68,11 +109,34 @@
 
   let {
     src, poster, contentId, startAt = 0, title,
+    ageRating, genres = [],
     subtitles = [], descriptions = [], chapters = [], endScreen = [],
+    endOfSeries = false,
+    nextEpisodeHref,
     previewVtt, previewSprites = [],
     enableAds = false,
     onEnded, onTimeUpdate
   }: Props = $props();
+
+  // Auto-advance to the next episode at 95% completion. Netflix-style
+  // "skip credits" — for TV titles the back-end of the file is usually
+  // credits the viewer doesn't watch, so jumping ahead saves them the
+  // dead time. Fires once per video; suppressed when we have no next
+  // episode OR when we're at the end of the series. The 95% threshold
+  // is high enough that mid-episode scrubbing past 90% (which
+  // currently triggers the end-screen) doesn't accidentally auto-jump.
+  let autoAdvancedFired = $state(false);
+  $effect(() => {
+    if (!nextEpisodeHref || endOfSeries || autoAdvancedFired) return;
+    if (duration > 0 && currentTime / duration >= 0.95) {
+      autoAdvancedFired = true;
+      window.location.href = nextEpisodeHref;
+    }
+  });
+
+  // Cap the chips shown in-player so the strip stays readable; the page
+  // body below the player still shows the full genre list.
+  const displayGenres = $derived((genres ?? []).slice(0, 3));
 
   // End-screen overlay state. Dismiss persists until the next mount;
   // countdown decrements each second once the overlay is visible.
@@ -83,13 +147,21 @@
   $effect(() => {
     const visible = endScreen && endScreen.length > 0 && duration > 0
       && currentTime / duration > 0.9 && !endScreenDismissed;
-    if (visible && !endScreenInterval) {
+    // Three cases where we still show the overlay but suppress the
+    // auto-advance countdown:
+    //   1. End of series — there's nowhere we'd auto-jump to.
+    //   2. nextEpisodeHref is set — the 95% auto-advance effect
+    //      handles forward navigation for TV titles; the end-screen
+    //      countdown would race it.
+    // The overlay still renders so viewers can click "Watch Next"
+    // manually before the 95% mark if they want it sooner.
+    if (visible && !endScreenInterval && !endOfSeries && !nextEpisodeHref) {
       endScreenInterval = setInterval(() => {
         endScreenCountdown = Math.max(0, endScreenCountdown - 1);
         if (endScreenCountdown === 0 && endScreen[0]) {
           if (endScreenInterval) { clearInterval(endScreenInterval); endScreenInterval = null; }
           // Navigate to the first card.
-          window.location.href = `/watch/${endScreen[0].id}`;
+          window.location.href = endScreen[0].href || `/watch/${endScreen[0].slug || endScreen[0].id}`;
         }
       }, 1000);
     } else if (!visible && endScreenInterval) {
@@ -438,6 +510,20 @@
 
   function handleKeyDown(e: KeyboardEvent) {
     if (!videoEl) return;
+    // Don't hijack keys when the user is typing in any editable surface.
+    // The handler is wired to <svelte:window>, so EVERY keystroke on the
+    // page reaches it — including those targeted at the review form's
+    // General Feedback textarea. Without this guard, pressing space
+    // toggled play/pause AND `preventDefault()` swallowed the space so
+    // it never reached the textarea (typing "great lets test" came out
+    // as "greatletstest"). Same fix lives on EnhancedVideoPlayer.
+    const a = (typeof document !== 'undefined' ? document.activeElement : null) as HTMLElement | null;
+    if (a && (
+      a.tagName === 'INPUT' ||
+      a.tagName === 'TEXTAREA' ||
+      a.tagName === 'SELECT' ||
+      a.isContentEditable
+    )) return;
     switch (e.key) {
       case ' ': case 'k': e.preventDefault(); togglePlay(); break;
       case 'ArrowRight': videoEl.currentTime = Math.min(videoEl.currentTime + 10, duration); break;
@@ -448,6 +534,16 @@
       case 'm': toggleMute(); break;
       case '.': case '>': e.preventDefault(); nextChapter(); break;
       case ',': case '<': e.preventDefault(); prevChapter(); break;
+      // `n` jumps straight to the next episode when one is loaded.
+      // No-op for movies + final episodes. Matches YouTube's Shift+N
+      // shortcut spirit but with a single keystroke since we're in a
+      // dedicated player surface, not a global page.
+      case 'n':
+        if (nextEpisodeHref) {
+          e.preventDefault();
+          window.location.href = nextEpisodeHref;
+        }
+        break;
     }
   }
 
@@ -616,6 +712,7 @@
     {/each}
   </video>
 
+
   <!-- Pre-roll ad chrome. The pre-roll plays from the same <video>; this
        overlay shows the "Ad" badge + countdown + skip button. -->
   {#if prerollActive && prerollUrl}
@@ -644,8 +741,20 @@
       aria-label="Next up suggestions"
     >
       <div class="w-full max-w-3xl space-y-4">
+        {#if endOfSeries}
+          <!-- Finale banner — replaces the "Up next" header when the
+               viewer has reached the last episode of the series. The
+               filler cards below still appear so they can keep watching
+               related content; this header just gives the moment its
+               proper weight. -->
+          <div class="text-center space-y-2 mb-2">
+            <div class="text-4xl">🎬</div>
+            <h3 class="text-white text-xl font-semibold">You've reached the end of the series</h3>
+            <p class="text-white/70 text-sm">Thanks for watching. Here are a few more to explore.</p>
+          </div>
+        {/if}
         <div class="flex items-center justify-between">
-          <h3 class="text-white text-lg font-semibold">Up next</h3>
+          <h3 class="text-white text-lg font-semibold">{endOfSeries ? 'More like this' : 'Up next'}</h3>
           <button
             type="button"
             onclick={() => (endScreenDismissed = true)}
@@ -656,12 +765,17 @@
         <div class="grid grid-cols-1 sm:grid-cols-{Math.min(endScreen.length, 3)} gap-3">
           {#each endScreen as item, i (item.id)}
             <a
-              href={`/watch/${item.id}`}
+              href={item.href || `/watch/${item.slug || item.id}`}
               class="block group surface-1 rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all"
             >
               <div class="aspect-video bg-black/50 relative">
                 {#if item.thumbnail}
                   <img src={item.thumbnail} alt="" class="w-full h-full object-cover" />
+                {/if}
+                {#if item.kind}
+                  <div class="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-medium">
+                    {item.kind}
+                  </div>
                 {/if}
                 {#if i === 0 && endScreenCountdown > 0}
                   <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
@@ -685,14 +799,55 @@
   <!-- Controls overlay — click is only used to stop propagation to the container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 {controlsVisible ? 'opacity-100' : 'opacity-0'}"
+    class="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 {controlsVisible ? 'opacity-100' : 'opacity-0'}"
     onclick={(e) => e.stopPropagation()}
     onkeydown={() => {}}
     role="presentation"
   >
-    <!-- Title -->
+    <!-- Top metadata strip: age rating + first 3 genres as glass chips.
+         Sits above the small title so the cinematic feel reads age + genre
+         first, then title. All inherit the parent's opacity transition. -->
+    <!-- Top region inside the controls overlay: title (large, with a
+         gradient backdrop) + age/genre strip below it. The whole region
+         fades in/out with the controls so the title only appears when
+         the user moves the mouse or pauses — it's gone the rest of the
+         time. Modern streaming feel without permanent chrome.
+
+         The `{#key title}` makes the title element remount with a
+         300ms fade whenever the title prop changes — used by the
+         watch page when navigating between episodes (?episode= URL
+         changes) so the new title fades in instead of snapping. -->
     {#if title}
-      <div class="absolute top-4 left-4 text-white text-sm font-medium drop-shadow">{title}</div>
+      <div class="absolute top-0 inset-x-0 pointer-events-none bg-linear-to-b from-black/60 via-black/20 to-transparent pt-3 pb-10 px-4">
+        <!-- Relative wrapper + absolute child = a true cross-fade
+             between consecutive titles (e.g. episode transitions on
+             a TV title). 200ms matches the watch-page episode badge. -->
+        <div class="relative h-6 sm:h-7">
+          {#key title}
+            <div
+              in:fade={{ duration: 200 }}
+              out:fade={{ duration: 200 }}
+              class="absolute inset-0 text-white text-sm sm:text-base font-medium drop-shadow truncate"
+            >
+              {title}
+            </div>
+          {/key}
+        </div>
+        {#if ageRating || displayGenres.length > 0}
+          <div class="mt-1.5 flex flex-wrap items-center gap-2">
+            {#if ageRating}
+              <span class="px-2 py-0.5 border border-white/30 rounded text-[10px] uppercase tracking-wider text-white/90 bg-black/30 backdrop-blur-sm">
+                {ageRating}
+              </span>
+            {/if}
+            {#each displayGenres as genre (genre)}
+              <span class="px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] text-white/90">
+                {genre}
+              </span>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/if}
 
     <!-- Current chapter label (only when chapters are present) -->
@@ -752,6 +907,7 @@
       {/if}
     </div>
 
+
     <!-- Controls row -->
     <div class="flex items-center gap-3 px-4 pb-4">
       <!-- Play/Pause -->
@@ -783,6 +939,25 @@
       >
         10↻
       </button>
+
+      <!-- Next Episode button — only renders when nextEpisodeHref is set
+           (TV titles with a successor episode). Click jumps straight to
+           the next episode; viewers don't have to wait for the end-
+           screen overlay or scrub forward. Keyboard shortcut is `n`. -->
+      {#if nextEpisodeHref}
+        <a
+          href={nextEpisodeHref}
+          aria-label="Play next episode (N)"
+          title="Next episode (N)"
+          class="text-white hover:text-[#FF5E0E] transition-colors inline-flex items-center gap-1 text-xs font-semibold"
+        >
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+            <polygon points="6,4 14,12 6,20" />
+            <rect x="15" y="4" width="3" height="16" />
+          </svg>
+          <span class="hidden sm:inline">Next</span>
+        </a>
+      {/if}
 
       <!-- Time -->
       <span class="text-white text-xs tabular-nums">{formatTime(currentTime)} / {formatTime(duration)}</span>

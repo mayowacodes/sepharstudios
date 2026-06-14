@@ -6,6 +6,7 @@ import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
 import { publish } from '$lib/server/sse';
 import { notify } from '$lib/server/notify';
+import { masterPlaylistUrl } from '$lib/server/encoder-playback';
 
 /**
  * POST /api/encoder/webhook
@@ -99,24 +100,23 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!body.jobId) return json({ error: 'jobId is required' }, { status: 400 });
 
 	// Resolve the media row — prefer the orchestrator-supplied mediaId (set
-	// at job creation), fall back to looking up by encoderJobId.
+	// at job creation), fall back to looking up by encoderJobId. `videoUrl`
+	// and `encoderJobId` are pulled so the ready-transition branch below
+	// can compose + persist the master.m3u8 URL (the webhook body never
+	// includes it — see encoder-playback.ts for why).
+	const rowProjection = {
+		id: mediaLibrary.id,
+		title: mediaLibrary.title,
+		creatorId: mediaLibrary.creatorId,
+		processingStatus: mediaLibrary.processingStatus,
+		processingProgress: mediaLibrary.processingProgress,
+		processingStage: mediaLibrary.processingStage,
+		videoUrl: mediaLibrary.videoUrl,
+		encoderJobId: mediaLibrary.encoderJobId
+	};
 	const [current] = await (body.mediaId
-		? db.select({
-			id: mediaLibrary.id,
-			title: mediaLibrary.title,
-			creatorId: mediaLibrary.creatorId,
-			processingStatus: mediaLibrary.processingStatus,
-			processingProgress: mediaLibrary.processingProgress,
-			processingStage: mediaLibrary.processingStage
-		}).from(mediaLibrary).where(eq(mediaLibrary.id, body.mediaId)).limit(1)
-		: db.select({
-			id: mediaLibrary.id,
-			title: mediaLibrary.title,
-			creatorId: mediaLibrary.creatorId,
-			processingStatus: mediaLibrary.processingStatus,
-			processingProgress: mediaLibrary.processingProgress,
-			processingStage: mediaLibrary.processingStage
-		}).from(mediaLibrary).where(eq(mediaLibrary.encoderJobId, body.jobId)).limit(1));
+		? db.select(rowProjection).from(mediaLibrary).where(eq(mediaLibrary.id, body.mediaId)).limit(1)
+		: db.select(rowProjection).from(mediaLibrary).where(eq(mediaLibrary.encoderJobId, body.jobId)).limit(1));
 
 	if (!current) {
 		// Unknown row — orchestrator probably retried with a stale ID. 200 so
@@ -169,6 +169,24 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (body.status === 'ready') {
 		updates.processingProgress = 100;
 		updates.processingError = null;
+		// Persist the master-playlist URL on the row so every consumer
+		// (admin review, /movies modal, future surfaces) can play without
+		// each one re-deriving the URL or calling out to the orchestrator.
+		// Only write when the column is empty so we never stomp a static
+		// upload, a live-recording finalize, or a prior successful encode.
+		if (!current.videoUrl) {
+			const jobIdForUrl = current.encoderJobId ?? body.jobId;
+			if (jobIdForUrl) {
+				try {
+					updates.videoUrl = masterPlaylistUrl(jobIdForUrl);
+				} catch (err) {
+					// Composition only fails on an empty jobId; we've
+					// already guarded that, but log defensively so this
+					// never silently leaves videoUrl unset.
+					console.error('[encoder/webhook] masterPlaylistUrl failed:', err);
+				}
+			}
+		}
 	}
 
 	// Only hit the DB when something actually changed beyond updatedAt.

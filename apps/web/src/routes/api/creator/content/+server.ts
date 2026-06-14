@@ -125,6 +125,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			genres: data.genre || [],
 			topics: data.themes || [],
 			keywords: data.keywords || [],
+			// Cast/crew live as jsonb arrays. The wizard validates the row
+			// shapes client-side; defensive Array.isArray here keeps a
+			// malformed body from inserting an invalid jsonb literal.
+			cast: Array.isArray(data.cast) ? data.cast : [],
+			crew: Array.isArray(data.crew) ? data.crew : [],
 			duration: data.duration?.toString() || null,
 			isActive: false,
 			isNew: true,

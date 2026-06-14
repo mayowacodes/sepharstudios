@@ -23,23 +23,27 @@
   // Pagination
   let currentPage = $state(1);
   let itemsPerPage = $state(12);
-  let totalItems = $state(0);
-  
-  // Filter content
-  const filteredContent = $derived.by(() => {
-    let filtered = allContent.filter(content => {
+
+  // Filter + sort, ALL rows. Kept as a separate derived because:
+  //   1. We need its `.length` for pagination AND its slice for the page.
+  //   2. Setting `totalItems` inside a `$derived.by` (the previous
+  //      implementation) is a Svelte 5 anti-pattern: a derived block must
+  //      be a pure function of its inputs. Mutating other state from
+  //      inside it leaves reactivity in an inconsistent state and was
+  //      the cause of the "Loading content…" spinner never going away
+  //      even after the API returned data and isLoading flipped to false.
+  const sortedFilteredContent = $derived.by(() => {
+    const filtered = allContent.filter((content) => {
       const statusMatch = selectedStatus === 'all' || content.status === selectedStatus;
       const typeMatch = selectedType === 'all' || content.contentType === selectedType;
       const creatorMatch = selectedCreator === 'all' || content.creatorId === selectedCreator;
-      const searchMatch = searchTerm === '' || 
-        content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        content.creatorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        content.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
+      const searchMatch = searchTerm === ''
+        || content.title.toLowerCase().includes(searchTerm.toLowerCase())
+        || content.creatorName.toLowerCase().includes(searchTerm.toLowerCase())
+        || content.description.toLowerCase().includes(searchTerm.toLowerCase());
       return statusMatch && typeMatch && creatorMatch && searchMatch;
     });
-    
-    // Sort content
+
     switch (sortBy) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
@@ -53,8 +57,7 @@
       case 'creator':
         filtered.sort((a, b) => a.creatorName.localeCompare(b.creatorName));
         break;
-      case 'priority':
-        // Custom priority logic for review queue
+      case 'priority': {
         const priorityOrder: Record<ContentStatus, number> = {
           [ContentStatus.DRAFT]: 5,
           [ContentStatus.SUBMITTED]: 4,
@@ -68,12 +71,19 @@
         };
         filtered.sort((a, b) => (priorityOrder[b.status as ContentStatus] || 0) - (priorityOrder[a.status as ContentStatus] || 0));
         break;
+      }
     }
-    
-    totalItems = filtered.length;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filtered.slice(startIndex, startIndex + itemsPerPage);
+
+    return filtered;
   });
+
+  // Total + paginated slice — derived from the sorted-filtered list above.
+  // Two separate `$derived` keeps each pure (no side-effects inside any
+  // derived block).
+  const totalItems = $derived(sortedFilteredContent.length);
+  const filteredContent = $derived(
+    sortedFilteredContent.slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage)
+  );
   
   async function loadContent() {
     isLoading = true;

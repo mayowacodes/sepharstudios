@@ -7,6 +7,7 @@
   import MediaGrid from "$lib/components/MediaGrid.svelte";
   import RecentlyWatched from "$lib/components/sections/dashboard/RecentlyWatched.svelte";
   import Recommendations from "$lib/components/sections/dashboard/Recommendations.svelte";
+  import ContinueWatchingRow from "$lib/components/sections/ContinueWatchingRow.svelte";
   import AccessDeniedBanner from "$lib/components/widgets/AccessDeniedBanner.svelte";
   import type { MediaSection } from "$lib/types/media";
 
@@ -20,6 +21,20 @@
     { title: "Popular Shows", items: (data.shows || []) as any[] },
     { title: "Inspiring Documentaries", items: (data.documentaries || []) as any[] }
   ]);
+
+  // Featured trailer for the "Now Streaming" bento tile. We pick the
+  // first movie / show / doc that has a playable `trailerUrl` so the
+  // tile autoplays something real instead of a stock Unsplash photo.
+  // The order (movies → shows → docs) reflects the typical home-page
+  // hierarchy; once any of them yields a trailer, we stop.
+  const featuredTrailer = $derived.by(() => {
+    const pools = [data.movies, data.shows, data.documentaries] as Array<Array<{ trailerUrl?: string | null; thumbnail?: string | null; title?: string | null }> | undefined>;
+    for (const pool of pools) {
+      const match = pool?.find((m) => typeof m.trailerUrl === 'string' && m.trailerUrl.startsWith('http'));
+      if (match) return match;
+    }
+    return null;
+  });
 
   onMount(() => {
     isMounted = true;
@@ -63,6 +78,17 @@
         </div>
       </section>
 
+      <!-- Continue Watching — sits ABOVE the marketing bento so a
+           returning viewer's primary action ("get back to my show")
+           takes precedence over the "watch anywhere" pitch. Hidden
+           when empty (anonymous viewers, or signed-in viewers with no
+           in-progress titles). -->
+      {#if data.continueWatching && data.continueWatching.length > 0}
+        <section in:fly={{ y: 30, duration: 700, delay: 200 }} class="pb-16">
+          <ContinueWatchingRow items={data.continueWatching} />
+        </section>
+      {/if}
+
       <!-- Glass UI Bento Grid & Device Frames (Options A & B Combined) -->
       <section in:fly={{ y: 50, duration: 1000, delay: 300 }} class="grid lg:grid-cols-2 gap-12 items-center pb-32">
         <div class="space-y-6 lg:pr-12">
@@ -84,16 +110,36 @@
         <div class="relative grid grid-cols-2 gap-4 h-125 w-full perspective-1000">
           <!-- Glassmorphic TV Frame -->
           <div class="col-span-2 row-span-2 relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl group hover:border-[#FF5E0E]/50 transition-colors duration-500">
-            <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-white/20 to-transparent"></div>
-            <img src="https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?w=800&q=80" alt="Family movie night" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
-            <div class="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent"></div>
-            <div class="absolute bottom-6 left-6 flex items-center gap-3">
+            <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-white/20 to-transparent z-10"></div>
+            <!-- Looping featured trailer when one exists, falling back to
+                 the stock Unsplash image so we never render an empty tile.
+                 Video is muted + autoplay + loop so it works without user
+                 interaction (browser autoplay rules require muted). The
+                 trailerUrl comes from whichever of movies/shows/docs has
+                 a playable trailer first — see featuredTrailer derived. -->
+            {#if featuredTrailer?.trailerUrl}
+              <!-- svelte-ignore a11y_media_has_caption -->
+              <video
+                src={featuredTrailer.trailerUrl}
+                poster={featuredTrailer.thumbnail ?? undefined}
+                class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+              ></video>
+            {:else}
+              <img src="https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?w=800&q=80" alt="Family movie night" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
+            {/if}
+            <div class="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+            <div class="absolute bottom-6 left-6 flex items-center gap-3 z-10">
               <div class="w-12 h-12 rounded-full bg-[#FF5E0E] flex items-center justify-center shadow-lg">
                 <PlayCircle class="h-6 w-6 text-white" />
               </div>
               <div>
                 <p class="font-bold text-lg">Now Streaming</p>
-                <p class="text-sm text-white/70">Available in 4K HDR</p>
+                <p class="text-sm text-white/70">{featuredTrailer?.title ?? 'Available in 4K HDR'}</p>
               </div>
             </div>
           </div>

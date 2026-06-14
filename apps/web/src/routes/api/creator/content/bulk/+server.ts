@@ -1,22 +1,34 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, ppvPurchases, quizSessions, bibleStoryProgress } from '$lib/db/schema/sepharstudios';
 import { and, eq, inArray } from 'drizzle-orm';
 import { Role } from '$lib/constants';
 
 /**
  * POST /api/creator/content/bulk
  *
- * Body: { ids: string[], action: 'publish'|'unlist'|'private'|'archive'|'delete' }
+ * Body: { ids: string[], action: 'publish'|'unlist'|'private'|'archive'|'delete'|'delete-permanent' }
  *
  * Applies a single action across many content rows in one go. Every id must
  * belong to the signed-in creator — if any fails the ownership check we
  * return 403 and skip the whole batch (no partial writes).
  *
+ * Two destructive options:
+ *   - `archive` / `delete` (legacy alias) — soft delete. Sets status=archived,
+ *      isActive=false, visibility=private. Hides from viewers but the row
+ *      stays in the DB so PPV purchases remain valid, scan/encoder artifacts
+ *      can be inspected, and the creator can un-archive later.
+ *   - `delete-permanent` — hard DELETE FROM media_library. Disallowed if any
+ *      PPV purchase exists for any of the rows (paying customers expected
+ *      access; refunding/voiding those is an admin concern, not a one-click
+ *      creator action). Dependent rows in quiz_sessions / bible_story_progress
+ *      are nulled (the FK columns are nullable) so historical session data
+ *      survives without pointing at a missing row.
+ *
  * Cap: 100 ids per call (matches the admin bulk endpoint).
  */
 
-const VALID_ACTIONS = new Set(['publish', 'unlist', 'private', 'archive', 'delete']);
+const VALID_ACTIONS = new Set(['publish', 'unlist', 'private', 'archive', 'delete', 'delete-permanent']);
 const BATCH_MAX = 100;
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -56,6 +68,40 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'One or more content items are not yours' }, { status: 403 });
 	}
 
+	// Permanent delete — actually removes the rows from media_library.
+	// Handled separately from the other actions because it isn't a simple
+	// UPDATE and needs guardrails the soft actions don't.
+	if (body.action === 'delete-permanent') {
+		// Block the destroy if any PPV purchase points at any of the rows.
+		// Customers paid; voiding them isn't a creator-side decision.
+		const purchases = await db
+			.select({ contentId: ppvPurchases.contentId })
+			.from(ppvPurchases)
+			.where(inArray(ppvPurchases.contentId, ids))
+			.limit(1);
+		if (purchases.length > 0) {
+			return json({
+				error: 'Cannot permanently delete content with existing PPV purchases. Archive instead, or contact support to void the purchases first.',
+				blockedBy: 'ppv_purchases'
+			}, { status: 409 });
+		}
+
+		// Detach nullable references in dependent tables so the parent
+		// DELETE won't fail on RESTRICT semantics from the FK definitions.
+		// quiz_sessions.content_id and bible_story_progress.content_id are
+		// both nullable in schema; null them out, don't drop the sessions.
+		await db.update(quizSessions)
+			.set({ contentId: null })
+			.where(inArray(quizSessions.contentId, ids));
+		await db.update(bibleStoryProgress)
+			.set({ contentId: null })
+			.where(inArray(bibleStoryProgress.contentId, ids));
+
+		const result = await db.delete(mediaLibrary).where(inArray(mediaLibrary.id, ids));
+		const affected = (result as { rowCount?: number }).rowCount ?? ids.length;
+		return json({ success: true, affected, action: 'delete-permanent' });
+	}
+
 	const now = new Date();
 	let updates: Record<string, unknown>;
 	switch (body.action) {
@@ -72,6 +118,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			updates = { status: 'archived', isActive: false, updatedAt: now };
 			break;
 		case 'delete':
+			// Legacy alias for 'archive'. The confirmation text on the
+			// client now matches reality ("Archive…"); kept here so
+			// previously-stored UI state still works.
 			updates = { status: 'archived', isActive: false, visibility: 'private', updatedAt: now };
 			break;
 		default:
