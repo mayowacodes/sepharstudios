@@ -62,7 +62,27 @@
 	<meta name="twitter:image" content={`${SiteMeta.link}${SiteMeta.ogimage}`} />
 </svelte:head>
 
-<Toaster richColors position="top-center" />
+<!-- Toasts tinted with the portal palette. `theme="dark"` matches the
+     portals' deep surfaces; `toastOptions.style` writes the
+     `--portal-*` CSS variables onto each toast wrapper so the brand
+     teal/cyan accents read consistently with the rest of the chrome. -->
+<Toaster
+	richColors
+	position="top-right"
+	theme="dark"
+	closeButton
+	expand={false}
+	visibleToasts={4}
+	toastOptions={{
+		duration: 4500,
+		classes: {
+			toast: 'portal-toast',
+			title: 'portal-toast-title',
+			description: 'portal-toast-desc',
+			closeButton: 'portal-toast-close'
+		}
+	}}
+/>
 <ModeWatcher defaultMode="dark" disableTransitions={true} />
 <PWAInstallPrompt />
 <LiveRegion />

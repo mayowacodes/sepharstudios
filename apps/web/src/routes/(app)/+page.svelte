@@ -1,13 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { PlayCircle, Film, Crown, Users, Sparkles, MonitorSmartphone, Coins, Zap, Lock, Gem, TrendingUp } from "@lucide/svelte";
+  import { PlayCircle, Film, Crown, Users, Sparkles, MonitorSmartphone, Coins, Zap, Lock, Gem, TrendingUp, Volume2, VolumeX } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import { page } from "$app/state";
+  import { goto } from '$app/navigation';
   import MediaGrid from "$lib/components/MediaGrid.svelte";
   import RecentlyWatched from "$lib/components/sections/dashboard/RecentlyWatched.svelte";
   import Recommendations from "$lib/components/sections/dashboard/Recommendations.svelte";
   import ContinueWatchingRow from "$lib/components/sections/ContinueWatchingRow.svelte";
+  import ComingSoonRow from "$lib/components/sections/ComingSoonRow.svelte";
   import AccessDeniedBanner from "$lib/components/widgets/AccessDeniedBanner.svelte";
   import type { MediaSection } from "$lib/types/media";
 
@@ -27,8 +29,16 @@
   // tile autoplays something real instead of a stock Unsplash photo.
   // The order (movies → shows → docs) reflects the typical home-page
   // hierarchy; once any of them yields a trailer, we stop.
-  const featuredTrailer = $derived.by(() => {
-    const pools = [data.movies, data.shows, data.documentaries] as Array<Array<{ trailerUrl?: string | null; thumbnail?: string | null; title?: string | null }> | undefined>;
+  type FeaturedTrailer = {
+    id?: string;
+    slug?: string | null;
+    title?: string | null;
+    thumbnail?: string | null;
+    trailerUrl?: string | null;
+    category?: 'kids' | 'teens' | string | null;
+  };
+  const featuredTrailer = $derived.by<FeaturedTrailer | null>(() => {
+    const pools = [data.movies, data.shows, data.documentaries] as Array<FeaturedTrailer[] | undefined>;
     for (const pool of pools) {
       const match = pool?.find((m) => typeof m.trailerUrl === 'string' && m.trailerUrl.startsWith('http'));
       if (match) return match;
@@ -36,8 +46,104 @@
     return null;
   });
 
+  // Audio toggle for the Now Streaming tile. Same sessionStorage key
+  // as FeaturedBillboardPanel so a viewer's "sound on" choice carries
+  // from /movies down to the landing page bento tile (and back).
+  const AUDIO_KEY = 'sephar.billboardAudio';
+  let nowStreamingMuted = $state(true);
+  let nowStreamingVideoEl: HTMLVideoElement | undefined = $state();
+  let nowStreamingTileEl: HTMLElement | undefined = $state();
+  let nowStreamingOnScreen = $state(true);
+
+  function toggleNowStreamingAudio(event: MouseEvent): void {
+    // Don't bubble — the tile itself is clickable.
+    event.stopPropagation();
+    nowStreamingMuted = !nowStreamingMuted;
+    if (nowStreamingVideoEl) {
+      nowStreamingVideoEl.muted = nowStreamingMuted;
+      if (!nowStreamingMuted) nowStreamingVideoEl.volume = 0.6;
+    }
+    try {
+      sessionStorage.setItem(AUDIO_KEY, nowStreamingMuted ? 'off' : 'on');
+    } catch {
+      // ignore
+    }
+  }
+
+  const nowStreamingDetailHref = $derived.by(() => {
+    if (!featuredTrailer) return '/movies';
+    const slug = featuredTrailer.slug || featuredTrailer.id || '';
+    if (featuredTrailer.category === 'kids') return `/kids/kiddies/${slug}`;
+    if (featuredTrailer.category === 'teens') return `/kids/teens/${slug}`;
+    return `/movies/${slug}`;
+  });
+
+  function handleNowStreamingClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button')) return;
+    if (featuredTrailer) void goto(nowStreamingDetailHref);
+  }
+
+  function handleNowStreamingKey(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (featuredTrailer) void goto(nowStreamingDetailHref);
+    }
+  }
+
   onMount(() => {
     isMounted = true;
+    try {
+      if (sessionStorage.getItem(AUDIO_KEY) === 'on') {
+        nowStreamingMuted = false;
+        if (nowStreamingVideoEl) {
+          nowStreamingVideoEl.muted = false;
+          nowStreamingVideoEl.volume = 0.6;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    const onVis = () => {
+      if (!nowStreamingVideoEl) return;
+      if (document.hidden || !nowStreamingOnScreen) nowStreamingVideoEl.pause();
+      else nowStreamingVideoEl.play().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    // Pause when scrolled off-screen, resume when scrolled back.
+    // Threshold 0.1 was too lenient — the bento tile stayed marked
+    // "intersecting" while only a sliver was in view, so the trailer
+    // kept playing (and audio kept playing too) after the viewer
+    // scrolled past. threshold [0, 0.25, 0.5] + rootMargin -15% on
+    // top/bottom pauses as soon as <25% of the tile is in the
+    // centered visible band. Matches the billboard's IO config.
+    let io: IntersectionObserver | undefined;
+    if (nowStreamingTileEl && 'IntersectionObserver' in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (!entry || !nowStreamingVideoEl) return;
+          const visible = entry.intersectionRatio >= 0.25;
+          nowStreamingOnScreen = visible;
+          if (!visible) {
+            nowStreamingVideoEl.pause();
+          } else if (!document.hidden) {
+            nowStreamingVideoEl.play().catch(() => {});
+          }
+        },
+        {
+          threshold: [0, 0.25, 0.5],
+          rootMargin: '-15% 0px -15% 0px'
+        }
+      );
+      io.observe(nowStreamingTileEl);
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      io?.disconnect();
+    };
   });
 </script>
 
@@ -89,6 +195,13 @@
         </section>
       {/if}
 
+      <!-- Coming Soon — horizontal carousel of the next-up titles. Sits
+           above the marketing bento so returning viewers spot the
+           upcoming releases before the pitch. Renders nothing when empty. -->
+      <section in:fly={{ y: 30, duration: 700, delay: 250 }} class="pb-16">
+        <ComingSoonRow items={(data.comingSoon ?? []) as any[]} />
+      </section>
+
       <!-- Glass UI Bento Grid & Device Frames (Options A & B Combined) -->
       <section in:fly={{ y: 50, duration: 1000, delay: 300 }} class="grid lg:grid-cols-2 gap-12 items-center pb-32">
         <div class="space-y-6 lg:pr-12">
@@ -108,8 +221,19 @@
 
         <!-- Bento Grid Montage -->
         <div class="relative grid grid-cols-2 gap-4 h-125 w-full perspective-1000">
-          <!-- Glassmorphic TV Frame -->
-          <div class="col-span-2 row-span-2 relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl group hover:border-[#FF5E0E]/50 transition-colors duration-500">
+          <!-- Glassmorphic TV Frame — clickable when a real featured
+               trailer is loaded so tapping the tile opens that title's
+               detail page. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <div
+            bind:this={nowStreamingTileEl}
+            role={featuredTrailer ? 'button' : undefined}
+            tabindex={featuredTrailer ? 0 : undefined}
+            aria-label={featuredTrailer ? `Open ${featuredTrailer.title ?? 'featured title'}` : undefined}
+            onclick={handleNowStreamingClick}
+            onkeydown={handleNowStreamingKey}
+            class="col-span-2 row-span-2 relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl group hover:border-[#FF5E0E]/50 transition-colors duration-500 {featuredTrailer ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5E0E]/70' : ''}"
+          >
             <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-white/20 to-transparent z-10"></div>
             <!-- Looping featured trailer when one exists, falling back to
                  the stock Unsplash image so we never render an empty tile.
@@ -120,6 +244,7 @@
             {#if featuredTrailer?.trailerUrl}
               <!-- svelte-ignore a11y_media_has_caption -->
               <video
+                bind:this={nowStreamingVideoEl}
                 src={featuredTrailer.trailerUrl}
                 poster={featuredTrailer.thumbnail ?? undefined}
                 class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
@@ -133,6 +258,31 @@
               <img src="https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?w=800&q=80" alt="Family movie night" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
             {/if}
             <div class="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+
+            <!-- Audio toggle — only when there's a real trailer. Same
+                 visual language as FeaturedBillboardPanel so the muted
+                 vs sound-on states are obvious at a glance. -->
+            {#if featuredTrailer?.trailerUrl}
+              <button
+                type="button"
+                onclick={toggleNowStreamingAudio}
+                aria-label={nowStreamingMuted ? 'Unmute trailer' : 'Mute trailer'}
+                aria-pressed={!nowStreamingMuted}
+                class="absolute top-4 right-4 z-20 inline-flex items-center gap-2 rounded-full backdrop-blur-md px-3 py-2 text-xs font-semibold transition-all
+                  {nowStreamingMuted
+                    ? 'border border-white/20 bg-black/40 text-white/80 hover:bg-black/60'
+                    : 'border border-[#FF5E0E] bg-[#FF5E0E]/30 text-white shadow-[0_0_18px_rgba(255,94,14,0.55)]'}"
+              >
+                {#if nowStreamingMuted}
+                  <VolumeX class="h-4 w-4" />
+                  <span class="hidden sm:inline">Muted</span>
+                {:else}
+                  <Volume2 class="h-4 w-4" />
+                  <span class="hidden sm:inline">Sound on</span>
+                {/if}
+              </button>
+            {/if}
+
             <div class="absolute bottom-6 left-6 flex items-center gap-3 z-10">
               <div class="w-12 h-12 rounded-full bg-[#FF5E0E] flex items-center justify-center shadow-lg">
                 <PlayCircle class="h-6 w-6 text-white" />

@@ -5,7 +5,7 @@
   import { tick } from 'svelte';
   import {
     User, ListVideo, Download, Clock, Settings, LogOut,
-    ChevronRight, Clapperboard, Crown, Coins
+    ChevronRight, Clapperboard, Crown, Coins, X
   } from '@lucide/svelte';
 
   // Lazy-loaded section components
@@ -115,6 +115,18 @@
       ontouchstart={handleTouchStart}
       ontouchend={handleTouchEnd}
     >
+      <!-- Explicit close — the drawer takes ~95% of mobile viewport so
+           the overlay-tap area is too thin to be reliable. This X is
+           always available regardless of which section is expanded. -->
+      <button
+        type="button"
+        class="studios-close"
+        aria-label="Close My Studios"
+        onclick={() => (isOpen = false)}
+      >
+        <X size={18} />
+      </button>
+
       <!-- Hero / Profile Banner -->
       <div class="studios-hero">
         <div class="studios-hero-bg"></div>
@@ -203,6 +215,30 @@
 </Sheet>
 
 <style>
+  /* ── Close (X) inside drawer ────────────────────────────────────────── */
+  .studios-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .studios-close:hover {
+    background: rgba(0, 0, 0, 0.65);
+    transform: scale(1.04);
+  }
+
   /* ── Trigger Button ─────────────────────────────────────────────────── */
   .studios-trigger {
     display: flex;
@@ -242,6 +278,22 @@
     font-weight: 700;
     color: white;
     letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  /* On the narrowest phones (< 380px), drop the text label so the pill
+     stays inside the header bar next to the hamburger + right cluster.
+     The orange dot + aria-label keep it accessible. */
+  @media (max-width: 380px) {
+    .studios-trigger-label {
+      display: none;
+    }
+    .studios-trigger {
+      padding: 0.35rem;
+      width: 1.85rem;
+      height: 1.85rem;
+      justify-content: center;
+    }
   }
 
   /* ── Panel ──────────────────────────────────────────────────────────── */

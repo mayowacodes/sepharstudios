@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import { Loader2, FileCheck } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   type Application = {
     id: string;
@@ -105,8 +105,14 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={FileCheck} title="Creator Applications" subtitle="Review and approve creators before they can publish content." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Vetting"
+    title="Creator applications"
+    subtitle="Review and approve creators before they can publish content."
+    icon={FileCheck}
+  />
 
   <div class="flex flex-wrap items-center gap-3">
     <label for="statusFilter" class="text-sm text-foreground/80">Status</label>

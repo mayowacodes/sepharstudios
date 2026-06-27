@@ -2,7 +2,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Workflow } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import StatChip from '$lib/components/dashboard/StatChip.svelte';
   
   interface WorkflowRule {
@@ -178,12 +179,18 @@
   ];
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Workflow} title="Workflow" subtitle="Automate content review and approval rules.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Automation"
+    title="Workflow"
+    subtitle="Automate content review and approval rules."
+    icon={Workflow}
+  >
     {#snippet actions()}
-      <button onclick={createNewRule} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New rule</button>
+      <PortalButton variant="primary" size="sm" onclick={createNewRule}>+ New rule</PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="flex flex-wrap gap-2">
     <StatChip label="processed" value={workflowStats.totalProcessed} tone="blue" />

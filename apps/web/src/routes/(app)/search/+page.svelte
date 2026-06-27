@@ -19,6 +19,11 @@
     category?: string | null;
     year: string | null;
     link: string;
+    // Optional in-progress overlay attached server-side by
+    // attachCatalogProgress so search cards can render the same
+    // orange strip catalog cards do.
+    progressPercent?: number;
+    positionSeconds?: number;
   }
 
   // Read ?q= from URL so /search?q=… deep-links work and the back/forward
@@ -203,6 +208,17 @@
                       <Play class="w-5 h-5 fill-white" />
                     </div>
                   </div>
+                  <!-- In-progress strip — matches catalog + watchlist
+                       cards so the "you started this" signal stays
+                       consistent everywhere a result can surface. -->
+                  {#if typeof r.progressPercent === 'number' && r.progressPercent > 0 && r.progressPercent < 95}
+                    <div class="absolute inset-x-0 bottom-0 h-1 bg-black/40">
+                      <div
+                        class="h-full bg-[#FF5E0E]"
+                        style="width: {Math.max(2, Math.min(100, r.progressPercent))}%"
+                      ></div>
+                    </div>
+                  {/if}
                 </div>
                 <p class="text-sm font-semibold text-white truncate" title={r.title}>{r.title}</p>
                 <p class="text-xs text-muted-foreground capitalize">

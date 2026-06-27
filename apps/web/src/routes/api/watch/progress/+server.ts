@@ -1,11 +1,13 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaWatchProgress, reviews, playlistItems, playlists, transactions, watchSessionMeta } from '$lib/db/schema/sepharstudios';
+import { mediaWatchProgress, reviews, playlistItems, playlists, transactions, watchSessionMeta, creatorEarnings, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { and, eq } from 'drizzle-orm';
 import { checkAndAwardAchievements, updateStreak } from '$lib/server/achievements';
 import { scoreWatchEngagement } from '$lib/server/ai-token-scoring';
+import { computeCreatorEarning, type EngagementQuality } from '$lib/server/earnings-config';
 import { notify } from '$lib/server/notify';
 import { track } from '$lib/server/analytics';
+import { publish } from '$lib/server/sse';
 import { fingerprintFromHeaders } from '$lib/server/ua-country';
 
 // POST /api/watch/progress — save playback position (called every 30s)
@@ -25,6 +27,41 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const userId = session.user.id;
 	const completionPercent = durationSeconds ? Math.round((positionSeconds / durationSeconds) * 100) : 0;
 	const isCompleted = completionPercent >= 90;
+
+	// Helper for the "Live now" analytics panels. Looks up title +
+	// creatorId in one quick query, then broadcasts on both the global
+	// `analytics:watch-events:all` topic (admin dashboard) and the
+	// per-creator `analytics:watch-events:creator:<id>` topic (the
+	// creator's own dashboard). All errors swallowed — analytics
+	// publish failures must never fail playback.
+	async function publishWatchEvent(
+		kind: 'watch_start' | 'watch_complete',
+		mid: string,
+		pct: number
+	): Promise<void> {
+		try {
+			const [row] = await db
+				.select({ title: mediaLibrary.title, creatorId: mediaLibrary.creatorId })
+				.from(mediaLibrary)
+				.where(eq(mediaLibrary.id, mid))
+				.limit(1);
+			if (!row) return;
+			const event = {
+				kind,
+				contentId: mid,
+				title: row.title,
+				userId,
+				completionPercent: pct,
+				at: new Date().toISOString()
+			};
+			publish('analytics:watch-events:all', event);
+			if (row.creatorId) {
+				publish(`analytics:watch-events:creator:${row.creatorId}`, event);
+			}
+		} catch (err) {
+			console.warn('[watch/progress] publishWatchEvent failed', err);
+		}
+	}
 
 	const existing = await db.select()
 		.from(mediaWatchProgress)
@@ -85,6 +122,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			isCompleted
 		});
 		justCompleted = isCompleted;
+		// Publish a watch_start event so the admin + creator analytics
+		// "Live now" panels can show "someone just started watching X".
+		// Fire-and-forget; analytics surfaces are best-effort.
+		void publishWatchEvent('watch_start', contentId, completionPercent);
 
 		// Capture device + country on first watch-progress write for this session.
 		// One row per (user, content) start is enough for the analytics aggregates —
@@ -98,6 +139,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			osName: fp.osName,
 			country: fp.country
 		}).catch((err) => console.warn('[watch/progress] watch_session_meta insert failed:', err));
+	}
+
+	// Live "watch_complete" event for analytics — fired once per real
+	// completion transition. Uses the same fire-and-forget helper as
+	// watch_start so a failed lookup never blocks playback.
+	if (justCompleted) {
+		void publishWatchEvent('watch_complete', contentId, completionPercent);
 	}
 
 	// Only the request that actually transitioned the row to completed runs the
@@ -162,6 +210,39 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					source: 'watch_complete'
 				}
 			}).catch((err) => console.error('[watch/progress] failed to write STC ledger row:', err));
+		}
+
+		// Creator-side earnings — separate ledger from the viewer's STC
+		// reward above. Pays the creator a cents amount tied to completion +
+		// engagement quality. See lib/server/earnings-config.ts for the curve.
+		// Self-watches don't earn (creators can't pad their own KPIs).
+		try {
+			const [content] = await db
+				.select({ creatorId: mediaLibrary.creatorId })
+				.from(mediaLibrary)
+				.where(eq(mediaLibrary.id, contentId))
+				.limit(1);
+			const creatorId = content?.creatorId;
+			if (creatorId && creatorId !== userId && reward?.engagementQuality !== 'suspicious') {
+				const earning = computeCreatorEarning({
+					completionPercent,
+					engagementQuality: (reward?.engagementQuality ?? 'low') as EngagementQuality
+				});
+				if (earning.amountCents > 0) {
+					await db.insert(creatorEarnings).values({
+						creatorId,
+						contentId,
+						viewerId: userId,
+						amountCents: earning.amountCents,
+						completionPercent,
+						engagementQuality: reward?.engagementQuality ?? null,
+						engagementMultiplier: Math.round(earning.engagementMultiplier * 100),
+						source: 'watch_complete'
+					});
+				}
+			}
+		} catch (err) {
+			console.error('[watch/progress] failed to write creator_earnings row:', err);
 		}
 
 		// Achievement notification — only if any new achievements were awarded.

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { ArrowLeft, MessageSquarePlus } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   const categories = [
     { id: 'getting-started', title: 'Getting Started', icon: '🚀' },
@@ -50,7 +50,7 @@
   <a href="/creator/forum" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">
     <ArrowLeft class="w-3 h-3" /> Back to forum
   </a>
-  <PageHeader icon={MessageSquarePlus} title="Start a Discussion" subtitle="All posts are moderated by AI before publishing. Be kind and on-topic." />
+  <PortalHero compact eyebrow="Community" title="Start a discussion" subtitle="All posts are moderated by AI before publishing. Be kind and on-topic." icon={MessageSquarePlus} />
 
   <form
     class="surface-2 backdrop-blur-sm rounded-xl p-6 space-y-4"

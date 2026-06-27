@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { FileText } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
+	import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
 	type Proposal = {
 		id: string;
@@ -45,12 +46,18 @@
 	<title>Governance Proposals - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-4">
-	<PageHeader icon={FileText} title="Governance Proposals" subtitle="Pending, queued, and historical DAO proposals.">
+<div class="mx-auto px-4 py-8 space-y-4 max-w-7xl">
+	<PortalHero
+		compact
+		eyebrow="DAO"
+		title="Proposals"
+		subtitle="Pending, queued, and historical DAO proposals."
+		icon={FileText}
+	>
 		{#snippet actions()}
-			<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New</a>
+			<PortalButton href="/admin/governance/create" variant="primary" size="sm">+ New</PortalButton>
 		{/snippet}
-	</PageHeader>
+	</PortalHero>
 
 	<div class="rounded-xl border border-border/40 overflow-hidden">
 		<table class="w-full text-sm">

@@ -21,8 +21,8 @@
     Settings,
     RefreshCw
   } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
-  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalKpi from '$lib/components/portal/PortalKpi.svelte';
 
   interface PaymentRow {
     id: string;
@@ -298,53 +298,43 @@
   }
 </script>
 
-<div class="space-y-8">
-  <PageHeader
-    icon={Wallet}
+<div class="mx-auto px-4 py-6 space-y-8 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Revenue"
     title="Earnings"
     subtitle={`Track your revenue, STC tokens, and payment preferences. Tier: ${earningsData.tier === 'top_performer' ? 'Top Performer' : earningsData.tier === 'exclusive' ? 'Exclusive Partner' : 'Standard'} (${earningsData.revenueShare}% share).`}
+    icon={Wallet}
   />
 
   <!-- Earnings Overview -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <KpiCard
+    <PortalKpi
       label="This Month"
       value={`$${(earningsData.monthCents / 100).toFixed(2)}`}
       icon={DollarSign}
-      accent="green"
       delta={earningsDelta}
       deltaLabel="vs last month"
       sparkline={series.earnings}
-      loading={loadingEarnings}
-      index={0}
     />
-    <KpiCard
+    <PortalKpi
       label="This Year"
       value={`$${(earningsData.yearCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       icon={Calendar}
-      accent="blue"
       deltaLabel="12 months"
-      loading={loadingEarnings}
-      index={1}
     />
-    <KpiCard
+    <PortalKpi
       label="Total Earned"
       value={`$${(earningsData.lifetimeCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       icon={TrendingUp}
-      accent="purple"
       deltaLabel="lifetime"
-      loading={loadingEarnings}
-      index={2}
     />
     {#if $isConnected}
-      <KpiCard
+      <PortalKpi
         label="STC Value"
         value={`$${tokenomicsData.stcValue.toFixed(2)}`}
         icon={Coins}
-        accent="orange"
         deltaLabel={`${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`}
-        loading={loadingEarnings}
-        index={3}
       />
     {/if}
   </div>

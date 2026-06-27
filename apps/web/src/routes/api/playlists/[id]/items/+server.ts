@@ -2,6 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { playlists, playlistItems, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq, and } from 'drizzle-orm';
+import { attachCatalogProgress } from '$lib/server/catalog-progress';
 
 // GET /api/playlists/[id]/items — list items in a playlist with content details
 export const GET: RequestHandler = async ({ params, locals }) => {
@@ -35,7 +36,20 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			.innerJoin(mediaLibrary, eq(playlistItems.contentId, mediaLibrary.id))
 			.where(eq(playlistItems.playlistId, params.id!));
 
-		return json(items);
+		// Augment each item's `content` with in-progress overlay
+		// (progressPercent + positionSeconds) so the /watchlist UI
+		// renders the same orange strip cards do on catalog pages.
+		// The helper expects rows with `id` — pull each item's content
+		// out, augment, then re-stitch.
+		const contents = items.map((it) => it.content);
+		const augmented = await attachCatalogProgress(contents, session.user.id);
+		const byId = new Map(augmented.map((c) => [c.id, c]));
+		const itemsWithProgress = items.map((it) => ({
+			...it,
+			content: byId.get(it.content.id) ?? it.content
+		}));
+
+		return json(itemsWithProgress);
 	} catch (e) {
 		console.error('GET /api/playlists/[id]/items failed', e);
 		return json({ error: 'Failed to load playlist items' }, { status: 500 });

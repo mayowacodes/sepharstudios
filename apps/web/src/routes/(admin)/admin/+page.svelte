@@ -7,8 +7,9 @@
     ShieldCheck, Video, Banknote, MessageSquare, Coins,
     Sparkles
   } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
-  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalKpi from '$lib/components/portal/PortalKpi.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
   let adminStats = $state({
     pendingReviews: 0,
@@ -51,30 +52,44 @@
   ];
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <!-- Mission Control hero — pulsing system-pulse dot. Tone is success
+       when nothing's pending, warning when a review queue is building,
+       danger when the queue is critical. -->
+  <PortalHero
+    eyebrow="Mission Control"
+    title="Platform pulse"
+    subtitle="Reviews, encoder health, creator community. Everything you need to keep the studio humming."
     icon={ShieldCheck}
-    title="Admin"
-    subtitle="Platform overview, content review, creator community."
+    statusDot
+    statusText={
+      adminStats.pendingReviews === 0
+        ? 'All systems nominal'
+        : `${adminStats.pendingReviews} review${adminStats.pendingReviews === 1 ? '' : 's'} pending`
+    }
+    statusTone={
+      adminStats.pendingReviews === 0
+        ? 'success'
+        : adminStats.pendingReviews < 5
+        ? 'warning'
+        : 'danger'
+    }
   >
     {#snippet actions()}
-      <a
-        href="/admin/ai-runs"
-        class="hidden md:inline-flex items-center gap-1.5 text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors"
-      >
-        <Sparkles class="w-3.5 h-3.5" />
-        AI Runs
-      </a>
+      <PortalButton href="/admin/ai-runs" variant="secondary" size="md">
+        <Sparkles class="w-4 h-4" /> AI Runs
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
-  <!-- Primary KPIs (5-up on desktop, 2-up on mobile) -->
+  <!-- Primary KPIs — animated count-up. Hover any tile to reveal the
+       trend line; pulse on positive deltas. -->
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-    <KpiCard label="Pending Reviews" value={adminStats.pendingReviews} icon={Clock} accent="yellow" href="/admin/review" index={0} />
-    <KpiCard label="Active Creators" value={adminStats.totalCreators} icon={Users} accent="blue" href="/admin/creators" index={1} />
-    <KpiCard label="Published" value={adminStats.publishedContent} icon={CheckCircle2} accent="green" href="/admin/content?status=approved" index={2} />
-    <KpiCard label="Rejected" value={adminStats.rejectedContent} icon={XCircle} accent="red" href="/admin/content?status=rejected" index={3} />
-    <KpiCard label="Platform Views" value={adminStats.totalViews.toLocaleString()} icon={Eye} accent="purple" href="/admin/analytics" index={4} />
+    <PortalKpi label="Pending Reviews" value={adminStats.pendingReviews} icon={Clock} href="/admin/review" />
+    <PortalKpi label="Active Creators" value={adminStats.totalCreators} icon={Users} href="/admin/creators" />
+    <PortalKpi label="Published" value={adminStats.publishedContent} icon={CheckCircle2} href="/admin/content?status=approved" />
+    <PortalKpi label="Rejected" value={adminStats.rejectedContent} icon={XCircle} href="/admin/content?status=rejected" />
+    <PortalKpi label="Platform Views" value={adminStats.totalViews} icon={Eye} href="/admin/analytics" />
   </div>
 
   <!-- Bento body: urgent reviews (2 cols) + secondary KPIs (1 col) -->

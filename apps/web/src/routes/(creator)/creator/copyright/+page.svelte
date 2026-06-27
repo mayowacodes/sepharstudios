@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ShieldCheck, FileText, Mail, AlertTriangle } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   const sections = [
     {
@@ -69,8 +69,8 @@ agent: copyright@sepharstudios.com.`
   <meta name="description" content="Copyright, licensing and DMCA policy for Sephar Studios creators." />
 </svelte:head>
 
-<div class="container mx-auto max-w-3xl py-6 px-4 space-y-6">
-  <PageHeader icon={ShieldCheck} title="Copyright & Licensing" subtitle="Last updated 2026-05-27. By uploading you agree to every clause below." />
+<div class="mx-auto max-w-4xl py-6 px-4 space-y-6">
+  <PortalHero compact eyebrow="Legal" title="Copyright & licensing" subtitle="Last updated 2026-05-27. By uploading you agree to every clause below." icon={ShieldCheck} />
 
   <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">
     <AlertTriangle class="w-5 h-5 text-yellow-300 shrink-0 mt-0.5" />

@@ -1,7 +1,7 @@
 <!-- Creator Agreement -->
 <script lang="ts">
   import { FileText } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let activeSection = 'overview';
   let hasAccepted = false;
@@ -21,8 +21,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={FileText} title="Creator Agreement" subtitle="Terms and conditions for content creators on Sephar Studios." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">
+  <PortalHero compact eyebrow="Legal" title="Creator agreement" subtitle="Terms and conditions for content creators on Sephar Studios." icon={FileText} />
 
   <!-- Agreement Status -->
   {#if hasAccepted}

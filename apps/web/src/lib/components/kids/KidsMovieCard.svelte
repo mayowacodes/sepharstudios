@@ -2,15 +2,20 @@
   import { goto } from '$app/navigation';
   import { Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { myList } from '$lib/stores/myList';
+  import { isRecentlyAdded } from '$lib/utils/recency';
 
   let { movie }: { movie: {
     id: string;
     slug?: string | null;
     title: string;
     thumbnailUrl: string;
+    /** Portrait poster. Preferred over the (landscape) thumbnailUrl so
+     *  the card renders the full artwork, not a cropped slice. */
+    posterUrl?: string | null;
     trailerUrl?: string;
     genres?: string[];
     progressPercent?: number;
+    createdAt?: string | Date | null;
   } } = $props();
 
   let isHovered = $state(false);
@@ -56,7 +61,7 @@
     </video>
   {:else}
     <img
-      src={movie.thumbnailUrl}
+      src={movie.posterUrl || movie.thumbnailUrl || '/placeholder-vertical.jpg'}
       alt={movie.title}
       width="320"
       height="192"
@@ -64,6 +69,14 @@
       decoding="async"
       class="w-full h-48 object-cover"
     />
+  {/if}
+
+  {#if isRecentlyAdded(movie.createdAt)}
+    <!-- Friendly "New" sticker in the top-left so kids spot fresh stuff
+         at a glance. Sized to feel sticker-like rather than chip-like. -->
+    <div class="absolute top-2 left-2 bg-yellow-300 text-pink-700 text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full border-2 border-pink-300 shadow z-30">
+      New!
+    </div>
   {/if}
 
   {#if typeof movie.progressPercent === 'number' && movie.progressPercent > 0 && movie.progressPercent < 95}

@@ -1,9 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Users, Search, ShieldAlert } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import { Users, ShieldAlert } from '@lucide/svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
-  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import PortalKpi from '$lib/components/portal/PortalKpi.svelte';
+  import PortalDataTable from '$lib/components/portal/PortalDataTable.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
   interface UserRow {
     id: string;
@@ -21,16 +24,18 @@
 
   let users = $state<UserRow[]>([]);
   let loading = $state(true);
-  let q = $state('');
+  // Server-side filters: role + banned status. The free-text search is
+  // now handled client-side by PortalDataTable's built-in command bar so
+  // the admin gets instant filtering without round-tripping. For very
+  // large user bases we can flip the search back to server-side later;
+  // until then, instant feel wins.
   let roleFilter = $state<string>('all');
   let bannedFilter = $state<string>('all');
-  let qTimer: ReturnType<typeof setTimeout> | null = null;
 
   async function load() {
     loading = true;
     try {
       const params = new URLSearchParams();
-      if (q.trim()) params.set('q', q.trim());
       if (roleFilter !== 'all') params.set('role', roleFilter);
       if (bannedFilter !== 'all') params.set('banned', bannedFilter);
       const res = await fetch(`/api/admin/users?${params}`);
@@ -47,11 +52,6 @@
     } finally {
       loading = false;
     }
-  }
-
-  function onSearchInput() {
-    if (qTimer) clearTimeout(qTimer);
-    qTimer = setTimeout(load, 250);
   }
 
   $effect(() => { roleFilter; bannedFilter; void load(); });
@@ -75,97 +75,155 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-7xl space-y-6">
-  <PageHeader
-    icon={Users}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="People"
     title="Audience"
     subtitle="View and manage end-users. Ban, warn, or open per-user detail for purchases + abuse history."
+    icon={Users}
   />
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <KpiCard label="In view" value={stats.total} icon={Users} accent="blue" variant="compact" index={0} />
-    <KpiCard label="Creators" value={stats.creators} icon={Users} accent="purple" variant="compact" index={1} />
-    <KpiCard label="Banned" value={stats.banned} icon={ShieldAlert} accent="red" variant="compact" index={2} />
-    <KpiCard label="Flagged" value={stats.flagged} icon={ShieldAlert} accent="yellow" variant="compact" index={3} />
-  </div>
-
-  <div class="flex flex-wrap gap-3 items-center">
-    <div class="relative w-80">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-      <input
-        type="text"
-        bind:value={q}
-        oninput={onSearchInput}
-        placeholder="Search name or email…"
-        class="w-full surface-2 rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder-gray-500"
-      />
-    </div>
-    <select bind:value={roleFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-foreground">
-      <option value="all">All roles</option>
-      <option value="user">User</option>
-      <option value="creator">Creator</option>
-      <option value="admin">Admin</option>
-    </select>
-    <select bind:value={bannedFilter} class="surface-2 rounded-lg px-3 py-2 text-sm text-foreground">
-      <option value="all">All status</option>
-      <option value="false">Active</option>
-      <option value="true">Banned</option>
-    </select>
+    <PortalKpi label="In view" value={stats.total} icon={Users} />
+    <PortalKpi label="Creators" value={stats.creators} icon={Users} />
+    <PortalKpi label="Banned" value={stats.banned} icon={ShieldAlert} />
+    <PortalKpi label="Flagged" value={stats.flagged} icon={ShieldAlert} />
   </div>
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(8) as _ (_)}<Skeleton class="h-14 rounded-lg" />{/each}
+      {#each Array(8) as _, i (i)}<Skeleton class="h-14 rounded-lg" />{/each}
     </div>
-  {:else if users.length === 0}
-    <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No users match these filters.</div>
   {:else}
-    <div class="surface-1 rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="surface-1">
-          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <th class="px-4 py-3">User</th>
-            <th class="px-4 py-3">Role</th>
-            <th class="px-4 py-3">Joined</th>
-            <th class="px-4 py-3">Last seen</th>
-            <th class="px-4 py-3 text-right">PPV $</th>
-            <th class="px-4 py-3 text-right">Flags</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each users as u (u.id)}
-            <tr class="border-t border-white/5 hover:surface-1">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2">
-                  {#if u.image}
-                    <img src={u.image} alt="" class="w-7 h-7 rounded-full object-cover" />
-                  {:else}
-                    <div class="w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
-                      {(u.name ?? '?').charAt(0).toUpperCase()}
-                    </div>
-                  {/if}
-                  <div>
-                    <div class="text-foreground">{u.name}</div>
-                    <div class="text-xs text-muted-foreground">{u.email}</div>
-                  </div>
-                  {#if u.banned}
-                    <span class="ml-1 text-xs px-2 py-0.5 rounded bg-red-600/30 text-red-200">Banned</span>
-                  {/if}
-                </div>
-              </td>
-              <td class="px-4 py-3 text-xs text-foreground/80 capitalize">{u.role ?? 'user'}</td>
-              <td class="px-4 py-3 text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString()}</td>
-              <td class="px-4 py-3 text-xs text-muted-foreground">{relativeTime(u.lastSeenAt)}</td>
-              <td class="px-4 py-3 text-right text-foreground tabular-nums">${(u.ppvLifetimeCents / 100).toFixed(2)}</td>
-              <td class="px-4 py-3 text-right text-yellow-300">{u.abuseReportsAgainst || ''}</td>
-              <td class="px-4 py-3 text-right">
-                <a href={`/admin/users/${u.id}`} class="text-xs text-purple-300 hover:text-purple-200">Open →</a>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <PortalDataTable items={users} searchPlaceholder="Search name or email…" searchKey="name">
+      {#snippet filters()}
+        <select
+          bind:value={roleFilter}
+          class="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+          style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
+        >
+          <option value="all">All roles</option>
+          <option value="user">User</option>
+          <option value="creator">Creator</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select
+          bind:value={bannedFilter}
+          class="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+          style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
+        >
+          <option value="all">All status</option>
+          <option value="false">Active</option>
+          <option value="true">Banned</option>
+        </select>
+      {/snippet}
+
+      {#snippet row(u)}
+        <div class="flex items-center gap-3 text-sm">
+          {#if u.image}
+            <img src={u.image} alt="" class="w-8 h-8 rounded-full object-cover shrink-0" />
+          {:else}
+            <div
+              class="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center shrink-0"
+              style="background: hsl(var(--portal-accent)/0.2); color: hsl(var(--portal-accent));"
+            >
+              {(u.name ?? '?').charAt(0).toUpperCase()}
+            </div>
+          {/if}
+          <div class="min-w-0 flex-1">
+            <div class="font-medium text-[hsl(var(--portal-text))] truncate">{u.name}</div>
+            <div class="text-xs text-[hsl(var(--portal-text-muted))] truncate">{u.email}</div>
+          </div>
+          <span class="hidden md:inline text-xs text-[hsl(var(--portal-text-muted))] capitalize">{u.role ?? 'user'}</span>
+          <span class="hidden lg:inline text-xs text-[hsl(var(--portal-text-muted))]">{relativeTime(u.lastSeenAt)}</span>
+          <span class="text-sm tabular-nums text-[hsl(var(--portal-text))]">${(u.ppvLifetimeCents / 100).toFixed(2)}</span>
+          {#if u.banned}
+            <span
+              class="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+              style="background: hsl(var(--portal-danger)/0.2); color: hsl(var(--portal-danger));"
+            >BANNED</span>
+          {/if}
+          {#if u.abuseReportsAgainst > 0}
+            <span
+              class="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+              style="background: hsl(45 95% 55% / 0.2); color: hsl(45 95% 70%);"
+            >{u.abuseReportsAgainst} flag{u.abuseReportsAgainst === 1 ? '' : 's'}</span>
+          {/if}
+        </div>
+      {/snippet}
+
+      {#snippet detail(u)}
+        <div class="space-y-5">
+          <div class="flex items-center gap-3">
+            {#if u.image}
+              <img src={u.image} alt="" class="w-14 h-14 rounded-full object-cover" />
+            {:else}
+              <div
+                class="w-14 h-14 rounded-full text-lg font-bold flex items-center justify-center"
+                style="background: hsl(var(--portal-accent)/0.2); color: hsl(var(--portal-accent));"
+              >
+                {(u.name ?? '?').charAt(0).toUpperCase()}
+              </div>
+            {/if}
+            <div class="min-w-0">
+              <div class="text-lg font-semibold text-[hsl(var(--portal-text))] truncate">{u.name}</div>
+              <div class="text-sm text-[hsl(var(--portal-text-muted))] truncate">{u.email}</div>
+            </div>
+          </div>
+
+          {#if u.banned}
+            <div
+              class="rounded-lg p-3 border"
+              style="background: hsl(var(--portal-danger)/0.1); border-color: hsl(var(--portal-danger)/0.35); color: hsl(var(--portal-danger));"
+            >
+              <div class="text-[10px] uppercase tracking-widest font-semibold mb-1 opacity-80">Banned</div>
+              <p class="text-xs">{u.banReason ?? 'No reason provided.'}</p>
+            </div>
+          {/if}
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Role</div>
+              <div class="text-sm capitalize text-[hsl(var(--portal-text))]">{u.role ?? 'user'}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Joined</div>
+              <div class="text-sm text-[hsl(var(--portal-text))]">{new Date(u.createdAt).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Last seen</div>
+              <div class="text-sm text-[hsl(var(--portal-text))]">{relativeTime(u.lastSeenAt)}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">PPV lifetime</div>
+              <div class="text-sm font-semibold tabular-nums text-[hsl(var(--portal-text))]">${(u.ppvLifetimeCents / 100).toFixed(2)}</div>
+            </div>
+          </div>
+
+          {#if u.abuseReportsAgainst > 0}
+            <div
+              class="rounded-lg p-3 border"
+              style="background: hsl(45 95% 55% / 0.1); border-color: hsl(45 95% 55% / 0.3); color: hsl(45 95% 80%);"
+            >
+              <div class="text-[10px] uppercase tracking-widest font-semibold mb-1 opacity-80">Abuse reports</div>
+              <p class="text-xs">{u.abuseReportsAgainst} open report{u.abuseReportsAgainst === 1 ? '' : 's'} against this user.</p>
+            </div>
+          {/if}
+
+          <PortalButton href={`/admin/users/${u.id}`} variant="primary" size="md">
+            Open full profile →
+          </PortalButton>
+        </div>
+      {/snippet}
+
+      {#snippet empty()}
+        <PortalEmptyState
+          icon={Users}
+          title="No users match these filters"
+          description="Adjust the role or status filter, or clear the search box."
+        />
+      {/snippet}
+    </PortalDataTable>
   {/if}
 </div>

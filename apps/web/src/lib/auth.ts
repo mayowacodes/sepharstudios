@@ -2,6 +2,7 @@ import { APIError, betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '$lib/db/drizzle';
 import { schema } from '$lib/db/schema';
+import { playlists } from '$lib/db/schema/sepharstudios';
 import { openAPI, admin as adminPlugin, customSession, magicLink } from 'better-auth/plugins';
 import { createAuthMiddleware } from 'better-auth/api';
 import { env } from '$env/dynamic/private';
@@ -120,6 +121,25 @@ export const auth = betterAuth({
           method: 'email',
           domain: email ? email.split('@')[1] : null
         });
+        // Bootstrap the default "My List" playlist so a brand-new
+        // account never sees a "no playlist yet" intermediate state
+        // on /watchlist + so the first My-List bookmark click doesn't
+        // pay the playlist-creation round-trip on top of the toggle.
+        // Best-effort: a duplicate row (re-fired hook, unlikely) is
+        // benign — the next bookmark click reuses whichever default
+        // exists. Failure is swallowed; the lazy path in
+        // `/api/my-list/[contentId]` still creates one on demand.
+        if (newUserId) {
+          try {
+            await db.insert(playlists).values({
+              userId: newUserId,
+              name: 'My List',
+              isDefault: true
+            });
+          } catch (err) {
+            console.warn('[auth] default playlist bootstrap failed', err);
+          }
+        }
       }
     }),
   },

@@ -3,7 +3,8 @@
   import { onMount } from 'svelte';
   import { MessageSquare } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import StatChip from '$lib/components/dashboard/StatChip.svelte';
   
   interface Message {
@@ -241,13 +242,19 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={MessageSquare} title="Communications" subtitle="Manage creator messages and templates.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Outreach"
+    title="Communications"
+    subtitle="Manage creator messages and templates."
+    icon={MessageSquare}
+  >
     {#snippet actions()}
-      <button onclick={() => showTemplateModal = true} class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors">Templates</button>
-      <button onclick={composeMessage} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">Compose</button>
+      <PortalButton variant="secondary" size="sm" onclick={() => (showTemplateModal = true)}>Templates</PortalButton>
+      <PortalButton variant="primary" size="sm" onclick={composeMessage}>Compose</PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="flex flex-wrap gap-2">
     <StatChip label="sent" value={messages.filter(m => m.status === 'sent').length} tone="blue" />

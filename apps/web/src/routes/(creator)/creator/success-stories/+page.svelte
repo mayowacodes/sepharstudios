@@ -1,7 +1,7 @@
 <!-- Creator Success Stories -->
 <script lang="ts">
   import { Trophy } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let activeFilter = $state('all');
 
@@ -178,8 +178,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Trophy} title="Success Stories" subtitle="Be inspired by fellow creators making a real impact through their ministry." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">
+  <PortalHero compact eyebrow="Inspiration" title="Success stories" subtitle="Be inspired by fellow creators making a real impact through their ministry." icon={Trophy} />
 
   <!-- Impact Statistics -->
   <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">

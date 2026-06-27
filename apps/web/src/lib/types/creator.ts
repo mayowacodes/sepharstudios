@@ -195,6 +195,33 @@ export interface UploadWizardState {
       description: string;
       contentType: ContentType | '';
       ageRating: AgeRating | '';
+      // Drives the schema `category` column on submit. 'general' → NULL
+      // (appears on /movies, /shows, /documentaries); 'kids' → category='kids'
+      // (appears on /kids/kiddies); 'teens' → category='teens' (appears on
+      // /kids/teens). Separated from contentType so a Kids Series or
+      // Teens Short is expressible.
+      audience: 'general' | 'kids' | 'teens';
+      // First-episode metadata — only meaningful when contentType === SERIES.
+      // The wizard creates this episode alongside the series row on submit,
+      // so the creator never lands in an empty-shell series state where the
+      // browse card exists but has no episodes attached. Episodes 2+ get
+      // added afterward via /creator/content/<id>/episodes. Defaults: S1E1,
+      // empty title (creator must fill in).
+      episodeTitle: string;
+      seasonNumber: number;
+      episodeNumber: number;
+      // Coming Soon — moved from the Review step to here so step 2's
+      // Video Upload validator can read it and skip the file-required
+      // gate. Coming Soon entries are announcements: posters + trailer
+      // + release date + (optionally) the final video. The encoder
+      // pipeline only runs if the creator actually uploaded a real
+      // video; otherwise the row sits as an announcement and the
+      // creator adds the video later from /creator/content/<id>. The
+      // existing cron flips status='coming_soon' rows to live when
+      // `scheduledPublishAt` passes — same shape as before, just
+      // entered earlier in the wizard.
+      comingSoon: boolean;
+      comingSoonReleaseDate: string; // YYYY-MM-DD; empty when not Coming Soon
     };
     [UploadStep.VIDEO_UPLOAD]: {
       videoFile: File | null;
@@ -233,6 +260,9 @@ export interface UploadWizardState {
     [UploadStep.REVIEW_SUBMIT]: {
       termsAccepted: boolean;
       guidelinesAccepted: boolean;
+      // Coming Soon moved to BASIC_INFO — see comment there. The
+      // Review step now renders a read-only summary of the Coming
+      // Soon decision but doesn't own the values.
     };
   };
   isValid: {

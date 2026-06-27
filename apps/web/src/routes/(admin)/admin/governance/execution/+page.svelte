@@ -3,7 +3,7 @@
 	import TimelockQueueTable from '$lib/components/admin/governance/TimelockQueueTable.svelte';
 	import MultisigApprovalsPanel from '$lib/components/admin/governance/MultisigApprovalsPanel.svelte';
 	import { Timer } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
 	type Proposal = {
 		id: string;
@@ -78,8 +78,8 @@
 	<title>Governance Execution - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={Timer} title="Timelock & Execution" subtitle="Queued proposals awaiting execution windows." />
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero compact eyebrow="DAO" title="Timelock & execution" subtitle="Queued proposals awaiting execution windows." icon={Timer} />
 
 	{#if message}
 		<p class="text-sm text-cyan-300">{message}</p>

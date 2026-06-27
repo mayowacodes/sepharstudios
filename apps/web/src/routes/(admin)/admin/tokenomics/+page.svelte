@@ -5,7 +5,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Coins as CoinsIcon } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   // contracts.ts pulls all ABIs + viem helpers — deferred so the tokenomics
@@ -200,8 +200,14 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={CoinsIcon} title="Tokenomics" subtitle="STC token economics and revenue distribution." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Token economy"
+    title="Tokenomics"
+    subtitle="STC token economics and revenue distribution."
+    icon={CoinsIcon}
+  />
 
   <!-- Token Supply Information -->
   <Card class="bg-linear-to-r from-primary/20 to-secondary/20">

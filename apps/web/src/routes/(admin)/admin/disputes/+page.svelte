@@ -1,7 +1,8 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { ShieldAlert, ExternalLink, ChevronLeft, ChevronRight } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   interface DisputeRow {
@@ -88,29 +89,38 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-6xl space-y-6">
-  <PageHeader
-    icon={ShieldAlert}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Finance"
     title="Disputes"
     subtitle="Stripe + Paystack disputes / chargebacks. Respond to open disputes through the processor's dashboard; this page tracks state + audit."
+    icon={ShieldAlert}
   />
 
-  <div class="flex gap-2">
+  <div class="flex gap-2 flex-wrap">
     {#each ['open', 'won', 'lost', 'withdrawn', 'all'] as f (f)}
       <button
         type="button"
         onclick={() => (filter = f)}
-        class="px-3 py-1.5 rounded text-xs capitalize {filter === f ? 'bg-purple-600 text-foreground' : 'surface-2 text-foreground/80 hover:text-foreground'}"
+        class="px-3 py-1.5 rounded-full text-xs capitalize transition-colors"
+        style={filter === f
+          ? `background: hsl(var(--portal-accent)); color: hsl(var(--portal-bg-base)); font-weight: 600;`
+          : `background: hsl(var(--portal-bg-elevated)/0.6); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`}
       >{f}</button>
     {/each}
   </div>
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(4) as _ (_)}<Skeleton class="h-16 rounded-lg" />{/each}
+      {#each Array(4) as _, i (i)}<Skeleton class="h-16 rounded-lg" />{/each}
     </div>
   {:else if disputes.length === 0}
-    <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No disputes match this filter.</div>
+    <PortalEmptyState
+      icon={ShieldAlert}
+      title="No disputes here"
+      description="No payment disputes match this filter. Open disputes will arrive via processor webhooks."
+    />
   {:else}
     <div class="surface-1 rounded-xl overflow-hidden">
       <table class="w-full text-sm">

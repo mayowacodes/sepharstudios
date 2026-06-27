@@ -10,6 +10,11 @@ export type MediaItem = {
   // orange strip across the bottom of the artwork ("you started this").
   progressPercent?: number;
   positionSeconds?: number;
+  // Used by catalog cards to drive a "Just added" badge for titles
+  // created in the last 14 days. Provided by mediaCardColumns; cards
+  // compute the cutoff client-side so the badge stays accurate even
+  // if the page is left open across a day boundary.
+  createdAt?: string | Date | null;
   title: string;
   description?: string | null;
   thumbnail?: string | null;
@@ -46,6 +51,16 @@ export type MediaItem = {
   slug?: string | null;
   language?: string | null;
   isNew?: boolean | null;
+  // Drives the "New Movie / New Series / New Documentary" badge label.
+  // Without it, cards would say "New" generically; with it, the badge
+  // reads the right word for the media. Optional because legacy hard-
+  // coded media + some external surfaces don't ship it.
+  mediaType?: string | null;
+  // Coming Soon — when status='coming_soon', this is the planned
+  // go-live timestamp. The ComingSoonCard renders it as a
+  // "Releases [Mon DD]" badge. Null on published rows.
+  status?: string | null;
+  scheduledPublishAt?: string | Date | null;
 };
 
 export type MediaSection = {

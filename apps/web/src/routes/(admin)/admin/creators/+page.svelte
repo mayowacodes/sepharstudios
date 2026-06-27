@@ -8,7 +8,8 @@
   import { Label } from '$lib/components/ui/label';
   import { Coins, DollarSign, Wallet, Settings, CreditCard, TrendingUp, Users, Clock, FileText, X, Send, Mail, Megaphone, UserPlus } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
 
   interface Creator {
@@ -351,21 +352,23 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-4 space-y-6">
-  <PageHeader
-    icon={Users}
-    title="Creator Management"
+<div class="mx-auto px-4 py-4 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Community"
+    title="Creator management"
     subtitle="Manage creators and their content on the platform."
+    icon={Users}
   >
     {#snippet actions()}
-      <button onclick={() => (broadcastOpen = true)} class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors">
-        <Megaphone class="w-3 h-3" /> Send broadcast
-      </button>
-      <button onclick={() => (inviteOpen = true)} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
-        <UserPlus class="w-3 h-3" /> Invite creator
-      </button>
+      <PortalButton variant="secondary" size="sm" onclick={() => (broadcastOpen = true)}>
+        <Megaphone class="w-3.5 h-3.5" /> Broadcast
+      </PortalButton>
+      <PortalButton variant="primary" size="sm" onclick={() => (inviteOpen = true)}>
+        <UserPlus class="w-3.5 h-3.5" /> Invite creator
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <KpiCard label="Active Creators" value={creators.filter(c => c.status === 'active').length} icon={Users} accent="green" variant="compact" index={0} />

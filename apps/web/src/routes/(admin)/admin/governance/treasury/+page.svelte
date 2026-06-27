@@ -3,7 +3,7 @@
 	import TreasuryPoolsTable from '$lib/components/admin/governance/TreasuryPoolsTable.svelte';
 	import GovernanceStatusCard from '$lib/components/admin/governance/GovernanceStatusCard.svelte';
 	import { Wallet } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
 	type TreasuryData = {
 		pools: Array<{ key: string; label: string; control: string; status: string }>;
@@ -34,8 +34,8 @@
 	<title>Governance Treasury - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={Wallet} title="Treasury Monitor" subtitle="Pool balances, flows, and buyback execution." />
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero compact eyebrow="DAO · Vault" title="Treasury monitor" subtitle="Pool balances, flows, and buyback execution." icon={Wallet} />
 
 	{#if loading}
 		<p class="text-sm text-muted-foreground">Loading treasury data...</p>

@@ -2,7 +2,10 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Wallet, CheckCircle2, PauseOctagon, RotateCcw } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalDataTable from '$lib/components/portal/PortalDataTable.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type StatusFilter = 'all' | 'pending' | 'approved' | 'in_transit' | 'paid' | 'failed' | 'on_hold';
@@ -139,112 +142,136 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-7xl space-y-6">
-  <PageHeader
-    icon={Wallet}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Finance"
     title="Payouts"
     subtitle="Review and approve creator payouts. Stripe transfers fire immediately on approve; Paystack payouts are queued for the existing settlement worker."
+    icon={Wallet}
   />
-
-  <div class="space-y-3">
-    <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-muted-foreground mr-2">Status:</span>
-      {#each (['pending', 'approved', 'in_transit', 'paid', 'failed', 'on_hold', 'all'] as StatusFilter[]) as s (s)}
-        <button
-          type="button"
-          onclick={() => (status = s)}
-          class="px-3 py-1 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
-        >{s.replace('_', ' ')}</button>
-      {/each}
-    </div>
-    <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-muted-foreground mr-2">Processor:</span>
-      {#each (['all', 'paystack', 'stripe'] as ProcessorFilter[]) as p (p)}
-        <button
-          type="button"
-          onclick={() => (processor = p)}
-          class="px-3 py-1 rounded text-xs capitalize {processor === p ? 'bg-purple-700 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
-        >{p}</button>
-      {/each}
-    </div>
-  </div>
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(5) as _ (_)}<Skeleton class="h-12 rounded-lg" />{/each}
-    </div>
-  {:else if rows.length === 0}
-    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
-      No payouts match these filters.
+      {#each Array(5) as _, i (i)}<Skeleton class="h-12 rounded-lg" />{/each}
     </div>
   {:else}
-    <div class="surface-1 border border-border/40 rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="surface-1">
-          <tr class="text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <th class="px-4 py-3">Creator</th>
-            <th class="px-4 py-3">Processor</th>
-            <th class="px-4 py-3">Period</th>
-            <th class="px-4 py-3">Net</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each rows as r (r.id)}
-            <tr class="border-t border-white/5 hover:surface-1">
-              <td class="px-4 py-3 text-foreground/90">
-                {r.creatorDisplayName ?? r.creatorName ?? '—'}
-                {#if r.creatorEmail}<div class="text-xs text-muted-foreground">{r.creatorEmail}</div>{/if}
-              </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-0.5 rounded text-xs uppercase tracking-wide {processorBadge(r.processor)}">{r.processor}</span>
-                {#if r.processor === 'stripe' && !r.stripePayoutsEnabled}
-                  <div class="text-xs text-red-300 mt-0.5">Stripe not verified</div>
-                {/if}
-              </td>
-              <td class="px-4 py-3 text-xs text-muted-foreground">
-                {new Date(r.periodStart).toLocaleDateString()} → {new Date(r.periodEnd).toLocaleDateString()}
-              </td>
-              <td class="px-4 py-3 text-foreground font-medium">
-                {money(r.netCents, r.currency)}
-                <div class="text-xs text-muted-foreground">gross {money(r.grossCents, r.currency)}</div>
-              </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-0.5 rounded text-xs capitalize {statusBadge(r.status)}">{r.status.replace('_', ' ')}</span>
-                {#if r.failureReason}<div class="text-xs text-red-300 mt-0.5 max-w-xs truncate">{r.failureReason}</div>{/if}
-              </td>
-              <td class="px-4 py-3 text-right">
-                {#if r.status === 'pending'}
-                  <div class="inline-flex gap-2">
-                    <button
-                      type="button"
-                      onclick={() => approve(r)}
-                      disabled={busy[r.id]}
-                      class="px-2.5 py-1 rounded text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white inline-flex items-center gap-1"
-                    ><CheckCircle2 class="w-3 h-3" />Approve</button>
-                    <button
-                      type="button"
-                      onclick={() => hold(r)}
-                      disabled={busy[r.id]}
-                      class="px-2.5 py-1 rounded text-xs bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-1"
-                    ><PauseOctagon class="w-3 h-3" />Hold</button>
-                  </div>
-                {:else if r.status === 'failed'}
-                  <button
-                    type="button"
-                    onclick={() => retry(r)}
-                    disabled={busy[r.id]}
-                    class="px-2.5 py-1 rounded text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white inline-flex items-center gap-1"
-                  ><RotateCcw class="w-3 h-3" />{busy[r.id] ? 'Retrying…' : 'Retry'}</button>
-                {:else}
-                  <span class="text-xs text-muted-foreground">—</span>
-                {/if}
-              </td>
-            </tr>
+    <PortalDataTable items={rows} searchPlaceholder="Search creator…" searchKey="creatorDisplayName">
+      {#snippet filters()}
+        <select
+          bind:value={status}
+          class="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+          style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
+        >
+          {#each (['pending', 'approved', 'in_transit', 'paid', 'failed', 'on_hold', 'all'] as StatusFilter[]) as s (s)}
+            <option value={s}>{s.replace('_', ' ')}</option>
           {/each}
-        </tbody>
-      </table>
-    </div>
+        </select>
+        <select
+          bind:value={processor}
+          class="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+          style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
+        >
+          {#each (['all', 'paystack', 'stripe'] as ProcessorFilter[]) as p (p)}
+            <option value={p}>{p}</option>
+          {/each}
+        </select>
+      {/snippet}
+
+      {#snippet row(r)}
+        <div class="flex items-center gap-3 text-sm">
+          <div class="min-w-0 flex-1">
+            <div class="font-medium text-[hsl(var(--portal-text))] truncate">{r.creatorDisplayName ?? r.creatorName ?? '—'}</div>
+            <div class="text-xs text-[hsl(var(--portal-text-muted))] truncate">{r.creatorEmail ?? ''}</div>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded uppercase tracking-wide font-semibold {processorBadge(r.processor)}">{r.processor}</span>
+          <span class="hidden lg:inline text-xs text-[hsl(var(--portal-text-muted))]">
+            {new Date(r.periodStart).toLocaleDateString()} → {new Date(r.periodEnd).toLocaleDateString()}
+          </span>
+          <span class="text-sm font-semibold tabular-nums text-[hsl(var(--portal-text))] min-w-20 text-right">{money(r.netCents, r.currency)}</span>
+          <span class="text-xs px-2 py-0.5 rounded capitalize font-medium {statusBadge(r.status)}">{r.status.replace('_', ' ')}</span>
+        </div>
+      {/snippet}
+
+      {#snippet detail(r)}
+        <div class="space-y-5">
+          <div>
+            <div class="text-lg font-semibold text-[hsl(var(--portal-text))]">{r.creatorDisplayName ?? r.creatorName ?? '—'}</div>
+            {#if r.creatorEmail}<div class="text-sm text-[hsl(var(--portal-text-muted))]">{r.creatorEmail}</div>{/if}
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs px-2 py-0.5 rounded uppercase tracking-wide font-semibold {processorBadge(r.processor)}">{r.processor}</span>
+            <span class="text-xs px-2 py-0.5 rounded capitalize font-medium {statusBadge(r.status)}">{r.status.replace('_', ' ')}</span>
+          </div>
+
+          {#if r.processor === 'stripe' && !r.stripePayoutsEnabled}
+            <div
+              class="rounded-lg p-3 border"
+              style="background: hsl(var(--portal-danger)/0.1); border-color: hsl(var(--portal-danger)/0.35); color: hsl(var(--portal-danger));"
+            >
+              <div class="text-[10px] uppercase tracking-widest font-semibold mb-1 opacity-80">Stripe not verified</div>
+              <p class="text-xs">Account status: {r.stripeAccountStatus ?? 'unknown'}. Cannot disburse until creator finishes onboarding.</p>
+            </div>
+          {/if}
+
+          {#if r.failureReason}
+            <div
+              class="rounded-lg p-3 border"
+              style="background: hsl(var(--portal-danger)/0.1); border-color: hsl(var(--portal-danger)/0.35); color: hsl(var(--portal-danger));"
+            >
+              <div class="text-[10px] uppercase tracking-widest font-semibold mb-1 opacity-80">Failure reason</div>
+              <p class="text-xs whitespace-pre-wrap">{r.failureReason}</p>
+            </div>
+          {/if}
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Period</div>
+              <div class="text-sm text-[hsl(var(--portal-text))]">{new Date(r.periodStart).toLocaleDateString()} → {new Date(r.periodEnd).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Created</div>
+              <div class="text-sm text-[hsl(var(--portal-text))]">{new Date(r.createdAt).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Gross</div>
+              <div class="text-sm tabular-nums text-[hsl(var(--portal-text))]">{money(r.grossCents, r.currency)}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Platform fee</div>
+              <div class="text-sm tabular-nums text-[hsl(var(--portal-text))]">{money(r.platformFeeCents, r.currency)}</div>
+            </div>
+            <div class="col-span-2 pt-2 border-t" style="border-color: hsl(var(--portal-border));">
+              <div class="text-[10px] uppercase tracking-widest font-semibold text-[hsl(var(--portal-text-muted))] mb-1">Net payable</div>
+              <div class="text-2xl font-bold tabular-nums text-[hsl(var(--portal-text))]">{money(r.netCents, r.currency)}</div>
+            </div>
+          </div>
+
+          {#if r.status === 'pending'}
+            <div class="flex gap-2 pt-2">
+              <PortalButton variant="primary" size="md" onclick={() => approve(r)} disabled={busy[r.id]}>
+                <CheckCircle2 class="w-4 h-4" /> Approve
+              </PortalButton>
+              <PortalButton variant="secondary" size="md" onclick={() => hold(r)} disabled={busy[r.id]}>
+                <PauseOctagon class="w-4 h-4" /> Hold
+              </PortalButton>
+            </div>
+          {:else if r.status === 'failed'}
+            <PortalButton variant="primary" size="md" onclick={() => retry(r)} disabled={busy[r.id]}>
+              <RotateCcw class="w-4 h-4" /> {busy[r.id] ? 'Retrying…' : 'Retry'}
+            </PortalButton>
+          {/if}
+        </div>
+      {/snippet}
+
+      {#snippet empty()}
+        <PortalEmptyState
+          icon={Wallet}
+          title="No payouts match these filters"
+          description="Try widening status or processor — the queue refreshes after each settlement run."
+        />
+      {/snippet}
+    </PortalDataTable>
   {/if}
 </div>

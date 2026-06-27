@@ -11,7 +11,7 @@
     value: number;
   }
 
-  type Accent = 'purple' | 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'gray';
+  type Accent = 'portal' | 'purple' | 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'gray';
 
   interface Props {
     data: Point[];
@@ -24,12 +24,18 @@
   let {
     data,
     label,
-    accent = 'purple',
+    accent = 'portal',
     height = 220,
     formatValue = (v) => v.toLocaleString()
   }: Props = $props();
 
+  // Default 'portal' pulls from the `--portal-accent` CSS variable so
+  // the chart matches whichever portal palette is in scope (teal for
+  // admin, cyan for creator). Explicit named accents stay supported
+  // for one-off callers that need a specific tone (e.g. red for
+  // failure trends).
   const ACCENT: Record<Accent, string> = {
+    portal: 'hsl(var(--portal-accent, 175 60% 48%))',
     purple: 'rgb(168 85 247)',
     blue:   'rgb(59 130 246)',
     green:  'rgb(34 197 94)',
@@ -96,19 +102,22 @@
   }
 </script>
 
-<div class="surface-1 rounded-xl p-5">
+<div
+  class="rounded-xl p-5 border"
+  style="background: hsl(var(--portal-bg-elevated, 222 22% 11%)/0.55); border-color: hsl(var(--portal-border, 215 14% 27%)); backdrop-filter: blur(8px);"
+>
   <div class="flex items-center justify-between mb-3">
-    <h3 class="text-sm font-medium text-gray-300">{label}</h3>
+    <h3 class="text-sm font-medium" style="color: hsl(var(--portal-text, 210 30% 92%));">{label}</h3>
     {#if hoverIndex !== null && parsed[hoverIndex]}
-      <div class="text-xs text-gray-400">
-        <span class="text-white font-medium tabular-nums">{formatValue(parsed[hoverIndex].value)}</span>
+      <div class="text-xs" style="color: hsl(var(--portal-text-muted, 210 15% 60%));">
+        <span class="font-medium tabular-nums" style="color: hsl(var(--portal-text, 210 30% 92%));">{formatValue(parsed[hoverIndex].value)}</span>
         <span class="ml-2">{fmtDate(parsed[hoverIndex].date)}</span>
       </div>
     {/if}
   </div>
 
   {#if parsed.length === 0}
-    <div class="text-sm text-gray-500 py-10 text-center" style="height: {height}px">No data yet.</div>
+    <div class="text-sm py-10 text-center" style="height: {height}px; color: hsl(var(--portal-text-muted, 210 15% 60%));">No data yet.</div>
   {:else}
     <svg
       bind:this={svgRef}
@@ -132,7 +141,7 @@
       {#each tickValues() as t, i}
         {@const y = PAD.top + (i / (tickValues().length - 1)) * (H - PAD.top - PAD.bottom)}
         <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y} stroke="rgba(255,255,255,0.07)" stroke-width="1" />
-        <text x={PAD.left - 6} y={y + 3} text-anchor="end" fill="rgb(156 163 175)" font-size="10">
+        <text x={PAD.left - 6} y={y + 3} text-anchor="end" fill="hsl(var(--portal-text-muted, 210 15% 60%))" font-size="10">
           {formatValue(tickValues()[tickValues().length - 1 - i])}
         </text>
       {/each}
@@ -166,7 +175,7 @@
         {@const ticks = [0, Math.floor(parsed.length / 2), parsed.length - 1]}
         {#each ticks as ti}
           {@const x = PAD.left + ti * (scales?.xStep ?? 0)}
-          <text x={x} y={H - PAD.bottom + 16} text-anchor="middle" fill="rgb(156 163 175)" font-size="10">
+          <text x={x} y={H - PAD.bottom + 16} text-anchor="middle" fill="hsl(var(--portal-text-muted, 210 15% 60%))" font-size="10">
             {fmtDate(parsed[ti].date)}
           </text>
         {/each}

@@ -5,6 +5,7 @@ import { mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { startEncoderWorkflow } from '$lib/server/temporal-client';
+import { encoderMinioClient } from '$lib/server/minio';
 
 /**
  * POST /api/admin/encoder/jobs/[mediaId]/retry
@@ -47,6 +48,38 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 	const oldJobId = row.encoderJobId;
 	const newJob = newJobId();
+	const inputObject = `${oldJobId}/source`;
+
+	// Pre-flight: confirm the source video is actually in MinIO before we
+	// burn a Temporal workflow + retry budget. The retry path used to start
+	// a workflow blindly; if the original upload had silently failed, the
+	// activity hit S3 404, retried 3× over ~3 min, and the admin saw a
+	// cryptic "Activity task failed". Now we surface the real reason and
+	// stamp the row with an actionable error so the admin can decide to
+	// ask the creator to re-upload instead of clicking Retry again.
+	try {
+		await encoderMinioClient.statObject(INPUT_BUCKET, inputObject);
+	} catch (err) {
+		const isNotFound = (err as { code?: string })?.code === 'NotFound'
+			|| /not\s*found/i.test((err as Error)?.message ?? '');
+		if (isNotFound) {
+			const detail = `Source video missing in MinIO (${INPUT_BUCKET}/${inputObject}). The original upload didn't land — Retry can't help here. Ask the creator to re-upload the video.`;
+			await db.update(mediaLibrary)
+				.set({
+					processingStatus: 'failed',
+					processingError: detail,
+					updatedAt: new Date()
+				})
+				.where(eq(mediaLibrary.id, row.id));
+			return json({ error: 'Source missing', detail }, { status: 410 });
+		}
+		// Any other MinIO error (auth, network) bubbles up — caller sees 502.
+		console.error(`[admin/encoder/retry] MinIO statObject failed for ${inputObject}:`, err);
+		return json({
+			error: 'Could not verify source video',
+			detail: err instanceof Error ? err.message : String(err)
+		}, { status: 502 });
+	}
 
 	try {
 		await startEncoderWorkflow({
@@ -54,14 +87,37 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			mediaId: row.id,
 			inputBucket: INPUT_BUCKET,
 			// Reuse the original upload — it's still in encoder MinIO at the old prefix.
-			inputObject: `${oldJobId}/source`,
+			inputObject,
 			outputBucket: OUTPUT_BUCKET,
 			outputPrefix: newJob,
 			profile: 'vod-multi'
 		});
 	} catch (err) {
-		console.error(`[admin/encoder/retry] Temporal start failed for new jobId=${newJob}:`, err);
-		return json({ error: 'Temporal start failed', detail: (err as Error).message }, { status: 502 });
+		// The Temporal SDK wraps the underlying gRPC error in a `cause`
+		// chain. Node's default console output stops at the top-level
+		// ServiceError("Failed to start Workflow") which is uninformative;
+		// flatten the chain so docker logs + the JSON response carry the
+		// real cause (e.g. "INVALID_ARGUMENT: search attribute mediaId is
+		// not defined", "UNAVAILABLE: connection refused", etc.).
+		const flattenCauses = (e: unknown): string => {
+			const messages: string[] = [];
+			let cur: unknown = e;
+			let depth = 0;
+			while (cur && depth < 5) {
+				if (cur instanceof Error) {
+					messages.push(`${cur.name}: ${cur.message}`);
+					cur = (cur as { cause?: unknown }).cause;
+				} else {
+					messages.push(String(cur));
+					break;
+				}
+				depth += 1;
+			}
+			return messages.join(' → ');
+		};
+		const detail = flattenCauses(err);
+		console.error(`[admin/encoder/retry] Temporal start failed for new jobId=${newJob}: ${detail}`, err);
+		return json({ error: 'Temporal start failed', detail }, { status: 502 });
 	}
 
 	// Swap the row to the new workflow + clear the prior error / state.

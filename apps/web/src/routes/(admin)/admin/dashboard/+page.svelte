@@ -2,7 +2,7 @@
   import { ShieldCheck, Smartphone, Monitor, Tablet, Tv, Activity, Users, Clock } from "@lucide/svelte";
   import { Badge } from "$lib/components/ui/badge";
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "$lib/components/ui/card";
-  import PageHeader from "$lib/components/dashboard/PageHeader.svelte";
+  import PortalHero from "$lib/components/portal/PortalHero.svelte";
   import StatChip from "$lib/components/dashboard/StatChip.svelte";
   
   const { data } = $props();
@@ -28,13 +28,19 @@
   const totalSessions = $derived(data.deviceStats.reduce((acc: number, curr: { count: number }) => acc + curr.count, 0));
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={ShieldCheck} title="Platform Pulse" subtitle="Real-time device monitoring and session oversight.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Operations"
+    title="Platform pulse"
+    subtitle="Real-time device monitoring and session oversight."
+    icon={ShieldCheck}
+  >
     {#snippet actions()}
       <StatChip label="active sessions" value={totalSessions} tone="green" />
       <Activity class="w-4 h-4 text-green-500 animate-pulse" />
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <!-- Stats Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

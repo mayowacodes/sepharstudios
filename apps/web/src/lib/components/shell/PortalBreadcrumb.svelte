@@ -54,15 +54,15 @@
   }
 </script>
 
-<nav aria-label="Breadcrumb" class="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0">
+<nav aria-label="Breadcrumb" class="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0 leading-none">
   {#each crumbs as c, i (c.href)}
     {#if i > 0}
       <ChevronRight class="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden="true" />
     {/if}
     {#if i === crumbs.length - 1}
-      <span class="text-foreground font-medium truncate">{c.label}</span>
+      <span class="text-foreground font-medium truncate inline-flex items-center leading-none">{c.label}</span>
     {:else}
-      <a href={c.href} class="hover:text-foreground transition-colors truncate">{c.label}</a>
+      <a href={c.href} class="hover:text-foreground transition-colors truncate inline-flex items-center leading-none">{c.label}</a>
     {/if}
   {/each}
 </nav>

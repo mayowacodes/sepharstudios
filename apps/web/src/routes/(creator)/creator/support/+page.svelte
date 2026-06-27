@@ -7,7 +7,7 @@
   import { isConnected, walletAddress } from '$lib/web3/wallet';
   import WalletConnect from '$lib/components/web3/WalletConnect.svelte';
   import { Coins, Wallet, Crown, TrendingUp, Shield, ExternalLink, RefreshCw, AlertCircle, LifeBuoy } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let activeSection = 'overview';
 
@@ -26,8 +26,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={LifeBuoy} title="Creator Support" subtitle="Get help with your creator journey on Sephar Studios." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">
+  <PortalHero compact eyebrow="Help" title="Creator support" subtitle="Get help with your creator journey on Sephar Studios." icon={LifeBuoy} />
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Navigation Sidebar -->

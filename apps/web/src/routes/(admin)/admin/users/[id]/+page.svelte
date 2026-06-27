@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { Users, ShieldAlert, Banknote, Video, ArrowLeft } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { toast } from 'svelte-sonner';
 
@@ -77,8 +78,12 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-5xl space-y-6">
-  <a href="/admin/users" class="text-xs text-purple-300 hover:text-purple-200 inline-flex items-center gap-1">
+<div class="mx-auto py-8 px-4 max-w-6xl space-y-6">
+  <a
+    href="/admin/users"
+    class="text-xs inline-flex items-center gap-1 transition-colors"
+    style="color: hsl(var(--portal-accent));"
+  >
     <ArrowLeft class="w-3 h-3" /> All users
   </a>
 
@@ -90,20 +95,23 @@
       <Skeleton class="h-32 rounded-xl" />
     </div>
   {:else if data}
-    <PageHeader
-      icon={Users}
+    <PortalHero
+      compact
+      eyebrow="Audience · individual"
       title={data.user.name}
       subtitle={`${data.user.email} · joined ${new Date(data.user.createdAt).toLocaleDateString()} · role: ${data.user.role ?? 'user'}${data.user.banned ? ' · ⚠ BANNED' : ''}`}
+      icon={Users}
+      statusDot={!!data.user.banned}
+      statusText={data.user.banned ? `Banned: ${data?.user.banReason ?? '(no reason)'}` : undefined}
+      statusTone={data.user.banned ? 'danger' : 'neutral'}
     >
       {#snippet actions()}
         {#if !data?.user.banned}
-          <button type="button" onclick={warn} class="px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-sm">Warn</button>
-          <button type="button" onclick={ban} disabled={banning} class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm">Ban</button>
-        {:else}
-          <span class="text-xs text-red-300">Banned: {data?.user.banReason ?? '(no reason)'}</span>
+          <PortalButton variant="secondary" size="sm" onclick={warn}>Warn</PortalButton>
+          <PortalButton variant="destructive" size="sm" onclick={ban} disabled={banning}>Ban</PortalButton>
         {/if}
       {/snippet}
-    </PageHeader>
+    </PortalHero>
 
     <!-- Ban banner -->
     {#if data.user.banned}

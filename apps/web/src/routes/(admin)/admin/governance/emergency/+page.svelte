@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { AlertTriangle } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
 	type PauseEvent = {
 		id: string;
@@ -56,8 +56,8 @@
 	<title>Governance Emergency - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={AlertTriangle} title="Emergency Controls" subtitle="Security-incident pause + audit log." />
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero compact eyebrow="DAO · Critical" title="Emergency controls" subtitle="Security-incident pause + audit log." icon={AlertTriangle} statusDot statusText="Pause + audit" statusTone="danger" />
 
 	<div class="rounded-xl border border-border/40 surface-1 p-4 space-y-3">
 		<h2 class="text-lg text-foreground font-semibold">Trigger Emergency Pause</h2>

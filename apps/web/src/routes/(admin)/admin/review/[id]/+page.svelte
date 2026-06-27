@@ -23,7 +23,8 @@
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import * as Tabs from '$lib/components/ui/tabs';
   import { toast } from 'svelte-sonner';
-  import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, Loader2, Film, Rocket } from '@lucide/svelte';
+  import { goto } from '$app/navigation';
+  import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, Loader2, Film, Rocket, Bell, Archive, Trash2 } from '@lucide/svelte';
 
   // Scan state pulled from the admin content GET.
   let scanStatus = $state<string>('idle');
@@ -39,6 +40,40 @@
   let encoderJobId = $state<string | null>(null);
   let cancelling = $state(false);
 
+  // ── Admin metadata editor state ─────────────────────────────────────
+  // Mirror of the editable fields from the loaded content row. We keep
+  // the editor's draft in its own object so unsaved changes don't
+  // contaminate the read-only Overview tab. Saved via the new
+  // PATCH /api/admin/content/[id] endpoint.
+  interface AdminEditDraft {
+    title: string;
+    description: string;
+    mediaType: string;
+    ageRating: string;
+    category: string | null;
+    language: string;
+    duration: string;
+    bibleReference: string;
+    visibility: string;
+    isActive: boolean;
+    status: string;
+    genres: string;     // comma-separated for editing convenience
+    topics: string;
+    keywords: string;
+    posterUrl: string;
+    posterLandscapeUrl: string;
+    posterSquareUrl: string;
+    logoTitleUrl: string;
+    backdropUrl: string;
+    thumbnail: string;
+    trailerUrl: string;
+    scheduledPublishAt: string;
+  }
+  let editDraft = $state<AdminEditDraft | null>(null);
+  let editSaving = $state(false);
+  let editorName = $state<string | null>(null);
+  let editedAt = $state<string | null>(null);
+
   let contentData = $state<ContentSubmission | null>(null);
   let reviewHistory = $state<ContentReview[]>([]);
   let currentReview = $state<Partial<ContentReview>>({
@@ -47,6 +82,13 @@
     feedback: '',
     detailedNotes: []
   });
+
+  // Coming Soon release date. Pre-populated from the row's
+  // scheduledPublishAt (set by the creator in the upload wizard) and
+  // editable by the admin during approval. YYYY-MM-DD format for the
+  // <input type="date"> binding.
+  let comingSoonReleaseDate = $state('');
+  const minComingSoonDate = new Date().toISOString().slice(0, 10);
 
   let videoCurrentTime = $state(0);
   let isLoading = $state(true);
@@ -67,7 +109,7 @@
   // Tab state — synced with URL hash so reload lands on the same tab and
   // back-button navigation works. Default is 'review' because that's where
   // most of the reviewer's time is spent.
-  type TabId = 'overview' | 'review' | 'encoder' | 'scan' | 'history';
+  type TabId = 'overview' | 'edit' | 'review' | 'encoder' | 'scan' | 'history';
   const VALID_TABS: TabId[] = ['overview', 'review', 'encoder', 'scan', 'history'];
   let activeTab = $state<TabId>('review');
 
@@ -120,7 +162,51 @@
       encoderProgress = item.processingProgress ?? null;
       encoderStage = item.processingStage ?? null;
       encoderError = item.processingError ?? null;
+      // Pre-fill the Coming Soon release date from whatever the creator
+      // submitted (scheduledPublishAt). When the row didn't come in as
+      // a Coming Soon request this stays empty and the admin can fill
+      // it in if they want to push the row down the Coming Soon path.
+      if (item.scheduledPublishAt) {
+        const ts = Date.parse(item.scheduledPublishAt);
+        if (!Number.isNaN(ts)) {
+          comingSoonReleaseDate = new Date(ts).toISOString().slice(0, 10);
+        }
+      }
       encoderJobId = item.encoderJobId ?? null;
+
+      // Seed the admin editor draft. Arrays get joined with ", " so
+      // admins can edit them as plain comma-separated strings. We'll
+      // split on save. Empty/missing → empty string so inputs stay
+      // controlled.
+      editedAt = item.editedAt ?? null;
+      editorName = item.editorName ?? null;
+      editDraft = {
+        title: item.title ?? '',
+        description: item.description ?? '',
+        mediaType: item.mediaType ?? 'movie',
+        ageRating: item.ageRating ?? '',
+        category: item.category ?? null,
+        language: item.language ?? '',
+        duration: item.duration ?? '',
+        bibleReference: item.bibleReference ?? '',
+        visibility: item.visibility ?? 'public',
+        isActive: item.isActive ?? false,
+        status: item.status ?? 'submitted',
+        genres: Array.isArray(item.genres) ? item.genres.join(', ') : '',
+        topics: Array.isArray(item.topics) ? item.topics.join(', ') : '',
+        keywords: Array.isArray(item.keywords) ? item.keywords.join(', ') : '',
+        posterUrl: item.posterUrl ?? '',
+        posterLandscapeUrl: item.posterLandscapeUrl ?? '',
+        posterSquareUrl: item.posterSquareUrl ?? '',
+        logoTitleUrl: item.logoTitleUrl ?? '',
+        backdropUrl: item.backdropUrl ?? '',
+        thumbnail: item.thumbnail ?? '',
+        trailerUrl: item.trailerUrl ?? '',
+        scheduledPublishAt: item.scheduledPublishAt
+          ? new Date(item.scheduledPublishAt).toISOString().slice(0, 16)
+          : ''
+      };
+
       videoSubtitles = Array.isArray(item.subtitles) ? item.subtitles : [];
       videoDescriptions = Array.isArray(item.descriptions) ? item.descriptions : [];
       videoChapters = Array.isArray(item.chapters) ? item.chapters : [];
@@ -261,6 +347,147 @@
     }
   }
 
+  // Retry a failed encode. Hits the existing /api/admin/encoder/jobs/<id>/retry
+  // endpoint which mints a fresh jobId, reuses the original source, resets
+  // status/progress/error, and kicks off a new workflow. Used when an
+  // upstream ffmpeg failure or heartbeat timeout left the row in 'failed'.
+  let retryingEncode = $state(false);
+  async function retryEncode() {
+    if (!contentData) return;
+    if (!confirm('Retry encoding? A fresh workflow will start using the original source. The old jobId stays on record for audit.')) return;
+    retryingEncode = true;
+    try {
+      const res = await fetch(`/api/admin/encoder/jobs/${contentData.id}/retry`, { method: 'POST' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Include the upstream detail (Temporal connection failure, missing
+        // source file, etc.) so the admin sees the actual cause instead of
+        // the generic top-line "Temporal start failed".
+        const detail = body.detail ? `\n\n${body.detail}` : '';
+        throw new Error(`${body.error ?? `Retry failed (HTTP ${res.status})`}${detail}`);
+      }
+      // Optimistically reset the local view. The SSE subscription will
+      // then stream the actual orchestrator progress as it ramps.
+      encoderStatus = 'created';
+      encoderProgress = 0;
+      encoderStage = 'queued';
+      encoderError = null;
+      encoderJobId = body.jobId ?? encoderJobId;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Retry failed');
+    } finally {
+      retryingEncode = false;
+    }
+  }
+
+  // Save admin metadata edits. Calls PATCH /api/admin/content/<id>.
+  // Splits comma-separated taxonomy strings back into arrays before
+  // sending. Treats blank fields as nulls (server coerces the URL
+  // ones to null too). Refreshes the loaded content row on success so
+  // both Overview + Editor reflect the new values without a full
+  // reload.
+  async function saveAdminEdit(): Promise<void> {
+    if (!editDraft || !contentData) return;
+    editSaving = true;
+    try {
+      const splitList = (s: string): string[] | null => {
+        const arr = s.split(',').map((v) => v.trim()).filter(Boolean);
+        return arr.length === 0 ? null : arr;
+      };
+      const payload = {
+        title: editDraft.title.trim(),
+        description: editDraft.description,
+        mediaType: editDraft.mediaType,
+        ageRating: editDraft.ageRating || null,
+        category: editDraft.category || null,
+        language: editDraft.language || null,
+        duration: editDraft.duration || null,
+        bibleReference: editDraft.bibleReference || null,
+        visibility: editDraft.visibility,
+        isActive: editDraft.isActive,
+        status: editDraft.status,
+        genres: splitList(editDraft.genres),
+        topics: splitList(editDraft.topics),
+        keywords: splitList(editDraft.keywords),
+        posterUrl: editDraft.posterUrl || null,
+        posterLandscapeUrl: editDraft.posterLandscapeUrl || null,
+        posterSquareUrl: editDraft.posterSquareUrl || null,
+        logoTitleUrl: editDraft.logoTitleUrl || null,
+        backdropUrl: editDraft.backdropUrl || null,
+        thumbnail: editDraft.thumbnail || null,
+        trailerUrl: editDraft.trailerUrl || null,
+        scheduledPublishAt: editDraft.scheduledPublishAt || null
+      };
+      const res = await fetch(`/api/admin/content/${contentData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(`Save failed: ${body.error ?? `HTTP ${res.status}`}${body.detail ? `\n\n${body.detail}` : ''}`);
+        return;
+      }
+      editedAt = body.editedAt ?? new Date().toISOString();
+      // Mirror the new title back onto the loaded contentData so the
+      // page header updates immediately.
+      if (contentData && typeof payload.title === 'string') {
+        contentData.title = payload.title;
+      }
+    } catch (err) {
+      alert(`Save failed: ${err instanceof Error ? err.message : 'network error'}`);
+    } finally {
+      editSaving = false;
+    }
+  }
+
+  // Archive: soft-archive the row via the existing DELETE endpoint
+  // (no mode). Reversible from the admin content list.
+  let archivingContent = $state(false);
+  async function archiveContent() {
+    if (!contentData) return;
+    if (!confirm(`Archive "${contentData.title}"? Viewers won't see it; you can restore from /admin/content.`)) return;
+    archivingContent = true;
+    try {
+      const res = await fetch(`/api/admin/content/${contentData.id}`, { method: 'DELETE' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? `Archive failed (HTTP ${res.status})`);
+      toast.success('Archived. You can restore from /admin/content.');
+      await goto('/admin/content');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Archive failed');
+    } finally {
+      archivingContent = false;
+    }
+  }
+
+  // Permanent delete: hard delete via the shared helper. Blocks on PPV
+  // purchases (409). Cancels in-flight encoder workflow + cleans MinIO
+  // storage in the background.
+  let deletingContent = $state(false);
+  async function deleteContent() {
+    if (!contentData) return;
+    if (!confirm(`Permanently delete "${contentData.title}"? This wipes the row, all watch history, and the video file. This can't be undone.`)) return;
+    deletingContent = true;
+    try {
+      const res = await fetch(`/api/admin/content/${contentData.id}?mode=delete`, { method: 'DELETE' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.error("Can't delete — viewers have paid for this. Archive instead.");
+          return;
+        }
+        throw new Error(body.error ?? `Delete failed (HTTP ${res.status})`);
+      }
+      toast.success('Deleted. Cleaning up storage in the background.');
+      await goto('/admin/content');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      deletingContent = false;
+    }
+  }
+
   function encoderStatusClass(s: string | null): string {
     if (s === 'ready') return 'text-emerald-300';
     if (s === 'failed') return 'text-red-300';
@@ -308,8 +535,14 @@
   async function submitReview() {
     if (!contentData) return;
     if (!currentReview.result) {
-      submitError = 'Pick a decision (Approve / Needs revision / Reject) before submitting.';
+      submitError = 'Pick a decision (Approve / Needs revision / Reject / Coming Soon) before submitting.';
       return;
+    }
+    if (currentReview.result === ReviewResult.APPROVE_COMING_SOON) {
+      if (!comingSoonReleaseDate || comingSoonReleaseDate < minComingSoonDate) {
+        submitError = 'Pick a release date today or later for the Coming Soon flow.';
+        return;
+      }
     }
     submitError = '';
     submitting = true;
@@ -324,7 +557,10 @@
           // ALWAYS false here — Publish is its own button. Lets the admin
           // approve now and publish later (or never), without the API
           // implicitly flipping isActive every time someone approves.
-          publishNow: false
+          publishNow: false,
+          comingSoonReleaseDate: currentReview.result === ReviewResult.APPROVE_COMING_SOON
+            ? comingSoonReleaseDate
+            : undefined
         })
       });
       if (!res.ok) {
@@ -344,6 +580,12 @@
             ? 'Waiting for encoder to finish before you can publish.'
             : 'Click "Publish to platform" to make it live for viewers.'
         });
+      } else if (currentReview.result === ReviewResult.APPROVE_COMING_SOON) {
+        toast.success('Approved as Coming Soon', {
+          description: `Will auto-publish on ${comingSoonReleaseDate} via the scheduled-publish cron. Viewers can subscribe for a notification.`
+        });
+        window.location.href = '/admin/review';
+        return;
       } else if (currentReview.result === ReviewResult.REJECTED) {
         toast.success('Submission rejected', { description: 'The creator has been notified.' });
         // Rejecting → no follow-up here. Send the reviewer back to the queue.
@@ -424,6 +666,7 @@
   // different from rejecting or requesting revision.
   const submitLabel = $derived(
     currentReview.result === ReviewResult.APPROVED ? 'Approve review' :
+    currentReview.result === ReviewResult.APPROVE_COMING_SOON ? 'Approve as Coming Soon' :
     currentReview.result === ReviewResult.REJECTED ? 'Reject submission' :
     currentReview.result === ReviewResult.NEEDS_REVISION ? 'Request revision' :
     'Submit review'
@@ -451,6 +694,19 @@
         <span class="text-xs text-muted-foreground">
           {contentData.contentType} · {contentData.ministryAffiliation || 'Platform'} · {contentData.duration ?? '—'} min
         </span>
+        <!-- Admin-edit audit badge — surfaces who last touched the row
+             so a reviewer doesn't get confused by a creator-vs-admin
+             diff. Only renders when the row has been edited from the
+             admin side. -->
+        {#if editedAt}
+          <span
+            class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full"
+            style="background: hsl(var(--portal-accent)/0.15); color: hsl(var(--portal-accent)); border: 1px solid hsl(var(--portal-accent)/0.35);"
+            title={new Date(editedAt).toLocaleString()}
+          >
+            ✎ Edited{editorName ? ` by ${editorName}` : ''}
+          </span>
+        {/if}
 
         <!-- Encoder pill / live mini progress -->
         {#if encoderStatus === 'ready'}
@@ -540,10 +796,19 @@
         ></video>
       </div>
     {:else if contentData.id}
+      <!--
+        Honest empty state. The trailer pipeline IS wired (sign + PUT
+        + commit on /api/creator/trailer-upload/{sign,commit}). When
+        this banner shows, it means either the creator hasn't
+        uploaded a trailer for this row OR the wizard's best-effort
+        upload step failed silently. Creators can attach one from the
+        Video tab on /creator/content/[id]; admins can paste a direct
+        URL via the Edit metadata tab below.
+      -->
       <div class="mx-auto max-w-3xl mt-4 surface-1 rounded-xl border border-border/40 px-4 py-3 text-xs text-muted-foreground flex items-center gap-2">
         <Film class="w-3.5 h-3.5 opacity-60" />
-        No playable trailer attached.
-        <span class="opacity-60">(Trailer upload is staged but the encoder pipeline for trailers isn't wired yet — tracked in TECHDEBT.md.)</span>
+        No trailer attached.
+        <span class="opacity-60">The creator can add one from their content page, or you can paste a direct URL via "Edit metadata".</span>
       </div>
     {/if}
   </div>
@@ -553,6 +818,7 @@
     <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v as TabId)}>
       <Tabs.List class="sticky top-15 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70 w-full justify-start overflow-x-auto">
         <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+        <Tabs.Trigger value="edit">Edit metadata</Tabs.Trigger>
         <Tabs.Trigger value="review">Review</Tabs.Trigger>
         <Tabs.Trigger value="encoder">Encoder{#if encoderStatus === 'failed'} ⚠{/if}</Tabs.Trigger>
         <Tabs.Trigger value="scan">Scan</Tabs.Trigger>
@@ -615,6 +881,185 @@
             {/if}
           </div>
         </div>
+      </Tabs.Content>
+
+      <!-- ---- Edit metadata ---- -->
+      <!-- Admin metadata editor. Same field allow-list as the creator's
+           own edit form, minus the asset-upload flows. v1 accepts raw
+           URLs for posters/backdrops/logos/trailers — paste a freshly-
+           uploaded MinIO URL or a CDN URL. Full presigned upload UX
+           lives in /creator/upload and reaches admins via the creator
+           portal access path. Save persists via PATCH
+           /api/admin/content/[id] and stamps editedBy + editedAt. -->
+      <Tabs.Content value="edit" class="mt-6 space-y-6">
+        {#if editDraft}
+          <div class="rounded-xl border p-4 flex items-start gap-3" style="background: hsl(var(--portal-bg-elevated)/0.4); border-color: hsl(var(--portal-border));">
+            <div class="text-sm" style="color: hsl(var(--portal-text-muted));">
+              <strong class="text-foreground">Edit any field</strong> and click <em>Save changes</em>.
+              These edits stamp <code class="font-mono text-xs">edited_by</code> on the row so it's auditable.
+              Asset URLs accept any MinIO / CDN URL — upload flows live on the creator side.
+              {#if editedAt}
+                <div class="mt-1 text-xs">
+                  Last admin edit: <span class="text-foreground">{new Date(editedAt).toLocaleString()}</span>
+                  {#if editorName}by <span class="text-foreground">{editorName}</span>{/if}
+                </div>
+              {/if}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Title</span>
+              <input type="text" bind:value={editDraft.title} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Status</span>
+              <select bind:value={editDraft.status} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40">
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
+                <option value="published">Published</option>
+                <option value="rejected">Rejected</option>
+                <option value="archived">Archived</option>
+                <option value="coming_soon">Coming soon</option>
+              </select>
+            </label>
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Description</span>
+              <textarea bind:value={editDraft.description} rows="4" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 resize-y"></textarea>
+            </label>
+
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Content type</span>
+              <select bind:value={editDraft.mediaType} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40">
+                <option value="movie">Movie</option>
+                <option value="series">Series</option>
+                <option value="show">Show</option>
+                <option value="short">Short film</option>
+                <option value="documentary">Documentary</option>
+                <option value="sermon">Sermon (legacy)</option>
+                <option value="worship">Worship (legacy)</option>
+                <option value="kids">Kids (legacy)</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Age rating</span>
+              <select bind:value={editDraft.ageRating} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40">
+                <option value="">— Not set —</option>
+                <option value="ALL_AGES">All ages</option>
+                <option value="SEVEN_PLUS">7+</option>
+                <option value="TEN_PLUS">10+</option>
+                <option value="TWELVE_PLUS">12+</option>
+                <option value="SIXTEEN_PLUS">16+</option>
+                <option value="EIGHTEEN_PLUS">18+</option>
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Audience</span>
+              <select bind:value={editDraft.category} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40">
+                <option value={null}>General</option>
+                <option value="kids">Kids</option>
+                <option value="teens">Teens</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Visibility</span>
+              <select bind:value={editDraft.visibility} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40">
+                <option value="public">Public</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="private">Private</option>
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Language</span>
+              <input type="text" bind:value={editDraft.language} placeholder="English" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Duration (min)</span>
+              <input type="text" bind:value={editDraft.duration} placeholder="90" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Bible reference</span>
+              <input type="text" bind:value={editDraft.bibleReference} placeholder="John 3:16" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Genres <span class="text-[10px] normal-case opacity-60">(comma-separated)</span></span>
+              <input type="text" bind:value={editDraft.genres} placeholder="Drama, Faith, Family" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Topics <span class="text-[10px] normal-case opacity-60">(comma-separated)</span></span>
+              <input type="text" bind:value={editDraft.topics} placeholder="Forgiveness, Hope" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Search keywords <span class="text-[10px] normal-case opacity-60">(comma-separated)</span></span>
+              <input type="text" bind:value={editDraft.keywords} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Scheduled publish at</span>
+              <input type="datetime-local" bind:value={editDraft.scheduledPublishAt} class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Active</span>
+              <div class="mt-1 flex items-center gap-2">
+                <input type="checkbox" bind:checked={editDraft.isActive} class="w-4 h-4" />
+                <span class="text-sm text-muted-foreground">Visible on the public catalog</span>
+              </div>
+            </label>
+
+            <div class="block lg:col-span-2 pt-2 mt-2 border-t border-border/40">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Asset URLs</span>
+            </div>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Poster (portrait)</span>
+              <input type="text" bind:value={editDraft.posterUrl} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Poster (landscape)</span>
+              <input type="text" bind:value={editDraft.posterLandscapeUrl} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Poster (square)</span>
+              <input type="text" bind:value={editDraft.posterSquareUrl} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Title logo (transparent PNG)</span>
+              <input type="text" bind:value={editDraft.logoTitleUrl} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Backdrop / hero</span>
+              <input type="text" bind:value={editDraft.backdropUrl} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Thumbnail</span>
+              <input type="text" bind:value={editDraft.thumbnail} placeholder="https://…" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+            <label class="block lg:col-span-2">
+              <span class="text-xs uppercase tracking-wider text-muted-foreground">Trailer URL</span>
+              <input type="text" bind:value={editDraft.trailerUrl} placeholder="https://… (browser-safe MP4)" class="mt-1 w-full surface-2 rounded-lg px-3 py-2 text-sm text-foreground border border-border/40 font-mono text-[11px]" />
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between gap-3 pt-2">
+            <p class="text-xs text-muted-foreground">
+              Edits save immediately. They do not trigger a re-encode — the encoder pipeline only fires on a fresh upload.
+            </p>
+            <button
+              type="button"
+              onclick={saveAdminEdit}
+              disabled={editSaving}
+              class="text-sm font-semibold rounded-full px-4 py-2 transition-colors disabled:opacity-60"
+              style="background: hsl(var(--portal-accent)); color: hsl(var(--portal-bg-base));"
+            >
+              {editSaving ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
+        {:else}
+          <div class="text-sm text-muted-foreground">Loading metadata…</div>
+        {/if}
       </Tabs.Content>
 
       <!-- ---- Review ---- -->
@@ -791,6 +1236,21 @@
               {cancelling ? 'Cancelling…' : 'Cancel encode'}
             </button>
           {/if}
+
+          <!-- Retry button — only when the row is in a terminal failure
+               state. Hits /api/admin/encoder/jobs/<id>/retry which mints
+               a fresh workflow using the original source file. The old
+               jobId stays on the row's history for audit. -->
+          {#if encoderStatus === 'failed' || encoderStatus === 'cancelled'}
+            <button
+              type="button"
+              onclick={retryEncode}
+              disabled={retryingEncode}
+              class="w-full text-sm font-semibold text-white bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 rounded px-3 py-2 disabled:opacity-50 shadow-[0_0_18px_rgba(255,94,14,0.35)]"
+            >
+              {retryingEncode ? 'Starting new encode…' : 'Retry encoding'}
+            </button>
+          {/if}
         </div>
       </Tabs.Content>
 
@@ -825,7 +1285,10 @@
        2. PUBLISH — separate explicit action that makes the content live
           on /movies and fans out new-release notifications. Disabled
           until status='approved' AND the encoder is ready. -->
-  <div class="fixed bottom-0 left-0 right-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+  <div
+    class="fixed bottom-0 left-0 right-0 z-20 border-t backdrop-blur-md"
+    style="background: hsl(var(--portal-bg-elevated) / 0.92); border-color: hsl(var(--portal-border) / 0.7);"
+  >
     <div class="container mx-auto px-4 py-3">
       {#if submitError}
         <div class="mb-2 text-xs text-red-400">{submitError}</div>
@@ -854,7 +1317,28 @@
               <XCircle class="w-4 h-4 text-red-400" />
               <span class="text-red-300">Reject</span>
             </label>
+            <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+              <input type="radio" bind:group={currentReview.result} value={ReviewResult.APPROVE_COMING_SOON} class="accent-orange-500" />
+              <Bell class="w-4 h-4 text-[#FF5E0E]" />
+              <span class="text-[#FF5E0E]">Approve as Coming Soon</span>
+            </label>
           </fieldset>
+          {#if currentReview.result === ReviewResult.APPROVE_COMING_SOON}
+            <!-- Release date editor — only renders when the admin picks the
+                 Coming Soon path. Pre-filled from the creator's scheduledPublishAt
+                 if they set one in the upload wizard; editable here. -->
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <label for="cs-release-date" class="text-white/80">Release date:</label>
+              <input
+                id="cs-release-date"
+                type="date"
+                bind:value={comingSoonReleaseDate}
+                min={minComingSoonDate}
+                class="px-2 py-1 bg-black/40 border border-white/15 text-white rounded focus:outline-none focus:ring-2 focus:ring-[#FF5E0E]"
+              />
+              <span class="text-white/50 text-xs">Cron flips to live + notifies subscribers when this date elapses.</span>
+            </div>
+          {/if}
           <button
             type="button"
             onclick={submitReview}
@@ -909,6 +1393,30 @@
         </div>
 
         <div class="flex-1"></div>
+
+        <!-- Archive + Delete — destructive controls sit on the right
+             so they don't compete with the review/publish actions.
+             Archive is reversible; Delete is permanent + cleans MinIO. -->
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick={archiveContent}
+            disabled={archivingContent || deletingContent}
+            class="text-sm px-3 py-2 rounded font-medium border border-yellow-500/40 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/20 disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            <Archive class="w-4 h-4" />
+            {archivingContent ? 'Archiving…' : 'Archive'}
+          </button>
+          <button
+            type="button"
+            onclick={deleteContent}
+            disabled={archivingContent || deletingContent}
+            class="text-sm px-3 py-2 rounded font-medium border border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20 disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            <Trash2 class="w-4 h-4" />
+            {deletingContent ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
 
         <button
           type="button"

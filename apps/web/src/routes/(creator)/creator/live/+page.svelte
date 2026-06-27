@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Radio, Copy, RefreshCw, Trash2, Eye } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { toast } from 'svelte-sonner';
 
@@ -122,11 +122,13 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-4xl space-y-6">
-  <PageHeader
-    icon={Radio}
-    title="Live streaming"
+<div class="mx-auto py-8 px-4 max-w-4xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Broadcast"
+    title="Go live"
     subtitle="Create a stream, point OBS / Streamlabs at the RTMP URL + key, and go live. Viewers see the LIVE indicator on your watch page."
+    icon={Radio}
   />
 
   <!-- Compose -->
@@ -146,7 +148,7 @@
     <h2 class="text-sm font-semibold text-foreground mb-3">Your streams</h2>
     {#if loading}
       <div class="space-y-2">
-        {#each Array(2) as _ (_)}<Skeleton class="h-32 rounded-xl" />{/each}
+        {#each Array(2) as _, i (i)}<Skeleton class="h-32 rounded-xl" />{/each}
       </div>
     {:else if streams.length === 0}
       <div class="surface-1 rounded-xl p-10 text-center text-muted-foreground">No streams yet. Create one above to get started.</div>

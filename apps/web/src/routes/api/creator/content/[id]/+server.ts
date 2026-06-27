@@ -10,6 +10,7 @@ import { user } from '$lib/db/schema';
 import { and, eq, sql, gte, isNotNull } from 'drizzle-orm';
 import { Role } from '$lib/constants';
 import { notify, notifyAdmins } from '$lib/server/notify';
+import { permanentlyDeleteContent } from '$lib/server/content-delete';
 
 /**
  * GET    /api/creator/content/[id] — single content row + per-content analytics
@@ -24,7 +25,7 @@ import { notify, notifyAdmins } from '$lib/server/notify';
 const ALLOWED_PATCH_FIELDS = new Set([
 	// Basic Info — PPV pricing lives in the `ppv_content` table, NOT on
 	// media_library. Creator-suggested PPV happens via the admin PPV modal.
-	'title', 'description', 'contentType', 'ageRating',
+	'title', 'description', 'contentType', 'ageRating', 'audience',
 	// Metadata
 	'genres', 'topics', 'keywords', 'bibleReference', 'language', 'duration',
 	'ministryAffiliation', 'hasSubtitles', 'hasClosedCaptions',
@@ -36,11 +37,29 @@ const ALLOWED_PATCH_FIELDS = new Set([
 	// Catalog completion round: chapters, cast, crew, region restrictions
 	'chapters', 'cast', 'crew', 'geoMode', 'geoRegions',
 	// Curated end-screen next-up
-	'nextUpContentIds'
+	'nextUpContentIds',
+	// Status — creator-controlled ONLY for the Coming Soon → submitted
+	// transition (see CREATOR_STATUS_TRANSITIONS below). All other status
+	// movements still go through the admin endpoints.
+	'status'
 ]);
 
+// Creator-allowed status transitions. The only one that's safe for a
+// creator to trigger directly is sending a previously-approved Coming
+// Soon row back to review when they've attached the main video — admin
+// originally approved the announcement without seeing the video, so
+// the video needs a fresh look. Every other transition (publish,
+// reject, archive) goes through the admin endpoints or the cron.
+const CREATOR_STATUS_TRANSITIONS: Record<string, string[]> = {
+	coming_soon: ['submitted']
+};
+
 const ALLOWED_VISIBILITY = new Set(['public', 'unlisted', 'private']);
-const ALLOWED_CONTENT_TYPES = new Set(['movie', 'show', 'documentary']);
+// Widened to match the wizard's current dropdown (movie/series/short/
+// documentary). 'show' kept as a legacy alias because older rows + the
+// detail-loader already tolerate both 'show' and 'series'.
+const ALLOWED_CONTENT_TYPES = new Set(['movie', 'show', 'series', 'short', 'documentary']);
+const ALLOWED_AUDIENCES = new Set(['general', 'kids', 'teens']);
 const ALLOWED_GEO_MODES = new Set(['all', 'allow', 'block']);
 
 async function loadOwned(contentId: string, ownerId: string) {
@@ -157,6 +176,16 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 			updates.mediaType = value;
 			continue;
 		}
+		if (key === 'audience') {
+			// Wizard sends 'general' / 'kids' / 'teens'. We translate to the
+			// schema `category` column ('kids' / 'teens' / NULL). Kids portal
+			// at /kids/kiddies + /kids/teens filters on this column.
+			if (typeof value !== 'string' || !ALLOWED_AUDIENCES.has(value)) {
+				return json({ error: 'Invalid audience' }, { status: 400 });
+			}
+			updates.category = value === 'general' ? null : value;
+			continue;
+		}
 		if (key === 'scheduledPublishAt') {
 			if (value === null || value === '') {
 				updates.scheduledPublishAt = null;
@@ -268,6 +297,21 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 			updates.nextUpContentIds = Array.from(new Set(cleaned));
 			continue;
 		}
+		if (key === 'status') {
+			// Only the "I added the missing video to my Coming Soon row"
+			// transition is creator-driven. Everything else (publish, reject,
+			// archive) goes through the admin endpoints / cron.
+			const target = typeof value === 'string' ? value : '';
+			const current = row.status ?? '';
+			const allowed = CREATOR_STATUS_TRANSITIONS[current] ?? [];
+			if (!allowed.includes(target)) {
+				return json({
+					error: `Status transition ${current || '(none)'} → ${target || '(empty)'} is not allowed`
+				}, { status: 400 });
+			}
+			updates.status = target;
+			continue;
+		}
 		// Catch-all for the remaining text / boolean / nullable fields.
 		updates[key] = value as never;
 	}
@@ -325,10 +369,39 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 		}).catch(() => undefined);
 	}
 
+	// Coming Soon → submitted transition: creator attached the main
+	// video to a previously-approved announcement. Ping every admin so
+	// the row appears back in the review queue and gets a fresh look
+	// at the video before the cron's auto-publish-on-date logic flips
+	// it to live.
+	if ('status' in updates && row.status === 'coming_soon' && updates.status === 'submitted') {
+		console.info(`[creator/content PATCH] coming_soon → submitted (video added) on ${row.id}`);
+		notifyAdmins({
+			kind: 'system',
+			title: `Coming Soon video added: "${updated.title.slice(0, 50)}"`,
+			message: 'Creator attached the main video to a previously-approved Coming Soon row. Review the video, then it auto-publishes on the release date.',
+			actionUrl: `/admin/review/${updated.id}`
+		}).catch(() => undefined);
+	}
+
 	return json({ success: true, content: updated });
 };
 
-export const DELETE: RequestHandler = async ({ params, locals }) => {
+/**
+ * DELETE /api/creator/content/[id][?mode=archive|delete]
+ *
+ * Two modes, gated by the `mode` query string. Ownership check
+ * applies to both — creator can only act on rows they own; admins
+ * still hit /api/admin/content/[id] for any-row access.
+ *
+ *   - default / mode=archive  → soft archive (status='archived',
+ *     is_active=false). Sends a "Content archived" notification.
+ *
+ *   - mode=delete             → hard delete via the shared helper.
+ *     Blocks on existing PPV purchases (409). Cancels in-flight
+ *     encoder workflow. FK cascades + MinIO cleanup follow.
+ */
+export const DELETE: RequestHandler = async ({ params, url, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
 	if (![Role.CREATOR, Role.ADMIN].includes(session.user.role as Role)) {
@@ -337,6 +410,36 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	const { row, status } = await loadOwned(params.id!, session.user.id);
 	if (status !== 200) return json({ error: status === 404 ? 'Not found' : 'Forbidden' }, { status });
+
+	const mode = url.searchParams.get('mode') ?? 'archive';
+
+	if (mode === 'delete') {
+		const result = await permanentlyDeleteContent(row.id, session.user.id);
+		if (!result.ok) {
+			if (result.reason === 'not_found') {
+				return json({ error: 'Not found' }, { status: 404 });
+			}
+			if (result.reason === 'ppv_purchases_exist') {
+				return json(
+					{
+						error: 'Cannot permanently delete content with existing PPV purchases. Archive instead, or contact support to void the purchases first.',
+						blockedBy: 'ppv_purchases'
+					},
+					{ status: 409 }
+				);
+			}
+		}
+		if (session.user.id) {
+			notify({
+				userId: session.user.id,
+				kind: 'system',
+				title: 'Content deleted',
+				message: `"${row.title}" has been permanently deleted.`,
+				actionUrl: '/creator/content'
+			}).catch(() => undefined);
+		}
+		return json({ success: true, deleted: true });
+	}
 
 	await db.update(mediaLibrary)
 		.set({ status: 'archived', isActive: false, updatedAt: new Date() })
@@ -352,5 +455,5 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		}).catch(() => undefined);
 	}
 
-	return json({ success: true });
+	return json({ success: true, archived: true });
 };

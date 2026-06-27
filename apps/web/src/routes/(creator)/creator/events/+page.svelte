@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { Calendar } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   interface EventRow {
     id: string;
@@ -147,8 +147,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Calendar} title="Creator Events" subtitle="Learn, grow, and connect with fellow faith-based creators." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero compact eyebrow="Calendar" title="Events" subtitle="Learn, grow, and connect with fellow faith-based creators." icon={Calendar} />
 
   <!-- Featured Event — the soonest upcoming creator event, if any. -->
   {#if featured}

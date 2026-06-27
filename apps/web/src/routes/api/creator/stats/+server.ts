@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary, transactions } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, creatorEarnings } from '$lib/db/schema/sepharstudios';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { Role } from '$lib/constants';
 
@@ -33,23 +33,26 @@ export const GET: RequestHandler = async ({ locals }) => {
 		console.warn('[api/creator/stats] media_library query failed:', err);
 	}
 
+	// Creator earnings ledger — sum of amount_cents in the current calendar
+	// month, scoped to this creator. Distinct from the viewer-side STC
+	// reward in `transactions` (different subject + unit). See
+	// lib/server/earnings-config.ts for the per-row formula.
 	let monthlyEarnings = 0;
 	try {
 		const [earningsRow] = await db
 			.select({
-				monthlyEarnings: sql<number>`coalesce(sum(${transactions.amount}), 0)`
+				cents: sql<number>`coalesce(sum(${creatorEarnings.amountCents}), 0)`
 			})
-			.from(transactions)
+			.from(creatorEarnings)
 			.where(
 				and(
-					eq(transactions.userId, creatorId),
-					eq(transactions.type, 'earn'),
-					gte(transactions.createdAt, monthStart)
+					eq(creatorEarnings.creatorId, creatorId),
+					gte(creatorEarnings.createdAt, monthStart)
 				)
 			);
-		monthlyEarnings = Number(earningsRow?.monthlyEarnings ?? 0);
+		monthlyEarnings = Number(earningsRow?.cents ?? 0) / 100;
 	} catch (err) {
-		console.warn('[api/creator/stats] transactions query failed:', err);
+		console.warn('[api/creator/stats] creator_earnings query failed:', err);
 	}
 
 	return json({

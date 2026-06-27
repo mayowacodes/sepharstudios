@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { ShieldAlert, Flag, Check, X, AlertTriangle } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type Filter = 'all' | 'review' | 'forum_thread' | 'forum_reply' | 'content' | 'user';
@@ -165,31 +166,39 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-5xl space-y-6">
-  <PageHeader
-    icon={ShieldAlert}
+<div class="mx-auto py-8 px-4 max-w-5xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Trust & Safety"
     title="Abuse queue"
     subtitle="Triage user-submitted reports. Resolve to action the target, dismiss for false reports, or escalate when senior review is needed."
+    icon={ShieldAlert}
   />
 
   <div class="space-y-3">
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-muted-foreground mr-2">Type:</span>
+      <span class="text-xs mr-2" style="color: hsl(var(--portal-text-muted));">Type:</span>
       {#each (['all', 'review', 'forum_thread', 'forum_reply', 'content', 'user'] as Filter[]) as f (f)}
         <button
           type="button"
           onclick={() => filter = f}
-          class="px-3 py-1.5 rounded text-xs {filter === f ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
+          class="px-3 py-1.5 rounded-full text-xs transition-colors"
+          style={filter === f
+            ? `background: hsl(var(--portal-accent)); color: hsl(var(--portal-bg-base)); font-weight: 600;`
+            : `background: hsl(var(--portal-bg-elevated)/0.6); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`}
         >{f.replace('_', ' ')}</button>
       {/each}
     </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <span class="text-xs text-muted-foreground mr-2">Status:</span>
+      <span class="text-xs mr-2" style="color: hsl(var(--portal-text-muted));">Status:</span>
       {#each (['open', 'resolved', 'all'] as Status[]) as s (s)}
         <button
           type="button"
           onclick={() => statusFilter = s}
-          class="px-3 py-1.5 rounded text-xs capitalize {statusFilter === s ? 'bg-purple-700 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
+          class="px-3 py-1.5 rounded-full text-xs capitalize transition-colors"
+          style={statusFilter === s
+            ? `background: hsl(var(--portal-accent-2, var(--portal-accent))); color: hsl(var(--portal-bg-base)); font-weight: 600;`
+            : `background: hsl(var(--portal-bg-elevated)/0.6); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`}
         >{s}</button>
       {/each}
     </div>
@@ -197,12 +206,15 @@
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(4) as _ (_)}<Skeleton class="h-20 rounded-xl" />{/each}
+      {#each Array(4) as _, i (i)}<Skeleton class="h-20 rounded-xl" />{/each}
     </div>
   {:else if reports.length === 0}
-    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
-      Queue is empty.
-    </div>
+    <PortalEmptyState
+      icon={ShieldAlert}
+      title="Queue is empty"
+      tone="success"
+      description="No open reports of this type. Nothing to triage — keep an eye on the live feed."
+    />
   {:else}
     <ul class="space-y-2">
       {#each reports as r (r.id)}

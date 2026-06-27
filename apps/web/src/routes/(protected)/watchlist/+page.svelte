@@ -16,6 +16,8 @@
     mediaType: string;
     slug: string | null;
     category: string | null;
+    progressPercent?: number;
+    positionSeconds?: number;
   }
 
   // Build the audience-appropriate detail-page URL for a watchlist
@@ -29,6 +31,24 @@
     if (item.mediaType === 'tv' || item.mediaType === 'series') return `/shows/${slug}`;
     if (item.mediaType === 'documentary') return `/documentaries/${slug}`;
     return `/movies/${slug}`;
+  }
+
+  // Direct-to-player URL for the in-progress "Resume now" hover
+  // shortcut — same shape as the Continue Watching row on the home
+  // page. Only used when the item has a saved position.
+  function resumeHref(item: PlaylistItem): string {
+    const slug = item.slug || item.contentId;
+    const params = new URLSearchParams();
+    params.set('t', String(Math.max(0, Math.floor(item.positionSeconds ?? 0))));
+    return `/watch/${slug}?${params.toString()}`;
+  }
+
+  // Treat an item as "in progress" when the server attached the same
+  // overlay the catalog cards use. Drives the Resume hover affordance.
+  function isInProgress(item: PlaylistItem): boolean {
+    return typeof item.progressPercent === 'number'
+      && item.progressPercent > 0
+      && item.progressPercent < 95;
   }
 
   interface Playlist {
@@ -64,6 +84,8 @@
                   thumbnail: string | null;
                   posterUrl: string | null;
                   mediaType: string;
+                  progressPercent?: number;
+                  positionSeconds?: number;
                 };
               }>
             : [];
@@ -79,7 +101,9 @@
             posterUrl: r.content.posterUrl,
             mediaType: r.content.mediaType,
             slug: r.content.slug ?? null,
-            category: r.content.category ?? null
+            category: r.content.category ?? null,
+            progressPercent: r.content.progressPercent,
+            positionSeconds: r.content.positionSeconds
           }));
 
           return { ...pl, items };
@@ -196,13 +220,46 @@
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 {/if}
-                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white">
-                    <Play class="w-5 h-5 fill-white" />
+                <!-- Hover veil — only renders the bare play icon
+                     for un-started items. In-progress items get the
+                     orange Resume pill below (rendered outside the
+                     <a> so the inner click doesn't double-trigger).
+                     Pointer-events disabled here; the pill re-enables
+                     them where needed. -->
+                {#if !isInProgress(item)}
+                  <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white">
+                      <Play class="w-5 h-5 fill-white" />
+                    </div>
                   </div>
-                </div>
+                {/if}
+                <!-- In-progress strip — same orange affordance the
+                     catalog cards render, so the watchlist surface
+                     stays in the same visual family. -->
+                {#if typeof item.progressPercent === 'number' && item.progressPercent > 0 && item.progressPercent < 95}
+                  <div class="absolute inset-x-0 bottom-0 h-1 bg-black/40">
+                    <div
+                      class="h-full bg-[#FF5E0E]"
+                      style="width: {Math.max(2, Math.min(100, item.progressPercent))}%"
+                    ></div>
+                  </div>
+                {/if}
               </div>
             </a>
+            {#if isInProgress(item)}
+              <!-- Orange "Resume now" pill — direct shortcut to
+                   /watch with the saved position. Sits over the
+                   artwork on hover, mirrors the Continue Watching
+                   row's hover pattern for consistency. -->
+              <a
+                href={resumeHref(item)}
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-2 px-3 py-2 rounded-full bg-[#FF5E0E] text-white text-sm font-semibold shadow-lg hover:scale-105"
+                aria-label={`Resume ${item.title} now`}
+              >
+                <Play class="w-4 h-4 fill-white" />
+                Resume
+              </a>
+            {/if}
             <button
               onclick={() => removeItem(defaultList!.id, item.contentId)}
               disabled={removing === item.contentId}

@@ -6,7 +6,8 @@
   import { browser } from '$app/environment';
   import { ContentStatus, ContentType } from '$lib/types/creator';
   import { Video, Upload, ChevronLeft, ChevronRight } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
   const PAGE_SIZE = 25;
 
@@ -263,14 +264,20 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Video} title="Content Library" subtitle="Manage your submitted content and track review progress.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Library"
+    title="Your content"
+    subtitle="Submitted, in review, published, archived — everything you've made."
+    icon={Video}
+  >
     {#snippet actions()}
-      <a href="/creator/upload" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
-        <Upload class="w-3 h-3" /> Upload
-      </a>
+      <PortalButton href="/creator/upload" variant="primary" size="sm">
+        <Upload class="w-3.5 h-3.5" /> Upload
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <!-- Filters and Search -->
   <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
@@ -398,7 +405,7 @@
         <div class="surface-2 backdrop-blur-sm rounded-xl p-6 hover:surface-3 transition-all {selected[content.id] ? 'ring-2 ring-purple-500' : ''}">
           <div class="flex flex-col lg:flex-row lg:items-start gap-4">
             <!-- Selection checkbox -->
-            <div class="flex-shrink-0 pt-2">
+            <div class="shrink-0 pt-2">
               <input
                 type="checkbox"
                 bind:checked={selected[content.id]}
@@ -407,7 +414,7 @@
               />
             </div>
             <!-- Thumbnail -->
-            <div class="flex-shrink-0">
+            <div class="shrink-0">
               <img
                 src={content.thumbnailUrl}
                 alt={content.title}

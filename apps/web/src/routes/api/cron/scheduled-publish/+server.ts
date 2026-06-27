@@ -1,10 +1,11 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary, notificationPreferences, notifications } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, notificationPreferences, notifications, comingSoonSubscriptions } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
-import { and, eq, isNotNull, lte } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, lte } from 'drizzle-orm';
 import { sendNewReleaseNotification } from '$lib/server/notifications';
+import { notify } from '$lib/server/notify';
 
 /**
  * POST /api/cron/scheduled-publish
@@ -31,24 +32,30 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const now = new Date();
 
+	// Catch both:
+	//   - status='approved' rows scheduled by an admin (existing path)
+	//   - status='coming_soon' rows whose release date has elapsed (new)
+	// Both flip to status='published' + isActive=true via the same code
+	// path below.
 	const due = await db.select({
 		id: mediaLibrary.id,
 		title: mediaLibrary.title,
 		mediaType: mediaLibrary.mediaType,
 		videoUrl: mediaLibrary.videoUrl,
 		encoderJobId: mediaLibrary.encoderJobId,
-		processingStatus: mediaLibrary.processingStatus
+		processingStatus: mediaLibrary.processingStatus,
+		previousStatus: mediaLibrary.status
 	})
 		.from(mediaLibrary)
 		.where(and(
-			eq(mediaLibrary.status, 'approved'),
+			inArray(mediaLibrary.status, ['approved', 'coming_soon']),
 			eq(mediaLibrary.isActive, false),
 			isNotNull(mediaLibrary.scheduledPublishAt),
 			lte(mediaLibrary.scheduledPublishAt, now)
 		))
 		.limit(BATCH);
 
-	const result = { processed: 0, published: 0, skipped: 0, notified: 0, errors: [] as string[] };
+	const result = { processed: 0, published: 0, skipped: 0, notified: 0, notifiedSubscribers: 0, errors: [] as string[] };
 
 	for (const c of due) {
 		result.processed += 1;
@@ -95,6 +102,45 @@ export const POST: RequestHandler = async ({ request }) => {
 						console.warn('[scheduled-publish] email failed', r.email, err);
 					}
 				}
+			}
+
+			// Per-title Notify-me fan-out — viewers who tapped the bell
+			// on this Coming Soon title's detail page get a personal
+			// in-app + email + push (via notify()'s built-in routing)
+			// the moment it drops. Distinct from the platform-wide
+			// fan-out above: this list is tiny but the conversion
+			// signal is strong. Stamping notified_at makes the
+			// dispatch idempotent across cron re-runs.
+			const subs = await db
+				.select({ userId: comingSoonSubscriptions.userId, contentId: comingSoonSubscriptions.contentId })
+				.from(comingSoonSubscriptions)
+				.where(and(
+					eq(comingSoonSubscriptions.contentId, c.id),
+					isNull(comingSoonSubscriptions.notifiedAt)
+				));
+
+			for (const sub of subs) {
+				try {
+					await notify({
+						userId: sub.userId,
+						kind: 'content_publish',
+						title: `${c.title} is live`,
+						message: 'The title you were waiting for just dropped.',
+						actionUrl: `/watch/${c.id}`
+					});
+					result.notifiedSubscribers += 1;
+				} catch (err) {
+					console.warn('[scheduled-publish] notify-me dispatch failed', sub.userId, err);
+				}
+			}
+
+			if (subs.length > 0) {
+				await db.update(comingSoonSubscriptions)
+					.set({ notifiedAt: now })
+					.where(and(
+						eq(comingSoonSubscriptions.contentId, c.id),
+						isNull(comingSoonSubscriptions.notifiedAt)
+					));
 			}
 		} catch (err) {
 			result.errors.push(`${c.id}: ${err instanceof Error ? err.message : String(err)}`);

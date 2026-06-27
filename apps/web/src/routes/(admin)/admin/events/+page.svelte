@@ -6,7 +6,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Calendar, Plus, Edit, Trash2, Users, ExternalLink } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   interface EventRow {
     id: string;
@@ -201,14 +201,20 @@
   <title>Events · Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Calendar} title="Events" subtitle="Webinars, workshops, conferences. Powers /webinars and /creator/events.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Calendar"
+    title="Events"
+    subtitle="Webinars, workshops, conferences. Powers /webinars and /creator/events."
+    icon={Calendar}
+  >
     {#snippet actions()}
       <Button onclick={openCreate} size="sm" class="rounded-full">
         <Plus class="w-3.5 h-3.5 mr-1" /> New event
       </Button>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   {#if message}
     <div class="rounded-md border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-200">{message}</div>

@@ -1,11 +1,11 @@
 <!-- Creator Analytics Dashboard -->
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { BarChart3, Eye, Clock, Target, Heart, LineChart } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { BarChart3, Eye, Clock, Target, Heart, LineChart, Radio } from '@lucide/svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
   import TrendChart from '$lib/components/dashboard/TrendChart.svelte';
-  import EmptyState from '$lib/components/dashboard/EmptyState.svelte';
+  import EmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   // Real analytics — pulled from /api/creator/analytics
@@ -89,9 +89,63 @@
     void loadAnalytics(selectedPeriod);
   });
 
+  // ── Live "Live now" panel + 60s KPI refresh ─────────────────────────
+  // Streams watch_start / watch_complete events for this creator's
+  // own content. The KPI tiles re-fetch every 60s when the tab is
+  // visible — backgrounded tabs skip the refresh to spare the DB.
+  type LiveEvent = {
+    kind: 'watch_start' | 'watch_complete';
+    contentId: string;
+    title: string;
+    completionPercent: number;
+    at: string;
+  };
+  let liveEvents = $state<LiveEvent[]>([]);
+  let evtSource: EventSource | null = null;
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+  function pushLiveEvent(ev: LiveEvent): void {
+    // Keep the rolling 20-event window — bigger than that and the
+    // panel scrolls forever.
+    const copy = [ev, ...liveEvents];
+    liveEvents = copy.slice(0, 20);
+  }
+
   onMount(() => {
     void loadAIInsights();
+
+    if (typeof EventSource !== 'undefined') {
+      try {
+        evtSource = new EventSource('/api/creator/analytics/stream');
+        evtSource.onmessage = (msg) => {
+          try {
+            const data = JSON.parse(msg.data) as LiveEvent;
+            pushLiveEvent(data);
+          } catch { /* ignore malformed frames */ }
+        };
+      } catch { /* SSE unavailable; the page is still functional */ }
+    }
+
+    refreshTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void loadAnalytics(selectedPeriod);
+      }
+    }, 60_000);
   });
+
+  onDestroy(() => {
+    evtSource?.close();
+    evtSource = null;
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  });
+
+  function relativeTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 10_000) return 'just now';
+    if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`;
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+    return new Date(iso).toLocaleTimeString();
+  }
   
   function formatNumber(num: number): string {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -108,15 +162,18 @@
 </script>
 
 <div class="space-y-6">
-  <PageHeader
+  <PortalHero
+    compact
+    eyebrow="Insights"
+    title="Your audience pulse"
+    subtitle="Watch time, completions, and what's resonating right now."
     icon={BarChart3}
-    title="Analytics"
-    subtitle="Track your content performance and audience engagement."
   >
     {#snippet actions()}
       <select
         bind:value={selectedPeriod}
-        class="px-3 py-1.5 surface-2 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-purple-600"
+        class="px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2"
+        style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
       >
         <option value="7d">Last 7 days</option>
         <option value="30d">Last 30 days</option>
@@ -124,7 +181,49 @@
         <option value="1y">Last year</option>
       </select>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
+
+  <!-- Live now — watch events on this creator's content streamed via
+       SSE. Empty by default; populates as viewers start or finish
+       a video. Quiet design so it complements (doesn't compete with)
+       the AI Insights panel below. -->
+  {#if liveEvents.length > 0}
+    <div
+      class="relative rounded-2xl p-5 portal-fade-up backdrop-blur-md overflow-hidden"
+      style="background: hsl(var(--portal-bg-card)/0.7); border: 1px solid hsl(var(--portal-accent)/0.35); box-shadow: var(--portal-accent-glow);"
+    >
+      <!-- Soft accent halo so the panel reads as "this is live, watch it" -->
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-30 blur-3xl"
+        style="background: radial-gradient(circle, hsl(var(--portal-accent)/0.7) 0%, transparent 70%);"
+      ></div>
+
+      <div class="relative flex items-center gap-2 mb-3">
+        <Radio class="w-4 h-4 portal-pulse-dot" style="color: hsl(var(--portal-accent))" />
+        <h2 class="text-sm font-semibold" style="color: hsl(var(--portal-text))">Live now</h2>
+        <span class="text-xs" style="color: hsl(var(--portal-text-muted))">
+          — {liveEvents.length} recent {liveEvents.length === 1 ? 'event' : 'events'}
+        </span>
+      </div>
+      <ul class="relative space-y-1.5 max-h-48 overflow-y-auto">
+        {#each liveEvents as ev (ev.contentId + ev.at)}
+          <li class="flex items-center gap-2 text-xs">
+            <span
+              class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+              style:background-color={ev.kind === 'watch_complete'
+                ? 'hsl(var(--portal-success))'
+                : 'hsl(var(--portal-accent))'}
+            ></span>
+            <span class="truncate flex-1" style="color: hsl(var(--portal-text))">
+              {ev.kind === 'watch_complete' ? 'Completed' : 'Started watching'}: {ev.title}
+            </span>
+            <span class="shrink-0" style="color: hsl(var(--portal-text-muted))">{relativeTime(ev.at)}</span>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 
   <!-- AI Insights panel — real data from /api/ai/creator-insights -->
   <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6">
@@ -202,12 +301,21 @@
 
   {#if isLoading}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {#each Array(4) as _ (_)}
+      {#each Array(4) as _, i (i)}
         <Skeleton class="h-28 rounded-xl" />
       {/each}
     </div>
     <Skeleton class="h-64 rounded-xl" />
-  {:else if (analyticsData.overview?.totalViews ?? 0) === 0 && (analyticsData.contentPerformance?.length ?? 0) === 0}
+  {:else if (analyticsData.contentPerformance?.length ?? 0) === 0}
+    <!--
+      True empty state — the creator has no uploaded content at all.
+      The old check ANDed totalViews === 0 with contentPerformance
+      length === 0, but those two are coupled: no content → no views.
+      Keeping just the content-count check means a creator who has
+      uploaded videos but hasn't accrued any views yet still sees the
+      KPI grid (with zero values) + the per-title list, which is far
+      more useful than the "upload your first" prompt.
+    -->
     <EmptyState
       icon={LineChart}
       title="No analytics yet"
@@ -416,29 +524,56 @@
       </div>
     </div>
 
-    <!-- Growth Insights -->
+    <!--
+      Performance Insights — derived from the real KPI payload, not
+      hardcoded boilerplate. The prior version had four static cards
+      claiming "Worship content shows highest engagement" / "47%
+      mobile" / "7–9 PM peak" / "25-44 most engaged" regardless of the
+      creator's actual data, which read as fake. Now: top-performing
+      content title, top device share (if any), top country (if any),
+      and the size of the content library — all computed locally from
+      the same payload the KPIs render from.
+    -->
+    {@const topContent = analyticsData.contentPerformance?.[0]}
+    {@const topDevice = analyticsData.viewsByDevice?.[0]}
+    {@const topCountry = analyticsData.demographics?.topCountries?.[0]}
+    {@const libSize = analyticsData.contentPerformance?.length ?? 0}
     <div class="surface-2 backdrop-blur-sm rounded-xl p-6">
       <h3 class="text-xl font-bold text-foreground mb-4">Performance Insights</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="text-center">
           <div class="text-2xl font-bold text-green-400 mb-2">📈</div>
-          <div class="text-foreground font-medium">Best Performing</div>
-          <div class="text-muted-foreground text-sm">Worship content shows highest engagement</div>
+          <div class="text-foreground font-medium">Top Performer</div>
+          <div class="text-muted-foreground text-sm">
+            {topContent?.title
+              ? `${topContent.title} (${formatNumber(topContent.views)} views)`
+              : 'No view data yet'}
+          </div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-bold text-blue-400 mb-2">📱</div>
-          <div class="text-foreground font-medium">Mobile First</div>
-          <div class="text-muted-foreground text-sm">47% of views come from mobile devices</div>
+          <div class="text-foreground font-medium">Top Device</div>
+          <div class="text-muted-foreground text-sm">
+            {topDevice
+              ? `${topDevice.device} · ${topDevice.pct ?? topDevice.percentage ?? 0}%`
+              : 'Awaiting device data'}
+          </div>
         </div>
         <div class="text-center">
-          <div class="text-2xl font-bold text-purple-400 mb-2">⏰</div>
-          <div class="text-foreground font-medium">Peak Hours</div>
-          <div class="text-muted-foreground text-sm">Most active 7-9 PM local time</div>
+          <div class="text-2xl font-bold text-purple-400 mb-2">🌍</div>
+          <div class="text-foreground font-medium">Top Country</div>
+          <div class="text-muted-foreground text-sm">
+            {topCountry
+              ? `${topCountry.country} · ${formatNumber(topCountry.count ?? 0)} views`
+              : 'Awaiting geo data'}
+          </div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-bold text-orange-400 mb-2">🎯</div>
-          <div class="text-foreground font-medium">Target Audience</div>
-          <div class="text-muted-foreground text-sm">25-44 age group most engaged</div>
+          <div class="text-foreground font-medium">Library Size</div>
+          <div class="text-muted-foreground text-sm">
+            {libSize} {libSize === 1 ? 'title' : 'titles'} published
+          </div>
         </div>
       </div>
     </div>

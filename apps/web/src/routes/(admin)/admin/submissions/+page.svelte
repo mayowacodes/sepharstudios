@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Inbox } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   type Tab = 'stories' | 'sponsorships' | 'tickets';
 
@@ -147,8 +147,14 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Inbox} title="Submissions" subtitle="Triage success stories, sponsorship pitches, and support tickets." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Triage"
+    title="Submissions"
+    subtitle="Triage success stories, sponsorship pitches, and support tickets."
+    icon={Inbox}
+  />
 
   <!-- Tab chips -->
   <div class="flex flex-wrap gap-2">

@@ -1,7 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import {
-	creators,
 	mediaLibrary,
 	mediaWatchProgress,
 	reviews,
@@ -64,14 +63,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	// route and blanking /creator/analytics. The page already handles an
 	// empty payload gracefully (renders zero KPIs + an empty-state).
 	try {
-	const [creator] = await db
-		.select()
-		.from(creators)
-		.where(eq(creators.userId, session.user.id))
-		.limit(1);
-
-	if (!creator) return json({ error: 'Not a creator' }, { status: 403 });
-
+	// We used to 403 if there was no `creators` row for the user, but
+	// that locks admins (and any content uploaded under an admin account)
+	// out of their own analytics — the page would show "No analytics yet"
+	// even when there were published rows. Authorization is already
+	// satisfied by the session check above; the creators row is a profile
+	// / onboarding concept, not the analytics gate. Content rows are
+	// matched against `creatorId = session.user.id`; missing-content cases
+	// fall through to the empty-zero payload at the bottom.
 	const period = url.searchParams.get('period') ?? '30d';
 	const days = PERIOD_DAYS[period] ?? 30;
 	const cutoff = days ? new Date(Date.now() - days * 86_400_000) : null;

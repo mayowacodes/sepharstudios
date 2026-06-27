@@ -80,7 +80,11 @@ export enum ReviewType {
 export enum ReviewResult {
   APPROVED = 'approved',
   REJECTED = 'rejected',
-  NEEDS_REVISION = 'needs_revision'
+  NEEDS_REVISION = 'needs_revision',
+  // Coming Soon — approves the row into status='coming_soon' (publicly
+  // visible on Coming Soon surfaces but not playable). The cron flips
+  // it to live when scheduledPublishAt elapses.
+  APPROVE_COMING_SOON = 'approve_coming_soon'
 }
 
 export interface ContentReview {

@@ -302,6 +302,13 @@ export const mediaLibrary = pgTable('media_library', {
 	assignedAt: timestamp('assigned_at'),
 	assignedBy: text('assigned_by').references(() => user.id, { onDelete: 'set null' }),
 
+	// Admin metadata-editor audit. updatedAt records WHEN the row last
+	// changed; editedBy/editedAt records WHO when the change came from
+	// the admin /api/admin/content/[id] PATCH endpoint (creator edits
+	// don't stamp these — the creator owns the row anyway).
+	editedBy: text('edited_by').references(() => user.id, { onDelete: 'set null' }),
+	editedAt: timestamp('edited_at'),
+
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -1331,4 +1338,40 @@ export const aiCallLog = pgTable('ai_call_log', {
 }, (t) => ({
 	userIdx: index('ai_call_log_user_idx').on(t.userId, t.createdAt),
 	surfaceIdx: index('ai_call_log_surface_idx').on(t.surface)
+}));
+
+// Creator earnings ledger — one row per monetizable engagement event on
+// a creator's content. The KPI on /creator (Creator Studio "This Month"
+// $X.XX) sums `amount_cents` over the current calendar month, scoped to
+// `creator_id = me`. Distinct from `transactions` which tracks viewer-
+// side STC rewards keyed by `user_id = viewer`. See
+// `lib/server/earnings-config.ts` for how `amount_cents` is computed.
+export const creatorEarnings = pgTable('creator_earnings', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text('creator_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	contentId: text('content_id').notNull(),
+	viewerId: text('viewer_id').references(() => user.id, { onDelete: 'set null' }),
+	amountCents: integer('amount_cents').notNull(),
+	completionPercent: integer('completion_percent').notNull(),
+	engagementQuality: varchar('engagement_quality', { length: 20 }),
+	engagementMultiplier: integer('engagement_multiplier_x100').notNull(), // stored ×100 to stay integer
+	source: varchar('source', { length: 40 }).notNull(),                     // 'watch_complete' | 'tip' | 'sponsorship'
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	creatorMonthIdx: index('creator_earnings_creator_month_idx').on(t.creatorId, t.createdAt),
+	contentIdx: index('creator_earnings_content_idx').on(t.contentId)
+}));
+
+// Per-title "Notify me" list for Coming Soon releases. One row per
+// (user, content) pair. The scheduled-publish cron reads these on
+// flip-to-live and dispatches a notification, then stamps notified_at
+// so re-runs don't re-notify. See drizzle/0040_coming_soon.sql.
+export const comingSoonSubscriptions = pgTable('coming_soon_subscriptions', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	notifiedAt: timestamp('notified_at')
+}, (t) => ({
+	contentPendingIdx: index('css_content_pending_idx').on(t.contentId)
 }));

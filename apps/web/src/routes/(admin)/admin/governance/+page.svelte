@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import GovernanceStatusCard from '$lib/components/admin/governance/GovernanceStatusCard.svelte';
 	import { Landmark } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
+	import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
 	type StatusResponse = {
 		policyMode: string;
@@ -36,12 +37,18 @@
 	<title>Governance - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={Landmark} title="Governance" subtitle="DAO proposals, treasury, and on-chain controls.">
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero
+		compact
+		eyebrow="DAO"
+		title="Governance"
+		subtitle="DAO proposals, treasury, and on-chain controls."
+		icon={Landmark}
+	>
 		{#snippet actions()}
-			<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New Proposal</a>
+			<PortalButton href="/admin/governance/create" variant="primary" size="sm">+ New Proposal</PortalButton>
 		{/snippet}
-	</PageHeader>
+	</PortalHero>
 
 	{#if loading}
 		<div class="grid md:grid-cols-4 gap-4">

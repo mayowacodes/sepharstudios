@@ -43,13 +43,16 @@
       {#each items as item (item.id)}
         <a href="/watch/{item.id}" class="w-36 shrink-0 group space-y-2">
           <div class="aspect-2/3 rounded-lg overflow-hidden bg-white/5 relative">
-            {#if item.thumbnail || item.posterUrl}
-              <img
-                src={item.posterUrl ?? item.thumbnail ?? ''}
-                alt={item.title}
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            {/if}
+            <!-- Prefer the portrait posterUrl over the landscape thumbnail
+                 so the card slot (aspect 2:3) renders the full artwork
+                 instead of a cropped sliver. Falls back to a vertical
+                 placeholder so unposted rows never look like dead gray
+                 boxes. -->
+            <img
+              src={item.posterUrl ?? item.thumbnail ?? '/placeholder-vertical.jpg'}
+              alt={item.title}
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <div class="w-9 h-9 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white">▶</div>
             </div>

@@ -1,6 +1,7 @@
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary, mediaWatchProgress, episodes } from '$lib/db/schema/sepharstudios';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { mediaCardColumns } from '$lib/db/projections';
+import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { attachCatalogProgress } from '$lib/server/catalog-progress';
 
@@ -14,11 +15,13 @@ export const actions: Actions = {};
 
 export const load: PageServerLoad = async ({ locals }) => {
     try {
+        // Accept both wizard literal ('series') and legacy ('show') so the
+        // landing page doesn't miss rows the catalog at /shows now lists.
         const trendingShows = await db.select()
             .from(mediaLibrary)
             .where(
                 and(
-                    eq(mediaLibrary.mediaType, 'show'),
+                    inArray(mediaLibrary.mediaType, ['show', 'series']),
                     eq(mediaLibrary.isActive, true),
                     eq(mediaLibrary.visibility, 'public')
                 )
@@ -26,11 +29,12 @@ export const load: PageServerLoad = async ({ locals }) => {
             .orderBy(desc(mediaLibrary.createdAt))
             .limit(10);
 
+        // Short Film lumped into trending movies — matches /movies coverage.
         const trendingMovies = await db.select()
             .from(mediaLibrary)
             .where(
                 and(
-                    eq(mediaLibrary.mediaType, 'movie'),
+                    inArray(mediaLibrary.mediaType, ['movie', 'short']),
                     eq(mediaLibrary.isActive, true),
                     eq(mediaLibrary.visibility, 'public')
                 )
@@ -142,16 +146,24 @@ export const load: PageServerLoad = async ({ locals }) => {
         // Catalog cards on the home page get the same in-progress
         // overlay as the dedicated /movies + /shows pages so the
         // "you started this" signal stays consistent across the site.
-        const [showsWithProgress, moviesWithProgress] = await Promise.all([
+        // Coming Soon row gets the next 12 across all media types so
+        // the carousel surfaces a representative mix on the landing.
+        const [showsWithProgress, moviesWithProgress, comingSoon] = await Promise.all([
             attachCatalogProgress(trendingShows, session?.user.id),
-            attachCatalogProgress(trendingMovies, session?.user.id)
+            attachCatalogProgress(trendingMovies, session?.user.id),
+            db.select(mediaCardColumns)
+                .from(mediaLibrary)
+                .where(eq(mediaLibrary.status, 'coming_soon'))
+                .orderBy(asc(mediaLibrary.scheduledPublishAt))
+                .limit(12)
         ]);
 
         return {
             shows: showsWithProgress,
             movies: moviesWithProgress,
             documentaries: [],
-            continueWatching
+            continueWatching,
+            comingSoon
         };
     } catch (error) {
         console.error('Homepage load failed, using fallback data:', error);
@@ -159,7 +171,8 @@ export const load: PageServerLoad = async ({ locals }) => {
             shows: [],
             movies: [],
             documentaries: [],
-            continueWatching: []
+            continueWatching: [],
+            comingSoon: []
         };
     }
 };

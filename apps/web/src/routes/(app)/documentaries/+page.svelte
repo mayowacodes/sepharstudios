@@ -1,8 +1,9 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
   import DocumentaryCard from '$lib/components/DocumentaryCard.svelte';
-  import { PlayCircle } from '@lucide/svelte';
-  import { Button } from '$lib/components/ui/button';
+  import FeaturedBillboardPanel from '$lib/components/FeaturedBillboardPanel.svelte';
+  import ComingSoonRow from '$lib/components/sections/ComingSoonRow.svelte';
 
   const { data } = $props();
 
@@ -27,13 +28,34 @@
   // Use runes for state instead of writable
   let selectedCategory = $state<string | null>(null);
   let selectedTopic = $state<string | null>(null);
+  // Mirror the "Continue watching" toggle to the URL so it survives
+  // reload + becomes shareable. See /movies for the same pattern.
+  let onlyInProgress = $state(page.url.searchParams.get('inProgress') === '1');
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (onlyInProgress) url.searchParams.set('inProgress', '1');
+    else url.searchParams.delete('inProgress');
+    replaceState(url, page.state);
+  });
+
+  const hasAnyProgress = $derived(
+    allDocumentaries.some((d: any) =>
+      typeof d.progressPercent === 'number'
+        && d.progressPercent > 0
+        && d.progressPercent < 95
+    )
+  );
 
   // Derived store for filtered documentaries
   let filteredDocumentaries = $derived(
     allDocumentaries.filter((doc: any) => {
       const categoryMatch = !selectedCategory || doc.genres?.includes(selectedCategory);
       const topicMatch = !selectedTopic || doc.topics?.includes(selectedTopic);
-      return categoryMatch && topicMatch;
+      const progressMatch = !onlyInProgress
+        || (typeof doc.progressPercent === 'number' && doc.progressPercent > 0 && doc.progressPercent < 95);
+      return categoryMatch && topicMatch && progressMatch;
     })
   );
 
@@ -78,41 +100,10 @@
     </section>
 
     {#if featuredDocumentary}
-      <section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 surface-glass">
-        <img
-          src={featuredDocumentary.backdropUrl || featuredDocumentary.thumbnail}
-          alt={featuredDocumentary.title}
-          class="absolute inset-0 h-full w-full object-cover opacity-40"
-        />
-        <div class="absolute inset-0 veil-strong"></div>
-        <div class="relative z-10 grid gap-6 p-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div class="space-y-4">
-            <div class="inline-flex items-center gap-2 rounded-full border border-[#FFBF00]/30 bg-[#FFBF00]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#FFBF00]">
-              <span class="h-2 w-2 rounded-full bg-[#FFBF00] shadow-[0_0_12px_rgba(255,191,0,0.6)]"></span>
-              Just Added
-            </div>
-            <h2 class="text-4xl sm:text-5xl font-extrabold text-display">{featuredDocumentary.title}</h2>
-            <p class="text-white/70 line-clamp-3 max-w-xl">{featuredDocumentary.description}</p>
-            <div class="flex flex-wrap gap-3 text-sm text-white/60">
-              {#if featuredDocumentary.year}<span>{featuredDocumentary.year}</span>{/if}
-              {#if featuredDocumentary.duration}<span>{featuredDocumentary.duration}</span>{/if}
-              {#if featuredDocumentary.quality}<span>{featuredDocumentary.quality}</span>{/if}
-            </div>
-            <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredDocumentary.slug || featuredDocumentary.id}">
-                <PlayCircle class="mr-2 h-5 w-5" />
-                Watch Now
-              </Button>
-            </div>
-          </div>
-          <div class="hidden lg:block">
-            <div class="h-full w-full rounded-2xl overflow-hidden border border-[#FFBF00]/40 halo-ring">
-              <img src={featuredDocumentary.thumbnail} alt={featuredDocumentary.title} class="h-full w-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </section>
+      <FeaturedBillboardPanel featured={featuredDocumentary} label="Just Added" />
     {/if}
+
+    <ComingSoonRow items={(data.comingSoon ?? []) as any[]} />
 
     {#if user}
       <p class="text-center text-white/70 font-semibold mb-6">Welcome, {user.name}!</p>
@@ -135,8 +126,8 @@
 
       <div class="w-full md:w-1/3">
         <label for="topic" class="block text-lg font-semibold mb-2 text-white/80">Filter by Topic</label>
-        <select 
-          id="topic" 
+        <select
+          id="topic"
           bind:value={selectedTopic}
           class="w-full p-3 rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
@@ -146,6 +137,20 @@
           {/each}
         </select>
       </div>
+      {#if hasAnyProgress}
+        <div class="w-full md:w-auto flex md:items-end">
+          <button
+            type="button"
+            onclick={() => (onlyInProgress = !onlyInProgress)}
+            class="w-full md:w-auto px-4 py-3 rounded-xl border text-sm font-semibold transition-colors {onlyInProgress
+              ? 'border-[#FF5E0E] bg-[#FF5E0E]/20 text-white shadow-[0_0_18px_rgba(255,94,14,0.35)]'
+              : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}"
+            aria-pressed={onlyInProgress}
+          >
+            {onlyInProgress ? 'Showing in progress' : 'Continue watching'}
+          </button>
+        </div>
+      {/if}
     </div>
 
     {#if selectedCategory || selectedTopic}

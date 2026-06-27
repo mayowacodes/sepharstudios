@@ -1,7 +1,7 @@
 <!-- Creator Newsletter -->
 <script lang="ts">
   import { Mail } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let email = $state('');
   let isSubscribed = $state(false);
@@ -65,8 +65,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Mail} title="Creator Newsletter" subtitle="Stay informed with the latest updates, tips, and opportunities." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">
+  <PortalHero compact eyebrow="Updates" title="Creator newsletter" subtitle="Stay informed with the latest updates, tips, and opportunities." icon={Mail} />
 
   {#if !isSubscribed}
     <!-- Newsletter Signup -->

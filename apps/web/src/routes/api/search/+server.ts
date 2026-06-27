@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { searchMedia, isMeiliConfigured } from '$lib/server/meilisearch';
+import { attachCatalogProgress } from '$lib/server/catalog-progress';
 
 /**
  * GET /api/search?q=&limit=&offset=&genre=&mediaType=&ageRating=
@@ -11,7 +12,7 @@ import { searchMedia, isMeiliConfigured } from '$lib/server/meilisearch';
  * search page handles that by routing the query to /api/ai/search.
  */
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
 	const q = url.searchParams.get('q')?.trim() ?? '';
 	if (!q) return json({ results: [], q: '', source: 'meili' });
 
@@ -70,7 +71,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			};
 		});
 
-		return json({ results, q, source: 'meili', count: results.length });
+		// Attach the in-progress overlay so search cards render the
+		// same orange progress strip catalog cards do. The helper is
+		// safe to call without a userId (anonymous viewers get the
+		// rows back unchanged via early-return).
+		const session = await locals.auth.getSession();
+		const enriched = await attachCatalogProgress(results, session?.user.id);
+
+		return json({ results: enriched, q, source: 'meili', count: enriched.length });
 	} catch (err) {
 		console.error('[search] meili query failed:', err);
 		return json({ error: 'Search service is temporarily unavailable.' }, { status: 502 });

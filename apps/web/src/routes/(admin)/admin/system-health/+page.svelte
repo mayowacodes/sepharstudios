@@ -2,7 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Activity, RefreshCw, X, CheckCircle2, AlertTriangle, Database, Box, Cloud, Search, Server } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
@@ -178,23 +179,21 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-6xl space-y-8">
-  <PageHeader
-    icon={Activity}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-8">
+  <PortalHero
+    compact
+    eyebrow="Infrastructure"
     title="System health"
     subtitle={lastRefresh ? `Last refresh ${lastRefresh.toLocaleTimeString()}` : 'Live monitor of infrastructure + encoder jobs.'}
+    icon={Activity}
   >
     {#snippet actions()}
-      <button
-        type="button"
-        onclick={() => { void loadHealth(); void loadJobs(); }}
-        class="px-3 py-1.5 rounded surface-2 text-foreground text-xs inline-flex items-center gap-1"
-      >
+      <PortalButton variant="secondary" size="sm" onclick={() => { void loadHealth(); void loadJobs(); }}>
         <RefreshCw class="w-3.5 h-3.5" />
         Refresh now
-      </button>
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   {#if loadingHealth && !health}
     <div class="text-center text-muted-foreground py-12">Checking…</div>

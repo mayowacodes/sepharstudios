@@ -2,7 +2,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { MessagesSquare, Plus } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
   interface ThreadRow {
     id: string;
@@ -95,14 +96,20 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={MessagesSquare} title="Community Forum" subtitle="Connect, learn, and grow with fellow faith-based creators.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Community"
+    title="Forum"
+    subtitle="Connect, learn, and grow with fellow faith-based creators."
+    icon={MessagesSquare}
+  >
     {#snippet actions()}
-      <button type="button" onclick={() => goto('/creator/forum/new')} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
-        <Plus class="w-3 h-3" /> New discussion
-      </button>
+      <PortalButton variant="primary" size="sm" onclick={() => goto('/creator/forum/new')}>
+        <Plus class="w-3.5 h-3.5" /> New discussion
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Sidebar -->

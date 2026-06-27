@@ -1,7 +1,7 @@
 <script lang="ts">
 	import GuardrailValidator from '$lib/components/admin/governance/GuardrailValidator.svelte';
 	import { FilePlus2 } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
 	let title = $state('');
 	let description = $state('');
@@ -74,8 +74,8 @@
 	<title>Create Governance Proposal - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 max-w-3xl space-y-4">
-	<PageHeader icon={FilePlus2} title="Create Proposal" subtitle="Draft a new governance proposal for the DAO." />
+<div class="mx-auto px-4 py-8 max-w-4xl space-y-4">
+	<PortalHero compact eyebrow="DAO" title="Create proposal" subtitle="Draft a new governance proposal for the DAO." icon={FilePlus2} />
 
 	<div class="rounded-xl border border-border/40 surface-1 p-5 space-y-4">
 		<div>

@@ -4,8 +4,9 @@
   import { goto } from '$app/navigation';
   import { ContentStatus, ContentType } from '$lib/types/creator';
   import { Video, Clock, CheckCircle2, XCircle, FileText } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
-  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalKpi from '$lib/components/portal/PortalKpi.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   
   // Content management data
   let allContent = $state<any[]>([]);
@@ -359,21 +360,24 @@
     void goto(`/admin/review/${id}`);
   }
 
-  async function deleteContent(id: string) {
-    if (!confirm('Are you sure you want to delete this content? This action cannot be undone.')) return;
-    // Optimistic UI — pull from local state immediately, then call the
-    // server DELETE. If the server rejects, restore the row and toast.
+  // Row-level Archive — soft-archive only. Hard delete lives on the
+  // detail page (/admin/review/[id]) where it can be confirmed against
+  // the full title context and the encoder/PPV state. From the queue
+  // surface, accidentally permanent-deleting the wrong row would be a
+  // disaster, so this stays reversible.
+  async function archiveContent(id: string) {
+    if (!confirm('Archive this content? Viewers won\'t see it; you can restore it from this list.')) return;
     const previous = allContent;
     allContent = allContent.filter((c) => c.id !== id);
     try {
       const res = await fetch(`/api/admin/content/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Delete failed (HTTP ${res.status})`);
+        throw new Error(body.error ?? `Archive failed (HTTP ${res.status})`);
       }
     } catch (err) {
       allContent = previous;
-      alert(`Delete failed: ${err instanceof Error ? err.message : 'unknown'}`);
+      alert(`Archive failed: ${err instanceof Error ? err.message : 'unknown'}`);
     }
   }
   
@@ -385,18 +389,57 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-4 space-y-6">
-  <PageHeader
+<style>
+  /* When a KPI tile is the active quick-filter, ring it with the
+     portal accent so the admin can see at a glance which slice of
+     the library they're viewing. The :global() target reaches into
+     the inner PortalCard rendered by PortalKpi. */
+  .is-active :global([data-slot='portal-card']) {
+    box-shadow: 0 0 0 1px hsl(var(--portal-accent) / 0.55), 0 0 24px hsl(var(--portal-accent) / 0.18);
+    border-color: hsl(var(--portal-accent) / 0.55) !important;
+  }
+  .content-card {
+    outline: none;
+  }
+  .content-card:focus-visible {
+    outline: 2px solid hsl(var(--portal-accent));
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="mx-auto px-4 py-4 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Library"
+    title="Content management"
+    subtitle="Every submission, published title, and archived row in one place."
     icon={Video}
-    title="Content Management"
-    subtitle="Manage all submitted content across the platform."
   />
 
+  <!--
+    KPI tiles act as quick-filters for the table below. Clicking
+    "Pending Review" snaps selectedStatus to SUBMITTED; clicking
+    "Total Content" clears the filter back to 'all'. The active tile
+    gets a portal-accent ring so the admin sees which filter is on.
+  -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <KpiCard label="Pending Review" value={allContent.filter(c => c.status === ContentStatus.SUBMITTED).length} icon={Clock} accent="blue" variant="compact" index={0} />
-    <KpiCard label="Published" value={allContent.filter(c => c.status === ContentStatus.PUBLISHED).length} icon={CheckCircle2} accent="green" variant="compact" index={1} />
-    <KpiCard label="Rejected" value={allContent.filter(c => c.status === ContentStatus.REJECTED).length} icon={XCircle} accent="red" variant="compact" index={2} />
-    <KpiCard label="Total Content" value={allContent.length} icon={FileText} accent="purple" variant="compact" index={3} />
+    {#each [
+      { label: 'Pending Review', value: allContent.filter(c => c.status === ContentStatus.SUBMITTED).length, icon: Clock, filter: ContentStatus.SUBMITTED },
+      { label: 'Published', value: allContent.filter(c => c.status === ContentStatus.PUBLISHED).length, icon: CheckCircle2, filter: ContentStatus.PUBLISHED },
+      { label: 'Rejected', value: allContent.filter(c => c.status === ContentStatus.REJECTED).length, icon: XCircle, filter: ContentStatus.REJECTED },
+      { label: 'Total Content', value: allContent.length, icon: FileText, filter: 'all' }
+    ] as kpi (kpi.label)}
+      <button
+        type="button"
+        onclick={() => { selectedStatus = kpi.filter; currentPage = 1; }}
+        class="text-left block w-full rounded-2xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--portal-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--portal-bg-base))]"
+        class:is-active={selectedStatus === kpi.filter}
+        aria-pressed={selectedStatus === kpi.filter}
+        aria-label={`Filter by ${kpi.label}`}
+      >
+        <PortalKpi label={kpi.label} value={kpi.value} icon={kpi.icon} />
+      </button>
+    {/each}
   </div>
 
   <!-- Filters and Controls -->
@@ -513,37 +556,51 @@
       <p class="text-foreground ml-4">Loading content...</p>
     </div>
   {:else if filteredContent.length === 0}
-    <!-- Empty State -->
-    <div class="text-center py-12">
-      <div class="text-6xl mb-4">📚</div>
-      <h3 class="text-xl font-bold text-foreground mb-2">No Content Found</h3>
-      <p class="text-muted-foreground">Try adjusting your filters or search terms.</p>
-    </div>
+    <PortalEmptyState
+      icon={FileText}
+      title="No content found"
+      description="Try widening the status, type, or search term — the library updates the moment a creator submits."
+    />
   {:else}
     <!-- Content Grid/List -->
     {#if viewMode === 'grid'}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {#each filteredContent as content}
-          <div class="surface-2 backdrop-blur-sm rounded-xl overflow-hidden hover:surface-3 transition-all">
+          <!--
+            Card-level click navigates to the review/edit page. The
+            checkbox + per-row action buttons live inside the card and
+            stop propagation on their own click handlers so they keep
+            working as discrete controls. Enter/Space on the card act
+            like a click for keyboard users.
+          -->
+          <div
+            class="content-card surface-2 backdrop-blur-sm rounded-xl overflow-hidden hover:surface-3 transition-all cursor-pointer focus-within:ring-2 focus-within:ring-[hsl(var(--portal-accent))]"
+            role="button"
+            tabindex="0"
+            aria-label={`Review ${content.title}`}
+            onclick={() => reviewContent(content.id)}
+            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reviewContent(content.id); } }}
+          >
             <!-- Selection Checkbox -->
             <div class="p-4 pb-0">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={selectedContent.includes(content.id)}
+                onclick={(e) => e.stopPropagation()}
                 onchange={(e) => { selectContent(content.id, e); return (e.target as HTMLInputElement).checked; }}
                 class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
               />
             </div>
-            
+
             <!-- Thumbnail -->
             <div class="px-4">
-              <img 
-                src={content.thumbnailUrl} 
+              <img
+                src={content.thumbnailUrl}
                 alt={content.title}
                 class="w-full h-32 object-cover rounded-lg"
               />
             </div>
-            
+
             <!-- Content Info -->
             <div class="p-4">
               <div class="flex items-start justify-between mb-2">
@@ -552,15 +609,15 @@
                   {content.priority?.toUpperCase()}
                 </span>
               </div>
-              
+
               <p class="text-foreground/80 text-xs mb-3 line-clamp-2">{content.description}</p>
-              
+
               <!-- Status & Metadata -->
               <div class="space-y-2 mb-3">
                 <span class={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(content.status)}`}>
                   {content.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                 </span>
-                
+
                 <div class="text-xs text-muted-foreground space-y-1">
                   <div>By: {content.creatorName}</div>
                   <div>{content.duration}min • {content.fileSize}</div>
@@ -570,18 +627,20 @@
                   {/if}
                 </div>
               </div>
-              
-              <!-- Actions -->
+
+              <!-- Actions — each handler calls stopPropagation so the
+                   button's intent (Publish / Edit) wins over the
+                   card's "open review" intent. -->
               <div class="flex gap-2">
                 <button
-                  onclick={() => reviewContent(content.id)}
+                  onclick={(e) => { e.stopPropagation(); reviewContent(content.id); }}
                   class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                 >
                   Review
                 </button>
                 {#if !content.isActive}
                   <button
-                    onclick={() => publishContent(content.id)}
+                    onclick={(e) => { e.stopPropagation(); publishContent(content.id); }}
                     disabled={publishing === content.id}
                     class="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                   >
@@ -589,7 +648,7 @@
                   </button>
                 {:else}
                   <button
-                    onclick={() => editContent(content.id)}
+                    onclick={(e) => { e.stopPropagation(); editContent(content.id); }}
                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                   >
                     Edit
@@ -602,12 +661,12 @@
                   <span class="text-xs bg-amber-600/20 text-amber-400 border border-amber-600/30 px-2 py-1 rounded">
                     PPV ${(content.ppvPriceCents / 100).toFixed(2)}
                   </span>
-                  <button onclick={() => openRegionModal(content.id)} class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 px-2 py-1 rounded transition-colors">
+                  <button onclick={(e) => { e.stopPropagation(); openRegionModal(content.id); }} class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 px-2 py-1 rounded transition-colors">
                     Region prices
                   </button>
-                  <button onclick={() => removePpv(content.id)} class="text-xs text-red-400 hover:text-red-300 px-2 py-1">Remove PPV</button>
+                  <button onclick={(e) => { e.stopPropagation(); removePpv(content.id); }} class="text-xs text-red-400 hover:text-red-300 px-2 py-1">Remove PPV</button>
                 {:else}
-                  <button onclick={() => openPpvModal(content.id)} class="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30 px-2 py-1 rounded transition-colors">
+                  <button onclick={(e) => { e.stopPropagation(); openPpvModal(content.id); }} class="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30 px-2 py-1 rounded transition-colors">
                     + Set PPV Price
                   </button>
                 {/if}
@@ -645,12 +704,20 @@
         <!-- Table Rows -->
         <div class="divide-y divide-gray-700">
           {#each filteredContent as content}
-            <div class="p-4 hover:surface-1 transition-colors">
+            <div
+              class="p-4 hover:surface-1 transition-colors cursor-pointer"
+              role="button"
+              tabindex="0"
+              aria-label={`Review ${content.title}`}
+              onclick={() => reviewContent(content.id)}
+              onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reviewContent(content.id); } }}
+            >
               <div class="flex items-center">
-                <input 
-                  type="checkbox" 
-checked={selectedContent.includes(content.id)}
-                onchange={(e) => { selectContent(content.id, e); return (e.target as HTMLInputElement).checked; }}
+                <input
+                  type="checkbox"
+                  checked={selectedContent.includes(content.id)}
+                  onclick={(e) => e.stopPropagation()}
+                  onchange={(e) => { selectContent(content.id, e); return (e.target as HTMLInputElement).checked; }}
                   class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 mr-4"
                 />
                 <div class="flex-1 grid grid-cols-12 gap-4 items-center">
@@ -697,29 +764,30 @@ checked={selectedContent.includes(content.id)}
                     </span>
                   </div>
                   
-                  <!-- Actions -->
+                  <!-- Actions — stopPropagation so action buttons keep
+                       their distinct intent against the row-level click. -->
                   <div class="col-span-1">
                     <div class="flex space-x-2">
-                      <button 
-                        onclick={() => reviewContent(content.id)}
+                      <button
+                        onclick={(e) => { e.stopPropagation(); reviewContent(content.id); }}
                         class="text-red-400 hover:text-red-300 text-sm"
                         title="Review"
                       >
                         👁️
                       </button>
-                      <button 
-                        onclick={() => editContent(content.id)}
+                      <button
+                        onclick={(e) => { e.stopPropagation(); editContent(content.id); }}
                         class="text-blue-400 hover:text-blue-300 text-sm"
                         title="Edit"
                       >
                         ✏️
                       </button>
-                      <button 
-                        onclick={() => deleteContent(content.id)}
-                        class="text-red-400 hover:text-red-300 text-sm"
-                        title="Delete"
+                      <button
+                        onclick={(e) => { e.stopPropagation(); archiveContent(content.id); }}
+                        class="text-yellow-400 hover:text-yellow-300 text-sm"
+                        title="Archive (reversible). Permanent delete lives on the review page."
                       >
-                        🗑️
+                        📦
                       </button>
                     </div>
                   </div>

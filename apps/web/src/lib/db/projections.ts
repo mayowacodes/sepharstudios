@@ -15,8 +15,19 @@ export const mediaCardColumns = {
 	description: mediaLibrary.description,
 	thumbnail: mediaLibrary.thumbnail,
 	posterUrl: mediaLibrary.posterUrl,
+	// Landscape poster (16:9). Consumed by ContinueWatchingRow + any
+	// future landscape-card row before falling back to backdropUrl
+	// (which is huge HD and meant for hero panels, not card slots).
+	posterLandscapeUrl: mediaLibrary.posterLandscapeUrl,
+	// Square poster (1:1). Reserved for compact mobile + square
+	// carousel layouts. Not yet rendered on a card surface.
+	posterSquareUrl: mediaLibrary.posterSquareUrl,
 	backdropUrl: mediaLibrary.backdropUrl,
 	trailerUrl: mediaLibrary.trailerUrl,
+	// Transparent PNG title treatment. Renders in place of the
+	// plain-text H1 / H2 on FeaturedBillboardPanel + MediaDetailPage
+	// so the hero reads as a branded title logo, not system font.
+	logoTitleUrl: mediaLibrary.logoTitleUrl,
 	link: mediaLibrary.link,
 	slug: mediaLibrary.slug,
 	mediaType: mediaLibrary.mediaType,
@@ -37,5 +48,10 @@ export const mediaCardColumns = {
 	voteAverage: mediaLibrary.voteAverage,
 	voteCount: mediaLibrary.voteCount,
 	popularity: mediaLibrary.popularity,
-	createdAt: mediaLibrary.createdAt
+	createdAt: mediaLibrary.createdAt,
+	// Powers the Coming Soon "Releases [date]" badge + the dedicated
+	// /coming-soon page's monthly grouping. Null on already-published
+	// rows; only meaningful when status='coming_soon' or 'approved'.
+	scheduledPublishAt: mediaLibrary.scheduledPublishAt,
+	status: mediaLibrary.status
 } as const;

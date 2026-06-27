@@ -19,8 +19,22 @@ export async function getRecommendations(userId: string, profileId: string | nul
 
 	const watchedIds = history.map((h) => h.contentId);
 
+	// Pull poster + thumbnail too — the Recommendations card on the
+	// dashboard reads `posterUrl ?? thumbnail` for its artwork. Without
+	// these columns in the projection, every card rendered as an empty
+	// gray box because the {#if posterUrl || thumbnail} guard failed.
 	const candidates = await db
-		.select({ id: mediaLibrary.id, title: mediaLibrary.title, genres: mediaLibrary.genres, topics: mediaLibrary.topics, mediaType: mediaLibrary.mediaType, category: mediaLibrary.category, ageRating: mediaLibrary.ageRating })
+		.select({
+			id: mediaLibrary.id,
+			title: mediaLibrary.title,
+			genres: mediaLibrary.genres,
+			topics: mediaLibrary.topics,
+			mediaType: mediaLibrary.mediaType,
+			category: mediaLibrary.category,
+			ageRating: mediaLibrary.ageRating,
+			thumbnail: mediaLibrary.thumbnail,
+			posterUrl: mediaLibrary.posterUrl
+		})
 		.from(mediaLibrary)
 		.where(eq(mediaLibrary.isActive, true))
 		.limit(50);

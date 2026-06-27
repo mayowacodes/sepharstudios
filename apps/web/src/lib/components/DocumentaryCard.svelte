@@ -3,6 +3,7 @@
   import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { myList } from '$lib/stores/myList';
+  import { isRecentlyAdded } from '$lib/utils/recency';
 
   let { documentary, onClick = () => {}, onHover = () => {} }: { documentary: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
 
@@ -67,7 +68,7 @@
       ></video>
     {:else}
       <img
-        src={documentary.thumbnail || '/placeholder-vertical.jpg'}
+        src={documentary.posterUrl || documentary.poster_url || documentary.thumbnail || '/placeholder-vertical.jpg'}
         alt=""
         width="280"
         height="420"
@@ -89,7 +90,11 @@
 
   {#if documentary.isNew}
     <div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">
-      New Episode
+      New Documentary
+    </div>
+  {:else if isRecentlyAdded(documentary.createdAt)}
+    <div class="absolute top-2 left-2 bg-[#FF5E0E] text-white text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full z-30 shadow">
+      Just added
     </div>
   {/if}
 

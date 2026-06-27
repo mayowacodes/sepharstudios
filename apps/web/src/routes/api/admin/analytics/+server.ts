@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
-import { mediaLibrary, transactions } from '$lib/db/schema/sepharstudios';
+import { mediaLibrary, transactions, mediaWatchProgress } from '$lib/db/schema/sepharstudios';
 import { user } from '$lib/db/schema';
 import { and, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/admin-auth';
@@ -206,6 +206,22 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		content: pct(sum(seriesContent), Number(priorContent?.count ?? 0))
 	};
 
+	// "Views today" — number of distinct watch rows updated since midnight.
+	// Uses updatedAt (not watchedAt) so a session that started yesterday
+	// and continued today still counts. Falls back to 0 on query error.
+	const startOfToday = new Date();
+	startOfToday.setHours(0, 0, 0, 0);
+	let viewsTodayCount = 0;
+	try {
+		const [row] = await db
+			.select({ c: sql<number>`count(*)` })
+			.from(mediaWatchProgress)
+			.where(gte(mediaWatchProgress.updatedAt, startOfToday));
+		viewsTodayCount = Number(row?.c ?? 0);
+	} catch (err) {
+		console.warn('[admin/analytics] viewsToday query failed', err);
+	}
+
 	return json({
 		platformMetrics: {
 			totalUsers: Number(usersAgg?.totalUsers ?? 0),
@@ -215,7 +231,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			totalRevenue: Number(revenueAgg?.totalRevenue ?? 0),
 			newUsersToday: Number(usersAgg?.newUsers ?? 0),
 			contentPublishedToday: Number(contentAgg?.publishedToday ?? 0),
-			viewsToday: 0
+			viewsToday: viewsTodayCount
 		},
 		series: {
 			users: seriesUsers,

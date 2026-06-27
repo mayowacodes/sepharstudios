@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
   import MovieCard from '$lib/components/MovieCard.svelte';
+  import FeaturedBillboardPanel from '$lib/components/FeaturedBillboardPanel.svelte';
+  import ComingSoonRow from '$lib/components/sections/ComingSoonRow.svelte';
   import { writable } from 'svelte/store';
-  import { PlayCircle } from '@lucide/svelte';
-  import { Button } from '$lib/components/ui/button';
   import type { MediaItem } from '$lib/types/media';
 
   const { data } = $props();
@@ -11,7 +12,20 @@
   // Use movies from server data, fallback to empty array
   let allMovies = $derived((data.movies || []) as MediaItem[]);
 
+  // "Just Added" billboard picker. We sort by *upload recency*
+  // (createdAt), not release_date / year — "just added" reflects when
+  // the row landed in the catalog, not when the film originally came
+  // out. With the old release_date path, rows without a release_date
+  // (e.g. fresh short uploads like the intro video) tied at 0 with
+  // every other no-date row and the sort got unstable, sometimes
+  // surfacing the intro instead of an actual new movie.
   const getNewestTimestamp = (item: any) => {
+    if (item?.createdAt) {
+      const t = item.createdAt instanceof Date
+        ? item.createdAt.getTime()
+        : Date.parse(item.createdAt);
+      if (!Number.isNaN(t)) return t;
+    }
     if (item?.release_date) {
       const parsed = Date.parse(item.release_date);
       if (!Number.isNaN(parsed)) return parsed;
@@ -22,19 +36,57 @@
     }
     return 0;
   };
+  // Prefer rows that are clearly "movies" (mediaType==='movie' OR have
+  // a portrait posterUrl). Shorts and AI intros without a poster lose
+  // the tiebreak so the billboard surfaces a real, posterable title.
   const featuredMovie = $derived.by(() => {
     if (!allMovies?.length) return null;
-    return [...allMovies].sort((a, b) => getNewestTimestamp(b) - getNewestTimestamp(a))[0];
+    const ranked = [...allMovies].sort((a: any, b: any) => {
+      const aPoster = !!(a.posterUrl || a.poster_url);
+      const bPoster = !!(b.posterUrl || b.poster_url);
+      if (aPoster !== bPoster) return aPoster ? -1 : 1;
+      return getNewestTimestamp(b) - getNewestTimestamp(a);
+    });
+    return ranked[0];
   });
 
   // Create writable store for category selection
   let selectedCategory = writable<string | null>(null);
 
+  // "Continue watching" filter — when true, only show titles the
+  // current viewer has unfinished progress on (signal driven by the
+  // `progressPercent` overlay attached by the server load). Lives
+  // alongside the category filter so the two stack: a viewer can
+  // ask for "all Drama I've started" via the combination.
+  //
+  // Filter state is mirrored to the URL (`?inProgress=1`) so it
+  // survives reload, shows up in browser history, and becomes
+  // shareable — "here's the list of stuff I haven't finished" is a
+  // legit Slack / iMessage link to send to yourself.
+  let onlyInProgress = $state(page.url.searchParams.get('inProgress') === '1');
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (onlyInProgress) url.searchParams.set('inProgress', '1');
+    else url.searchParams.delete('inProgress');
+    // replaceState avoids dirtying the back stack with every toggle.
+    // The {} second arg is required by SvelteKit's typed signature.
+    replaceState(url, page.state);
+  });
+
+  // True when ANY card has an in-progress overlay — drives whether
+  // the filter chip appears at all. No reason to surface an empty
+  // toggle to anonymous viewers / brand-new accounts.
+  const hasAnyProgress = $derived(allMovies.some((m) => typeof m.progressPercent === 'number' && m.progressPercent > 0 && m.progressPercent < 95));
+
   // Derived store for filtered movies
   let filteredMovies = $derived(
-    allMovies.filter(movie => 
-      !$selectedCategory || movie.genres?.includes($selectedCategory)
-    )
+    allMovies.filter(movie => {
+      if ($selectedCategory && !movie.genres?.includes($selectedCategory)) return false;
+      if (onlyInProgress && !(typeof movie.progressPercent === 'number' && movie.progressPercent > 0 && movie.progressPercent < 95)) return false;
+      return true;
+    })
   );
 
   // Categories derived from all available movies
@@ -66,72 +118,20 @@
     </section>
 
     {#if featuredMovie}
-      <section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 surface-glass">
-        <img
-          src={featuredMovie.backdropUrl || featuredMovie.thumbnail}
-          alt={featuredMovie.title}
-          class="absolute inset-0 h-full w-full object-cover opacity-40"
-        />
-        <div class="absolute inset-0 veil-strong"></div>
-        <div class="relative z-10 grid gap-6 p-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div class="space-y-4">
-            <div class="inline-flex items-center gap-2 rounded-full border border-[#FFBF00]/30 bg-[#FFBF00]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#FFBF00]">
-              <span class="h-2 w-2 rounded-full bg-[#FFBF00] shadow-[0_0_12px_rgba(255,191,0,0.6)]"></span>
-              Just Added
-            </div>
-            <h2 class="text-4xl sm:text-5xl font-extrabold text-display">{featuredMovie.title}</h2>
-            <p class="text-white/70 line-clamp-3 max-w-xl">{featuredMovie.description}</p>
-            <div class="flex flex-wrap gap-3 text-sm text-white/60">
-              {#if featuredMovie.year}<span>{featuredMovie.year}</span>{/if}
-              {#if featuredMovie.duration}<span>{featuredMovie.duration}</span>{/if}
-              {#if featuredMovie.quality}<span>{featuredMovie.quality}</span>{/if}
-            </div>
-            <div class="flex flex-wrap gap-3 pt-2">
-              <Button size="lg" class="bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]" href="/watch/{featuredMovie.slug || featuredMovie.id}">
-                <PlayCircle class="mr-2 h-5 w-5" />
-                Watch Now
-              </Button>
-            </div>
-          </div>
-          <div class="hidden lg:block">
-            <div class="h-full w-full rounded-2xl overflow-hidden border border-[#FFBF00]/40 halo-ring relative bg-black">
-              <!-- Featured trailer playback. Muted + looped so the panel
-                   reads as a "vibe" preview rather than a full play; the
-                   real Watch action lives on the Watch Now CTA. Poster is
-                   the thumbnail so the panel still looks good for content
-                   without a trailer. preload="metadata" keeps the page
-                   fast — the browser only fetches enough to seek + start.
-                   playsinline stops iOS from auto-fullscreening. -->
-              {#if featuredMovie.trailerUrl}
-                <!-- svelte-ignore a11y_media_has_caption -->
-                <video
-                  src={featuredMovie.trailerUrl}
-                  poster={featuredMovie.thumbnail ?? undefined}
-                  class="h-full w-full object-cover"
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  preload="metadata"
-                ></video>
-              {:else}
-                <img src={featuredMovie.thumbnail} alt={featuredMovie.title} class="h-full w-full object-cover" />
-              {/if}
-            </div>
-          </div>
-        </div>
-      </section>
+      <FeaturedBillboardPanel featured={featuredMovie} label="Just Added" />
     {/if}
+
+    <ComingSoonRow items={(data.comingSoon ?? []) as any[]} />
 
     {#if user}
       <p class="text-center text-white/70 font-semibold mb-6">Welcome, {user.name}!</p>
     {/if}
 
-    <div class="flex justify-center mb-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-center gap-4 mb-8">
       <div class="w-full md:w-1/3">
         <label for="category" class="block text-lg font-semibold mb-2 text-white/80">Filter by Category</label>
-        <select 
-          id="category" 
+        <select
+          id="category"
           bind:value={$selectedCategory}
           class="w-full p-3 rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
@@ -141,6 +141,22 @@
           {/each}
         </select>
       </div>
+      <!-- "Continue watching" chip — only appears when the viewer
+           actually has progress on at least one title, so brand-new
+           accounts don't see an empty toggle. Tap toggles between the
+           full catalog and "show only what I've started." -->
+      {#if hasAnyProgress}
+        <button
+          type="button"
+          onclick={() => (onlyInProgress = !onlyInProgress)}
+          class="self-start md:self-end px-4 py-3 rounded-xl border text-sm font-semibold transition-colors {onlyInProgress
+            ? 'border-[#FF5E0E] bg-[#FF5E0E]/20 text-white shadow-[0_0_18px_rgba(255,94,14,0.35)]'
+            : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}"
+          aria-pressed={onlyInProgress}
+        >
+          {onlyInProgress ? 'Showing in progress' : 'Continue watching'}
+        </button>
+      {/if}
     </div>
 
     {#if filteredMovies.length === 0}
@@ -156,7 +172,7 @@
     {:else}
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {#each filteredMovies as movie}
-          <MovieCard {movie} onClick={() => {}} />
+          <MovieCard {movie} />
         {/each}
       </div>
     {/if}

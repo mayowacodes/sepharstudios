@@ -103,12 +103,35 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	if (!title) return json({ error: 'Title is required' }, { status: 400 });
 
+	// Coming Soon — creator opted into pre-release. We stash the
+	// release date on `scheduledPublishAt` so the existing cron can
+	// pick it up after admin approval. The presence of
+	// `scheduledPublishAt` on a `status='submitted'` row IS the
+	// signal to the admin reviewer that this is a Coming Soon
+	// request — no separate metadata flag needed. Falls back
+	// gracefully when missing/invalid: the row goes through the
+	// normal submitted path.
+	let scheduledPublishAt: Date | null = null;
+	if (data.comingSoon && data.comingSoonReleaseDate) {
+		const ts = Date.parse(String(data.comingSoonReleaseDate));
+		if (!Number.isNaN(ts)) scheduledPublishAt = new Date(ts);
+	}
+
+	// Audience → category. The wizard's Audience radio (general / kids / teens)
+	// drives the `category` column the kids portal filters on. General leaves
+	// the column NULL so /movies, /shows, /documentaries pick the row up.
+	const category =
+		data.audience === 'kids' ? 'kids'
+		: data.audience === 'teens' ? 'teens'
+		: null;
+
 	try {
 		await db.insert(mediaLibrary).values({
 			id,
 			title,
 			description: data.description,
 			mediaType: data.contentType,
+			category,
 			ageRating: data.ageRating,
 			// 6 asset slots: every asset uploaded in AssetManagementStep maps
 			// 1-to-1 to its own column so creators can later replace any of them
@@ -138,7 +161,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${id.slice(0, 5)}`,
 			link: `/watch/${id}`,
 			videoUrl: data.videoUrl || null,
-			processingStatus: 'not_started'
+			processingStatus: 'not_started',
+			scheduledPublishAt
 		});
 
 		return json({ success: true, contentId: id });

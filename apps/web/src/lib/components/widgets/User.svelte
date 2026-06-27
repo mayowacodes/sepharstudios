@@ -81,10 +81,15 @@
   }
 </script>
 
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 sm:gap-4">
   {#if user}
-    <!-- Search for authenticated users -->
-    <Search />
+    <!-- Search for authenticated users. Hidden below lg because the
+         full-width input fights with the My Studios pill + bell + avatar
+         on phones — viewers on smaller screens use the magnifying-glass
+         icon in the global Header to reach /search instead. -->
+    <div class="hidden lg:block w-full max-w-md">
+      <Search />
+    </div>
 
     <!-- Notifications -->
     <Sheet bind:open={isNotificationOpen}>

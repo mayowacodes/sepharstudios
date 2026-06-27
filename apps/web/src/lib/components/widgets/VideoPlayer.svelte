@@ -181,6 +181,45 @@
     return active;
   });
 
+  // Skip Intro / Skip Credits affordance. We recognise chapters by
+  // their title alone — no schema change required, just a convention
+  // creators follow when chaptering their videos:
+  //   "Intro", "Opening", "Theme" → intro range = [chapter.start, next.start)
+  //   "Credits", "Outro", "End"   → outro range = [chapter.start, duration]
+  // When `currentTime` falls inside an intro or outro range, a
+  // floating Skip button renders in the bottom-right corner. Click
+  // jumps to the end of that range — either the next chapter's start
+  // (intro) or to the end-screen / onEnded (outro). Auto-advance via
+  // 95%-completion still wins if the chapter range starts that late.
+  const SKIP_INTRO_NAMES = /^(intro|opening|theme|opening credits)$/i;
+  const SKIP_OUTRO_NAMES = /^(credits|outro|end|end credits|closing|ending)$/i;
+
+  const skipIntroTarget = $derived.by(() => {
+    if (!chapters || chapters.length === 0) return null;
+    // Look at the current chapter; if it's an intro chapter and we're
+    // still inside it, surface the skip target (next chapter's start,
+    // or current+90s as a fallback when there's no next chapter).
+    const ch = currentChapter;
+    if (!ch || !SKIP_INTRO_NAMES.test(ch.title.trim())) return null;
+    const idx = chapters.findIndex((c) => c.start === ch.start);
+    const next = idx >= 0 ? chapters[idx + 1] : undefined;
+    const target = next ? next.start : ch.start + 90;
+    if (currentTime >= target) return null; // already past it
+    return target;
+  });
+
+  const skipOutroTarget = $derived.by(() => {
+    if (!chapters || chapters.length === 0) return null;
+    const ch = currentChapter;
+    if (!ch || !SKIP_OUTRO_NAMES.test(ch.title.trim())) return null;
+    // Outro skip jumps near the end so the existing end-screen logic
+    // takes over (and the 95% auto-advance fires for TV titles). We
+    // intentionally stop 0.5s before duration to make sure the
+    // `ended` event fires after seek + brief play.
+    if (duration <= 0) return null;
+    return Math.max(0, duration - 0.5);
+  });
+
   function jumpToChapter(start: number) {
     if (videoEl && Number.isFinite(start)) videoEl.currentTime = start;
   }
@@ -490,6 +529,93 @@
     }
   }
 
+  // Picture-in-Picture support. Browser API gives us a floating
+  // mini-player that survives tab switches — useful when the viewer
+  // wants to keep watching while reading something else. Not every
+  // browser surfaces it (Firefox has its own UI; some embedded views
+  // strip it), so we feature-detect and only render the toggle when
+  // the API is available + the current video isn't already disabled
+  // from PiP via `disablePictureInPicture`.
+  let inPip = $state(false);
+  const pipSupported = $derived(
+    typeof document !== 'undefined'
+      && 'pictureInPictureEnabled' in document
+      && (document as Document & { pictureInPictureEnabled?: boolean }).pictureInPictureEnabled === true
+  );
+  async function togglePip(): Promise<void> {
+    if (!videoEl) return;
+    try {
+      const docWithPip = document as Document & {
+        pictureInPictureElement?: Element | null;
+        exitPictureInPicture?: () => Promise<void>;
+      };
+      const elWithPip = videoEl as HTMLVideoElement & {
+        requestPictureInPicture?: () => Promise<PictureInPictureWindow>;
+      };
+      if (docWithPip.pictureInPictureElement) {
+        await docWithPip.exitPictureInPicture?.();
+        inPip = false;
+      } else {
+        await elWithPip.requestPictureInPicture?.();
+        inPip = true;
+      }
+    } catch (err) {
+      console.warn('[VideoPlayer] PiP toggle failed', err);
+    }
+  }
+  // Watch the document's PiP state so we re-sync our flag if the user
+  // closes the PiP window via the browser's own UI rather than our
+  // button — keeps the toggle's visual state honest.
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const onEnter = () => { inPip = true; };
+    const onLeave = () => { inPip = false; };
+    videoEl?.addEventListener('enterpictureinpicture', onEnter);
+    videoEl?.addEventListener('leavepictureinpicture', onLeave);
+    return () => {
+      videoEl?.removeEventListener('enterpictureinpicture', onEnter);
+      videoEl?.removeEventListener('leavepictureinpicture', onLeave);
+    };
+  });
+
+  // Auto-PiP when the player scrolls out of view during playback — so
+  // the viewer can keep watching while they scroll down to read the
+  // description / cast / reviews on the same page. Uses
+  // IntersectionObserver to fire exactly when the player becomes
+  // <10% visible, and only when it's actively playing (we don't pop
+  // out a paused player). The opposite transition is intentionally NOT
+  // handled — we don't slam back to inline when the player scrolls
+  // into view again because some viewers prefer to keep PiP up while
+  // they scroll back. They can close PiP via the button or the native
+  // window's ✕.
+  $effect(() => {
+    if (typeof window === 'undefined' || !containerEl || !pipSupported) return;
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        // Only auto-PiP when the player is mostly out of view AND it's
+        // currently playing AND we're not already in PiP AND we're not
+        // in fullscreen (would conflict). Browsers also bail on
+        // `requestPictureInPicture` outside a user-gesture context —
+        // we silently swallow that since "scroll past while watching"
+        // is a chain of user gestures and Chrome / Edge / Safari all
+        // honour it in practice.
+        if (
+          entry.intersectionRatio < 0.1
+          && playing
+          && !inPip
+          && !fullscreen
+        ) {
+          try { await togglePip(); } catch { /* gesture-context bail; not worth surfacing */ }
+        }
+      },
+      { threshold: [0, 0.1, 0.5, 1] }
+    );
+    observer.observe(containerEl);
+    return () => observer.disconnect();
+  });
+
   function showControls() {
     controlsVisible = true;
     clearTimeout(controlsTimer);
@@ -544,8 +670,21 @@
           window.location.href = nextEpisodeHref;
         }
         break;
+      // `?` (which is Shift+/ on US layouts) opens the shortcut
+      // help overlay. `/` is included so users on layouts without
+      // an easy `?` still get a fast keystroke. The overlay closes
+      // itself on Esc / outside-click / another `?` press.
+      case '?': case '/':
+        e.preventDefault();
+        shortcutsOpen = !shortcutsOpen;
+        break;
     }
   }
+
+  // Keyboard-shortcut help overlay state. Triggered by `?` (also `/`)
+  // and the inline help button in the controls row. Stays open until
+  // Esc, click-outside, or another `?`.
+  let shortcutsOpen = $state(false);
 
   const progressPct = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
   const bufferedPct = $derived(duration > 0 ? (buffered / duration) * 100 : 0);
@@ -712,6 +851,28 @@
     {/each}
   </video>
 
+  <!-- Skip Intro / Skip Credits — floating button in the bottom-right,
+       OUTSIDE the controls fade so viewers can hit it even when the
+       controls are hidden (they're idle, watching, then suddenly the
+       theme kicks in). Only renders when the current chapter matches
+       the naming convention (see SKIP_INTRO_NAMES / SKIP_OUTRO_NAMES). -->
+  {#if skipIntroTarget !== null}
+    <button
+      type="button"
+      onclick={(e) => { e.stopPropagation(); if (videoEl) videoEl.currentTime = skipIntroTarget!; }}
+      class="absolute bottom-20 right-4 z-30 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-black text-sm font-semibold shadow-lg transition-colors backdrop-blur"
+    >
+      Skip Intro
+    </button>
+  {:else if skipOutroTarget !== null}
+    <button
+      type="button"
+      onclick={(e) => { e.stopPropagation(); if (videoEl) videoEl.currentTime = skipOutroTarget!; }}
+      class="absolute bottom-20 right-4 z-30 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-black text-sm font-semibold shadow-lg transition-colors backdrop-blur"
+    >
+      Skip Credits
+    </button>
+  {/if}
 
   <!-- Pre-roll ad chrome. The pre-roll plays from the same <video>; this
        overlay shows the "Ad" badge + countdown + skip button. -->
@@ -1051,6 +1212,33 @@
         >CC</button>
       {/if}
 
+      <!-- Keyboard shortcuts opener — `?` icon next to fullscreen.
+           Press the actual `?` key as the keyboard shortcut, or click
+           this button. -->
+      <button
+        type="button"
+        onclick={() => (shortcutsOpen = true)}
+        aria-label="Show keyboard shortcuts"
+        class="text-white/70 hover:text-[#FF5E0E] transition-colors text-base font-bold"
+      >?</button>
+
+      <!-- Picture-in-Picture toggle — only renders when the browser
+           actually supports the API. Sits next to Fullscreen because
+           it's an alternate "display surface" control. The icon
+           matches the standard PiP glyph (rectangle within rectangle). -->
+      {#if pipSupported}
+        <button
+          onclick={togglePip}
+          aria-label={inPip ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
+          aria-pressed={inPip}
+          class="text-white hover:text-[#FF5E0E] transition-colors"
+        >
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/>
+          </svg>
+        </button>
+      {/if}
+
       <!-- Fullscreen -->
       <button
         onclick={toggleFullscreen}
@@ -1066,6 +1254,66 @@
       </button>
     </div>
   </div>
+
+  <!-- Keyboard shortcut help overlay — opens via the `?` key or the
+       inline help button in the controls. Click anywhere outside the
+       panel or press Esc to close. Lists every shortcut grouped by
+       function so viewers can learn them all at a glance. -->
+  {#if shortcutsOpen}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div
+      class="absolute inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+      onclick={(e) => { e.stopPropagation(); shortcutsOpen = false; }}
+      role="button"
+      tabindex="-1"
+      aria-label="Close shortcuts"
+    >
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div
+        class="max-w-md w-full bg-zinc-900 border border-white/15 rounded-2xl shadow-2xl p-6 text-white"
+        onclick={(e) => e.stopPropagation()}
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        aria-label="Keyboard shortcuts"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold">Keyboard shortcuts</h3>
+          <button
+            type="button"
+            onclick={() => (shortcutsOpen = false)}
+            class="text-white/60 hover:text-white text-sm"
+            aria-label="Close"
+          >Close</button>
+        </div>
+        <dl class="space-y-2.5 text-sm">
+          {#each [
+            { keys: ['Space', 'K'], action: 'Play / pause' },
+            { keys: ['←'], action: 'Back 10 seconds' },
+            { keys: ['→'], action: 'Forward 10 seconds' },
+            { keys: ['↑'], action: 'Volume up' },
+            { keys: ['↓'], action: 'Volume down' },
+            { keys: ['M'], action: 'Mute / unmute' },
+            { keys: ['F'], action: 'Fullscreen' },
+            { keys: ['<', ','], action: 'Previous chapter' },
+            { keys: ['>', '.'], action: 'Next chapter' },
+            { keys: ['N'], action: 'Next episode (TV titles)' },
+            { keys: ['?', '/'], action: 'Show this help' }
+          ] as row (row.action)}
+            <div class="flex items-center justify-between gap-4">
+              <dd class="text-white/80">{row.action}</dd>
+              <dt class="flex items-center gap-1 shrink-0">
+                {#each row.keys as k, i (k)}
+                  {#if i > 0}<span class="text-white/40 text-xs">or</span>{/if}
+                  <kbd class="px-1.5 py-0.5 rounded bg-white/10 border border-white/20 text-xs font-mono">{k}</kbd>
+                {/each}
+              </dt>
+            </div>
+          {/each}
+        </dl>
+      </div>
+    </div>
+  {/if}
 
   <!-- Center play button (shown when paused) -->
   {#if !playing && controlsVisible}

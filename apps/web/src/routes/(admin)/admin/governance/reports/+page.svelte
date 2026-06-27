@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { BarChart3, Download } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
+	import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
 	type ReportData = {
 		generatedAt: string;
@@ -65,14 +66,20 @@
 	<title>Governance Reports - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={BarChart3} title="Governance Reports" subtitle="Voting activity, proposal outcomes, treasury flows.">
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero
+		compact
+		eyebrow="DAO · Reports"
+		title="Governance reports"
+		subtitle="Voting activity, proposal outcomes, treasury flows."
+		icon={BarChart3}
+	>
 		{#snippet actions()}
-			<button class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors disabled:opacity-50" onclick={exportCsv} disabled={!report}>
-				<Download class="w-3 h-3" /> Export CSV
-			</button>
+			<PortalButton variant="secondary" size="sm" onclick={exportCsv} disabled={!report}>
+				<Download class="w-3.5 h-3.5" /> Export CSV
+			</PortalButton>
 		{/snippet}
-	</PageHeader>
+	</PortalHero>
 
 	{#if loading}
 		<p class="text-sm text-muted-foreground">Generating report...</p>

@@ -7,7 +7,7 @@
   import VideoPlayer from '$lib/components/widgets/VideoPlayer.svelte';
   import { COUNTRIES } from '$lib/data/countries';
   import { announce } from '$lib/stores/live-region';
-  import { ArrowLeft, ExternalLink, Archive as ArchiveIcon } from '@lucide/svelte';
+  import { ArrowLeft, ExternalLink, Archive as ArchiveIcon, Trash2 } from '@lucide/svelte';
 
   type Tab = 'details' | 'images' | 'video' | 'subtitles' | 'chapters' | 'episodes' | 'analytics' | 'thread';
 
@@ -696,9 +696,23 @@
     editCrew = [...editCrew, { name: '', role: 'Director' }];
   }
 
-  // Asset replacement: upload a single file via /api/files, then PATCH the
-  // URL into the named field on the content row.
+  // Asset replacement.
+  //
+  // Two distinct pipelines, picked by `field`:
+  //   - trailerUrl  → /api/creator/trailer-upload/{sign,commit}
+  //                   Goes to the encoder MinIO bucket so the browser
+  //                   can publicly play it back. Kicks off the trailer
+  //                   re-encode workflow (in case the upload wasn't a
+  //                   browser-safe MP4). The pipeline IS wired now —
+  //                   the prior "via /api/files" path silently wrote
+  //                   trailerUrl to the private images bucket where
+  //                   neither admin review nor the watch page could
+  //                   reach it.
+  //   - everything else (posters, backdrop, thumbnail, logoTitle)
+  //                  → /api/files (image bucket, presign-less form-data
+  //                   POST). Same shape as before — no change.
   async function replaceAsset(field: keyof ContentRow, file: File) {
+    if (field === 'trailerUrl') return replaceTrailer(file);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -719,6 +733,77 @@
       toast.success('Asset replaced');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Replace failed');
+    }
+  }
+
+  // The sign endpoint enforces a strict filename character set
+  // (A-Za-z0-9._-() and space). Anything outside that range — apostrophes,
+  // accented characters, parens-pairs, emoji from "My Trailer (final)!.mp4"
+  // — returns 400 with a vague "invalid_filename" message before the
+  // upload even begins. Sanitize ourselves so the user doesn't have to
+  // rename their file before retrying.
+  function sanitizeTrailerFilename(name: string): string {
+    const cleaned = name
+      .replace(/[^A-Za-z0-9._\-() ]+/g, '_')
+      .replace(/_+/g, '_')
+      .slice(0, 200);
+    return cleaned || `trailer-${Date.now()}.mp4`;
+  }
+
+  async function replaceTrailer(file: File) {
+    // Default browsers report `application/octet-stream` when MIME sniffing
+    // fails; the sign endpoint rejects anything not in its native-browser-
+    // video list. Fall through to video/mp4 if the type is empty/unknown
+    // so the common case (a .mp4 from desktop) doesn't 400 needlessly.
+    const inferred = file.type && file.type.startsWith('video/') ? file.type : 'video/mp4';
+    try {
+      const signRes = await fetch('/api/creator/trailer-upload/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentId,
+          filename: sanitizeTrailerFilename(file.name),
+          contentType: inferred
+        })
+      });
+      const signBody = await signRes.json().catch(() => ({}));
+      if (!signRes.ok) {
+        throw new Error(signBody.detail ?? signBody.error ?? `Trailer presign failed (HTTP ${signRes.status}).`);
+      }
+      const { uploadUrl, objectKey } = signBody as { uploadUrl: string; objectKey: string };
+
+      // PUT the raw bytes to the presigned URL. We can't use /api/files
+      // for this — the encoder bucket lives at a different host and the
+      // presigned URL is the only way the browser can write to it.
+      const putRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': inferred },
+        body: file
+      });
+      if (!putRes.ok) {
+        throw new Error(`Trailer upload to storage failed (HTTP ${putRes.status}).`);
+      }
+
+      const commitRes = await fetch('/api/creator/trailer-upload/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentId, objectKey })
+      });
+      const commitBody = await commitRes.json().catch(() => ({}));
+      if (!commitRes.ok) {
+        throw new Error(commitBody.detail ?? commitBody.error ?? `Trailer commit failed (HTTP ${commitRes.status}).`);
+      }
+      // The commit endpoint returns `{ trailerUrl }`; reflect it locally so
+      // the inline <video> swaps to the new source without a page reload.
+      const newUrl = commitBody.trailerUrl as string | undefined;
+      if (newUrl && content) content.trailerUrl = newUrl;
+      toast.success('Trailer uploaded', {
+        description: 'It may take a moment for browsers to pick up the new file.'
+      });
+    } catch (err) {
+      toast.error('Trailer upload failed', {
+        description: err instanceof Error ? err.message : 'Unknown error'
+      });
     }
   }
 
@@ -832,12 +917,14 @@
     }
   }
 
+  let archiving = $state(false);
   async function archive() {
     if (!confirm('Archive this content? It will no longer be visible to viewers.')) return;
+    archiving = true;
     try {
       const res = await fetch(`/api/creator/content/${contentId}`, { method: 'DELETE' });
       if (res.ok) {
-        toast.success('Archived');
+        toast.success('Archived. You can restore from your content list.');
         goto('/creator/content');
         return;
       }
@@ -848,6 +935,36 @@
       toast.error(body.error ?? `Archive failed (HTTP ${res.status})`);
     } catch (err) {
       toast.error(`Archive failed: ${err instanceof Error ? err.message : 'network error'}`);
+    } finally {
+      archiving = false;
+    }
+  }
+
+  // Permanent delete — hits the same endpoint with ?mode=delete. The
+  // shared helper blocks on PPV purchases (409 surfaced as a toast),
+  // cancels in-flight encoder, and cleans MinIO in the background.
+  let deleting = $state(false);
+  async function permanentlyDelete() {
+    if (!content) return;
+    if (!confirm(`Permanently delete "${content.title}"? This wipes the row, all watch history, and the video file. This can't be undone.`)) return;
+    deleting = true;
+    try {
+      const res = await fetch(`/api/creator/content/${contentId}?mode=delete`, { method: 'DELETE' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.error("Can't delete — viewers have paid for this. Archive instead.");
+          return;
+        }
+        toast.error(body.error ?? `Delete failed (HTTP ${res.status})`);
+        return;
+      }
+      toast.success('Deleted. Cleaning up storage in the background.');
+      goto('/creator/content');
+    } catch (err) {
+      toast.error(`Delete failed: ${err instanceof Error ? err.message : 'network error'}`);
+    } finally {
+      deleting = false;
     }
   }
 
@@ -948,15 +1065,22 @@
           </div>
         </div>
       </div>
+      <!-- Header keeps the title + status clean. Archive / Delete moved
+           to a sticky bottom action bar so destructive controls always
+           sit at the bottom of the viewport, out of the way of the read
+           path. Only the "View live" link stays here. -->
       <div class="flex items-center gap-2 shrink-0">
         {#if content.isActive}
-          <a href={`/watch/${content.id}`} target="_blank" rel="noopener" class="text-xs surface-1 hover:surface-2 text-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 transition-colors">
+          <a
+            href={`/watch/${content.id}`}
+            target="_blank"
+            rel="noopener"
+            class="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1 transition-colors"
+            style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border));"
+          >
             View live <ExternalLink class="w-3 h-3" />
           </a>
         {/if}
-        <button type="button" onclick={archive} class="text-xs bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-300 rounded-full px-3 py-1.5 inline-flex items-center gap-1 transition-colors">
-          <ArchiveIcon class="w-3 h-3" /> Archive
-        </button>
       </div>
     </header>
 
@@ -1271,6 +1395,41 @@
           </div>
         {:else if activeTab === 'video'}
           <div class="space-y-4">
+            <!--
+              Coming Soon + no main video → prominent "Add main video"
+              CTA. Without this banner the missing video reads as a
+              broken encoder (the "waiting" progress bar below
+              implies an encode is stuck). Coming Soon announcement-
+              only submissions intentionally have no video at first;
+              this banner is how the creator finishes the job. The
+              upload wizard's edit mode runs the encoder pipeline +
+              the cron's auto-publish takes over from there.
+            -->
+            {#if !content.videoUrl && (content.status === 'coming_soon' || content.scheduledPublishAt)}
+              <div
+                class="rounded-xl border border-violet-500/40 bg-violet-500/10 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">🗓️</span>
+                  <div class="space-y-1">
+                    <div class="text-white font-semibold">Add the main video to finish this Coming Soon</div>
+                    <div class="text-sm text-violet-100/80">
+                      {#if content.scheduledPublishAt}
+                        Releases <span class="text-violet-50 font-medium">{String(content.scheduledPublishAt).slice(0, 10)}</span>.
+                      {/if}
+                      Uploading the video here runs the encoder + sends the row back to admin review for publication. The cron flips it to live on the release date once everything is approved.
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={`/creator/upload?edit=${content.id}`}
+                  class="inline-flex items-center justify-center whitespace-nowrap bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow-[0_0_18px_rgba(167,139,250,0.45)] transition-colors"
+                >
+                  Add main video →
+                </a>
+              </div>
+            {/if}
+
             {#if content.videoUrl}
               <div>
                 <div class="text-sm text-muted-foreground mb-2">Current encoded video</div>
@@ -1290,9 +1449,13 @@
                   previewSprites={content.previewSpriteUrls ?? []}
                 />
               </div>
-            {:else}
+            {:else if !(content.status === 'coming_soon' || content.scheduledPublishAt)}
               <!-- Live encoder progress (R+1). SSE-driven; falls back to a
-                   one-shot status fetch when the stream isn't connected. -->
+                   one-shot status fetch when the stream isn't connected.
+                   Hidden for Coming Soon rows without a main video — the
+                   "waiting" progress bar there read as a stuck encode
+                   even though no encoder job had been created. The
+                   violet CTA above takes its place. -->
               <div class="surface-1 rounded-lg p-4 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="text-sm font-medium text-foreground">Encoder progress</div>
@@ -1716,5 +1879,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Sticky bottom action bar — destructive controls live here so the
+         scroll-readable area above isn't cluttered. Mirrors the pattern
+         on /admin/review/[id]. Anchored to the viewport bottom so it's
+         always one tap away regardless of how long the detail page gets. -->
+    {#if content}
+      <div
+        class="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t pointer-events-none"
+        style="background: hsl(var(--portal-bg-elevated)/0.92); border-color: hsl(var(--portal-border));"
+      >
+        <div class="mx-auto px-4 py-3 max-w-5xl flex items-center justify-between gap-3 pointer-events-auto">
+          <div class="min-w-0 flex-1 text-xs text-[hsl(var(--portal-text-muted))] truncate">
+            <span class="font-semibold text-[hsl(var(--portal-text))]">{content.title}</span>
+            <span class="ml-2">· {content.isActive ? 'Live' : (content.status ?? 'submitted')}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onclick={archive}
+              disabled={archiving || deleting}
+              class="text-xs rounded-full px-3 py-2 inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 font-medium"
+              style="background: hsl(45 95% 55% / 0.18); color: hsl(45 95% 70%); border: 1px solid hsl(45 95% 55% / 0.3);"
+            >
+              <ArchiveIcon class="w-3.5 h-3.5" /> {archiving ? 'Archiving…' : 'Archive'}
+            </button>
+            <button
+              type="button"
+              onclick={permanentlyDelete}
+              disabled={archiving || deleting}
+              class="text-xs rounded-full px-3 py-2 inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 font-medium"
+              style="background: hsl(var(--portal-danger)/0.18); color: hsl(var(--portal-danger)); border: 1px solid hsl(var(--portal-danger)/0.35);"
+            >
+              <Trash2 class="w-3.5 h-3.5" /> {deleting ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Spacer so the sticky bar doesn't overlap the last row of content -->
+      <div aria-hidden="true" class="h-20"></div>
+    {/if}
   {/if}
 </div>

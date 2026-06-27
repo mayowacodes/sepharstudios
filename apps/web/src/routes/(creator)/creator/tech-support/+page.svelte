@@ -1,7 +1,7 @@
 <!-- Technical Support -->
 <script lang="ts">
   import { Wrench } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   interface TicketForm {
     subject: string;
@@ -102,8 +102,8 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Wrench} title="Technical Support" subtitle="Get personalized help from our technical support team." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">
+  <PortalHero compact eyebrow="Help" title="Technical support" subtitle="Get personalized help from our technical support team." icon={Wrench} />
 
   {#if !isSubmitted}
     <!-- Quick Help Section -->

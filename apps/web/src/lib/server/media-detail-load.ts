@@ -36,13 +36,19 @@ export async function loadMediaDetail(params: {
 	const { slug, mediaType, category, userId } = params;
 
 	// mediaType filter — allow both `tv` and `series` as TV identifiers
-	// (schema drift over time). The kids routes don't restrict mediaType
-	// since a single slug should resolve regardless of whether it's a
-	// movie, show, or doc — kids detail pages don't have sub-routes.
+	// (schema drift over time), and lump `short` in with `movie` because
+	// the /movies catalog page lists BOTH (mediaType IN ('movie', 'short'))
+	// so a short clicked from /movies must resolve at /movies/<slug>.
+	// Without this, every short film 404s on click. The kids routes don't
+	// restrict mediaType since a single slug should resolve regardless of
+	// whether it's a movie, show, doc, or short — kids detail pages don't
+	// have sub-routes.
 	const typeMatches = mediaType
 		? mediaType === 'tv'
 			? or(eq(mediaLibrary.mediaType, 'tv'), eq(mediaLibrary.mediaType, 'series'))
-			: eq(mediaLibrary.mediaType, mediaType)
+			: mediaType === 'movie'
+				? or(eq(mediaLibrary.mediaType, 'movie'), eq(mediaLibrary.mediaType, 'short'))
+				: eq(mediaLibrary.mediaType, mediaType)
 		: undefined;
 
 	// Category filter — kids and teens routes require category to match
@@ -59,6 +65,10 @@ export async function loadMediaDetail(params: {
 			thumbnail: mediaLibrary.thumbnail,
 			backdropUrl: mediaLibrary.backdropUrl,
 			posterUrl: mediaLibrary.posterUrl,
+			// Transparent PNG title treatment. MediaDetailPage swaps
+			// the H1 for this image when present so the hero reads as
+			// a real branded title logo, not system font.
+			logoTitleUrl: mediaLibrary.logoTitleUrl,
 			trailerUrl: mediaLibrary.trailerUrl,
 			videoUrl: mediaLibrary.videoUrl,
 			encoderJobId: mediaLibrary.encoderJobId,
@@ -74,7 +84,12 @@ export async function loadMediaDetail(params: {
 			crew: mediaLibrary.crew,
 			mediaType: mediaLibrary.mediaType,
 			isActive: mediaLibrary.isActive,
-			visibility: mediaLibrary.visibility
+			visibility: mediaLibrary.visibility,
+			// Coming Soon: the detail page swaps the Watch CTA for a
+			// Notify-me bell when status='coming_soon'. scheduledPublishAt
+			// drives the "Releases on [date]" copy.
+			status: mediaLibrary.status,
+			scheduledPublishAt: mediaLibrary.scheduledPublishAt
 		})
 		.from(mediaLibrary)
 		.where(
@@ -86,7 +101,11 @@ export async function loadMediaDetail(params: {
 		)
 		.limit(1);
 
-	if (!row || !row.isActive) {
+	// Coming Soon rows are deliberately isActive=false (not playable yet)
+	// but they DO have public detail pages so viewers can read the
+	// description + subscribe via Notify-me. Only 404 when the row is
+	// genuinely missing or unpublished-and-not-coming-soon.
+	if (!row || (!row.isActive && row.status !== 'coming_soon')) {
 		error(404, 'Content not found');
 	}
 	if (row.visibility === 'private') {

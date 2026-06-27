@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Banknote, Search, X } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
+  import PortalEmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type StatusFilter = 'all' | 'pending' | 'success' | 'failed';
@@ -131,51 +133,57 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-6xl space-y-6">
-  <PageHeader
-    icon={Banknote}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Finance"
     title="Refunds"
     subtitle="Issue and audit refunds against Paystack transactions."
+    icon={Banknote}
   >
     {#snippet actions()}
-      <button
-        type="button"
-        onclick={() => (issueOpen = true)}
-        class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
-      >Issue refund</button>
+      <PortalButton variant="primary" size="sm" onclick={() => (issueOpen = true)}>
+        Issue refund
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="flex flex-wrap gap-3 items-center">
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
       {#each (['all', 'pending', 'success', 'failed'] as StatusFilter[]) as s (s)}
         <button
           type="button"
           onclick={() => (status = s)}
-          class="px-3 py-1.5 rounded text-xs capitalize {status === s ? 'bg-purple-600 text-foreground' : 'surface-1 text-white/80 hover:surface-2'}"
+          class="px-3 py-1.5 rounded-full text-xs capitalize transition-colors"
+          style={status === s
+            ? `background: hsl(var(--portal-accent)); color: hsl(var(--portal-bg-base)); font-weight: 600;`
+            : `background: hsl(var(--portal-bg-elevated)/0.6); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`}
         >{s}</button>
       {/each}
     </div>
     <div class="relative ml-auto w-72">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: hsl(var(--portal-text-muted));" />
       <input
         type="text"
         bind:value={q}
         oninput={onSearchInput}
         placeholder="Search reference, email, name…"
-        class="w-full surface-1 border border-border/40 rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder-gray-500"
+        class="w-full rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2"
+        style="background: hsl(var(--portal-bg-elevated)/0.6); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
       />
     </div>
   </div>
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(5) as _ (_)}<Skeleton class="h-12 rounded-lg" />{/each}
+      {#each Array(5) as _, i (i)}<Skeleton class="h-12 rounded-lg" />{/each}
     </div>
   {:else if rows.length === 0}
-    <div class="surface-1 border border-border/40 rounded-xl p-12 text-center text-muted-foreground">
-      No refunds match these filters.
-    </div>
+    <PortalEmptyState
+      icon={Banknote}
+      title="No refunds here"
+      description="No refunds match these filters. Search by reference, email, or name to find a specific transaction."
+    />
   {:else}
     <div class="surface-1 border border-border/40 rounded-xl overflow-hidden">
       <table class="w-full text-sm">

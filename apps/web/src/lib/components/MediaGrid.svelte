@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { MediaItem, MediaSection } from '../types/media';
+  import type { MediaSection, MediaItem } from '../types/media';
   import MovieCard from './MovieCard.svelte';
-  import { mediaModalStore } from '$lib/stores/mediaModalStore';
 
   interface Props {
     sections?: MediaSection[];
@@ -17,9 +16,14 @@
     return [];
   });
 
-  const openModal = (media: MediaItem) => {
-    $mediaModalStore = {...$mediaModalStore, isOpen: true, media}
-  };
+  // The grid USED to push the clicked row into the legacy
+  // mediaModalStore quick-view overlay AND let the card navigate at
+  // the same time. The modal opened, briefly captured scroll/focus,
+  // then the navigation landed underneath it — the visual effect was
+  // a flash of overlay followed by what looked like "the page jumped
+  // to the top" because viewers never saw the new page render. The
+  // MovieCard now owns the click and routes via goto(); the grid
+  // should not pass an onClick that re-opens the legacy modal.
 </script>
 
 <div class="space-y-10">
@@ -40,7 +44,7 @@
         >
           {#each section.items as item (item.id)}
             <div class="shrink-0 w-44 sm:w-48 lg:w-56 snap-start">
-              <MovieCard movie={item} onClick={() => openModal(item)} />
+              <MovieCard movie={item} />
             </div>
           {/each}
         </div>

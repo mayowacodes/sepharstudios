@@ -78,18 +78,41 @@
 
 <CommandPaletteAI bind:open={paletteOpen} variant={portal} onAskCopilot={() => (copilotOpen = true)} />
 
-<div data-portal={portal} class="min-h-screen bg-background text-foreground">
+<div data-portal={portal} class="min-h-screen text-[hsl(var(--portal-text))]">
   <a
     href="#portal-main"
-    class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-primary focus:text-primary-foreground focus:px-3 focus:py-2 focus:rounded-md"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-[hsl(var(--portal-accent))] focus:text-white focus:px-3 focus:py-2 focus:rounded-md"
   >Skip to main content</a>
 
   <Sidebar.Provider style="--sidebar-width: 14rem;">
-    <Sidebar.Root collapsible="icon" class="surface-glass">
-      <Sidebar.Header class="border-b border-white/10">
-        <a href={portal === 'admin' ? '/admin' : '/creator'} class="flex items-center gap-2 px-2 py-1.5 text-foreground hover:opacity-80 transition-opacity">
-          <img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-6 w-6 object-contain shrink-0" />
-          <span class="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">{portalLabel}</span>
+    <Sidebar.Root collapsible="icon" class="portal-sidebar">
+      <!--
+        Sidebar header is pinned to h-12 (48px) so its bottom divider
+        sits flush with the main header's bottom divider. Before this,
+        the logo (h-8) plus the two-line "Creator Studio / Cosmic
+        Studio" label measured ~52–56px tall, so the cap of the sidebar
+        sat 4–8px below the main header's bottom border and the two
+        labels (sidebar "Creator Studio" vs breadcrumb "Creator Studio")
+        rendered at different y-positions. Fixed-height + leading-none
+        on the labels keeps the visual baseline locked.
+      -->
+      <Sidebar.Header class="h-12 px-0 py-0 border-b border-[hsl(var(--portal-border)/0.7)]">
+        <a
+          href={portal === 'admin' ? '/admin' : '/creator'}
+          class="flex h-full items-center gap-2 px-2 text-[hsl(var(--portal-text))] hover:opacity-90 transition-opacity group/brand"
+        >
+          <div
+            class="relative flex items-center justify-center h-7 w-7 rounded-lg shrink-0 border border-[hsl(var(--portal-accent)/0.4)]"
+            style="background: var(--portal-gradient-cta);"
+          >
+            <img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-4 w-4 object-contain" />
+          </div>
+          <div class="flex flex-col leading-none gap-0.5 group-data-[collapsible=icon]:hidden">
+            <span class="text-sm font-semibold tracking-tight leading-none">{portalLabel}</span>
+            <span class="text-[10px] uppercase tracking-[0.18em] leading-none text-[hsl(var(--portal-accent))]">
+              {portal === 'admin' ? 'Mission Control' : 'Cosmic Studio'}
+            </span>
+          </div>
         </a>
       </Sidebar.Header>
 
@@ -106,7 +129,12 @@
                       {#snippet child({ props })}
                         <a href={item.href} {...props}>
                           <Icon />
-                          <span>{item.label}</span>
+                          <!-- Hide the label entirely in icon-collapsed
+                               mode. Without this guard the label was
+                               getting clipped mid-character by overflow
+                               instead of disappearing, which read as
+                               garbled letter bleed beside each icon. -->
+                          <span class="group-data-[collapsible=icon]:hidden">{item.label}</span>
                         </a>
                       {/snippet}
                     </Sidebar.MenuButton>
@@ -132,7 +160,7 @@
                         {:else}
                           <div class="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">{initial}</div>
                         {/if}
-                        <span class="truncate">{user?.name ?? 'Account'}</span>
+                        <span class="truncate group-data-[collapsible=icon]:hidden">{user?.name ?? 'Account'}</span>
                       </button>
                     {/snippet}
                   </Sidebar.MenuButton>
@@ -186,7 +214,15 @@
           </Sidebar.MenuItem>
         </Sidebar.Menu>
       </Sidebar.Footer>
-      <Sidebar.Rail />
+      <!--
+        Sidebar.Rail intentionally removed: it's a 16px overlay button
+        absolutely positioned with -translate-x-1/2 over the right edge
+        of the sidebar. In icon-collapsed mode that 8px bleed sits on
+        top of the nav-icon column and applies a w/e-resize cursor +
+        intercepts the click, so the icons stop responding. The same
+        toggle is already exposed via the header's <Sidebar.Trigger />
+        and the ⌘B global keybind — the rail was redundant.
+      -->
     </Sidebar.Root>
 
     <Sidebar.Inset class="flex flex-col min-w-0">
@@ -217,13 +253,25 @@
             </span>
           {/if}
         </a>
+        <!-- Copilot toggle. Mobile gets the icon-only chip (no rail at
+             that breakpoint). Desktop gets a labeled chip that flips
+             the rail open / closed so the main pane reclaims the
+             right-side real estate when the creator/admin doesn't
+             want AI help. ⌘J also toggles via the global keybind
+             handler above. -->
         <button
           type="button"
           onclick={() => (copilotOpen = !copilotOpen)}
-          class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5"
-          aria-label="Open Copilot (⌘J)"
+          class="inline-flex items-center justify-center gap-1.5 px-2 h-8 rounded-md transition-colors"
+          style={copilotOpen
+            ? `background: hsl(var(--portal-accent)/0.18); color: hsl(var(--portal-accent)); border: 1px solid hsl(var(--portal-accent)/0.4);`
+            : `background: hsl(var(--portal-bg-elevated)/0.5); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`}
+          aria-label={copilotOpen ? 'Close Copilot (⌘J)' : 'Open Copilot (⌘J)'}
+          aria-pressed={copilotOpen}
+          title={copilotOpen ? 'Close Copilot (⌘J)' : 'Open Copilot (⌘J)'}
         >
           <Sparkles class="w-4 h-4" />
+          <span class="hidden md:inline text-[11px] font-medium">Copilot</span>
         </button>
       </header>
 
@@ -253,19 +301,71 @@
 {/if}
 
 <style>
-  /* Portal accent overrides — admin runs red, creator runs purple. Both
-     override --primary (which the sidebar active state + button styles
-     all key off of). */
-  :global([data-portal='admin']) {
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 100%;
-    --sidebar-primary: 0 72% 51%;
-    --sidebar-primary-foreground: 0 0% 100%;
+  /* Portal token blocks live in app.css now. This file owns just the
+     sidebar chrome — the surface, the active-state sweep, and the
+     hover micro-interactions on nav items. */
+
+  /* Sidebar surface — replaces the .surface-glass class so we can pin
+     the gradient + dot-grid to the portal tokens. */
+  :global(.portal-sidebar) {
+    background-color: hsl(var(--portal-bg-elevated)) !important;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      hsl(var(--portal-grid-line) / 0.22) 1px,
+      transparent 0
+    ) !important;
+    background-size: 24px 24px !important;
+    border-right: 1px solid hsl(var(--portal-border) / 0.7) !important;
   }
-  :global([data-portal='creator']) {
-    --primary: 270 60% 56%;
-    --primary-foreground: 0 0% 100%;
-    --sidebar-primary: 270 60% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
+
+  /* Active nav item — the [data-active="true"] attribute is set by
+     shadcn-svelte's SidebarMenuButton. We add a 3px left accent bar
+     (full height) + the animated sweep on it. The label gets a subtle
+     text glow keyed to the portal accent. */
+  :global(.portal-sidebar [data-slot='sidebar-menu-button'][data-active='true']) {
+    position: relative;
+    background-color: hsl(var(--portal-accent) / 0.12) !important;
+    color: hsl(var(--portal-text)) !important;
+  }
+  :global(.portal-sidebar [data-slot='sidebar-menu-button'][data-active='true'])::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--portal-accent)) 30%,
+      hsl(var(--portal-accent)) 70%,
+      transparent 100%
+    );
+    background-size: 100% 200%;
+    animation: portal-sweep 1.8s ease-in-out infinite;
+  }
+
+  /* Non-active nav row — hover slides the icon 2px right + brightens
+     the row background. */
+  :global(.portal-sidebar [data-slot='sidebar-menu-button']:not([data-active='true']):hover) {
+    background-color: hsl(var(--portal-bg-base) / 0.6) !important;
+    color: hsl(var(--portal-text)) !important;
+  }
+  :global(.portal-sidebar [data-slot='sidebar-menu-button']:not([data-active='true']):hover svg) {
+    transform: translateX(2px);
+  }
+  :global(.portal-sidebar [data-slot='sidebar-menu-button'] svg) {
+    transition: transform 150ms ease-out;
+  }
+
+  /* Group labels — small caps, in the portal-accent color, so the
+     section structure is obvious without taking visual weight. */
+  :global(.portal-sidebar [data-slot='sidebar-group-label']) {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: hsl(var(--portal-text-muted)) !important;
   }
 </style>

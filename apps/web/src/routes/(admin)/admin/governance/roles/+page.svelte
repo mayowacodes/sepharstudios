@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import RolePermissionsTable from '$lib/components/admin/governance/RolePermissionsTable.svelte';
 	import { ShieldCheck } from '@lucide/svelte';
-	import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+	import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
 	type Data = {
 		matrix: Array<{ role: string; description: string; can: string[]; cannot: string[] }>;
@@ -34,8 +34,8 @@
 	<title>Governance Roles - Admin</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 space-y-6">
-	<PageHeader icon={ShieldCheck} title="Role Permissions" subtitle="Who can do what across the platform." />
+<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">
+	<PortalHero compact eyebrow="DAO · Access" title="Role permissions" subtitle="Who can do what across the platform." icon={ShieldCheck} />
 
 	{#if loading}
 		<p class="text-sm text-muted-foreground">Loading roles...</p>

@@ -10,7 +10,7 @@
   import MetadataStep from '$lib/components/creator/upload/MetadataStep.svelte';
   import ReviewSubmitStep from '$lib/components/creator/upload/ReviewSubmitStep.svelte';
   import { Upload } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let isSubmitting = $state(false);
   // Submission progress UX: when the wizard is uploading the video file
@@ -63,6 +63,13 @@
    *  must still be uploaded fresh (existing rows keep their video URL until
    *  the submit flow swaps in the new one). */
   let editId: string | null = $state(null);
+  // Tracks the row's status at edit-mode entry so the submit flow can
+  // detect the "completing a previously-approved Coming Soon by
+  // attaching the main video" case and ping admin to re-review the
+  // video. Without this we'd have no way to distinguish "creator is
+  // editing a coming-soon row's metadata only" from "creator is
+  // attaching the missing video for review".
+  let editPrefilledStatus: string | null = $state(null);
   // IMPORTANT: every bindable field used in a child step's `bind:` must be
   // initialized to a defined value here. Empty objects (`{}`) for stepData
   // entries leave the inner fields as `undefined`, which Svelte 5 treats as
@@ -77,7 +84,19 @@
         title: '',
         description: '',
         contentType: '',
-        ageRating: ''
+        ageRating: '',
+        audience: 'general',
+        // Series-only — populated when contentType=SERIES. Episode 1
+        // metadata that gets posted alongside the series row so the
+        // creator never lands in an empty-shell series state. S1E1 defaults.
+        episodeTitle: '',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        // Coming Soon decision lives here (moved from REVIEW_SUBMIT)
+        // so the Video Upload step's validator can skip the file gate
+        // when the creator is just submitting an announcement.
+        comingSoon: false,
+        comingSoonReleaseDate: ''
       },
       [UploadStep.VIDEO_UPLOAD]: {
         videoFile: null,
@@ -182,6 +201,25 @@
         if (!d.description || d.description.trim().length < 50) missing.push('Description (at least 50 characters)');
         if (!d.contentType) missing.push('Content type');
         if (!d.ageRating) missing.push('Age rating');
+        // Series-specific gate: the episode's title is required when the
+        // creator chose Series. Without it, we'd create an unnamed
+        // episode row that's effectively useless. Label the missing
+        // field with the actual S/E numbers (e.g. "S2 E5 title") so
+        // creators uploading something other than S1E1 don't see a
+        // confusing "Episode 1 title" prompt.
+        if (d.contentType === ContentType.SERIES && (!d.episodeTitle || d.episodeTitle.trim().length < 2)) {
+          missing.push(`S${d.seasonNumber || 1} E${d.episodeNumber || 1} title (at least 2 characters)`);
+        }
+        // Coming Soon gate: release date is required + must be today or
+        // later. Without this the inline red warning in BasicInfo would
+        // show but submit could still go through, leaving the cron with
+        // no scheduledPublishAt to auto-publish on.
+        if (d.comingSoon) {
+          const today = new Date().toISOString().slice(0, 10);
+          if (!d.comingSoonReleaseDate || d.comingSoonReleaseDate < today) {
+            missing.push('Coming Soon release date (today or later)');
+          }
+        }
         break;
       }
       case UploadStep.VIDEO_UPLOAD: {
@@ -192,6 +230,15 @@
         // sentinel `staged-for-encoding` value that `performActualUpload`
         // assigns when the user drops a video — `isCompleted` alone is
         // too loose, since it can be a stale draft remnant.
+        //
+        // Coming Soon entries are announcements — the main video is
+        // optional at submission time. The creator can upload it now
+        // (in which case it encodes + sits until the release date) or
+        // later from /creator/content/<id>. Either path is valid;
+        // we skip the gate entirely when the BASIC_INFO step's
+        // `comingSoon` flag is on.
+        const isComingSoon = state.stepData[UploadStep.BASIC_INFO].comingSoon;
+        if (isComingSoon) break;
         const d = state.stepData[step];
         if (!(d.videoFile instanceof File)) missing.push('Video file');
         else if (d.videoProgress?.uploadUrl !== 'staged-for-encoding') missing.push('Video upload');
@@ -300,14 +347,18 @@
       const videoData = wizardState.stepData[UploadStep.VIDEO_UPLOAD];
       const videoFile = videoData.videoFile;
 
+      const basic = wizardState.stepData[UploadStep.BASIC_INFO];
+
       // When editing an existing row, a fresh video is OPTIONAL — the creator
-      // may just want to tweak metadata. Otherwise (new submission) it's
-      // required to kick off the encoder pipeline.
-      if (!editId && !videoFile) {
+      // may just want to tweak metadata.
+      // For NEW submissions, the video is also OPTIONAL when the row is
+      // a Coming Soon announcement — the creator may not have the final
+      // file yet. Otherwise (new non-Coming-Soon row) it's required to
+      // kick off the encoder pipeline.
+      if (!editId && !videoFile && !basic.comingSoon) {
         throw new Error('Video file is required');
       }
 
-      const basic = wizardState.stepData[UploadStep.BASIC_INFO];
       const meta = wizardState.stepData[UploadStep.METADATA];
       const assets = wizardState.stepData[UploadStep.ASSET_MANAGEMENT].uploadedAssets;
 
@@ -322,6 +373,7 @@
           description: basic.description,
           contentType: basic.contentType,
           ageRating: basic.ageRating,
+          audience: basic.audience ?? 'general',
           genres: meta.genre ? (Array.isArray(meta.genre) ? meta.genre : [meta.genre]) : [],
           topics: meta.themes ?? [],
           keywords: meta.keywords ?? [],
@@ -342,8 +394,24 @@
           // after the real file is uploaded direct to encoder MinIO. We
           // explicitly send `null` here so the row doesn't keep the bogus
           // "staged-for-encoding" sentinel from the wizard's progress state.
-          trailerUrl: null
+          trailerUrl: null,
+          // Coming Soon edit can adjust the release date or flip the
+          // toggle off (re-publish immediately). The PATCH endpoint
+          // accepts scheduledPublishAt as a string or null.
+          scheduledPublishAt: basic.comingSoon
+            ? (basic.comingSoonReleaseDate || null)
+            : null
         };
+
+        // "I'm completing my Coming Soon by attaching the main video":
+        // creator opened the wizard on a coming_soon row, supplied a
+        // video file. Send the row back to admin review so the video
+        // gets a fresh look before the cron auto-publishes on the
+        // release date. The PATCH endpoint validates the transition.
+        if (editPrefilledStatus === 'coming_soon' && videoFile) {
+          patchBody.status = 'submitted';
+        }
+
         const patchRes = await fetch(`/api/creator/content/${editId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -369,11 +437,17 @@
         // uploaded direct to encoder MinIO (step 5 below). We send `null`
         // here so the row doesn't carry the bogus "staged-for-encoding"
         // sentinel from the wizard's progress state.
+        // Coming Soon now lives on BASIC_INFO, so `...basic` already
+        // carries `comingSoon` + `comingSoonReleaseDate`. The server
+        // reads them and stashes the release date as
+        // scheduledPublishAt so the existing cron's auto-publish path
+        // takes over from here.
         const submissionData = {
             ...basic,
             ...meta,
             assets,
             trailerUrl: null,
+            comingSoonReleaseDate: basic.comingSoonReleaseDate || null
         };
         const res = await fetch('/api/creator/content', {
             method: 'POST',
@@ -396,64 +470,91 @@
         body: JSON.stringify({ contentId })
       }).catch((err) => console.warn('AI tagging skipped:', err));
 
-      // 2. Create an orchestrator job attached to this content row.
-      // Narrow the optional videoFile — by this point we've returned early
-      // for the edit-without-new-video case, so it's guaranteed defined.
-      if (!videoFile) throw new Error('Video file is required');
+      // 2-4. Encoder pipeline — only runs when a real video file is in hand.
+      // Two paths skip this entire block:
+      //   - Coming Soon announcement with no video → row carries
+      //     scheduledPublishAt; trailer + posters are the announcement;
+      //     creator adds the main video later from /creator/content/<id>.
+      //   - Edit of an existing row without re-uploading the video → we
+      //     already returned early above when no encoder work was needed.
+      //
+      // When the video IS present we run the full pipeline regardless of
+      // Coming Soon — that's the "I have the full movie + a future
+      // release date" path the user explicitly wanted to support. The
+      // encoder writes a playable videoUrl; the cron's auto-publish
+      // logic flips the row to live when the release date passes.
+      if (videoFile) {
+        // Auto-pick the encoder profile from the source resolution. The
+        // browser reads dimensions out of the file via a hidden <video>
+        // element; we never decode the file. Falls back to vod-multi (1080p
+        // ladder) if probing fails or the file isn't readable.
+        const profile = await pickEncoderProfile(videoFile);
 
-      // Auto-pick the encoder profile from the source resolution. The
-      // browser reads dimensions out of the file via a hidden <video>
-      // element; we never decode the file. Falls back to vod-multi (1080p
-      // ladder) if probing fails or the file isn't readable.
-      const profile = await pickEncoderProfile(videoFile);
+        submitStep = 'job';
+        const jobRes = await fetch('/api/encoder/jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contentId,
+                filename: videoFile.name,
+                profile,
+                durationHint: meta.duration ? Number(meta.duration) * 60 : undefined
+            })
+        });
 
-      submitStep = 'job';
-      const jobRes = await fetch('/api/encoder/jobs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              contentId,
-              filename: videoFile.name,
-              profile,
-              durationHint: meta.duration ? Number(meta.duration) * 60 : undefined
-          })
-      });
+        if (!jobRes.ok) throw new Error('Failed to create encoder job');
+        const { jobId, upload } = await jobRes.json();
 
-      if (!jobRes.ok) throw new Error('Failed to create encoder job');
-      const { jobId, upload } = await jobRes.json();
+        // 3. Upload directly to orchestrator-controlled object storage.
+        // Surfaces real progress so the user can see the bar move on big
+        // files instead of staring at a silent spinner.
+        submitStep = 'uploading';
+        await uploadVideoWithProgress(upload.url, upload.method || 'PUT', videoFile);
 
-      // 3. Upload directly to orchestrator-controlled object storage.
-      // Surfaces real progress so the user can see the bar move on big
-      // files instead of staring at a silent spinner.
-      submitStep = 'uploading';
-      await uploadVideoWithProgress(upload.url, upload.method || 'PUT', videoFile);
+        // 4. Commit the job so workers can encode it.
+        submitStep = 'committing';
+        const commitRes = await fetch(`/api/encoder/jobs/${jobId}/commit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-      // 4. Commit the job so workers can encode it.
-      submitStep = 'committing';
-      const commitRes = await fetch(`/api/encoder/jobs/${jobId}/commit`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!commitRes.ok) throw new Error('Failed to queue encoder job');
+        if (!commitRes.ok) throw new Error('Failed to queue encoder job');
+      }
 
       // 5. Upload the trailer (if provided) directly to encoder MinIO.
-      // Trailers are stored as-is — no transcoding — because most creators
-      // upload MP4/h264 which every browser plays natively in <video src>.
-      // The robust-pipeline path (single 720p MP4 encoder job) is tracked
-      // in TECHDEBT.md. This step is best-effort: if it fails, the main
-      // submission still succeeded and we toast a soft warning so the
-      // creator can re-attach the trailer later from /creator/content.
+      // Trailers are stored as-is (no transcoding) — most creators upload
+      // MP4/h264 which every browser plays natively in <video src>.
+      // Best-effort: if it fails, the main submission still succeeded
+      // and we toast a soft warning so the creator can re-attach the
+      // trailer later from /creator/content/<id>.
+      //
+      // The sign endpoint enforces a strict filename character set
+      // (A-Za-z0-9._-() and space). Names with apostrophes, accents,
+      // emoji, or parens-with-anything-weird ("My Trailer v2!.mp4")
+      // were the common silent-failure mode — the wizard would toast
+      // "trailer was not attached" without explaining why. We sanitize
+      // the filename to match the endpoint's rules so the upload only
+      // fails for real reasons (network, auth, bucket missing).
       const trailerFile = wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerFile;
       if (trailerFile && contentId) {
+        const safeName = (() => {
+          const cleaned = trailerFile.name
+            .replace(/[^A-Za-z0-9._\-() ]+/g, '_')
+            .replace(/_+/g, '_')
+            .slice(0, 200);
+          return cleaned || `trailer.mp4`;
+        })();
+        const trailerType = trailerFile.type && trailerFile.type.startsWith('video/')
+          ? trailerFile.type
+          : 'video/mp4';
         try {
           const trailerSignRes = await fetch('/api/creator/trailer-upload/sign', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contentId,
-              filename: trailerFile.name,
-              contentType: trailerFile.type || 'video/mp4'
+              filename: safeName,
+              contentType: trailerType
             })
           });
           const signBody = await trailerSignRes.json().catch(() => ({}));
@@ -478,15 +579,90 @@
           }
         } catch (trailerErr) {
           console.warn('Trailer upload failed (non-blocking):', trailerErr);
+          // Surface the actual reason so the creator knows whether to
+          // rename their file, try a smaller upload, or contact support.
+          // The prior generic "you can re-upload from your content
+          // library" hid 4xx errors completely.
+          const reason = trailerErr instanceof Error ? trailerErr.message : 'Unknown error';
           toast.warning('Trailer was not attached', {
-            description: 'Your main video submitted successfully. You can re-upload the trailer from your content library.'
+            description: `${reason} Your main video submitted successfully — re-upload the trailer from /creator/content/<id> when ready.`
           });
         }
       }
 
-      toast.success('Content submitted successfully', {
-        description: 'Your video is now in the encoding queue. We\'ll notify you when it\'s ready.'
-      });
+      // 6. Series-only — create the first episode row alongside the series.
+      // Without this, uploading a series leaves the creator with an empty-
+      // shell series row in mediaLibrary and zero episodes attached, so
+      // the browse card exists but the watch page has nothing to play. We
+      // skip in edit mode: editing an existing series should never create
+      // a second episode 1. The episode's videoUrl stays null and the
+      // watch-page falls back to the series row's videoUrl that the
+      // encoder writes — so playback works as soon as encoding finishes.
+      const isNewSeries =
+        !editId &&
+        basic.contentType === ContentType.SERIES &&
+        !!basic.episodeTitle?.trim();
+      if (isNewSeries) {
+        try {
+          const epRes = await fetch(`/api/creator/content/${contentId}/episodes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              seasonNumber: basic.seasonNumber ?? 1,
+              episodeNumber: basic.episodeNumber ?? 1,
+              title: basic.episodeTitle?.trim(),
+              description: basic.description,
+              thumbnail: assets.thumbnail ?? assets.posterLandscape ?? null,
+              // videoUrl intentionally null — the encoder writes the
+              // playback URL onto the series row; the watch page falls
+              // back to series.videoUrl when episode.videoUrl is null.
+              videoUrl: null,
+              duration: meta.duration?.toString()
+            })
+          });
+          if (!epRes.ok) {
+            const epBody = await epRes.json().catch(() => ({}));
+            console.warn('[upload] episode-1 creation failed:', epBody);
+            toast.warning('Series created, but Episode 1 was not added', {
+              description: `${epBody.error ?? 'Unexpected error'} — add it manually from the episodes manager.`
+            });
+          }
+        } catch (epErr) {
+          console.warn('[upload] episode-1 creation threw:', epErr);
+          toast.warning('Series created, but Episode 1 was not added', {
+            description: 'Add it manually from the episodes manager.'
+          });
+        }
+      }
+
+      // Success toast — tone the description to match the submission type:
+      // - Coming Soon announcement (no video) → "Announcement submitted"
+      // - Coming Soon completion (edit + video on previously-approved coming-soon) → "Sent back to review"
+      // - Coming Soon with full video → "Submitted; will auto-publish on <date>"
+      // - Standard submission → "in the encoding queue"
+      // - Series submission → mention the seeded first episode
+      const isAnnouncementOnly = basic.comingSoon && !videoFile;
+      const isComingSoonWithVideo = basic.comingSoon && !!videoFile;
+      const isCompletingComingSoon = editId && editPrefilledStatus === 'coming_soon' && !!videoFile;
+      const releaseDate = basic.comingSoonReleaseDate || '';
+      toast.success(
+        isCompletingComingSoon
+          ? 'Video added · sent back to review'
+          : isAnnouncementOnly
+            ? 'Coming Soon announcement submitted'
+            : 'Content submitted successfully',
+        {
+          description: isCompletingComingSoon
+            ? `Admin will review the new video. The cron flips this to live on ${releaseDate || 'the release date'}.`
+            : isAnnouncementOnly
+              ? `Releases ${releaseDate}. Admin will review during the wait. Upload the main video any time from /creator/content/<id>.`
+              : isComingSoonWithVideo
+                ? `Your video is encoding. Once admin approves, it auto-publishes on ${releaseDate}.`
+                : isNewSeries
+                  ? `Series + S${basic.seasonNumber || 1}E${basic.episodeNumber || 1} "${basic.episodeTitle}" are in the encoding queue. Add more episodes from the episodes manager when ready.`
+                  : 'Your video is now in the encoding queue. We\'ll notify you when it\'s ready.'
+        }
+      );
       localStorage.removeItem('upload_draft');
       window.location.href = '/creator';
 
@@ -539,6 +715,11 @@
       const item = body.content;
       if (!item) return;
 
+      // Remember the row's current status. Used by submitContent to
+      // detect the "creator is completing a Coming Soon by attaching
+      // the main video" path and send the row back to review.
+      editPrefilledStatus = typeof item.status === 'string' ? item.status : null;
+
       // Pre-fill Basic Info + Metadata only. Video / assets must be uploaded
       // fresh — we don't reuse the old URLs since edit may include replacing
       // the actual media file.
@@ -549,7 +730,24 @@
         title: item.title ?? '',
         description: item.description ?? '',
         contentType: item.mediaType ?? '',
-        ageRating: item.ageRating ?? ''
+        ageRating: item.ageRating ?? '',
+        // Map schema `category` back to the wizard's Audience radio. NULL
+        // (or anything outside kids/teens) reads as General.
+        audience: item.category === 'kids' || item.category === 'teens' ? item.category : 'general',
+        // Episode 1 placeholders for the type contract. Edit mode never
+        // creates a fresh episode (the series already has its episodes),
+        // but the BasicInfo step still reads these bindable fields and
+        // wants defined values.
+        episodeTitle: 'Episode 1',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        // Rehydrate Coming Soon from the existing row's scheduledPublishAt
+        // so the creator can adjust the date or flip the toggle off when
+        // editing. Empty when the row is/was not Coming Soon.
+        comingSoon: item.status === 'coming_soon' || !!item.scheduledPublishAt,
+        comingSoonReleaseDate: item.scheduledPublishAt
+          ? String(item.scheduledPublishAt).slice(0, 10)
+          : ''
       };
       wizardState.stepData[UploadStep.METADATA] = {
         bibleReferences: item.bibleReference ? [item.bibleReference] : [],
@@ -584,7 +782,13 @@
           title: '',
           description: '',
           contentType: '',
-          ageRating: ''
+          ageRating: '',
+          audience: 'general',
+          episodeTitle: '',
+          seasonNumber: 1,
+          episodeNumber: 1,
+          comingSoon: false,
+          comingSoonReleaseDate: ''
         },
         [UploadStep.VIDEO_UPLOAD]: {
           videoFile: null,
@@ -677,22 +881,39 @@
       return; // skip localStorage draft when editing
     }
 
+    // ?cs=1 lands the wizard with the Coming Soon toggle pre-checked.
+    // Comes from the "Schedule a Coming Soon release" tile on the
+    // creator dashboard so the flow is one click instead of "upload,
+    // step through wizard, find the toggle". The toggle lives on the
+    // Basic Info step now (so step 2's video-required gate can read
+    // it); the date input expands inline the moment the toggle is on.
+    if (page.url.searchParams.get('cs') === '1') {
+      wizardState.stepData[UploadStep.BASIC_INFO].comingSoon = true;
+    }
+
     // Load any draft data from localStorage. The wizard shape evolves over
     // time (added/renamed fields, new steps); old drafts persisted before a
     // schema change would silently corrupt wizardState if spread blindly.
     // Bump DRAFT_SCHEMA_VERSION whenever any UploadStep payload structure
     // changes — stale drafts are discarded with a one-time toast.
+    //
+    // NEW: don't silently rehydrate. A creator who finished an upload, had
+    // the page redirect to /creator, then opens /creator/upload again to
+    // start a NEW video used to land into the prior draft's state — making
+    // them think they had to "clear" the old video's assets, which felt
+    // destructive. Instead we surface a banner that lets them pick
+    // "Resume" or "Start fresh."
     const draftData = localStorage.getItem('upload_draft');
     if (draftData) {
       try {
         const parsed = JSON.parse(draftData);
         if (parsed?._version === DRAFT_SCHEMA_VERSION) {
-          // Strip the version marker before merging — it isn't part of the
-          // wizard's actual state shape.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _version, ...payload } = parsed;
-          const sanitized = sanitizeWizardState(payload);
-          wizardState = sanitized;
+          const { _version, _savedAt, ...payload } = parsed;
+          pendingDraft = {
+            payload,
+            savedAt: typeof _savedAt === 'number' ? _savedAt : null
+          };
         } else {
           localStorage.removeItem('upload_draft');
           toast.info('Earlier draft was discarded because the upload form has changed.');
@@ -703,6 +924,36 @@
       }
     }
   });
+
+  // Banner state — set by onMount when a valid draft is found; cleared by
+  // either Resume (loads it into wizardState) or Start fresh (drops it).
+  // Suppress auto-save while the banner is showing so the act of waiting
+  // doesn't constantly overwrite _savedAt.
+  let pendingDraft = $state<{ payload: any; savedAt: number | null } | null>(null);
+
+  function resumeDraft(): void {
+    if (!pendingDraft) return;
+    const sanitized = sanitizeWizardState(pendingDraft.payload);
+    wizardState = sanitized;
+    pendingDraft = null;
+  }
+
+  function startFreshDraft(): void {
+    try { localStorage.removeItem('upload_draft'); } catch { /* ignore */ }
+    pendingDraft = null;
+    // wizardState is already at default; just nudge it to step 1 in case
+    // something earlier in the mount path bumped it.
+    wizardState.currentStep = UploadStep.BASIC_INFO;
+  }
+
+  function formatRelativeTime(ts: number | null): string {
+    if (!ts) return 'a moment ago';
+    const diff = Date.now() - ts;
+    if (diff < 60_000) return 'just now';
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min ago`;
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+    return `${Math.floor(diff / 86_400_000)}d ago`;
+  }
 
   // Bump whenever the wizardState shape changes — even a renamed field on
   // any UploadStep payload. Mismatched versions in onMount trigger a clean
@@ -716,16 +967,57 @@
 
   // Auto-save draft data (excluding File objects). In runes mode, $: is no
   // longer reactive — use $effect to track wizardState changes.
+  //
+  // Skipped while the Resume / Start fresh banner is showing so a creator
+  // who's about to pick "Start fresh" doesn't accidentally overwrite the
+  // draft they were considering resuming.
   $effect(() => {
-    if (typeof localStorage !== 'undefined') {
-      const stateToSave = JSON.parse(JSON.stringify(wizardState));
-      localStorage.setItem('upload_draft', JSON.stringify({ _version: DRAFT_SCHEMA_VERSION, ...stateToSave }));
-    }
+    if (typeof localStorage === 'undefined') return;
+    if (pendingDraft) return;
+    const stateToSave = JSON.parse(JSON.stringify(wizardState));
+    localStorage.setItem('upload_draft', JSON.stringify({
+      _version: DRAFT_SCHEMA_VERSION,
+      _savedAt: Date.now(),
+      ...stateToSave
+    }));
   });
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={Upload} title="Upload" subtitle="Submit a new video for review and encoding." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">
+  <PortalHero compact eyebrow="Create" title="New upload" subtitle="Submit a new video for review and encoding." icon={Upload} />
+
+  <!-- Draft-resume banner. Surfaces when localStorage has a saved draft
+       from a prior session so the creator can pick "Resume" (load the
+       saved fields) or "Start fresh" (clear it and begin a new video).
+       This replaces the prior silent-rehydrate behavior, which made the
+       wizard feel locked to the previous upload's assets. -->
+  {#if pendingDraft}
+    <div class="bg-yellow-500/5 border border-yellow-500/30 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      <div class="text-sm flex-1">
+        <strong class="text-foreground">Resume previous draft?</strong>
+        <p class="text-foreground/70 mt-1">
+          You have a saved draft from {formatRelativeTime(pendingDraft.savedAt)}.
+          Resume to continue where you left off, or start fresh for a new upload.
+        </p>
+      </div>
+      <div class="flex gap-2 shrink-0">
+        <button
+          type="button"
+          onclick={startFreshDraft}
+          class="text-sm rounded-md border border-white/15 bg-white/5 hover:bg-white/10 text-white/90 px-3 py-1.5 transition-colors"
+        >
+          Start fresh
+        </button>
+        <button
+          type="button"
+          onclick={resumeDraft}
+          class="text-sm rounded-md bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white font-semibold px-3 py-1.5 transition-colors"
+        >
+          Resume
+        </button>
+      </div>
+    </div>
+  {/if}
 
   {#if editPrefillBanner}
     <div class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start">
@@ -761,6 +1053,12 @@
         bind:description={wizardState.stepData[UploadStep.BASIC_INFO].description}
         bind:contentType={wizardState.stepData[UploadStep.BASIC_INFO].contentType}
         bind:ageRating={wizardState.stepData[UploadStep.BASIC_INFO].ageRating}
+        bind:audience={wizardState.stepData[UploadStep.BASIC_INFO].audience}
+        bind:episodeTitle={wizardState.stepData[UploadStep.BASIC_INFO].episodeTitle}
+        bind:seasonNumber={wizardState.stepData[UploadStep.BASIC_INFO].seasonNumber}
+        bind:episodeNumber={wizardState.stepData[UploadStep.BASIC_INFO].episodeNumber}
+        bind:comingSoon={wizardState.stepData[UploadStep.BASIC_INFO].comingSoon}
+        bind:comingSoonReleaseDate={wizardState.stepData[UploadStep.BASIC_INFO].comingSoonReleaseDate}
       />
     {:else if wizardState.currentStep === UploadStep.VIDEO_UPLOAD}
       <VideoUploadStep
@@ -799,8 +1097,16 @@
     {/if}
   </div>
   
-  <!-- Navigation Buttons -->
-  <div class="flex justify-between items-center max-w-4xl mx-auto pt-4">
+  <!-- Sticky bottom navigation — Form-template pattern. Wizard's
+       Previous / Next (or Submit) live here so they're always reachable
+       regardless of how long any step's body gets. The submission
+       progress overlay is rendered separately and sits above this bar
+       while in-flight. -->
+  <div
+    class="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t pointer-events-none"
+    style="background: hsl(var(--portal-bg-elevated)/0.92); border-color: hsl(var(--portal-border));"
+  >
+    <div class="mx-auto px-4 py-3 max-w-5xl flex justify-between items-center gap-3 pointer-events-auto">
     <button
       onclick={previousStep}
       disabled={wizardState.currentStep === UploadStep.BASIC_INFO || isSubmitting || isTransitioningStep}
@@ -870,7 +1176,10 @@
         {/if}
       </div>
     {/if}
+    </div>
   </div>
+  <!-- Spacer so the sticky bar doesn't cover the last field of any step -->
+  <div aria-hidden="true" class="h-24"></div>
 
   <!-- Submission progress overlay — shows live state and a real progress
        bar during the slow video upload step so the user knows it isn't

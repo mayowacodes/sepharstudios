@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { FileText, ArrowLeft, CheckCircle2, XCircle, Clock } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { toast } from 'svelte-sonner';
 
@@ -123,15 +123,21 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-3xl space-y-6">
-  <a href="/creator/earnings" class="text-xs text-purple-300 hover:text-purple-200 inline-flex items-center gap-1">
+<div class="mx-auto py-8 px-4 max-w-4xl space-y-6">
+  <a
+    href="/creator/earnings"
+    class="text-xs inline-flex items-center gap-1 transition-colors"
+    style="color: hsl(var(--portal-accent));"
+  >
     <ArrowLeft class="w-3 h-3" /> Back to earnings
   </a>
 
-  <PageHeader
-    icon={FileText}
+  <PortalHero
+    compact
+    eyebrow="Compliance"
     title="Tax forms"
     subtitle="Submit a W-9 (US persons), W-8BEN (foreign individuals), or W-8BEN-E (foreign entities). Admin reviews and confirms before annual 1099 generation."
+    icon={FileText}
   />
 
   <!-- Submit form -->

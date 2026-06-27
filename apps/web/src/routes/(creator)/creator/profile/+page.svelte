@@ -2,7 +2,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { User, Save, Loader2 } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   
   // Profile form data
   let profileData = $state({
@@ -175,15 +176,21 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={User} title="Creator Profile" subtitle="Manage your profile and ministry information.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">
+  <PortalHero
+    compact
+    eyebrow="Identity"
+    title="Creator profile"
+    subtitle="Manage your profile and ministry information."
+    icon={User}
+  >
     {#snippet actions()}
-      <button onclick={saveProfile} disabled={isSaving} class="text-xs bg-primary hover:opacity-90 disabled:opacity-50 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
-        {#if isSaving}<Loader2 class="w-3 h-3 animate-spin" />{:else}<Save class="w-3 h-3" />{/if}
+      <PortalButton variant="primary" size="sm" onclick={saveProfile} disabled={isSaving} loading={isSaving}>
+        {#if !isSaving}<Save class="w-3.5 h-3.5" />{/if}
         {isSaving ? 'Saving…' : 'Save'}
-      </button>
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <!-- Save Status -->
   {#if saveStatus === 'success'}
@@ -670,5 +677,31 @@
       </div>
     </div>
   {/if}
+
+  <!-- Sticky bottom save bar — Form template pattern. Always within
+       thumb-reach so a long profile form doesn't require scrolling
+       back to the header to commit. -->
+  <div
+    class="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t pointer-events-none"
+    style="background: hsl(var(--portal-bg-elevated)/0.92); border-color: hsl(var(--portal-border));"
+  >
+    <div class="mx-auto px-4 py-3 max-w-5xl flex items-center justify-between gap-3 pointer-events-auto">
+      <div class="text-xs" style="color: hsl(var(--portal-text-muted));">
+        {#if saveStatus === 'success'}
+          <span style="color: hsl(var(--portal-success));">Saved.</span>
+        {:else if saveStatus === 'error'}
+          <span style="color: hsl(var(--portal-danger));">Save failed — try again.</span>
+        {:else}
+          Changes auto-save once you hit Save.
+        {/if}
+      </div>
+      <PortalButton variant="primary" size="md" onclick={saveProfile} disabled={isSaving} loading={isSaving}>
+        {#if !isSaving}<Save class="w-4 h-4" />{/if}
+        {isSaving ? 'Saving…' : 'Save changes'}
+      </PortalButton>
+    </div>
+  </div>
+  <!-- Spacer so the sticky bar doesn't cover the last field -->
+  <div aria-hidden="true" class="h-20"></div>
 </div>
 

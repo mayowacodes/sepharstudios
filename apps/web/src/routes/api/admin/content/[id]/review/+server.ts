@@ -15,15 +15,20 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	if (!contentId) return json({ error: 'Missing content ID' }, { status: 400 });
 
 	const payload = await request.json() as {
-		result: 'approved' | 'rejected' | 'needs_revision';
+		result: 'approved' | 'rejected' | 'needs_revision' | 'approve_coming_soon';
 		feedback?: string;
 		rejectionReason?: string;
 		publishNow?: boolean;
+		// Coming Soon path — admin can edit the release date before
+		// approving. Falls back to whatever the creator submitted in
+		// scheduledPublishAt when not provided.
+		comingSoonReleaseDate?: string;
 	};
 
 	let status = 'submitted';
 	if (payload.result === 'approved') status = payload.publishNow ? 'published' : 'approved';
 	if (payload.result === 'rejected') status = 'rejected';
+	if (payload.result === 'approve_coming_soon') status = 'coming_soon';
 
 	const existing = await db
 		.select({
@@ -70,6 +75,18 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 	if (payload.result === 'approved' && payload.publishNow) updatePayload.isActive = true;
 	if (payload.result === 'rejected') updatePayload.isActive = false;
+	if (payload.result === 'approve_coming_soon') {
+		// Coming Soon rows are publicly visible but not yet playable —
+		// isActive stays false so the standard catalog grids filter
+		// them out, and a separate Coming-Soon read path picks them up
+		// by status='coming_soon'. The scheduled-publish cron flips
+		// the row to live when scheduledPublishAt elapses.
+		updatePayload.isActive = false;
+		if (payload.comingSoonReleaseDate) {
+			const ts = Date.parse(payload.comingSoonReleaseDate);
+			if (!Number.isNaN(ts)) updatePayload.scheduledPublishAt = new Date(ts);
+		}
+	}
 
 	await db.update(mediaLibrary).set(updatePayload).where(eq(mediaLibrary.id, contentId));
 

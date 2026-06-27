@@ -20,8 +20,9 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { PlayCircle, Bookmark, BookmarkCheck, RotateCcw } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
+  import { PlayCircle, Bookmark, BookmarkCheck, RotateCcw, Check, CheckCheck, Bell, BellRing } from '@lucide/svelte';
+  import { goto, invalidateAll } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
   import { Button } from '$lib/components/ui/button';
   import MediaPreviewPlayer from '$lib/components/widgets/MediaPreviewPlayer.svelte';
   import ShareButton from '$lib/components/widgets/ShareButton.svelte';
@@ -49,6 +50,9 @@
     thumbnail: string | null;
     backdropUrl: string | null;
     posterUrl: string | null;
+    // Transparent PNG title treatment overlaid on the hero. When
+    // present, swaps the plain-text H1 for a real branded logo.
+    logoTitleUrl: string | null;
     trailerUrl: string | null;
     /** Resolved master playlist URL (server load runs encoder-playback helper). */
     playbackUrl: string | null;
@@ -62,6 +66,13 @@
     cast: CastMember[] | null;
     crew: CrewMember[] | null;
     mediaType: string | null;
+    /** Workflow state. When 'coming_soon', the page replaces the
+     *  Watch CTA with a Notify-me toggle and hides Mark as Watched.
+     *  Other values render the normal playable layout. */
+    status?: string | null;
+    /** Planned go-live timestamp for coming_soon rows. Drives the
+     *  "Releases [date]" copy under the title. */
+    scheduledPublishAt?: string | Date | null;
   }
 
   interface WatchProgress {
@@ -108,9 +119,23 @@
   // then the client takes over once mounted. The store handles the
   // optimistic toggle + toast.
   let mounted = $state(false);
-  onMount(() => {
+  onMount(async () => {
     mounted = true;
     if (isInMyList) myList.seedIds([content.id]);
+    // Hydrate the Coming Soon notify-me bell. Skipped for non-coming-soon
+    // rows so we don't waste a request on every detail-page load.
+    if (content.status === 'coming_soon') {
+      try {
+        const res = await fetch(`/api/coming-soon/${content.id}/notify`);
+        if (res.ok) {
+          const body = await res.json();
+          notifySubscribed = !!body.subscribed;
+          notifySignedIn = body.signedIn ?? true;
+        }
+      } catch {
+        // ignore — the CTA still renders, just without a hydrated state
+      }
+    }
   });
 
   const inList = $derived(mounted ? $myList.ids.has(content.id) : isInMyList);
@@ -122,6 +147,99 @@
       contentTitle: content.title,
       contentType: content.mediaType ?? 'movie'
     });
+  }
+
+  // Coming Soon notify-me — only meaningful when content.status ===
+  // 'coming_soon'. Hydrates from /api/coming-soon/<id>/notify on
+  // mount, toggled by the bell CTA below. Anonymous viewers see a
+  // sign-in prompt before they can subscribe.
+  const isComingSoon = $derived(content.status === 'coming_soon');
+  let notifySubscribed = $state(false);
+  let notifySignedIn = $state(true);
+  let notifyBusy = $state(false);
+
+  const releaseLabel = $derived.by(() => {
+    const raw = content.scheduledPublishAt ?? null;
+    if (!raw) return null;
+    const ts = raw instanceof Date ? raw.getTime() : Date.parse(String(raw));
+    if (Number.isNaN(ts)) return null;
+    return new Date(ts).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  });
+
+  async function toggleNotify(): Promise<void> {
+    if (notifyBusy) return;
+    if (!notifySignedIn) {
+      void goto(`/auth/login?redirectTo=${encodeURIComponent(`/movies/${content.slug || content.id}`)}`);
+      return;
+    }
+    notifyBusy = true;
+    const previous = notifySubscribed;
+    notifySubscribed = !notifySubscribed; // optimistic
+    try {
+      const res = await fetch(`/api/coming-soon/${content.id}/notify`, { method: 'POST' });
+      if (!res.ok) {
+        notifySubscribed = previous;
+        toast.error("Couldn't update reminder");
+        return;
+      }
+      const body = await res.json();
+      notifySubscribed = !!body.subscribed;
+      toast.success(notifySubscribed
+        ? `We'll notify you when ${content.title} drops`
+        : `Reminder removed for ${content.title}`);
+    } catch {
+      notifySubscribed = previous;
+      toast.error('Network error');
+    } finally {
+      notifyBusy = false;
+    }
+  }
+
+  // Mark as Watched / Unwatch — manual override over the auto-tracked
+  // progress. Only relevant for signed-in viewers; we optimistically
+  // flip the local "looks watched" flag then invalidate so server
+  // state catches up (Resume CTA + Continue Watching row react).
+  let markingWatched = $state(false);
+  // A row is considered "watched" when the server told us the
+  // progress is in finished territory (>=95%) OR the user just
+  // pressed Mark as Watched. Local override lives until the next
+  // server load supersedes it.
+  let manualWatched: boolean | null = $state(null);
+  const looksWatched = $derived(
+    manualWatched !== null
+      ? manualWatched
+      : (watchProgress?.completionPercent ?? 0) >= 95
+  );
+
+  async function toggleWatched(): Promise<void> {
+    if (markingWatched) return;
+    markingWatched = true;
+    const next = !looksWatched;
+    manualWatched = next; // optimistic
+    try {
+      const res = await fetch(`/api/watch/mark/${content.id}?as=${next ? 'watched' : 'unwatched'}`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        manualWatched = !next;
+        toast.error("Couldn't update watch status", {
+          description: 'Please try again in a moment.'
+        });
+        return;
+      }
+      toast.success(next ? 'Marked as watched' : 'Removed watched status', {
+        description: content.title
+      });
+      // Refresh the page's load data so the Resume CTA + progress bar
+      // re-render based on the server's new view of the row.
+      await invalidateAll();
+    } catch (err) {
+      manualWatched = !next;
+      console.error('mark-as-watched failed', err);
+      toast.error('Network error', { description: 'Please try again.' });
+    } finally {
+      markingWatched = false;
+    }
   }
 
   let descExpanded = $state(false);
@@ -222,17 +340,52 @@
 
   // Watch URL prefers slug to keep the address bar friendly (we already
   // made the watch route accept both slug and uuid earlier in the project).
-  const watchHref = $derived(`/watch/${content.slug || content.id}`);
+  //
+  // For SERIES, default to deep-linking the FIRST episode. Without this,
+  // hitting Watch on a series plays back the series-row's videoUrl (which
+  // is fine — the encoder writes it onto the series row in the new wizard
+  // flow), but the watch page treats `?episode` as missing and tracks
+  // progress against `episodeId IS NULL`. The viewer's "Continue watching"
+  // card on the dashboard then shows the show-level row instead of
+  // "Resume · S1 E1 · 4:12". Pointing the CTA at the first episode keeps
+  // the watch-progress row episode-scoped from the first second.
+  //
+  // Episode 1 in the new wizard flow has `videoUrl: null` — the watch
+  // route already falls back to the show's playbackUrl when the active
+  // episode's videoUrl is missing, so playback works correctly.
+  const firstEpisodeId = $derived.by<string | null>(() => {
+    if (!episodes || episodes.length === 0) return null;
+    const sorted = [...episodes].sort((a, b) =>
+      a.seasonNumber - b.seasonNumber || a.episodeNumber - b.episodeNumber
+    );
+    return sorted[0]?.id ?? null;
+  });
+  const watchHref = $derived.by(() => {
+    const base = `/watch/${content.slug || content.id}`;
+    return firstEpisodeId ? `${base}?episode=${firstEpisodeId}` : base;
+  });
 
   // Resume URL — when watch-progress exists, the Resume CTA passes the
-  // saved second offset via `?t=`. Episode-progress would also include
-  // `&episode=<id>` so the watch page picks the right rendition; for v1
-  // we keep show-level resume only (the loader only fetches episodeId=NULL).
-  const resumeHref = $derived(
-    watchProgress
-      ? `${watchHref}?t=${watchProgress.positionSeconds}${watchProgress.episodeId ? `&episode=${watchProgress.episodeId}` : ''}`
-      : watchHref
-  );
+  // saved second offset via `?t=`. Episode-progress also includes
+  // `&episode=<id>` so the watch page picks the right rendition.
+  //
+  // The base `watchHref` may itself carry `?episode=<first-episode-id>`
+  // for series (see watchHref derivation above), so we strip the query
+  // string before re-appending params here. Otherwise the URL ends up
+  // with two `?` and the second-onwards segment gets parsed as the
+  // path, breaking the route match.
+  const resumeHref = $derived.by(() => {
+    if (!watchProgress) return watchHref;
+    const base = `/watch/${content.slug || content.id}`;
+    const params = new URLSearchParams();
+    params.set('t', String(watchProgress.positionSeconds));
+    // Prefer the explicit episodeId from the progress row; fall back to
+    // the first-episode default for series so resume still scopes to
+    // an episode when the row predates the new schema.
+    const episodeId = watchProgress.episodeId ?? firstEpisodeId;
+    if (episodeId) params.set('episode', episodeId);
+    return `${base}?${params.toString()}`;
+  });
 
   // Whether the page has a meaningful Resume CTA to show. The loader
   // already guards against trivial scrubbing (<15s) and near-complete
@@ -369,9 +522,25 @@
           {/if}
         </div>
 
-        <h1 class="{theme.titleSize} font-extrabold leading-tight text-display drop-shadow-lg {theme.titleClasses}">
-          {content.title}
-        </h1>
+        <!--
+          Branded title treatment when a transparent PNG title logo
+          was uploaded — renders the logo in place of the plain text
+          H1 so the detail hero reads as a cinematic title card, not
+          system font. The plain H1 stays as visually-hidden text so
+          screen readers + SEO still see the title.
+        -->
+        {#if content.logoTitleUrl}
+          <img
+            src={content.logoTitleUrl}
+            alt={content.title}
+            class="max-h-28 sm:max-h-36 lg:max-h-44 w-auto object-contain drop-shadow-lg"
+          />
+          <h1 class="sr-only">{content.title}</h1>
+        {:else}
+          <h1 class="{theme.titleSize} font-extrabold leading-tight text-display drop-shadow-lg {theme.titleClasses}">
+            {content.title}
+          </h1>
+        {/if}
 
         <!-- Metadata strip: age + year + duration + language. Mirrors the
              in-player overlay so creators see one consistent vocabulary. -->
@@ -469,10 +638,36 @@
              demotes to "Start over". When no progress exists, only the
              standard Watch button renders.
 
+             Coming Soon rows replace the Watch CTA entirely with a
+             Notify-me bell — the title isn't playable yet. The trailer
+             still plays in the preview pane above.
+
              Kids mode intercepts the click and shows the parental gate
              modal; everyone else gets a normal anchor navigation. -->
         <div class="flex flex-wrap items-center gap-3 pt-3">
-          {#if showResume}
+          {#if isComingSoon}
+            {#if releaseLabel}
+              <p class="w-full text-sm text-white/70">
+                Releases <span class="font-semibold text-white">{releaseLabel}</span>
+              </p>
+            {/if}
+            <Button
+              size={theme.ctaSize}
+              onclick={toggleNotify}
+              disabled={notifyBusy}
+              class={notifySubscribed
+                ? 'bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]'
+                : theme.outlineBtnClass}
+            >
+              {#if notifySubscribed}
+                <BellRing class="mr-2 h-5 w-5" />
+                You'll be notified
+              {:else}
+                <Bell class="mr-2 h-5 w-5" />
+                Notify me when it drops
+              {/if}
+            </Button>
+          {:else if showResume}
             <Button
               size={theme.ctaSize}
               href={resumeHref}
@@ -530,6 +725,32 @@
             title={content.title}
             description={content.description ?? ''}
           />
+          <!-- Mark as Watched / Unwatch — small icon-only chip so it
+               doesn't compete with Watch / My List for hierarchy.
+               Only renders for the standard + teens modes; kids mode
+               assumes auto-tracking is the only honest signal. Hidden
+               on Coming Soon rows (you can't have watched something
+               that hasn't released). -->
+          {#if mode !== 'kids' && !isComingSoon}
+            <button
+              type="button"
+              onclick={toggleWatched}
+              disabled={markingWatched}
+              aria-pressed={looksWatched}
+              aria-label={looksWatched ? `Remove watched status from ${content.title}` : `Mark ${content.title} as watched`}
+              class="inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed {looksWatched
+                ? 'border-green-500/50 bg-green-500/15 text-green-200 hover:bg-green-500/25'
+                : theme.outlineBtnClass}"
+            >
+              {#if looksWatched}
+                <CheckCheck class="h-4 w-4" />
+                Watched
+              {:else}
+                <Check class="h-4 w-4" />
+                Mark watched
+              {/if}
+            </button>
+          {/if}
         </div>
 
         {#if showResume && watchProgress && !watchProgress.isNextEpisode}
@@ -582,7 +803,7 @@
                 {#each eps as ep (ep.id)}
                   <li>
                     <a
-                      href={watchHref + `?episode=${ep.id}`}
+                      href={`/watch/${content.slug || content.id}?episode=${ep.id}`}
                       class="block rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[#FF5E0E]/60 hover:bg-white/8 transition-colors"
                     >
                       <div class="aspect-video bg-black/40 relative">

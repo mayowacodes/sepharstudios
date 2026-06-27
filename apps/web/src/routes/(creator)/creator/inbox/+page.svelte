@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { Inbox, Archive, MailOpen, CheckCircle2 } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
-  import EmptyState from '$lib/components/dashboard/EmptyState.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import EmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type Filter = 'unread' | 'all' | 'archived';
@@ -124,11 +124,13 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-3xl space-y-6">
-  <PageHeader
-    icon={Inbox}
+<div class="mx-auto py-8 px-4 max-w-4xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Messages"
     title="Inbox"
     subtitle="Messages from Sephar Studios about your content, applications, and account."
+    icon={Inbox}
   />
 
   <div class="flex flex-wrap gap-2 items-center">

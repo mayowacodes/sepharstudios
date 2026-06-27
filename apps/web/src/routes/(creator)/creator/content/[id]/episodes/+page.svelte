@@ -3,7 +3,8 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { ArrowLeft, Plus, Tv } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
 
   interface Episode {
     id: string;
@@ -161,13 +162,19 @@
     <ArrowLeft class="w-3 h-3" /> Back to show
   </a>
 
-  <PageHeader icon={Tv} title="Episodes" subtitle="{episodes.length} {episodes.length === 1 ? 'episode' : 'episodes'} across {grouped.length} {grouped.length === 1 ? 'season' : 'seasons'}.">
+  <PortalHero
+    compact
+    eyebrow="Series"
+    title="Episodes"
+    subtitle="{episodes.length} {episodes.length === 1 ? 'episode' : 'episodes'} across {grouped.length} {grouped.length === 1 ? 'season' : 'seasons'}."
+    icon={Tv}
+  >
     {#snippet actions()}
-      <button type="button" onclick={openCreate} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">
-        <Plus class="w-3 h-3" /> Add episode
-      </button>
+      <PortalButton variant="primary" size="sm" onclick={openCreate}>
+        <Plus class="w-3.5 h-3.5" /> Add episode
+      </PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   {#if loading}
     <div class="text-center text-muted-foreground py-12">Loading…</div>

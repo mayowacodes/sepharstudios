@@ -2,6 +2,7 @@
   import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { myList } from '$lib/stores/myList';
+  import { isRecentlyAdded } from '$lib/utils/recency';
 
   let { show, onClick = () => {}, onHover = () => {} }: {
     show: {
@@ -9,6 +10,11 @@
       title: string;
       description: string;
       thumbnail: string;
+      /** Portrait (2:3) poster. Catalog cards prefer this; falls back to
+       *  `thumbnail` (landscape) only when the row never got a portrait
+       *  poster set, since cropping landscape into the portrait slot
+       *  produces a tall sliver instead of the full artwork. */
+      posterUrl?: string | null;
       link: string;
       trailerUrl?: string;
       rating?: string;
@@ -25,6 +31,7 @@
       category?: 'kids' | 'teens' | string | null;
       progressPercent?: number;
       positionSeconds?: number;
+      createdAt?: string | Date | null;
     };
     onClick?: () => void;
     onHover?: () => void;
@@ -90,7 +97,7 @@
       ></video>
     {:else}
       <img
-        src={show.thumbnail || '/placeholder-vertical.jpg'}
+        src={show.posterUrl || show.thumbnail || '/placeholder-vertical.jpg'}
         alt=""
         width="280"
         height="420"
@@ -113,6 +120,10 @@
   {#if show.isNew}
     <div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">
       New Episode
+    </div>
+  {:else if isRecentlyAdded(show.createdAt)}
+    <div class="absolute top-2 left-2 bg-[#FF5E0E] text-white text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full z-30 shadow">
+      Just added
     </div>
   {/if}
 

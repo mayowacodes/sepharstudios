@@ -2,7 +2,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { FileText } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalButton from '$lib/components/portal/PortalButton.svelte';
   import StatChip from '$lib/components/dashboard/StatChip.svelte';
   
   interface ContentPolicy {
@@ -142,14 +143,18 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={FileText} title="Content Policies" subtitle="Guidelines and standards for content review.">
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Governance"
+    title="Content policies"
+    subtitle="Guidelines and standards for content review."
+    icon={FileText}
+  >
     {#snippet actions()}
-      <button onclick={createNewPolicy} class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">
-        + New policy
-      </button>
+      <PortalButton variant="primary" size="sm" onclick={createNewPolicy}>+ New policy</PortalButton>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <div class="flex flex-wrap gap-2">
     <StatChip label="theological" value={policies.filter(p => p.category === 'theological').length} tone="purple" />

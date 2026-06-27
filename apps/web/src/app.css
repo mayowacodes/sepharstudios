@@ -392,7 +392,12 @@ input:checked + .slider:before {
    primitives. Solves the bg-white/10 vs bg-white/5 vs bg-blue-600/20 drift
    across hand-rolled dashboards. The tint var resolves to white-on-dark
    in dark mode and dark-on-light in light mode, so a surface looks
-   correct in both themes without per-component overrides. */
+   correct in both themes without per-component overrides.
+
+   Inside portal scopes (admin / creator), the surfaces inherit the
+   portal background + border tokens so legacy `.surface-1/2/3` calls
+   still living in pages picked up the portal palette automatically.
+   This means we DIDN'T have to sweep ~50 call-sites by hand. */
 .surface-1 {
   background: var(--surface-tint-1);
   border: 1px solid var(--surface-tint-border);
@@ -404,6 +409,24 @@ input:checked + .slider:before {
 .surface-3 {
   background: var(--surface-tint-3);
   border: 1px solid var(--surface-tint-border);
+}
+
+/* Portal-scoped overrides — keys off the [data-portal] attribute on the
+   PortalShell root. Hex-equivalent of: surface-1 = base elevated,
+   surface-2 = mid elevated, surface-3 = top elevated. All borders
+   pull from --portal-border so the rings match the rest of the
+   chrome. */
+[data-portal] .surface-1 {
+  background: hsl(var(--portal-bg-elevated) / 0.45);
+  border-color: hsl(var(--portal-border));
+}
+[data-portal] .surface-2 {
+  background: hsl(var(--portal-bg-elevated) / 0.65);
+  border-color: hsl(var(--portal-border));
+}
+[data-portal] .surface-3 {
+  background: hsl(var(--portal-bg-elevated) / 0.85);
+  border-color: hsl(var(--portal-border));
 }
 
 .halo-ring {
@@ -459,6 +482,179 @@ input:checked + .slider:before {
    calmed; the spinner on async buttons still indicates loading via its
    final frame.
    ─────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────────
+   PORTAL DESIGN TOKENS — "Mission Control" admin + "Cosmic Maker" creator
+   ─────────────────────────────────────────────────────────────────────────
+   Scoped to the data-portal attribute on PortalShell so they only apply
+   inside /admin/* and /creator/*. They sit ON TOP of the global
+   :root / .dark tokens — anything not redefined here inherits.
+
+   The reusable utility classes (.surface-glass, .halo-ring, .text-display)
+   keep working unchanged; the new --portal-* names are what the new
+   portal components consume.
+   ─────────────────────────────────────────────────────────────────────── */
+[data-portal='admin'] {
+  --portal-bg-base: 213 35% 8%;
+  --portal-bg-elevated: 213 30% 12%;
+  --portal-bg-card: 213 28% 14%;
+  --portal-accent: 175 60% 48%;
+  --portal-accent-2: 222 50% 60%;
+  --portal-success: 158 64% 52%;
+  --portal-danger: 0 72% 60%;
+  --portal-warning: 38 92% 58%;
+  --portal-text: 210 30% 92%;
+  --portal-text-muted: 210 15% 60%;
+  --portal-border: 213 25% 22%;
+  --portal-grid-line: 213 30% 18%;
+  --portal-accent-glow: 0 0 24px hsla(175, 60%, 48%, 0.35);
+  --portal-gradient-hero: linear-gradient(135deg, hsl(213, 40%, 10%) 0%, hsl(175, 30%, 14%) 100%);
+  --portal-gradient-cta: linear-gradient(135deg, hsl(175, 60%, 45%) 0%, hsl(222, 50%, 55%) 100%);
+
+  --primary: var(--portal-accent);
+  --primary-foreground: 210 40% 98%;
+  --sidebar-primary: var(--portal-accent);
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-background: var(--portal-bg-elevated);
+  --sidebar-foreground: var(--portal-text);
+  --sidebar-border: var(--portal-border);
+  --sidebar-ring: var(--portal-accent);
+}
+
+[data-portal='creator'] {
+  --portal-bg-base: 240 35% 8%;
+  --portal-bg-elevated: 245 30% 12%;
+  --portal-bg-card: 245 28% 14%;
+  --portal-accent: 187 92% 62%;
+  --portal-accent-2: 270 80% 70%;
+  --portal-success: 158 64% 52%;
+  --portal-danger: 340 80% 65%;
+  --portal-warning: 38 92% 58%;
+  --portal-text: 240 30% 96%;
+  --portal-text-muted: 240 15% 65%;
+  --portal-border: 245 35% 25%;
+  --portal-grid-line: 245 30% 20%;
+  --portal-accent-glow: 0 0 24px hsla(187, 92%, 62%, 0.45);
+  --portal-gradient-hero: linear-gradient(135deg, hsl(240, 50%, 10%) 0%, hsl(270, 50%, 14%) 50%, hsl(187, 80%, 22%) 100%);
+  --portal-gradient-cta: linear-gradient(135deg, hsl(187, 92%, 60%) 0%, hsl(270, 80%, 65%) 100%);
+
+  --primary: var(--portal-accent);
+  --primary-foreground: 240 50% 8%;
+  --sidebar-primary: var(--portal-accent);
+  --sidebar-primary-foreground: 240 50% 8%;
+  --sidebar-background: var(--portal-bg-elevated);
+  --sidebar-foreground: var(--portal-text);
+  --sidebar-border: var(--portal-border);
+  --sidebar-ring: var(--portal-accent);
+}
+
+/* Shared dot-grid background on top of the base color so both portals
+   read as "space" instead of a flat fill. The grid is intentionally
+   subtle — visible up close, barely perceptible at distance. */
+[data-portal='admin'],
+[data-portal='creator'] {
+  background-color: hsl(var(--portal-bg-base));
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    hsl(var(--portal-grid-line) / 0.18) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  color: hsl(var(--portal-text));
+}
+
+/* Portal motion keyframes + helpers. Page-level transitions live in
+   lib/motion.ts; these are the ambient ones (sidebar sweep, status pulse,
+   card mount). Globally calmed by the prefers-reduced-motion rule below. */
+@keyframes portal-sweep {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes portal-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+@keyframes portal-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.portal-active-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--portal-accent) / 0.4) 40%,
+    hsl(var(--portal-accent)) 50%,
+    hsl(var(--portal-accent) / 0.4) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: portal-sweep 1.8s ease-in-out infinite;
+}
+
+.portal-pulse-dot {
+  animation: portal-pulse-dot 2s ease-in-out infinite;
+}
+
+.portal-fade-up {
+  animation: portal-fade-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Toast styling — applied via Toaster `toastOptions.classes` in
+   src/routes/+layout.svelte. The default svelte-sonner dark theme uses
+   neutral grays that fight the portal palette; here we re-skin the
+   wrapper to use the portal tokens so toasts feel native to whichever
+   portal the user is in. Falls back to neutral surfaces on public
+   routes where no `[data-portal]` ancestor exists.
+   ──────────────────────────────────────────────────────────────────── */
+:where(.portal-toast) {
+  background: hsl(var(--portal-bg-elevated, var(--surface-tint-2, 222 22% 11%)) / 0.95) !important;
+  color: hsl(var(--portal-text, var(--foreground, 210 40% 98%))) !important;
+  border: 1px solid hsl(var(--portal-border, 215 14% 27%)) !important;
+  border-radius: 14px !important;
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 18px 40px -16px rgba(0, 0, 0, 0.55),
+    0 0 0 1px hsl(var(--portal-accent, 175 60% 48%) / 0.08) inset;
+  font-family: 'Manrope', system-ui, sans-serif;
+}
+
+.portal-toast-title {
+  font-weight: 600 !important;
+  letter-spacing: -0.005em;
+  color: hsl(var(--portal-text, 210 40% 98%)) !important;
+}
+
+.portal-toast-desc {
+  color: hsl(var(--portal-text-muted, 220 10% 70%)) !important;
+}
+
+.portal-toast-close {
+  color: hsl(var(--portal-text-muted, 220 10% 70%)) !important;
+  border-color: hsl(var(--portal-border, 215 14% 27%)) !important;
+  background: hsl(var(--portal-bg-base, 222 22% 9%) / 0.6) !important;
+}
+.portal-toast-close:hover {
+  color: hsl(var(--portal-text, 210 40% 98%)) !important;
+  background: hsl(var(--portal-bg-elevated, 222 22% 13%)) !important;
+}
+
+/* Variant-specific accent stripes — match svelte-sonner's built-in
+   success/error/warning/info data attributes. Keeps the toast palette
+   coherent with portal accent + portal danger tokens. */
+:where(.portal-toast[data-type='success']) {
+  border-left: 3px solid hsl(var(--portal-success, 158 64% 52%)) !important;
+}
+:where(.portal-toast[data-type='error']) {
+  border-left: 3px solid hsl(var(--portal-danger, 0 72% 60%)) !important;
+}
+:where(.portal-toast[data-type='warning']) {
+  border-left: 3px solid hsl(45 95% 60%) !important;
+}
+:where(.portal-toast[data-type='info']) {
+  border-left: 3px solid hsl(var(--portal-accent, 175 60% 48%)) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

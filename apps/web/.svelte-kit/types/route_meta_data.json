@@ -147,6 +147,9 @@
 	"/api/admin/agent-runs": [
 		"src/routes/api/admin/agent-runs/+server.ts"
 	],
+	"/api/admin/agents/status": [
+		"src/routes/api/admin/agents/status/+server.ts"
+	],
 	"/api/admin/agents/[name]/fire": [
 		"src/routes/api/admin/agents/[name]/fire/+server.ts"
 	],
@@ -161,6 +164,9 @@
 	],
 	"/api/admin/analytics": [
 		"src/routes/api/admin/analytics/+server.ts"
+	],
+	"/api/admin/analytics/stream": [
+		"src/routes/api/admin/analytics/stream/+server.ts"
 	],
 	"/api/admin/communications": [
 		"src/routes/api/admin/communications/+server.ts"
@@ -414,6 +420,12 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/coming-soon": [
+		"src/routes/api/coming-soon/+server.ts"
+	],
+	"/api/coming-soon/[contentId]/notify": [
+		"src/routes/api/coming-soon/[contentId]/notify/+server.ts"
+	],
 	"/api/contact": [
 		"src/routes/api/contact/+server.ts"
 	],
@@ -437,6 +449,9 @@
 	],
 	"/api/creator/analytics": [
 		"src/routes/api/creator/analytics/+server.ts"
+	],
+	"/api/creator/analytics/stream": [
+		"src/routes/api/creator/analytics/stream/+server.ts"
 	],
 	"/api/creator/application": [
 		"src/routes/api/creator/application/+server.ts"
@@ -843,6 +858,9 @@
 	"/api/watch/live/[id]/stream": [
 		"src/routes/api/watch/live/[id]/stream/+server.ts"
 	],
+	"/api/watch/mark/[contentId]": [
+		"src/routes/api/watch/mark/[contentId]/+server.ts"
+	],
 	"/api/watch/progress": [
 		"src/routes/api/watch/progress/+server.ts"
 	],
@@ -854,9 +872,6 @@
 	],
 	"/(app)/apply/creator": [
 		"src/routes/(app)/apply/creator/+page.server.ts",
-		"src/routes/+layout.server.ts"
-	],
-	"/(app)/archive": [
 		"src/routes/+layout.server.ts"
 	],
 	"/(auth)/auth/forget-password": [
@@ -884,6 +899,10 @@
 	"/(app)/checkout": [
 		"src/routes/+layout.server.ts"
 	],
+	"/(app)/coming-soon": [
+		"src/routes/(app)/coming-soon/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/(app)/contact": [
 		"src/routes/+layout.server.ts"
 	],
@@ -892,6 +911,7 @@
 		"src/routes/+layout.server.ts"
 	],
 	"/(creator)/creator": [
+		"src/routes/(creator)/creator/+page.server.ts",
 		"src/routes/+layout.server.ts",
 		"src/routes/+layout.server.ts"
 	],

@@ -1,7 +1,7 @@
 <!-- Creator Guidelines -->
 <script lang="ts">
   import { BookOpen } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
 
   let activeSection = 'overview';
   
@@ -15,8 +15,8 @@
   ];
 </script>
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader icon={BookOpen} title="Creator Guidelines" subtitle="Everything you need to know about creating content for Sephar Studios." />
+<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">
+  <PortalHero compact eyebrow="Guides" title="Creator guidelines" subtitle="Everything you need to know about creating content for Sephar Studios." icon={BookOpen} />
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Navigation Sidebar -->

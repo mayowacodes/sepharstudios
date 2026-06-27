@@ -1,9 +1,10 @@
 <!-- Admin Analytics Dashboard -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import { Radio } from '@lucide/svelte';
   import { isConnected, walletAddress } from '$lib/web3/wallet';
   // contracts.ts pulls all ABIs + viem helpers (~150 KB). Type-only import here
   // keeps it out of the initial admin chunk; the dynamic import below pays the
@@ -18,8 +19,8 @@
     tokenAMM = mod.tokenAMM;
   }
   import { Coins, TrendingUp, Users, Crown, DollarSign, Activity, RefreshCw, Wallet, BarChart3, FileText } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
-  import KpiCard from '$lib/components/dashboard/KpiCard.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
+  import PortalKpi from '$lib/components/portal/PortalKpi.svelte';
   import TrendChart from '$lib/components/dashboard/TrendChart.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
@@ -142,9 +143,59 @@
     isLoading: false
   });
   
+  // ── Live "Live now" panel + 60s KPI refresh ─────────────────────────
+  // SSE-streamed watch events feed the panel below the KPI grid.
+  type LiveEvent = {
+    kind: 'watch_start' | 'watch_complete';
+    contentId: string;
+    title: string;
+    completionPercent: number;
+    at: string;
+  };
+  let liveEvents = $state<LiveEvent[]>([]);
+  let evtSource: EventSource | null = null;
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+  function pushLiveEvent(ev: LiveEvent): void {
+    const copy = [ev, ...liveEvents];
+    liveEvents = copy.slice(0, 20);
+  }
+
+  function relativeTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 10_000) return 'just now';
+    if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`;
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+    return new Date(iso).toLocaleTimeString();
+  }
+
   onMount(() => {
     // Critical above-the-fold first — analytics fills the visible KPI cards.
     loadAnalytics();
+
+    // Live event stream. Browser auto-reconnects on transient transport
+    // failures; no explicit polling fallback (the 60s timer below acts
+    // as a soft safety net for the KPI tiles).
+    if (typeof EventSource !== 'undefined') {
+      try {
+        evtSource = new EventSource('/api/admin/analytics/stream');
+        evtSource.onmessage = (msg) => {
+          try {
+            const data = JSON.parse(msg.data) as LiveEvent;
+            pushLiveEvent(data);
+          } catch { /* ignore malformed frames */ }
+        };
+      } catch { /* SSE unavailable; KPI refresh still keeps the page fresh */ }
+    }
+
+    // Re-fetch the KPI tiles every 60s when the tab is visible. A hidden
+    // tab skips the refresh so the DB isn't hammered by dozens of idle
+    // admin tabs.
+    refreshTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void loadAnalytics();
+      }
+    }, 60_000);
 
     // Tokenomics + admin wallet info live below the fold and require an extra
     // dynamic module + on-chain reads. Defer past the initial paint so the
@@ -283,19 +334,28 @@
     };
     return colors[category] || 'bg-gray-500';
   }
+
+  onDestroy(() => {
+    evtSource?.close();
+    evtSource = null;
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  });
 </script>
 
-<div class="container mx-auto px-4 py-4 space-y-6">
-  <PageHeader
-    icon={BarChart3}
-    title="Platform Analytics"
+<div class="mx-auto px-4 py-4 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Platform"
+    title="Mission analytics"
     subtitle="Monitor platform performance and user engagement."
+    icon={BarChart3}
   >
     {#snippet actions()}
       <select
         bind:value={selectedTimeRange}
         onchange={loadAnalytics}
-        class="surface-2 rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-red-500"
+        class="rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
+        style="background: hsl(var(--portal-bg-elevated)/0.7); color: hsl(var(--portal-text)); border: 1px solid hsl(var(--portal-border)); --tw-ring-color: hsl(var(--portal-accent)/0.4);"
       >
         <option value="7d">Last 7 Days</option>
         <option value="30d">Last 30 Days</option>
@@ -303,19 +363,45 @@
         <option value="1y">Last Year</option>
       </select>
     {/snippet}
-  </PageHeader>
+  </PortalHero>
+
+  <!-- Live now — watch events streaming in real time across the
+       platform. Empty until viewers start or finish content. Sits
+       just under the page header so it reads as "what's happening
+       right now" — distinct from the KPI tiles below which trail by
+       up to 60 seconds. -->
+  {#if liveEvents.length > 0}
+    <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <Radio class="w-4 h-4 text-emerald-300 animate-pulse" />
+        <h2 class="text-sm font-semibold text-foreground">Live now</h2>
+        <span class="text-xs text-muted-foreground">— {liveEvents.length} recent {liveEvents.length === 1 ? 'event' : 'events'}</span>
+      </div>
+      <ul class="space-y-1.5 max-h-48 overflow-y-auto">
+        {#each liveEvents as ev (ev.contentId + ev.at)}
+          <li class="flex items-center gap-2 text-xs">
+            <span class="inline-block w-1.5 h-1.5 rounded-full {ev.kind === 'watch_complete' ? 'bg-emerald-400' : 'bg-yellow-300'} shrink-0"></span>
+            <span class="text-foreground truncate flex-1">
+              {ev.kind === 'watch_complete' ? 'Completed' : 'Started watching'}: {ev.title}
+            </span>
+            <span class="text-muted-foreground shrink-0">{relativeTime(ev.at)}</span>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 
   <!-- Platform KPI tiles -->
   {#if loading}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {#each Array(4) as _ (_)}<Skeleton class="h-28 rounded-xl" />{/each}
+      {#each Array(4) as _, i (i)}<Skeleton class="h-28 rounded-xl" />{/each}
     </div>
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <KpiCard label="Total Users" value={formatNumber(platformMetrics.totalUsers)} icon={Users} accent="blue" delta={deltas.users} deltaLabel="vs prior 30d" sparkline={series.users} index={0} />
-      <KpiCard label="Active Creators" value={formatNumber(platformMetrics.activeCreators)} icon={Crown} accent="purple" index={1} />
-      <KpiCard label="Content" value={formatNumber(platformMetrics.totalContent)} icon={FileText} accent="orange" delta={deltas.content} deltaLabel="vs prior 30d" sparkline={series.content} index={2} />
-      <KpiCard label="Revenue" value={formatCurrency(platformMetrics.totalRevenue)} icon={DollarSign} accent="green" delta={deltas.revenue} deltaLabel="vs prior 30d" sparkline={series.revenue} index={3} />
+      <PortalKpi label="Total Users" value={platformMetrics.totalUsers} icon={Users} delta={deltas.users} deltaLabel="vs prior 30d" sparkline={series.users} formatValue={formatNumber} />
+      <PortalKpi label="Active Creators" value={platformMetrics.activeCreators} icon={Crown} formatValue={formatNumber} />
+      <PortalKpi label="Content" value={platformMetrics.totalContent} icon={FileText} delta={deltas.content} deltaLabel="vs prior 30d" sparkline={series.content} formatValue={formatNumber} />
+      <PortalKpi label="Revenue" value={formatCurrency(platformMetrics.totalRevenue)} icon={DollarSign} delta={deltas.revenue} deltaLabel="vs prior 30d" sparkline={series.revenue} />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { ShieldCheck, AlertTriangle, MessageSquare } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
   type Tab = 'reviews' | 'forum';
@@ -194,11 +194,13 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-5xl space-y-6">
-  <PageHeader
-    icon={ShieldCheck}
+<div class="mx-auto py-8 px-4 max-w-5xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Community"
     title="Moderation"
     subtitle="Review feedback and forum activity on your content. Hide spam, approve thoughtful reviews, or lock heated threads."
+    icon={ShieldCheck}
   />
 
   <div class="flex gap-2">
@@ -227,7 +229,7 @@
 
     {#if loading}
       <div class="space-y-2">
-        {#each Array(3) as _ (_)}
+        {#each Array(3) as _, i (i)}
           <Skeleton class="h-24 rounded-xl" />
         {/each}
       </div>
@@ -305,7 +307,7 @@
   {:else}
     {#if loading}
       <div class="space-y-2">
-        {#each Array(3) as _ (_)}
+        {#each Array(3) as _, i (i)}
           <Skeleton class="h-24 rounded-xl" />
         {/each}
       </div>

@@ -172,25 +172,17 @@
   const canSend = $derived(!streaming && input.trim().length > 0);
 </script>
 
+<!-- Rail fully collapses to width 0 when closed so the main pane
+     reclaims the entire right column. Re-open via the Copilot chip
+     in the header or the ⌘J keybind. The old "icon strip when
+     collapsed" pattern (a 48px vertical column with a rotated label)
+     was visually intrusive when the creator just wanted the AI gone. -->
 <aside
-  class="hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col {open ? 'w-80' : 'w-12'}"
+  class="hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col overflow-hidden {open ? 'w-80' : 'w-0 border-l-0'}"
   aria-label="AI Copilot"
+  aria-hidden={!open}
 >
-  {#if !open}
-    <button
-      type="button"
-      onclick={() => (open = true)}
-      class="flex flex-col items-center gap-3 w-full pt-4 text-muted-foreground hover:text-foreground transition-colors"
-      aria-label="Open Copilot (⌘J)"
-      title="Open Copilot (⌘J)"
-    >
-      <Sparkles class="w-4 h-4 {accentClass}" />
-      <span class="rotate-180 text-[10px] uppercase tracking-wider font-medium" style="writing-mode: vertical-rl;">Copilot ⌘J</span>
-    </button>
-    {#if chat.messages.length > 0}
-      <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true"></span>
-    {/if}
-  {:else}
+  {#if open}
     <header class="h-12 px-3 border-b border-white/10 flex items-center gap-2 shrink-0 relative">
       <Sparkles class="w-4 h-4 {accentClass}" />
       <h2 class="text-xs font-semibold text-foreground uppercase tracking-wide">Copilot</h2>

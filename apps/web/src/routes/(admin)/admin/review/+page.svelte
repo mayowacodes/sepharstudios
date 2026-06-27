@@ -20,9 +20,9 @@
     ShieldCheck, Inbox, Cross, Shield, Users, Wrench,
     CheckCircle2, Film, Clock, Loader2, AlertTriangle
   } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import StatChip from '$lib/components/dashboard/StatChip.svelte';
-  import EmptyState from '$lib/components/dashboard/EmptyState.svelte';
+  import EmptyState from '$lib/components/portal/PortalEmptyState.svelte';
   import * as Tabs from '$lib/components/ui/tabs';
 
   // Extended queue item — adds the playback/encoder fields the card needs.
@@ -369,11 +369,13 @@
   </div>
 {/if}
 
-<div class="container mx-auto px-4 py-6 space-y-6">
-  <PageHeader
-    icon={ShieldCheck}
+<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">
+  <PortalHero
+    compact
+    eyebrow="Review Queue"
     title="Content review"
-    subtitle="Submissions and viewer reviews awaiting moderation."
+    subtitle="Submissions and viewer reviews awaiting moderation. Press / to search."
+    icon={ShieldCheck}
   >
     {#snippet actions()}
       <StatChip label="encoding" value={stats.encoding} tone="yellow" />
@@ -382,7 +384,7 @@
         <StatChip label="failed" value={stats.failed} tone="red" />
       {/if}
     {/snippet}
-  </PageHeader>
+  </PortalHero>
 
   <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v as 'content' | 'user-reviews')}>
     <Tabs.List>

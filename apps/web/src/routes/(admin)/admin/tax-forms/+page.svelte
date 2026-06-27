@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { FileText, CheckCircle2, XCircle } from '@lucide/svelte';
-  import PageHeader from '$lib/components/dashboard/PageHeader.svelte';
+  import PortalHero from '$lib/components/portal/PortalHero.svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { toast } from 'svelte-sonner';
 
@@ -110,11 +110,13 @@
   }
 </script>
 
-<div class="container mx-auto py-8 px-4 max-w-6xl space-y-6">
-  <PageHeader
-    icon={FileText}
+<div class="mx-auto py-8 px-4 max-w-7xl space-y-6">
+  <PortalHero
+    compact
+    eyebrow="Compliance"
     title="Tax forms"
     subtitle="Review submitted W-9 / W-8BEN / W-8BEN-E forms before annual 1099 generation."
+    icon={FileText}
   />
 
   <div class="flex gap-2">
@@ -129,7 +131,7 @@
 
   {#if loading}
     <div class="space-y-2">
-      {#each Array(4) as _ (_)}<Skeleton class="h-16 rounded-xl" />{/each}
+      {#each Array(4) as _, i (i)}<Skeleton class="h-16 rounded-xl" />{/each}
     </div>
   {:else if forms.length === 0}
     <div class="surface-1 rounded-xl p-12 text-center text-muted-foreground">No forms match this filter.</div>

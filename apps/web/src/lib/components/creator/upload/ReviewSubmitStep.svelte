@@ -5,6 +5,11 @@
   // Bindable terms checkboxes — parent owns the values. `allStepData` is
   // read-only here (used only to render the review summary). `submitting`
   // lets the parent disable in-step UI while its outer Submit is in flight.
+  //
+  // Coming Soon used to live here as bindable inputs; it moved to
+  // BASIC_INFO so step 2 (Video Upload) can read it and skip the
+  // file-required gate. This step now shows a read-only summary of
+  // what the creator chose earlier.
   let {
     termsAccepted = $bindable<boolean>(false),
     guidelinesAccepted = $bindable<boolean>(false),
@@ -24,6 +29,12 @@
   const videoData = $derived(allStepData.stepData[UploadStep.VIDEO_UPLOAD]);
   const assetData = $derived(allStepData.stepData[UploadStep.ASSET_MANAGEMENT]);
   const metadataInfo = $derived(allStepData.stepData[UploadStep.METADATA]);
+
+  // Submission shape derivation — drives the tone of the bottom warning
+  // (Coming Soon = friendly heads-up; standard = standard heads-up).
+  const isComingSoon = $derived(!!basicInfo.comingSoon);
+  const hasVideo = $derived(!!videoData.videoProgress?.isCompleted);
+  const isAnnouncementOnly = $derived(isComingSoon && !hasVideo);
 </script>
 
 <div class="space-y-6">
@@ -42,7 +53,7 @@
         <h4 class="font-semibold text-white mb-2 flex items-center gap-1.5"><span class="text-primary">ℹ️</span> Basic Information</h4>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
-            <span class="text-gray-400">Title:</span>
+            <span class="text-gray-400">{basicInfo.contentType === 'series' ? 'Series title' : 'Title'}:</span>
             <span class="text-white font-medium">{basicInfo.title || 'Not provided'}</span>
           </div>
           <div class="flex justify-between">
@@ -53,6 +64,22 @@
             <span class="text-gray-400">Age Rating:</span>
             <span class="text-white font-medium">{basicInfo.ageRating || 'Not selected'}</span>
           </div>
+          {#if basicInfo.contentType === 'series'}
+            <!--
+              Series-only: show the episode that gets created alongside
+              the series row. Label is dynamic (S1E1, S2E5, …) so it
+              reflects whatever the creator entered — not a hardcoded
+              "Episode 1" which would be wrong for mid-series uploads.
+            -->
+            <div class="flex justify-between border-t border-border/40 pt-2 mt-2">
+              <span class="text-gray-400">
+                S{basicInfo.seasonNumber ?? 1} E{basicInfo.episodeNumber ?? 1}:
+              </span>
+              <span class="text-white font-medium">
+                {basicInfo.episodeTitle || 'Not provided'}
+              </span>
+            </div>
+          {/if}
         </div>
       </div>
 
@@ -167,6 +194,34 @@
     </div>
   </div>
 
+  <!--
+    Coming Soon — read-only summary of what the creator picked in Basic
+    Info. The toggle + date inputs moved to step 1 so the rest of the
+    wizard can branch on the choice. This block stays in Review so the
+    creator sees the final intent before submit.
+  -->
+  {#if isComingSoon}
+    <div class="bg-violet-500/10 border border-violet-500/30 rounded-xl p-6 space-y-2">
+      <div class="text-white font-medium flex items-center gap-2">
+        <span class="text-lg">🗓️</span>
+        Coming Soon · releases {basicInfo.comingSoonReleaseDate || '—'}
+      </div>
+      <div class="text-sm text-violet-100/80">
+        {#if isAnnouncementOnly}
+          Announcement-only submission — the main video isn't attached.
+          Admin will review the row during the wait; you can add the
+          final video from your content library any time before the
+          release date. If the video isn't ready when the date passes,
+          the row stays in Coming Soon until you upload it.
+        {:else}
+          Your video will be encoded as part of this submission. After
+          admin approval the row sits in Coming Soon; the cron flips it
+          to live automatically on the release date.
+        {/if}
+      </div>
+    </div>
+  {/if}
+
   <!-- Terms and Guidelines -->
   <div class="space-y-4">
     <h3 class="text-xl font-bold text-white">Terms and Guidelines</h3>
@@ -206,10 +261,17 @@
     </div>
   </div>
 
-  <!-- Submission Warning -->
+  <!--
+    Submission Warning — calibrated to the actual submission shape.
+    Coming Soon (any flavor) gets a friendlier "heads-up" tone since
+    the row sits before going live; standard submissions get the
+    encoding-queue reminder. The stale "Content cannot be edited once
+    submitted" line was wrong (creators CAN edit from their content
+    library after submit) and got dropped.
+  -->
   <div class="bg-secondary/10 border border-secondary/30 rounded-xl p-4">
     <div class="flex items-start">
-      <div class="text-2xl mr-3">⚠️</div>
+      <div class="text-2xl mr-3">{isComingSoon ? '🗓️' : '⚠️'}</div>
       <div>
         <div class="font-medium text-white mb-1">Before You Submit</div>
         <div class="text-sm text-yellow-100 space-y-1">
@@ -217,7 +279,13 @@
           <div>• Double-check your video quality and audio clarity</div>
           <div>• Verify that all uploaded images represent your content appropriately</div>
           <div>• Make sure your content aligns with our faith-based community standards</div>
-          <div>• Content cannot be edited once submitted - you'll need to resubmit if changes are needed</div>
+          {#if isAnnouncementOnly}
+            <div>• You can add the main video any time from your content library; the cron auto-publishes on the release date once a playable video is attached</div>
+          {:else if isComingSoon}
+            <div>• Your video will encode now, then sit in Coming Soon. The cron auto-publishes on the release date</div>
+          {:else}
+            <div>• Most fields stay editable from your content library after submit — only the main video file requires the upload wizard to swap</div>
+          {/if}
         </div>
       </div>
     </div>

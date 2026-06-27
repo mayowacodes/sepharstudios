@@ -5,6 +5,7 @@
   import { myList } from '$lib/stores/myList';
   import { goto } from '$app/navigation';
   import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
+  import { isRecentlyAdded } from '$lib/utils/recency';
 
   // Click on a card opens the audience-specific detail page (description
   // + preview + Watch CTA). The kids/teens portals reuse this same
@@ -21,11 +22,32 @@
   };
 
   const openModal = (media: MediaItem) => {
-    mediaModalStore.open(media);
+    // mediaModalStore was a legacy quick-view overlay; with proper
+    // detail pages live (/movies/<slug>, /kids/.../<slug>) we just
+    // navigate. Keeping both wired produced a flash of the modal on
+    // top of the new page that read as "the page scrolled to top"
+    // because the user never saw the navigation render.
     goto(detailPath(media), { replaceState: false });
   };
 
   let { movie, onClick = () => {}, onHover = () => {} }: { movie: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
+
+  // Badge label is keyed off mediaType so a "New" movie reads "New
+  // Movie", a new documentary "New Documentary", etc. Series default to
+  // "New Episode" since that's what the isNew flag conventionally means
+  // on episodic content. Falls back to a generic "New" for unknown types.
+  function newBadgeLabel(mt: string | null | undefined): string {
+    switch (mt) {
+      case 'movie': return 'New Movie';
+      case 'short': return 'New Short';
+      case 'series': return 'New Episode';
+      case 'episode': return 'New Episode';
+      case 'documentary': return 'New Documentary';
+      case 'sermon': return 'New Sermon';
+      case 'worship': return 'New Worship';
+      default: return 'New';
+    }
+  }
 
   let videoRef: HTMLVideoElement | undefined = $state();
   let isHovered = $state(false);
@@ -83,8 +105,17 @@
         preload="none"
       ></video>
     {:else}
+      <!--
+        Card slot is portrait (aspect-2/3). Prefer the actual portrait
+        posterUrl when the creator/admin set one — otherwise we end up
+        cropping a 16:9 landscape thumbnail into a tall sliver (e.g.
+        "TRUST" centered with the rest of the artwork chopped off).
+        Falls back to thumbnail → poster_url (legacy snake_case) →
+        a vertical placeholder so missing-image rows still render
+        something recognizable instead of the giant film-reel SVG.
+      -->
       <img
-        src={movie.thumbnail || '/placeholder-vertical.jpg'}
+        src={movie.posterUrl || movie.poster_url || movie.thumbnail || '/placeholder-vertical.jpg'}
         alt=""
         width="280"
         height="420"
@@ -110,7 +141,15 @@
 
   {#if movie.isNew}
     <div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">
-      New Episode
+      {newBadgeLabel(movie.mediaType)}
+    </div>
+  {:else if isRecentlyAdded(movie.createdAt)}
+    <!-- "Just added" — 14-day window from `created_at`. Surfaces
+         fresh catalog additions so returning viewers spot the new
+         stuff at a glance. `isNew` (a creator-curated flag for new
+         TV episodes) wins when present. -->
+    <div class="absolute top-2 left-2 bg-[#FF5E0E] text-white text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full z-30 shadow">
+      Just added
     </div>
   {/if}
 

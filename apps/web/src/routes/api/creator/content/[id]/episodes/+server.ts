@@ -8,8 +8,13 @@ import { and, asc, eq } from 'drizzle-orm';
  * POST /api/creator/content/[id]/episodes — create a new episode
  *
  * Ownership: parent show (mediaLibrary row) must belong to the signed-in
- * creator and have mediaType='show'.
+ * creator and have a series-shaped mediaType. The wizard writes the
+ * value 'series' (the canonical ContentType.SERIES enum); legacy rows
+ * may still carry 'show' or 'tv'. All three are accepted so the
+ * episodes manager works regardless of which value was written.
  */
+
+const SERIES_LIKE_TYPES = new Set(['series', 'show', 'tv']);
 
 async function loadShow(contentId: string, ownerId: string) {
 	const [row] = await db.select({
@@ -22,7 +27,9 @@ async function loadShow(contentId: string, ownerId: string) {
 		.limit(1);
 	if (!row) return { row: null as null, status: 404 as const };
 	if (row.creatorId !== ownerId) return { row: null as null, status: 403 as const };
-	if (row.mediaType !== 'show') return { row: null as null, status: 400 as const };
+	if (!SERIES_LIKE_TYPES.has(row.mediaType ?? '')) {
+		return { row: null as null, status: 400 as const };
+	}
 	return { row, status: 200 as const };
 }
 
