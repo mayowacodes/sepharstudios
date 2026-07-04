@@ -585,6 +585,9 @@
 	"/api/cron/agents/[name]": [
 		"src/routes/api/cron/agents/[name]/+server.ts"
 	],
+	"/api/cron/analytics-rollup": [
+		"src/routes/api/cron/analytics-rollup/+server.ts"
+	],
 	"/api/cron/creator-payouts": [
 		"src/routes/api/cron/creator-payouts/+server.ts"
 	],

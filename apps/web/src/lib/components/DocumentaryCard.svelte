@@ -14,7 +14,8 @@
   const handleMouseEnter = () => {
     isHovered = true;
     onHover?.();
-    previewTimeout = setTimeout(() => videoRef?.play(), 500);
+    // Silently swallow AbortError when a fast hover-out pauses before play resolves.
+    previewTimeout = setTimeout(() => { videoRef?.play().catch(() => {}); }, 500);
   };
 
   const handleMouseLeave = () => {

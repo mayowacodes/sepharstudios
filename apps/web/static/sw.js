@@ -6,7 +6,7 @@
 // the browser keeps using the old SW until it naturally expires (~24h), so
 // fixes like "stop intercepting /api/*" don't reach users until tomorrow.
 const DOWNLOAD_CACHE = 'sephar-downloads-v1';
-const SHELL_CACHE = 'sephar-shell-v2';
+const SHELL_CACHE = 'sephar-shell-v4';
 
 // App shell assets to cache on install
 const SHELL_ASSETS = ['/', '/offline', '/favicon-96x96.png'];
@@ -64,6 +64,12 @@ self.addEventListener('fetch', (event) => {
   // that can break body streams.
   if (event.request.method !== 'GET') return;
 
+  // Ranged media requests bypass the SW entirely. cache.match() ignores
+  // Range headers and would answer a partial-content request with a
+  // full-body 200 — the classic SW/media pitfall (Safari's native HLS
+  // loader issues ranged segment fetches). Let the network handle them.
+  if (event.request.headers.has('range')) return;
+
   // Only intercept HLS segments (.ts) and manifests (.m3u8) for offline playback
   if (url.pathname.endsWith('.ts') || url.pathname.endsWith('.m3u8')) {
     event.respondWith(
@@ -82,21 +88,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests, serve shell or network
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(async () => {
-        const cached = await caches.match('/');
-        return cached || new Response('Offline', { status: 503 });
-      })
-    );
-    return;
-  }
+  // DO NOT intercept navigation requests. We used to serve them ourselves
+  // (`fetch(req).catch(() => cached('/'))`) but that broke EVERY navigation
+  // because SvelteKit's auth + redirect + HMR responses can resolve to a
+  // Response object that respondWith() can't accept (opaqueredirect,
+  // network-error responses, etc.) — throwing
+  //   "Failed to convert value to 'Response'"
+  // and aborting the navigation. Symptom: click a movie card, URL changes,
+  // page renders blank / scrolled to top. Letting the browser handle
+  // navigation natively (no respondWith) restores SvelteKit's normal
+  // client-side router + SSR flow.
+  //
+  // We lose offline-fallback for navigations as a result. Acceptable
+  // trade-off — viewers without network can't reach the catalog anyway,
+  // and the legitimate SW use (HLS segment caching for downloads, push)
+  // is unaffected.
+  if (event.request.mode === 'navigate') return;
 
-  // Default: network first, fall back to shell cache
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  // Default: don't intercept anything else either. The HLS segment +
+  // manifest branch above already handles the playback caching path;
+  // for everything else (scripts, CSS, images), the browser HTTP cache
+  // is more reliable than us proxying through the SW.
 });
 
 // Web Push — server dispatches via /api/push/* with the registered VAPID

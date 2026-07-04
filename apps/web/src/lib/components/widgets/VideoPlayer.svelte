@@ -246,6 +246,19 @@
   let videoEl = $state<HTMLVideoElement | undefined>();
   let containerEl = $state<HTMLDivElement | undefined>();
   let hls: HlsType | null = null;
+  // Monotonic token guarding initHls. It's async (awaits the hls.js
+  // dynamic import), so two overlapping calls both used to pass the
+  // `if (hls) destroy` check while parked at the import and then BOTH
+  // constructed an Hls instance — the first leaked (worker + media
+  // listeners) and both attached to the same <video>. Each call takes
+  // a token; stale calls bail after every await.
+  let initSeq = 0;
+  // Bounded recovery for fatal hls.js errors. Without a cap, a
+  // permanently-404ing manifest put startLoad() into an unbounded
+  // retry storm against storage.
+  let recoveryAttempts = 0;
+  const MAX_RECOVERY_ATTEMPTS = 3;
+  let playbackFailed = $state(false);
 
   // ─── Scrubbing-preview thumbnails ──────────────────────────────────────
   // Cues parsed from `previewVtt`. Each cue covers a time window and
@@ -418,7 +431,10 @@
   }
 
   async function initHls(video: HTMLVideoElement, url: string) {
+    const token = ++initSeq;
     if (hls) { hls.destroy(); hls = null; }
+    recoveryAttempts = 0;
+    playbackFailed = false;
 
     const isHlsUrl = url.includes('.m3u8');
     const canPlayNative = video.canPlayType('application/vnd.apple.mpegurl');
@@ -427,6 +443,9 @@
     // native support). Safari and direct MP4 sources skip the dynamic import.
     if (isHlsUrl && !canPlayNative) {
       const Hls = await loadHls();
+      // Another initHls started while we awaited the import — it owns
+      // the element now; constructing here would leak a second instance.
+      if (token !== initSeq) return;
       if (!Hls.isSupported()) {
         video.src = url;
         if (startAt > 0) video.currentTime = startAt;
@@ -452,18 +471,30 @@
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls?.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls?.recoverMediaError();
-              break;
-            default:
-              hls?.destroy();
-              break;
-          }
+        if (!data.fatal) return;
+        // Bounded recovery. A permanently-broken source (404ing
+        // manifest, undecodable stream) used to loop startLoad() /
+        // recoverMediaError() forever — an unbounded request storm.
+        // After MAX attempts, tear down and surface an error overlay.
+        recoveryAttempts += 1;
+        if (recoveryAttempts > MAX_RECOVERY_ATTEMPTS) {
+          hls?.destroy();
+          hls = null;
+          playbackFailed = true;
+          return;
+        }
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            hls?.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            hls?.recoverMediaError();
+            break;
+          default:
+            hls?.destroy();
+            hls = null;
+            playbackFailed = true;
+            break;
         }
       });
     } else if (isHlsUrl && canPlayNative) {
@@ -700,6 +731,19 @@
   let prerollSkippableAt = $state(5);
   let prerollSkippableTimer: ReturnType<typeof setInterval> | null = null;
 
+  // True while we're still deciding whether a pre-roll ad plays. The
+  // src-owning $effect below skips while this (or prerollActive) is
+  // set, so exactly ONE code path ever initializes playback. Before
+  // this guard, onMount called initHls directly AND the $effect fired
+  // on mount — both parked at the async hls.js import, both passed the
+  // `if (hls) destroy` check, and both constructed an instance: one
+  // leaked, and with ads enabled the pre-roll's v.src was raced/stomped
+  // by the main content's init.
+  // Deliberately reads the props' initial values — the ads decision is
+  // made once per mount; these props never change on a live player.
+  // svelte-ignore state_referenced_locally
+  let adsDecisionPending = $state(enableAds && !!contentId);
+
   function endPreroll(reason: 'completed' | 'skipped' | 'error') {
     prerollActive = false;
     if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
@@ -707,7 +751,8 @@
       const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
       op?.('ad_preroll_end', { contentId, reason });
     } catch { /* analytics best-effort */ }
-    if (videoEl && src) initHls(videoEl, src);
+    // Main-content init happens via the $effect the moment
+    // prerollActive flips false — no direct initHls call needed.
   }
 
   onMount(() => {
@@ -720,9 +765,8 @@
       void (async () => {
         try {
           const res = await fetch(`/api/ads/vast-tag?contentId=${encodeURIComponent(contentId)}`);
-          if (!res.ok) { initHls(v, src); return; }
-          const body = await res.json();
-          if (!body?.url) { initHls(v, src); return; }
+          const body = res.ok ? await res.json() : null;
+          if (!body?.url) { adsDecisionPending = false; return; }
           prerollUrl = body.url;
           prerollActive = true;
           prerollSkippableAt = 5;
@@ -739,12 +783,13 @@
             const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
             op?.('ad_preroll_start', { contentId });
           } catch { /* analytics best-effort */ }
+          // Decision made (ad playing). prerollActive keeps the main
+          // init suppressed until endPreroll flips it.
+          adsDecisionPending = false;
         } catch {
-          initHls(v, src);
+          adsDecisionPending = false;
         }
       })();
-    } else {
-      initHls(v, src);
     }
 
     // Track the first play of this session — used for funnel analysis (sign-up
@@ -785,7 +830,11 @@
     });
     v.addEventListener('volumechange', () => { volume = v.volume; muted = v.muted; });
 
-    document.addEventListener('fullscreenchange', () => { fullscreen = !!document.fullscreenElement; });
+    // Named so the cleanup can remove it — the old anonymous handler
+    // leaked a document-level listener (holding the whole component
+    // closure alive) on every player mount.
+    const onFullscreenChange = () => { fullscreen = !!document.fullscreenElement; };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
 
     // Report progress every 30 seconds
     progressInterval = setInterval(reportProgress, 30_000);
@@ -795,6 +844,7 @@
     activeInterval = setInterval(pingActiveViewer, 30_000);
 
     return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
       clearInterval(progressInterval);
       clearInterval(activeInterval);
       clearTimeout(controlsTimer);
@@ -803,15 +853,29 @@
 
   onDestroy(() => {
     reportProgress();
+    // Invalidate any in-flight initHls so it can't construct an Hls
+    // instance after teardown.
+    initSeq += 1;
     hls?.destroy();
+    hls = null;
     clearInterval(progressInterval);
     clearInterval(activeInterval);
     clearTimeout(controlsTimer);
+    // The end-screen countdown + preroll skip timer were NOT cleared
+    // here before — an orphaned end-screen interval kept counting after
+    // the viewer navigated away and then fired window.location.href,
+    // yanking them to a different title from an unrelated page.
+    if (endScreenInterval) { clearInterval(endScreenInterval); endScreenInterval = null; }
+    if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
   });
 
-  // Re-init when src changes
+  // Single owner of playback init: runs on mount and on every src
+  // change, but stays out of the way while the ads decision is pending
+  // or a pre-roll is playing (see adsDecisionPending above).
   $effect(() => {
-    if (videoEl && src) initHls(videoEl, src);
+    if (videoEl && src && !adsDecisionPending && !prerollActive) {
+      initHls(videoEl, src);
+    }
   });
 </script>
 
@@ -850,6 +914,29 @@
       <track kind="descriptions" label={d.label} src={d.src} srclang={d.srclang} />
     {/each}
   </video>
+
+  <!-- Playback-failure overlay. Set when hls.js exhausts its bounded
+       recovery attempts (broken manifest, undecodable stream). Before
+       this, fatal errors were swallowed silently — the viewer saw a
+       frozen frame with no explanation, and we had no way to tell
+       codec problems from CORS from missing objects. Retry re-runs the
+       full init (fresh manifest fetch). -->
+  {#if playbackFailed}
+    <div class="absolute inset-0 z-40 bg-black/85 flex flex-col items-center justify-center gap-3 text-center p-6">
+      <div class="text-white text-lg font-semibold">Playback failed</div>
+      <p class="text-white/60 text-sm max-w-md">
+        The video stream couldn't be loaded. This is usually temporary —
+        try again, or come back in a few minutes while we sort it out.
+      </p>
+      <button
+        type="button"
+        onclick={() => { if (videoEl && src) initHls(videoEl, src); }}
+        class="mt-2 px-5 py-2 rounded-full bg-white/90 hover:bg-white text-black text-sm font-semibold transition-colors"
+      >
+        Try again
+      </button>
+    </div>
+  {/if}
 
   <!-- Skip Intro / Skip Credits — floating button in the bottom-right,
        OUTSIDE the controls fade so viewers can hit it even when the

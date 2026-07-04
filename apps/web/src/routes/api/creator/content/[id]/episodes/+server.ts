@@ -70,17 +70,37 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		airDate?: string;
 	};
 
-	const seasonNumber = Number.isFinite(body.seasonNumber) ? Number(body.seasonNumber) : NaN;
-	const episodeNumber = Number.isFinite(body.episodeNumber) ? Number(body.episodeNumber) : NaN;
+	const seasonNumber = Number(body.seasonNumber);
+	const episodeNumber = Number(body.episodeNumber);
 	const title = body.title?.trim() ?? '';
 
-	if (!Number.isFinite(seasonNumber) || seasonNumber < 1) {
-		return json({ error: 'seasonNumber must be a positive integer' }, { status: 400 });
+	// Whole numbers only — Number.isFinite let 1.5 through to an integer
+	// column (truncation / insert error). Cap at 1000 so a scripted loop
+	// can't create unbounded rows per show.
+	if (!Number.isInteger(seasonNumber) || seasonNumber < 1 || seasonNumber > 1000) {
+		return json({ error: 'seasonNumber must be a whole number between 1 and 1000' }, { status: 400 });
 	}
-	if (!Number.isFinite(episodeNumber) || episodeNumber < 1) {
-		return json({ error: 'episodeNumber must be a positive integer' }, { status: 400 });
+	if (!Number.isInteger(episodeNumber) || episodeNumber < 1 || episodeNumber > 1000) {
+		return json({ error: 'episodeNumber must be a whole number between 1 and 1000' }, { status: 400 });
 	}
 	if (!title) return json({ error: 'title is required' }, { status: 400 });
+
+	// De-dupe: one row per (show, season, episode). Without this a
+	// double-submit (or a scripted loop) created duplicate S1E1 rows
+	// that corrupted the episode list ordering and player next-up.
+	const [dup] = await db.select({ id: episodes.id })
+		.from(episodes)
+		.where(and(
+			eq(episodes.showId, row.id),
+			eq(episodes.seasonNumber, seasonNumber),
+			eq(episodes.episodeNumber, episodeNumber)
+		))
+		.limit(1);
+	if (dup) {
+		return json({
+			error: `S${seasonNumber}E${episodeNumber} already exists for this show. Edit it instead, or pick a different number.`
+		}, { status: 409 });
+	}
 
 	const id = crypto.randomUUID();
 	await db.insert(episodes).values({
@@ -89,11 +109,11 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		seasonNumber,
 		episodeNumber,
 		title: title.slice(0, 255),
-		description: body.description ?? null,
-		thumbnail: body.thumbnail ?? null,
-		videoUrl: body.videoUrl ?? null,
-		duration: body.duration ?? null,
-		airDate: body.airDate ?? null
+		description: typeof body.description === 'string' ? body.description.slice(0, 5000) : null,
+		thumbnail: typeof body.thumbnail === 'string' ? body.thumbnail.slice(0, 2048) : null,
+		videoUrl: typeof body.videoUrl === 'string' ? body.videoUrl.slice(0, 2048) : null,
+		duration: typeof body.duration === 'string' ? body.duration.slice(0, 50) : null,
+		airDate: typeof body.airDate === 'string' ? body.airDate.slice(0, 20) : null
 	});
 
 	return json({ success: true, id });

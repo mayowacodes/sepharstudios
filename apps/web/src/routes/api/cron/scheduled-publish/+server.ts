@@ -60,9 +60,15 @@ export const POST: RequestHandler = async ({ request }) => {
 	for (const c of due) {
 		result.processed += 1;
 
-		// Same readiness check the admin publish endpoint uses — skip rows whose
-		// video isn't actually encoded yet.
-		if (!c.videoUrl && c.encoderJobId && c.processingStatus !== 'ready') {
+		// Readiness check: a row must have a PLAYABLE video before it goes
+		// live. Playable = videoUrl persisted, OR an encoder job that has
+		// reached 'ready' (resolvePlaybackUrl composes the URL from jobId
+		// in that case). The old guard (`!videoUrl && encoderJobId &&
+		// status !== 'ready'`) evaluated to false for rows with NO encoder
+		// job at all — i.e. a Coming Soon announcement whose video was
+		// never uploaded — and published them with nothing to play.
+		const playable = !!c.videoUrl || (!!c.encoderJobId && c.processingStatus === 'ready');
+		if (!playable) {
 			result.skipped += 1;
 			continue;
 		}

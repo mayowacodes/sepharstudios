@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import {
 	mediaLibrary,
 	mediaWatchProgress,
+	mediaAnalyticsDaily,
 	reviews,
 	contentShares,
 	watchSessionMeta
@@ -100,30 +101,171 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		)
 		: inArray(mediaWatchProgress.contentId, contentIds);
 
-	const perContent = await db
-		.select({
-			contentId: mediaWatchProgress.contentId,
-			views: sql<number>`count(*)::int`,
-			completedWatches: sql<number>`sum(case when ${mediaWatchProgress.isCompleted} then 1 else 0 end)::int`,
-			avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`,
-			watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`
-		})
-		.from(mediaWatchProgress)
-		.where(progressFilter)
-		.groupBy(mediaWatchProgress.contentId);
+	// Every aggregate below depends ONLY on contentIds — none of them
+	// depend on each other — so they run as ONE parallel wave instead of
+	// ~10 sequential round-trips. On a remote Postgres this cuts the
+	// endpoint from ~10× RTT to max(single query), and the page polls
+	// this every 60s per open tab.
+	const sharesFilter = cutoff
+		? and(inArray(contentShares.contentId, contentIds), gte(contentShares.createdAt, cutoff))
+		: inArray(contentShares.contentId, contentIds);
+	const metaFilter = cutoff
+		? and(inArray(watchSessionMeta.contentId, contentIds), gte(watchSessionMeta.createdAt, cutoff))
+		: inArray(watchSessionMeta.contentId, contentIds);
 
-	const reviewAgg = await db
-		.select({
-			contentId: reviews.contentId,
-			likes: sql<number>`count(*)::int`,
-			avgRating: sql<number>`coalesce(avg(${reviews.rating}), 0)`
-		})
-		.from(reviews)
-		.where(and(
-			inArray(reviews.contentId, contentIds),
-			eq(reviews.isApproved, true)
-		))
-		.groupBy(reviews.contentId);
+	// Active viewers — Redis ZSET keyed per creator; trims entries older
+	// than 60s and reports cardinality. Falls back to 0 if Redis is down.
+	const activeViewersQ = (async () => {
+		try {
+			const redis = getRedis();
+			const key = `creator:active-viewers:${session.user.id}`;
+			const horizon = Date.now() - 60_000;
+			await redis.zremrangebyscore(key, 0, horizon);
+			return await redis.zcard(key);
+		} catch {
+			return 0;
+		}
+	})();
+
+	// Prior-window aggregates (growth-rate + deltas). Used to be TWO
+	// queries with identical WHERE clauses; merged into one.
+	const priorWindowQ = cutoff && priorCutoff
+		? db
+			.select({
+				views: sql<number>`count(*)::int`,
+				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
+				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
+			})
+			.from(mediaWatchProgress)
+			.where(and(
+				inArray(mediaWatchProgress.contentId, contentIds),
+				gte(mediaWatchProgress.updatedAt, priorCutoff),
+				lt(mediaWatchProgress.updatedAt, cutoff)
+			))
+			.then((r) => r[0])
+		: Promise.resolve(undefined);
+
+	// Per-day trends read the PRE-AGGREGATED rollup (media_analytics_daily,
+	// maintained by /api/cron/analytics-rollup + backfilled by migration
+	// 0043) instead of re-scanning raw watch-progress history on every
+	// request. ~30 tiny rows per creator instead of a history aggregate.
+	const trendRowsQ = days && days <= 90
+		? db
+			.select({
+				day: sql<string>`to_char(${mediaAnalyticsDaily.day}, 'YYYY-MM-DD')`,
+				views: sql<number>`sum(${mediaAnalyticsDaily.views})::int`,
+				watchSeconds: sql<number>`coalesce(sum(${mediaAnalyticsDaily.watchSeconds}), 0)`,
+				avgCompletion: sql<number>`CASE WHEN sum(${mediaAnalyticsDaily.views}) > 0
+					THEN sum(${mediaAnalyticsDaily.completionPctSum}) / sum(${mediaAnalyticsDaily.views})
+					ELSE 0 END`
+			})
+			.from(mediaAnalyticsDaily)
+			.where(and(
+				inArray(mediaAnalyticsDaily.contentId, contentIds),
+				gte(mediaAnalyticsDaily.day, sql`${cutoff!.toISOString().slice(0, 10)}::date`)
+			))
+			.groupBy(mediaAnalyticsDaily.day)
+			.orderBy(mediaAnalyticsDaily.day)
+		: Promise.resolve([] as Array<{ day: string; views: number; watchSeconds: number; avgCompletion: number }>);
+
+	const [
+		perContent,
+		reviewAgg,
+		shareAgg,
+		activeViewers,
+		priorWindow,
+		deviceRows,
+		countryRows,
+		trendRows,
+		ageRows,
+		genderRows
+	] = await Promise.all([
+		db
+			.select({
+				contentId: mediaWatchProgress.contentId,
+				views: sql<number>`count(*)::int`,
+				completedWatches: sql<number>`sum(case when ${mediaWatchProgress.isCompleted} then 1 else 0 end)::int`,
+				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`,
+				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`
+			})
+			.from(mediaWatchProgress)
+			.where(progressFilter)
+			.groupBy(mediaWatchProgress.contentId),
+		db
+			.select({
+				contentId: reviews.contentId,
+				likes: sql<number>`count(*)::int`,
+				avgRating: sql<number>`coalesce(avg(${reviews.rating}), 0)`
+			})
+			.from(reviews)
+			.where(and(
+				inArray(reviews.contentId, contentIds),
+				eq(reviews.isApproved, true)
+			))
+			.groupBy(reviews.contentId),
+		db
+			.select({ total: sql<number>`count(*)::int` })
+			.from(contentShares)
+			.where(sharesFilter)
+			.then((r) => r[0]),
+		activeViewersQ,
+		priorWindowQ,
+		db
+			.select({
+				deviceType: watchSessionMeta.deviceType,
+				count: sql<number>`count(*)::int`
+			})
+			.from(watchSessionMeta)
+			.where(metaFilter)
+			.groupBy(watchSessionMeta.deviceType),
+		db
+			.select({
+				country: watchSessionMeta.country,
+				count: sql<number>`count(*)::int`
+			})
+			.from(watchSessionMeta)
+			.where(metaFilter)
+			.groupBy(watchSessionMeta.country)
+			.orderBy(sql`count(*) desc`)
+			.limit(10),
+		trendRowsQ,
+		db
+			.select({
+				bucket: sql<string>`
+					CASE
+						WHEN ${user.dateOfBirth} IS NULL THEN NULL
+						WHEN date_part('year', age(${user.dateOfBirth})) < 18 THEN '<18'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 25 THEN '18-24'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 35 THEN '25-34'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 45 THEN '35-44'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 55 THEN '45-54'
+						ELSE '55+'
+					END
+				`,
+				count: sql<number>`count(*)::int`
+			})
+			.from(watchSessionMeta)
+			.innerJoin(user, eq(user.id, watchSessionMeta.userId))
+			.where(and(
+				inArray(watchSessionMeta.contentId, contentIds),
+				isNotNull(user.dateOfBirth),
+				cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
+			))
+			.groupBy(sql`1`),
+		db
+			.select({
+				gender: user.gender,
+				count: sql<number>`count(*)::int`
+			})
+			.from(watchSessionMeta)
+			.innerJoin(user, eq(user.id, watchSessionMeta.userId))
+			.where(and(
+				inArray(watchSessionMeta.contentId, contentIds),
+				isNotNull(user.gender),
+				cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
+			))
+			.groupBy(user.gender)
+	]);
 
 	const reviewByContent = new Map(reviewAgg.map((r) => [r.contentId, r]));
 	const progressByContent = new Map(perContent.map((p) => [p.contentId, p]));
@@ -162,42 +304,12 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const avgWatchMinutes = totalViews > 0 ? Math.round((totalWatchSeconds / totalViews) / 60 * 10) / 10 : 0;
 	const overallCompletionRate = totalViews > 0 ? Math.round(totalCompletionPctSum / totalViews) : 0;
 
-	// Shares — count rows in content_shares for this creator's content in window.
-	const sharesFilter = cutoff
-		? and(inArray(contentShares.contentId, contentIds), gte(contentShares.createdAt, cutoff))
-		: inArray(contentShares.contentId, contentIds);
-	const [shareAgg] = await db
-		.select({ total: sql<number>`count(*)::int` })
-		.from(contentShares)
-		.where(sharesFilter);
 	const totalShares = Number(shareAgg?.total ?? 0);
-
-	// Active viewers — Redis ZSET keyed per creator: each VideoPlayer ping adds
-	// `viewerKey` with score=now(); we trim entries older than 60s and report
-	// the cardinality. Falls back to 0 if Redis is down.
-	let activeViewers = 0;
-	try {
-		const redis = getRedis();
-		const key = `creator:active-viewers:${session.user.id}`;
-		const horizon = Date.now() - 60_000;
-		await redis.zremrangebyscore(key, 0, horizon);
-		activeViewers = await redis.zcard(key);
-	} catch {
-		activeViewers = 0;
-	}
 
 	// Growth rate — views this period vs previous same-length period.
 	let growthRate = 0;
-	if (cutoff && priorCutoff) {
-		const [priorAgg] = await db
-			.select({ views: sql<number>`count(*)::int` })
-			.from(mediaWatchProgress)
-			.where(and(
-				inArray(mediaWatchProgress.contentId, contentIds),
-				gte(mediaWatchProgress.updatedAt, priorCutoff),
-				lt(mediaWatchProgress.updatedAt, cutoff)
-			));
-		const priorViews = Number(priorAgg?.views ?? 0);
+	if (priorWindow) {
+		const priorViews = Number(priorWindow.views ?? 0);
 		if (priorViews > 0) {
 			growthRate = Math.round(((totalViews - priorViews) / priorViews) * 100);
 		} else if (totalViews > 0) {
@@ -205,19 +317,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		}
 	}
 
-	// viewsByDevice + topCountries — from watch_session_meta.
-	const metaFilter = cutoff
-		? and(inArray(watchSessionMeta.contentId, contentIds), gte(watchSessionMeta.createdAt, cutoff))
-		: inArray(watchSessionMeta.contentId, contentIds);
-
-	const deviceRows = await db
-		.select({
-			deviceType: watchSessionMeta.deviceType,
-			count: sql<number>`count(*)::int`
-		})
-		.from(watchSessionMeta)
-		.where(metaFilter)
-		.groupBy(watchSessionMeta.deviceType);
 	const deviceTotal = deviceRows.reduce((sum, r) => sum + Number(r.count), 0);
 	const viewsByDevice = deviceRows
 		.filter((r) => r.deviceType)
@@ -228,16 +327,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		}))
 		.sort((a, b) => b.count - a.count);
 
-	const countryRows = await db
-		.select({
-			country: watchSessionMeta.country,
-			count: sql<number>`count(*)::int`
-		})
-		.from(watchSessionMeta)
-		.where(metaFilter)
-		.groupBy(watchSessionMeta.country)
-		.orderBy(sql`count(*) desc`)
-		.limit(10);
 	const topCountries = countryRows
 		.filter((r) => r.country)
 		.map((r) => ({ country: r.country ?? 'XX', count: Number(r.count) }));
@@ -251,24 +340,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const seriesWatchMinutes: number[] = new Array(seriesDays).fill(0);
 	const seriesCompletion: number[] = new Array(seriesDays).fill(0);
 
-	if (days && days <= 90) {
-		const trendRows = await db
-			.select({
-				day: sql<string>`to_char(date_trunc('day', ${mediaWatchProgress.updatedAt}), 'YYYY-MM-DD')`,
-				views: sql<number>`count(*)::int`,
-				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
-				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
-			})
-			.from(mediaWatchProgress)
-			.where(and(
-				inArray(mediaWatchProgress.contentId, contentIds),
-				gte(mediaWatchProgress.updatedAt, cutoff!)
-			))
-			.groupBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`)
-			.orderBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`);
-		trends = trendRows.map((r) => ({ date: r.day, views: Number(r.views) }));
+	trends = trendRows.map((r) => ({ date: r.day, views: Number(r.views) }));
 
-		// Map rows to the fixed-length series buckets — index is days-ago from today.
+	// Map rows to the fixed-length series buckets — index is days-ago from today.
+	{
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 		for (const r of trendRows) {
@@ -283,24 +358,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		}
 	}
 
-	// Per-metric period-over-period deltas. Views uses the existing growthRate.
-	// For watchSeconds + avgCompletion we run one quick prior-window query.
+	// Per-metric period-over-period deltas from the merged prior-window
+	// aggregate. Views uses the growthRate computed above.
 	let watchTimeDelta = 0;
 	let completionDelta = 0;
-	if (cutoff && priorCutoff) {
-		const [priorRow] = await db
-			.select({
-				watchSeconds: sql<number>`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
-				avgCompletion: sql<number>`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
-			})
-			.from(mediaWatchProgress)
-			.where(and(
-				inArray(mediaWatchProgress.contentId, contentIds),
-				gte(mediaWatchProgress.updatedAt, priorCutoff),
-				lt(mediaWatchProgress.updatedAt, cutoff)
-			));
-		const priorWatchSeconds = Number(priorRow?.watchSeconds ?? 0);
-		const priorAvgCompletion = Number(priorRow?.avgCompletion ?? 0);
+	if (priorWindow) {
+		const priorWatchSeconds = Number(priorWindow.watchSeconds ?? 0);
+		const priorAvgCompletion = Number(priorWindow.avgCompletion ?? 0);
 		if (priorWatchSeconds > 0) {
 			watchTimeDelta = Math.round(((totalWatchSeconds - priorWatchSeconds) / priorWatchSeconds) * 1000) / 10;
 		} else if (totalWatchSeconds > 0) {
@@ -313,32 +377,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		}
 	}
 
-	// Age + gender breakdown. Join watch_session_meta → user to read
-	// self-reported demographics; users without DOB/gender simply don't
-	// contribute to those buckets.
-	const ageRows = await db
-		.select({
-			bucket: sql<string>`
-				CASE
-					WHEN ${user.dateOfBirth} IS NULL THEN NULL
-					WHEN date_part('year', age(${user.dateOfBirth})) < 18 THEN '<18'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 25 THEN '18-24'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 35 THEN '25-34'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 45 THEN '35-44'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 55 THEN '45-54'
-					ELSE '55+'
-				END
-			`,
-			count: sql<number>`count(*)::int`
-		})
-		.from(watchSessionMeta)
-		.innerJoin(user, eq(user.id, watchSessionMeta.userId))
-		.where(and(
-			inArray(watchSessionMeta.contentId, contentIds),
-			isNotNull(user.dateOfBirth),
-			cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
-		))
-		.groupBy(sql`1`);
 	const ageGroups = ageRows
 		.filter((r) => r.bucket)
 		.map((r) => ({ bucket: r.bucket ?? 'unknown', count: Number(r.count) }))
@@ -347,19 +385,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			return order.indexOf(a.bucket) - order.indexOf(b.bucket);
 		});
 
-	const genderRows = await db
-		.select({
-			gender: user.gender,
-			count: sql<number>`count(*)::int`
-		})
-		.from(watchSessionMeta)
-		.innerJoin(user, eq(user.id, watchSessionMeta.userId))
-		.where(and(
-			inArray(watchSessionMeta.contentId, contentIds),
-			isNotNull(user.gender),
-			cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`
-		))
-		.groupBy(user.gender);
 	const genderDistribution = genderRows
 		.filter((r) => r.gender)
 		.map((r) => ({ gender: r.gender ?? 'unknown', count: Number(r.count) }));

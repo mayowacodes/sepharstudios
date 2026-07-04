@@ -71,6 +71,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				encoderJobId: jobId,
 				processingStatus: 'created',
 				processingError: null,
+				// Clear any prior encode's playback URL. The webhook only
+				// writes videoUrl when the column is EMPTY (so it never
+				// stomps static uploads), which means a re-encode that
+				// leaves the old URL here plays the OLD video forever —
+				// the row's encoder_job_id and the jobId inside video_url
+				// drift apart. The admin retry endpoint already nulls it;
+				// this creator path missed the same line.
+				videoUrl: null,
+				processingProgress: 0,
 				updatedAt: new Date()
 			})
 			.where(eq(mediaLibrary.id, contentId));

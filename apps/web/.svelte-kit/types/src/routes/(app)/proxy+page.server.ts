@@ -16,32 +16,37 @@ export const actions = {};
 
 export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
     try {
+        // Card projection, not full rows — the full row drags chapters,
+        // cast, crew, geo config, and other JSON blobs into the page's
+        // serialized data on the highest-traffic route (~50% payload
+        // cut per row). Both queries run in parallel.
         // Accept both wizard literal ('series') and legacy ('show') so the
         // landing page doesn't miss rows the catalog at /shows now lists.
-        const trendingShows = await db.select()
-            .from(mediaLibrary)
-            .where(
-                and(
-                    inArray(mediaLibrary.mediaType, ['show', 'series']),
-                    eq(mediaLibrary.isActive, true),
-                    eq(mediaLibrary.visibility, 'public')
-                )
-            )
-            .orderBy(desc(mediaLibrary.createdAt))
-            .limit(10);
-
         // Short Film lumped into trending movies — matches /movies coverage.
-        const trendingMovies = await db.select()
-            .from(mediaLibrary)
-            .where(
-                and(
-                    inArray(mediaLibrary.mediaType, ['movie', 'short']),
-                    eq(mediaLibrary.isActive, true),
-                    eq(mediaLibrary.visibility, 'public')
+        const [trendingShows, trendingMovies] = await Promise.all([
+            db.select(mediaCardColumns)
+                .from(mediaLibrary)
+                .where(
+                    and(
+                        inArray(mediaLibrary.mediaType, ['show', 'series']),
+                        eq(mediaLibrary.isActive, true),
+                        eq(mediaLibrary.visibility, 'public')
+                    )
                 )
-            )
-            .orderBy(desc(mediaLibrary.createdAt))
-            .limit(10);
+                .orderBy(desc(mediaLibrary.createdAt))
+                .limit(10),
+            db.select(mediaCardColumns)
+                .from(mediaLibrary)
+                .where(
+                    and(
+                        inArray(mediaLibrary.mediaType, ['movie', 'short']),
+                        eq(mediaLibrary.isActive, true),
+                        eq(mediaLibrary.visibility, 'public')
+                    )
+                )
+                .orderBy(desc(mediaLibrary.createdAt))
+                .limit(10)
+        ]);
 
         // Continue Watching — signed-in viewers get a row of in-progress
         // titles (positionSeconds >= 15, completionPercent < 95).

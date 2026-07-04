@@ -188,6 +188,14 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'Invalid JSON' }, { status: 400 });
 	}
 
+	// Workflow-controlling enums get validated even on the admin path.
+	// Admin is trusted, but a typo ("pubished") written to `status`
+	// silently vanishes the row from every status-filtered query —
+	// this is an integrity guard, not an authz gate.
+	const VALID_STATUS = new Set(['draft', 'submitted', 'theological_review', 'content_review', 'technical_qa', 'approved', 'published', 'rejected', 'archived', 'coming_soon']);
+	const VALID_MEDIA_TYPE = new Set(['movie', 'series', 'show', 'tv', 'episode', 'documentary', 'short', 'sermon', 'worship', 'kids']);
+	const VALID_VISIBILITY = new Set(['public', 'unlisted', 'private']);
+
 	// Filter to the allow-list. We don't reject unknown keys (a future
 	// schema addition shouldn't break old admin clients) — we just drop.
 	const patch: Record<string, unknown> = {};
@@ -201,6 +209,12 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			} else if (key === 'scheduledPublishAt' && typeof v === 'string' && v) {
 				const d = new Date(v);
 				patch[key] = Number.isNaN(d.getTime()) ? null : d;
+			} else if (key === 'status' && typeof v === 'string' && !VALID_STATUS.has(v)) {
+				return json({ error: `Invalid status "${v}"` }, { status: 400 });
+			} else if (key === 'mediaType' && typeof v === 'string' && !VALID_MEDIA_TYPE.has(v)) {
+				return json({ error: `Invalid mediaType "${v}"` }, { status: 400 });
+			} else if (key === 'visibility' && typeof v === 'string' && !VALID_VISIBILITY.has(v)) {
+				return json({ error: `Invalid visibility "${v}"` }, { status: 400 });
 			} else {
 				patch[key] = v;
 			}

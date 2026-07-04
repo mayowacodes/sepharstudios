@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { toast } from 'svelte-sonner';
-  import { UploadStep, type UploadWizardState, ContentType, AgeRating } from '$lib/types/creator';
+  import { UploadStep, type UploadWizardState, ContentType } from '$lib/types/creator';
   import StepIndicator from '$lib/components/creator/upload/StepIndicator.svelte';
   import BasicInfoStep from '$lib/components/creator/upload/BasicInfoStep.svelte';
   import VideoUploadStep from '$lib/components/creator/upload/VideoUploadStep.svelte';
@@ -142,7 +142,14 @@
       [UploadStep.REVIEW_SUBMIT]: false
     }
   });
-  
+
+  // Serialized snapshot of the untouched default state, captured before
+  // any user input or URL-param mutation. The auto-save $effect compares
+  // against this so a pristine visit never writes a bogus draft.
+  // Capturing the INITIAL value (not a live reference) is the point here.
+  // svelte-ignore state_referenced_locally
+  const pristineSnapshot = JSON.stringify(JSON.parse(JSON.stringify(wizardState)));
+
   // StepIndicator's StepConfig expects `{ id, label }`. We keep id as the
   // UploadStep number stringified so it stays stable across migrations.
   const steps = [
@@ -152,11 +159,46 @@
     { id: String(UploadStep.METADATA), label: 'Metadata' },
     { id: String(UploadStep.REVIEW_SUBMIT), label: 'Review & Submit' }
   ];
-  
+
   let isTransitioningStep = $state(false);
+
+  // Local-timezone YYYY-MM-DD. Used by the Coming Soon date gate — the
+  // <input type="date"> yields the user's LOCAL date, so comparing it
+  // against a UTC-derived string rejects "today" for anyone west of UTC
+  // in the evening.
+  function localTodayYYYYMMDD(): string {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
 
   function goToStep(step: UploadStep) {
     if (isTransitioningStep || isSubmitting) return;
+    // Gate forward jumps: every step BEFORE the target must pass its
+    // validator. StepIndicator renders every circle as a clickable
+    // button, so without this a creator could click straight to
+    // "Review & Submit" and submit a row with no posters/backdrop —
+    // the per-step validators were never consulted on that path.
+    // Backward jumps are always allowed.
+    if (step > wizardState.currentStep) {
+      const ordered = [
+        UploadStep.BASIC_INFO,
+        UploadStep.VIDEO_UPLOAD,
+        UploadStep.ASSET_MANAGEMENT,
+        UploadStep.METADATA,
+        UploadStep.REVIEW_SUBMIT
+      ];
+      for (const s of ordered) {
+        if (s >= step) break;
+        const missing = missingFieldsForStep(s);
+        if (missing.length > 0) {
+          toast.info('Finish the earlier steps first', {
+            description: `Still needed: ${missing.join(', ')}`
+          });
+          return;
+        }
+      }
+    }
     isTransitioningStep = true;
     setTimeout(() => {
       wizardState.currentStep = step;
@@ -201,22 +243,35 @@
         if (!d.description || d.description.trim().length < 50) missing.push('Description (at least 50 characters)');
         if (!d.contentType) missing.push('Content type');
         if (!d.ageRating) missing.push('Age rating');
-        // Series-specific gate: the episode's title is required when the
-        // creator chose Series. Without it, we'd create an unnamed
-        // episode row that's effectively useless. Label the missing
-        // field with the actual S/E numbers (e.g. "S2 E5 title") so
-        // creators uploading something other than S1E1 don't see a
-        // confusing "Episode 1 title" prompt.
-        if (d.contentType === ContentType.SERIES && (!d.episodeTitle || d.episodeTitle.trim().length < 2)) {
-          missing.push(`S${d.seasonNumber || 1} E${d.episodeNumber || 1} title (at least 2 characters)`);
+        // Series-specific gates. Episode title is required when the
+        // creator chose Series (an unnamed episode row is useless), and
+        // the S/E numbers must be positive integers — the number inputs'
+        // min="1" only constrains the spinner arrows, so a typed 0 / -3
+        // (or a cleared field binding null) used to sail through client
+        // validation and then 400 at the episodes POST AFTER the series
+        // row was already created + encoding, leaving an empty-shell
+        // series. Label errors with the actual S/E numbers so mid-series
+        // uploads don't see a confusing "Episode 1" prompt.
+        if (d.contentType === ContentType.SERIES) {
+          if (!d.episodeTitle || d.episodeTitle.trim().length < 2) {
+            missing.push(`S${d.seasonNumber || 1} E${d.episodeNumber || 1} title (at least 2 characters)`);
+          }
+          if (!Number.isInteger(d.seasonNumber) || d.seasonNumber < 1) {
+            missing.push('Season number (whole number, 1 or higher)');
+          }
+          if (!Number.isInteger(d.episodeNumber) || d.episodeNumber < 1) {
+            missing.push('Episode number (whole number, 1 or higher)');
+          }
         }
         // Coming Soon gate: release date is required + must be today or
         // later. Without this the inline red warning in BasicInfo would
         // show but submit could still go through, leaving the cron with
-        // no scheduledPublishAt to auto-publish on.
+        // no scheduledPublishAt to auto-publish on. "Today" is computed
+        // from LOCAL date parts — toISOString() is UTC, which blocked
+        // western-timezone creators from picking their local today
+        // every evening.
         if (d.comingSoon) {
-          const today = new Date().toISOString().slice(0, 10);
-          if (!d.comingSoonReleaseDate || d.comingSoonReleaseDate < today) {
+          if (!d.comingSoonReleaseDate || d.comingSoonReleaseDate < localTodayYYYYMMDD()) {
             missing.push('Coming Soon release date (today or later)');
           }
         }
@@ -333,6 +388,73 @@
     }
   }
 
+  /**
+   * Upload the staged trailer (if any) directly to encoder MinIO and
+   * commit it onto the row. Best-effort: failure never fails the main
+   * submission — we toast the actual reason so the creator knows
+   * whether to rename the file, retry, or contact support.
+   *
+   * `instanceof File` guard matters: a rehydrated localStorage draft
+   * used to leave a plain `{}` in trailerFile (Files don't survive
+   * JSON.stringify), and calling `.name` on it threw AFTER the main
+   * video had fully uploaded — which triggered the rollback and
+   * archived a successful submission.
+   *
+   * The sign endpoint enforces a strict filename character set
+   * (A-Za-z0-9._-() and space), so we sanitize the name first —
+   * apostrophes/accents/emoji were the common silent-failure mode.
+   */
+  async function uploadTrailerIfAny(contentId: string): Promise<void> {
+    const trailerFile = wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerFile;
+    if (!(trailerFile instanceof File) || !contentId) return;
+
+    const safeName = (() => {
+      const cleaned = trailerFile.name
+        .replace(/[^A-Za-z0-9._\-() ]+/g, '_')
+        .replace(/_+/g, '_')
+        .slice(0, 200);
+      return cleaned || 'trailer.mp4';
+    })();
+    const trailerType = trailerFile.type && trailerFile.type.startsWith('video/')
+      ? trailerFile.type
+      : 'video/mp4';
+    try {
+      const trailerSignRes = await fetch('/api/creator/trailer-upload/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentId,
+          filename: safeName,
+          contentType: trailerType
+        })
+      });
+      const signBody = await trailerSignRes.json().catch(() => ({}));
+      if (!trailerSignRes.ok) {
+        throw new Error(signBody.detail ?? signBody.error ?? `Trailer presign failed (HTTP ${trailerSignRes.status}).`);
+      }
+      const { uploadUrl, objectKey } = signBody as { uploadUrl: string; objectKey: string };
+
+      // Reuse the same XHR-with-progress uploader the main video used.
+      await uploadVideoWithProgress(uploadUrl, 'PUT', trailerFile);
+
+      const trailerCommitRes = await fetch('/api/creator/trailer-upload/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentId, objectKey })
+      });
+      if (!trailerCommitRes.ok) {
+        const body = await trailerCommitRes.json().catch(() => ({}));
+        throw new Error(body.detail ?? body.error ?? `Trailer commit failed (HTTP ${trailerCommitRes.status}).`);
+      }
+    } catch (trailerErr) {
+      console.warn('Trailer upload failed (non-blocking):', trailerErr);
+      const reason = trailerErr instanceof Error ? trailerErr.message : 'Unknown error';
+      toast.warning('Trailer was not attached', {
+        description: `${reason} Re-upload the trailer from your content library when ready.`
+      });
+    }
+  }
+
   async function submitContent() {
     isSubmitting = true;
     submitStep = 'metadata';
@@ -390,11 +512,12 @@
           // so edits can revise the people list without re-uploading.
           cast: Array.isArray(meta.cast) ? meta.cast : [],
           crew: Array.isArray(meta.crew) ? meta.crew : [],
-          // Trailer URL is written later by /api/creator/trailer-upload/commit
-          // after the real file is uploaded direct to encoder MinIO. We
-          // explicitly send `null` here so the row doesn't keep the bogus
-          // "staged-for-encoding" sentinel from the wizard's progress state.
-          trailerUrl: null,
+          // NOTE: trailerUrl is deliberately ABSENT. It used to be sent
+          // as an unconditional `null`, which wiped the row's existing
+          // trailer on every metadata-only edit. The trailer is only
+          // rewritten by /api/creator/trailer-upload/commit when the
+          // creator actually stages a new file (see uploadTrailerIfAny).
+          //
           // Coming Soon edit can adjust the release date or flip the
           // toggle off (re-publish immediately). The PATCH endpoint
           // accepts scheduledPublishAt as a string or null.
@@ -402,6 +525,12 @@
             ? (basic.comingSoonReleaseDate || null)
             : null
         };
+
+        // Preserve the stored duration on metadata-only edits: prefill
+        // couldn't always restore it into the number input (it may be
+        // '' after rehydration), and PATCHing '' overwrote the column.
+        // Only send duration when the creator actually has a value.
+        if (!meta.duration) delete patchBody.duration;
 
         // "I'm completing my Coming Soon by attaching the main video":
         // creator opened the wizard on a coming_soon row, supplied a
@@ -423,8 +552,12 @@
         }
         contentId = editId;
 
-        // No new video → done. No need to re-encode.
+        // No new video → upload any newly staged trailer, then done.
+        // The trailer upload MUST happen before this early return —
+        // it used to sit after the encoder steps, so an edit that
+        // attached only a trailer silently discarded it.
         if (!videoFile) {
+          await uploadTrailerIfAny(contentId);
           toast.success('Content updated', { description: 'Your changes have been saved.' });
           localStorage.removeItem('upload_draft');
           window.location.href = '/creator/content';
@@ -521,74 +654,9 @@
         if (!commitRes.ok) throw new Error('Failed to queue encoder job');
       }
 
-      // 5. Upload the trailer (if provided) directly to encoder MinIO.
-      // Trailers are stored as-is (no transcoding) — most creators upload
-      // MP4/h264 which every browser plays natively in <video src>.
-      // Best-effort: if it fails, the main submission still succeeded
-      // and we toast a soft warning so the creator can re-attach the
-      // trailer later from /creator/content/<id>.
-      //
-      // The sign endpoint enforces a strict filename character set
-      // (A-Za-z0-9._-() and space). Names with apostrophes, accents,
-      // emoji, or parens-with-anything-weird ("My Trailer v2!.mp4")
-      // were the common silent-failure mode — the wizard would toast
-      // "trailer was not attached" without explaining why. We sanitize
-      // the filename to match the endpoint's rules so the upload only
-      // fails for real reasons (network, auth, bucket missing).
-      const trailerFile = wizardState.stepData[UploadStep.VIDEO_UPLOAD].trailerFile;
-      if (trailerFile && contentId) {
-        const safeName = (() => {
-          const cleaned = trailerFile.name
-            .replace(/[^A-Za-z0-9._\-() ]+/g, '_')
-            .replace(/_+/g, '_')
-            .slice(0, 200);
-          return cleaned || `trailer.mp4`;
-        })();
-        const trailerType = trailerFile.type && trailerFile.type.startsWith('video/')
-          ? trailerFile.type
-          : 'video/mp4';
-        try {
-          const trailerSignRes = await fetch('/api/creator/trailer-upload/sign', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contentId,
-              filename: safeName,
-              contentType: trailerType
-            })
-          });
-          const signBody = await trailerSignRes.json().catch(() => ({}));
-          if (!trailerSignRes.ok) {
-            throw new Error(signBody.detail ?? signBody.error ?? `Trailer presign failed (HTTP ${trailerSignRes.status}).`);
-          }
-          const { uploadUrl, objectKey } = signBody as { uploadUrl: string; objectKey: string };
-
-          // Reuse the same XHR-with-progress uploader the main video used —
-          // it surfaces a real progress bar and handles network errors
-          // consistently.
-          await uploadVideoWithProgress(uploadUrl, 'PUT', trailerFile);
-
-          const trailerCommitRes = await fetch('/api/creator/trailer-upload/commit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contentId, objectKey })
-          });
-          if (!trailerCommitRes.ok) {
-            const body = await trailerCommitRes.json().catch(() => ({}));
-            throw new Error(body.detail ?? body.error ?? `Trailer commit failed (HTTP ${trailerCommitRes.status}).`);
-          }
-        } catch (trailerErr) {
-          console.warn('Trailer upload failed (non-blocking):', trailerErr);
-          // Surface the actual reason so the creator knows whether to
-          // rename their file, try a smaller upload, or contact support.
-          // The prior generic "you can re-upload from your content
-          // library" hid 4xx errors completely.
-          const reason = trailerErr instanceof Error ? trailerErr.message : 'Unknown error';
-          toast.warning('Trailer was not attached', {
-            description: `${reason} Your main video submitted successfully — re-upload the trailer from /creator/content/<id> when ready.`
-          });
-        }
-      }
+      // 5. Upload the trailer (if provided). Shared helper — also called
+      // from the edit-without-new-video early return above.
+      await uploadTrailerIfAny(contentId);
 
       // 6. Series-only — create the first episode row alongside the series.
       // Without this, uploading a series leaves the creator with an empty-
@@ -753,7 +821,14 @@
         bibleReferences: item.bibleReference ? [item.bibleReference] : [],
         themes: item.topics ?? [],
         ministryAffiliation: '',
-        duration: '',
+        // Restore the stored duration so a metadata-only edit doesn't
+        // blank the column (the row stores it as a varchar; the wizard
+        // holds minutes as a number). Non-numeric legacy values fall
+        // back to '' and the patchBody omits the key in that case.
+        duration: (() => {
+          const n = Number.parseFloat(String(item.duration ?? ''));
+          return Number.isFinite(n) && n > 0 ? n : '';
+        })(),
         language: item.language ?? 'English',
         hasSubtitles: false,
         hasClosedCaptions: false,
@@ -843,6 +918,21 @@
         }
       }
     }
+
+    // NEVER restore the VIDEO_UPLOAD step's file slots from a draft.
+    // File objects serialize to `{}` under JSON.stringify, so a saved
+    // draft holds `videoFile: {}` / `trailerFile: {}` — plain objects
+    // that pass truthiness checks but explode on `.name` access. The
+    // worst case was a phantom trailer crashing submit AFTER the main
+    // video had fully uploaded + committed, which then rolled back
+    // (archived) the successful submission. Wipe all four slots; the
+    // step validator forces a re-pick anyway.
+    defaultState.stepData[UploadStep.VIDEO_UPLOAD] = {
+      videoFile: null,
+      trailerFile: null,
+      videoProgress: null,
+      trailerProgress: null
+    };
 
     // Clamp `currentStep` to the lowest still-invalid step. Previously we
     // restored `draft.currentStep` verbatim — that was the root cause of
@@ -963,7 +1053,10 @@
   // the first invalid step. Older v2 drafts had a saved currentStep that
   // could land users past Step 2 even though their videoFile (a File
   // object) was lost on rehydration. Bumping to 3 flushes those drafts.
-  const DRAFT_SCHEMA_VERSION = 3;
+  // v4: comingSoon/comingSoonReleaseDate moved from REVIEW_SUBMIT to
+  // BASIC_INFO + episodeTitle/seasonNumber/episodeNumber added to
+  // BASIC_INFO. v3 drafts carry the old shape; flush them.
+  const DRAFT_SCHEMA_VERSION = 4;
 
   // Auto-save draft data (excluding File objects). In runes mode, $: is no
   // longer reactive — use $effect to track wizardState changes.
@@ -974,7 +1067,17 @@
   $effect(() => {
     if (typeof localStorage === 'undefined') return;
     if (pendingDraft) return;
+    // Never auto-save in edit mode. The draft key is for NEW uploads;
+    // persisting an edit's prefilled state here meant "Resume previous
+    // draft?" later offered another row's data as a fresh upload —
+    // resubmitting it created a duplicate content row.
+    if (editId) return;
     const stateToSave = JSON.parse(JSON.stringify(wizardState));
+    const serialized = JSON.stringify(stateToSave);
+    // Don't persist a pristine, untouched wizard — otherwise merely
+    // visiting /creator/upload and leaving created a bogus "Resume
+    // previous draft?" banner on the next visit.
+    if (serialized === pristineSnapshot) return;
     localStorage.setItem('upload_draft', JSON.stringify({
       _version: DRAFT_SCHEMA_VERSION,
       _savedAt: Date.now(),

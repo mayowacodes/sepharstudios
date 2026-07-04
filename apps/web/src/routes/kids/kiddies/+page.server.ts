@@ -1,18 +1,24 @@
 import { db } from '$lib/db/drizzle';
 import { mediaLibrary } from '$lib/db/schema/sepharstudios';
-import { eq, and } from 'drizzle-orm';
+import { mediaCardColumns } from '$lib/db/projections';
+import { eq, and, desc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     try {
-        const content = await db.select()
+        // Card projection + a LIMIT — this used to serialize EVERY kids
+        // row's FULL columns (chapters/cast/crew JSON included) into the
+        // page data on every load, unbounded.
+        const content = await db.select(mediaCardColumns)
             .from(mediaLibrary)
             .where(
                 and(
                     eq(mediaLibrary.category, 'kids'),
                     eq(mediaLibrary.isActive, true)
                 )
-            );
+            )
+            .orderBy(desc(mediaLibrary.createdAt))
+            .limit(60);
 
         return { content };
     } catch (e) {

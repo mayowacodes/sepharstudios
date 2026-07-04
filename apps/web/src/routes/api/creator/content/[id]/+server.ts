@@ -26,9 +26,12 @@ const ALLOWED_PATCH_FIELDS = new Set([
 	// Basic Info — PPV pricing lives in the `ppv_content` table, NOT on
 	// media_library. Creator-suggested PPV happens via the admin PPV modal.
 	'title', 'description', 'contentType', 'ageRating', 'audience',
-	// Metadata
+	// Metadata. NOTE: ministryAffiliation / hasSubtitles /
+	// hasClosedCaptions were removed — they were never columns on
+	// media_library, and letting them through to the drizzle .set()
+	// threw on the unknown key, 500ing any PATCH that included them
+	// and losing the whole otherwise-valid update.
 	'genres', 'topics', 'keywords', 'bibleReference', 'language', 'duration',
-	'ministryAffiliation', 'hasSubtitles', 'hasClosedCaptions',
 	// Asset URLs (one per slot)
 	'thumbnail', 'posterUrl', 'posterLandscapeUrl', 'posterSquareUrl',
 	'logoTitleUrl', 'backdropUrl', 'trailerUrl',
@@ -43,6 +46,26 @@ const ALLOWED_PATCH_FIELDS = new Set([
 	// movements still go through the admin endpoints.
 	'status'
 ]);
+
+// Length caps for the free-text fields that used to hit the untyped
+// catch-all. Postgres throws `value too long for type character
+// varying(N)` (→ route 500) past the column width, and `description`
+// (text) is otherwise unbounded — a multi-MB string would flow into
+// Meilisearch indexing and page renders. Caps mirror the schema.
+const TEXT_FIELD_MAX: Record<string, number> = {
+	description: 10_000,
+	ageRating: 10,       // varchar(10)
+	bibleReference: 100, // varchar(100)
+	language: 50,        // varchar(50)
+	duration: 50,        // varchar(50)
+	thumbnail: 2048,
+	posterUrl: 2048,
+	posterLandscapeUrl: 2048,
+	posterSquareUrl: 2048,
+	logoTitleUrl: 2048,
+	backdropUrl: 2048,
+	trailerUrl: 2048
+};
 
 // Creator-allowed status transitions. The only one that's safe for a
 // creator to trigger directly is sending a previously-approved Coming
@@ -194,6 +217,17 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 				if (isNaN(parsed.getTime())) {
 					return json({ error: 'Invalid scheduledPublishAt' }, { status: 400 });
 				}
+				// Creator-supplied schedules must be in the future. The
+				// scheduled-publish cron flips any approved/coming_soon row
+				// whose date has elapsed, so accepting a past date here let
+				// a creator force-publish an admin-scheduled title instantly
+				// (bypassing the admin's chosen release date). 24h of grace
+				// backwards covers timezone/date-only inputs (YYYY-MM-DD
+				// parses as UTC midnight, which can be "yesterday" for
+				// western-timezone creators picking today's date).
+				if (parsed.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
+					return json({ error: 'scheduledPublishAt must be today or in the future' }, { status: 400 });
+				}
 				updates.scheduledPublishAt = parsed;
 			}
 			continue;
@@ -312,18 +346,33 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 			updates.status = target;
 			continue;
 		}
-		// Catch-all for the remaining text / boolean / nullable fields.
-		updates[key] = value as never;
+		// Catch-all — every remaining allow-listed field is a nullable
+		// text/varchar column. Enforce string-or-null + the column's
+		// length cap so a malformed payload can't 500 the route with a
+		// Postgres varchar overflow or bind a non-string to a text column.
+		if (value === null) {
+			updates[key] = null;
+			continue;
+		}
+		if (typeof value !== 'string') {
+			return json({ error: `${key} must be a string or null` }, { status: 400 });
+		}
+		const cap = TEXT_FIELD_MAX[key] ?? 2048;
+		updates[key] = value.slice(0, cap) as never;
 	}
 
 	if (Object.keys(updates).length === 1) {
 		return json({ error: 'No updatable fields supplied' }, { status: 400 });
 	}
 
+	// Re-assert ownership in the WHERE, not just the earlier SELECT —
+	// cheap TOCTOU defense-in-depth.
 	const [updated] = await db.update(mediaLibrary)
 		.set(updates as Parameters<typeof db.update>[0] extends never ? never : Record<string, unknown>)
-		.where(eq(mediaLibrary.id, row.id))
+		.where(and(eq(mediaLibrary.id, row.id), eq(mediaLibrary.creatorId, session.user.id)))
 		.returning();
+
+	if (!updated) return json({ error: 'Not found' }, { status: 404 });
 
 	// Side-effect: re-index in Meilisearch when discoverable fields change.
 	const reindexFields = ['title', 'description', 'genres', 'topics', 'keywords', 'bibleReference', 'cast', 'crew'];

@@ -103,6 +103,30 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	if (!title) return json({ error: 'Title is required' }, { status: 400 });
 
+	// Sanitize cast/crew per-element — same shape the PATCH endpoint
+	// enforces ({name, role, photoUrl?, characterName?} with length
+	// caps). The create path used to store arbitrary jsonb objects of
+	// arbitrary size; Meilisearch indexing then assumed the cleaned
+	// shape and produced junk index rows from malformed entries.
+	type PersonEntry = { name: string; role: string; photoUrl?: string; characterName?: string };
+	const cleanPeople = (value: unknown, kind: 'cast' | 'crew'): PersonEntry[] => {
+		if (!Array.isArray(value)) return [];
+		return value.slice(0, 50).flatMap((v): PersonEntry[] => {
+			if (!v || typeof v !== 'object') return [];
+			const name = String((v as { name?: unknown }).name ?? '').trim();
+			const role = String((v as { role?: unknown }).role ?? '').trim();
+			if (!name || !role) return [];
+			const out: PersonEntry = { name: name.slice(0, 120), role: role.slice(0, 80) };
+			const photoUrl = (v as { photoUrl?: unknown }).photoUrl;
+			if (typeof photoUrl === 'string' && photoUrl) out.photoUrl = photoUrl.slice(0, 500);
+			if (kind === 'cast') {
+				const characterName = (v as { characterName?: unknown }).characterName;
+				if (typeof characterName === 'string' && characterName) out.characterName = characterName.trim().slice(0, 120);
+			}
+			return [out];
+		});
+	};
+
 	// Coming Soon — creator opted into pre-release. We stash the
 	// release date on `scheduledPublishAt` so the existing cron can
 	// pick it up after admin approval. The presence of
@@ -128,8 +152,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		await db.insert(mediaLibrary).values({
 			id,
-			title,
-			description: data.description,
+			title: title.slice(0, 255),
+			// Cap the unbounded text column — an arbitrarily large string
+			// here would flow into Meilisearch indexing and page renders.
+			description: typeof data.description === 'string' ? data.description.slice(0, 10_000) : null,
 			mediaType: data.contentType,
 			category,
 			ageRating: data.ageRating,
@@ -148,11 +174,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			genres: data.genre || [],
 			topics: data.themes || [],
 			keywords: data.keywords || [],
-			// Cast/crew live as jsonb arrays. The wizard validates the row
-			// shapes client-side; defensive Array.isArray here keeps a
-			// malformed body from inserting an invalid jsonb literal.
-			cast: Array.isArray(data.cast) ? data.cast : [],
-			crew: Array.isArray(data.crew) ? data.crew : [],
+			// Cast/crew live as jsonb arrays, sanitized per-element to the
+			// same shape the PATCH endpoint enforces.
+			cast: cleanPeople(data.cast, 'cast'),
+			crew: cleanPeople(data.crew, 'crew'),
 			duration: data.duration?.toString() || null,
 			isActive: false,
 			isNew: true,

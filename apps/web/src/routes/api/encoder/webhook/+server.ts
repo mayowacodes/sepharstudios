@@ -83,11 +83,18 @@ function verifySignature(rawBody: string, signature: string | null, secret: stri
 export const POST: RequestHandler = async ({ request }) => {
 	const rawBody = await request.text();
 	const secret = env.ENCODER_WEBHOOK_SECRET;
-	if (secret) {
-		const sig = request.headers.get('x-encoder-signature');
-		if (!verifySignature(rawBody, sig, secret)) {
-			return json({ error: 'Invalid signature' }, { status: 401 });
-		}
+	// FAIL CLOSED. An unset secret used to silently skip verification,
+	// which meant a misconfigured deploy accepted unauthenticated status
+	// events (anyone could mark arbitrary media "ready" + rewrite its
+	// playback URL). Mirror the scheduled-publish cron: missing secret
+	// is a hard configuration error, not an auth bypass.
+	if (!secret) {
+		console.error('[encoder/webhook] ENCODER_WEBHOOK_SECRET is not configured — rejecting webhook');
+		return json({ error: 'Webhook secret not configured' }, { status: 500 });
+	}
+	const sig = request.headers.get('x-encoder-signature');
+	if (!verifySignature(rawBody, sig, secret)) {
+		return json({ error: 'Invalid signature' }, { status: 401 });
 	}
 
 	let body: WebhookBody;
@@ -122,6 +129,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Unknown row — orchestrator probably retried with a stale ID. 200 so
 		// it doesn't pile up DLQ entries; nothing we can do without a row.
 		return json({ ok: true, matched: false });
+	}
+
+	// STALE-JOB GUARD. When the row was resolved by mediaId, the event's
+	// jobId must match the row's CURRENT encoderJobId. Without this, a
+	// late/duplicate "ready" from an old job (orchestrator retries are
+	// expected) lands after a re-encode has already minted a new jobId:
+	// the status rank check passes, processingStatus flips to ready
+	// prematurely, and the ready-branch below composes videoUrl from the
+	// NEW jobId whose output doesn't exist yet → permanent 404 playback,
+	// while the terminal-state guard then blocks the real job's progress
+	// updates. 200 (not 4xx) so the orchestrator doesn't retry a message
+	// we will never accept.
+	if (current.encoderJobId && body.jobId !== current.encoderJobId) {
+		console.info(
+			`[encoder/webhook] ignoring stale job event: row ${current.id} is on ${current.encoderJobId}, event was for ${body.jobId}`
+		);
+		return json({ ok: true, matched: false, stale: true });
 	}
 
 	// Decide which fields to actually update (idempotent / monotonic).

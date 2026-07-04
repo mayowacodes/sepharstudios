@@ -56,7 +56,13 @@
   const handleMouseEnter = () => {
     isHovered = true;
     onHover?.();
-    previewTimeout = setTimeout(() => videoRef?.play(), 500);
+    // .play() returns a Promise that rejects with AbortError if a pause()
+    // (from a fast hover-out) lands before the play actually starts. Catch
+    // silently — there's nothing to do about a paused-before-played video,
+    // and the unhandled rejection was spamming the console with red noise.
+    previewTimeout = setTimeout(() => {
+      videoRef?.play().catch(() => {});
+    }, 500);
   };
 
   const handleMouseLeave = () => {

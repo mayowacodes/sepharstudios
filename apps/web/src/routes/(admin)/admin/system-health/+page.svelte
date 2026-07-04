@@ -93,9 +93,13 @@
     void loadHealth();
     void loadJobs();
     // Health is rare-changing; keep the 30s heartbeat on it. Encoder jobs
-    // come from SSE so progress updates appear immediately.
+    // come from SSE so progress updates appear immediately. Visibility
+    // guard matches the analytics pages — an idle admin tab left open
+    // was hitting /api/health 2,880 times a day for nothing.
     refreshTimer = setInterval(() => {
-      void loadHealth();
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void loadHealth();
+      }
     }, 30_000);
 
     try {

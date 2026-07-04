@@ -42,11 +42,15 @@
     comingSoonReleaseDate?: string;
   } = $props();
 
-  // Min date for the release-date input — today, YYYY-MM-DD. Stops
-  // creators from scheduling a Coming Soon in the past, which would
-  // auto-flip to live on the next cron tick. Mirrors the same guard
-  // the wizard's validator enforces.
-  const minComingSoonDate = new Date().toISOString().slice(0, 10);
+  // Min date for the release-date input — today in the CREATOR'S LOCAL
+  // timezone, YYYY-MM-DD. toISOString() is UTC and would reject the
+  // local "today" for anyone west of UTC in the evening. Mirrors the
+  // wizard validator's localTodayYYYYMMDD().
+  const minComingSoonDate = (() => {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  })();
 
   // True when the creator selected "Series" — drives the episode sub-
   // panel so they capture their first episode's title + numbering in

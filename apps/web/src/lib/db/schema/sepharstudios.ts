@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index, bigint, date, doublePrecision, primaryKey } from 'drizzle-orm/pg-core';
 
 import { sql } from 'drizzle-orm';
 
@@ -332,6 +332,27 @@ export const episodes = pgTable('episodes', {
 	airDate: varchar('air_date', { length: 20 }),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-day analytics rollup — one row per (content, day). Maintained by
+// /api/cron/analytics-rollup (re-aggregates the last 2 days each run)
+// and backfilled by migration 0043. The creator analytics endpoint
+// reads trends/sparklines from here (~30 rows) instead of aggregating
+// raw media_watch_progress history per request. avg completion for a
+// day = completionPctSum / views.
+// ─────────────────────────────────────────────────────────────────────────────
+export const mediaAnalyticsDaily = pgTable('media_analytics_daily', {
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	day: date('day').notNull(),
+	views: integer('views').notNull().default(0),
+	watchSeconds: bigint('watch_seconds', { mode: 'number' }).notNull().default(0),
+	completedWatches: integer('completed_watches').notNull().default(0),
+	completionPctSum: doublePrecision('completion_pct_sum').notNull().default(0),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	pk: primaryKey({ columns: [t.contentId, t.day] }),
+	dayIdx: index('media_analytics_daily_day_idx').on(t.day)
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subtitle / caption / audio-description tracks attached to a media row.

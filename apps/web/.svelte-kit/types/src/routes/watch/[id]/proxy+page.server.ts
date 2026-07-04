@@ -93,13 +93,23 @@ export const load = async ({ params, locals, request, url }: Parameters<PageServ
 		error(451, 'This title isn’t available in your region.');
 	}
 
-	// PPV gate. Owners + admins bypass. Otherwise: when active ppv_content
-	// row exists, viewer must have an entry in ppv_purchases. If they
-	// don't, we still load the page (so meta + paywall renders) but flag
+	// PPV gate. Owners bypass. Otherwise: when an active ppv_content row
+	// exists, viewer must have an entry in ppv_purchases. If they don't,
+	// we still load the page (so meta + paywall renders) but flag
 	// `paywall.required` so the client renders PPVPaywall instead of the
-	// VideoPlayer.
-	let paywall: { required: boolean; priceCents: number; currency: string } | null = null;
-	if (!isOwner) {
+	// VideoPlayer — AND we strip every playback URL from the payload
+	// below, because the flag alone is presentational: anything we
+	// return in `data` is readable in the network tab regardless of
+	// which component renders.
+	// ── Parallel wave 2 ──────────────────────────────────────────────
+	// Paywall, subtitle tracks, the deep-linked episode, and the show's
+	// episode list are all independent of each other (they only need the
+	// content row). Running them sequentially cost ~5 extra round-trips
+	// on the most latency-sensitive page in the app (click → playback).
+	const isTvLike = content.mediaType === 'tv' || content.mediaType === 'series';
+
+	const paywallQ = (async (): Promise<{ required: boolean; priceCents: number; currency: string } | null> => {
+		if (isOwner) return null;
 		const [ppvRow] = await db.select({
 			priceCents: ppvContent.finalPriceCents,
 			currency: ppvContent.currency
@@ -107,63 +117,25 @@ export const load = async ({ params, locals, request, url }: Parameters<PageServ
 			.from(ppvContent)
 			.where(and(eq(ppvContent.contentId, content.id), eq(ppvContent.isActive, true)))
 			.limit(1);
-		if (ppvRow) {
-			const [purchase] = await db.select({ id: ppvPurchases.id })
-				.from(ppvPurchases)
-				.where(and(eq(ppvPurchases.userId, session.user.id), eq(ppvPurchases.contentId, content.id)))
-				.limit(1);
-			paywall = {
-				required: !purchase,
-				priceCents: ppvRow.priceCents,
-				currency: (ppvRow.currency ?? 'USD').toUpperCase()
-			};
-		}
-	}
+		if (!ppvRow) return null;
+		const [purchase] = await db.select({ id: ppvPurchases.id })
+			.from(ppvPurchases)
+			.where(and(eq(ppvPurchases.userId, session.user.id), eq(ppvPurchases.contentId, content.id)))
+			.limit(1);
+		return {
+			required: !purchase,
+			priceCents: ppvRow.priceCents,
+			currency: (ppvRow.currency ?? 'USD').toUpperCase()
+		};
+	})();
 
-	// Subtitle / caption / audio-description tracks attached to this row.
-	// Split by kind so VideoPlayer can render them in the right tracks.
-	const tracks = await db
-		.select()
-		.from(contentSubtitleTracks)
-		.where(eq(contentSubtitleTracks.contentId, content.id));
-	const subtitles = tracks
-		.filter((t) => t.kind !== 'descriptions')
-		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
-	const descriptions = tracks
-		.filter((t) => t.kind === 'descriptions')
-		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
-
-	// Single source of truth for picking the playback URL — see
-	// $lib/server/encoder-playback.ts for the resolution order. Used to
-	// call the orchestrator's /playback endpoint here, but that signs
-	// Bunny-CDN URLs and prod isn't fronted by Bunny yet. The helper
-	// composes the direct encoder-MinIO URL instead — the same path the
-	// trailer pipeline already uses successfully.
-	let playbackUrl = resolvePlaybackUrl({
-		videoUrl: content.videoUrl,
-		encoderJobId: content.encoderJobId,
-		processingStatus: content.processingStatus
-	});
-
-	// Episode-deep-link path. We fetch the requested episode, confirm it
-	// belongs to this show (defence against guessable IDs from a sibling
-	// row), then override the playback URL + title with the episode's
-	// values. If the episode has its own encoder job we'd resolve through
-	// `resolvePlaybackUrl` for it too — for now episodes carry a direct
-	// `videoUrl`, mirroring how the legacy upload form set them.
-	let activeEpisode: {
-		id: string;
-		seasonNumber: number;
-		episodeNumber: number;
-		title: string;
-		description: string | null;
-		thumbnail: string | null;
-		duration: string | null;
-		videoUrl: string | null;
-	} | null = null;
-	if (requestedEpisodeId) {
-		const [ep] = await db
-			.select({
+	const [paywall, tracks, requestedEp, allEpisodes] = await Promise.all([
+		paywallQ,
+		db.select()
+			.from(contentSubtitleTracks)
+			.where(eq(contentSubtitleTracks.contentId, content.id)),
+		requestedEpisodeId
+			? db.select({
 				id: episodes.id,
 				showId: episodes.showId,
 				seasonNumber: episodes.seasonNumber,
@@ -174,25 +146,70 @@ export const load = async ({ params, locals, request, url }: Parameters<PageServ
 				duration: episodes.duration,
 				videoUrl: episodes.videoUrl
 			})
-			.from(episodes)
-			.where(eq(episodes.id, requestedEpisodeId))
-			.limit(1);
-		// Silently fall through to the show's main URL if the episode
-		// doesn't belong to this show — surface as a soft demotion
-		// rather than a 404 so a stale link still plays *something*.
-		if (ep && ep.showId === content.id) {
-			activeEpisode = {
-				id: ep.id,
-				seasonNumber: ep.seasonNumber,
-				episodeNumber: ep.episodeNumber,
-				title: ep.title,
-				description: ep.description,
-				thumbnail: ep.thumbnail,
-				duration: ep.duration,
-				videoUrl: ep.videoUrl
-			};
-			if (ep.videoUrl) playbackUrl = ep.videoUrl;
-		}
+				.from(episodes)
+				.where(eq(episodes.id, requestedEpisodeId))
+				.limit(1)
+				.then((r) => r[0] ?? null)
+			: Promise.resolve(null),
+		// Episode list — only for TV titles (next-episode + end-screen
+		// logic below). Movies + docs skip the query entirely.
+		isTvLike
+			? db.select({
+				id: episodes.id,
+				seasonNumber: episodes.seasonNumber,
+				episodeNumber: episodes.episodeNumber,
+				title: episodes.title,
+				thumbnail: episodes.thumbnail,
+				duration: episodes.duration
+			})
+				.from(episodes)
+				.where(eq(episodes.showId, content.id))
+				.orderBy(episodes.seasonNumber, episodes.episodeNumber)
+			: Promise.resolve([] as Array<{ id: string; seasonNumber: number; episodeNumber: number; title: string; thumbnail: string | null; duration: string | null }>)
+	]);
+
+	const subtitles = tracks
+		.filter((t) => t.kind !== 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
+	const descriptions = tracks
+		.filter((t) => t.kind === 'descriptions')
+		.map((t) => ({ label: t.label, src: t.fileUrl, srclang: t.language }));
+
+	// Single source of truth for picking the playback URL — see
+	// $lib/server/encoder-playback.ts for the resolution order.
+	let playbackUrl = resolvePlaybackUrl({
+		videoUrl: content.videoUrl,
+		encoderJobId: content.encoderJobId,
+		processingStatus: content.processingStatus
+	});
+
+	// Episode-deep-link path. Confirm the episode belongs to this show
+	// (defence against guessable IDs from a sibling row), then override
+	// the playback URL + title with the episode's values. A stale link
+	// silently falls through to the show's main URL so it still plays
+	// *something*.
+	let activeEpisode: {
+		id: string;
+		seasonNumber: number;
+		episodeNumber: number;
+		title: string;
+		description: string | null;
+		thumbnail: string | null;
+		duration: string | null;
+		videoUrl: string | null;
+	} | null = null;
+	if (requestedEp && requestedEp.showId === content.id) {
+		activeEpisode = {
+			id: requestedEp.id,
+			seasonNumber: requestedEp.seasonNumber,
+			episodeNumber: requestedEp.episodeNumber,
+			title: requestedEp.title,
+			description: requestedEp.description,
+			thumbnail: requestedEp.thumbnail,
+			duration: requestedEp.duration,
+			videoUrl: requestedEp.videoUrl
+		};
+		if (requestedEp.videoUrl) playbackUrl = requestedEp.videoUrl;
 	}
 
 	// Watch-progress fetch — drives the detail-page Resume CTA and a
@@ -256,25 +273,9 @@ export const load = async ({ params, locals, request, url }: Parameters<PageServ
 	// `n` shortcut + the 95% auto-advance can all use the same href.
 	let nextEpisodeHref: string | null = null;
 
-	// Path 1 — next episode for TV titles. We need both `activeEpisode`
-	// (the one currently playing) AND the show's full episode list. We
-	// fetch episodes only for TV titles to avoid the extra query for
-	// movies + docs.
-	const isTvLike = content.mediaType === 'tv' || content.mediaType === 'series';
+	// Path 1 — next episode for TV titles. `allEpisodes` was prefetched
+	// in the parallel wave above (empty array for movies + docs).
 	if (isTvLike) {
-		const allEpisodes = await db
-			.select({
-				id: episodes.id,
-				seasonNumber: episodes.seasonNumber,
-				episodeNumber: episodes.episodeNumber,
-				title: episodes.title,
-				thumbnail: episodes.thumbnail,
-				duration: episodes.duration
-			})
-			.from(episodes)
-			.where(eq(episodes.showId, content.id))
-			.orderBy(episodes.seasonNumber, episodes.episodeNumber);
-
 		if (allEpisodes.length > 0) {
 			// If we know which episode is active, the "next" is the row
 			// after it. If no episode is active (e.g. viewer hit the
@@ -402,9 +403,23 @@ export const load = async ({ params, locals, request, url }: Parameters<PageServ
 	const acceptLang = request.headers.get('accept-language')?.split(',')[0]?.trim();
 	const viewerLocale = normalizeLocale(localeOverride || acceptLang);
 
+	// PAYWALL ENFORCEMENT — not just presentation. Everything returned
+	// here is serialized into the page data and readable in the browser's
+	// network tab, so when the paywall is required we must strip every
+	// playback URL server-side. Without this, a viewer could copy the
+	// master.m3u8 URL from __data.json and stream the PPV title for free
+	// (the encoder bucket is public-read). Trailer stays — it's the
+	// free preview that sells the purchase.
+	const paywallLocked = paywall?.required === true;
 	return {
-		content: { ...content, playbackUrl },
-		activeEpisode,
+		content: {
+			...content,
+			playbackUrl: paywallLocked ? null : playbackUrl,
+			videoUrl: paywallLocked ? null : content.videoUrl
+		},
+		activeEpisode: paywallLocked && activeEpisode
+			? { ...activeEpisode, videoUrl: null }
+			: activeEpisode,
 		watchProgress,
 		subtitles,
 		descriptions,
