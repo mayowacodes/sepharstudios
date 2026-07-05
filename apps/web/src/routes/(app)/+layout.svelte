@@ -1,6 +1,7 @@
 <script lang="ts">
   import Header from '$lib/components/sections/header.svelte';
   import Footer from '$lib/components/sections/footer.svelte';
+  import LazyMovieModal from '$lib/components/widgets/LazyMovieModal.svelte';
   let { children } = $props();
 </script>
 
@@ -21,4 +22,10 @@
     {@render children()}
   </main>
   <Footer />
+
+  <!-- Quick-view modal — single global mount for every catalog surface
+       (home rails, /movies, /shows, /documentaries, /browse, search).
+       Cards open it via mediaModalStore.open(media); lazy-loaded so the
+       modal's code only downloads on layout mount, not per page. -->
+  <LazyMovieModal />
 </div>

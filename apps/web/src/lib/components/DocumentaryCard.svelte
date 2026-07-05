@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { myList } from '$lib/stores/myList';
   import { isRecentlyAdded } from '$lib/utils/recency';
+  import { mediaModalStore } from '$lib/stores/mediaModalStore';
 
   let { documentary, onClick = () => {}, onHover = () => {} }: { documentary: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
 
@@ -27,21 +28,32 @@
     }
   };
 
-  const navigate = () => {
-    // Card click goes to the documentary's detail page first; the
-    // Watch CTA there is what jumps to /watch. Kids/teens-categorized
-    // rows route through the audience portal so they stay inside the
-    // age-appropriate detail variant.
-    if (!documentary.id) { onClick(); return; }
+  // Card click opens the global quick-view modal; the inner Play pill
+  // navigates straight to the detail page. Kids/teens-categorized rows
+  // route through the audience portal so they stay inside the
+  // age-appropriate detail variant.
+  const detailPath = () => {
     const slug = documentary.slug || documentary.id;
-    if (documentary.category === 'kids') goto(`/kids/kiddies/${slug}`);
-    else if (documentary.category === 'teens') goto(`/kids/teens/${slug}`);
-    else goto(`/documentaries/${slug}`);
+    if (documentary.category === 'kids') return `/kids/kiddies/${slug}`;
+    if (documentary.category === 'teens') return `/kids/teens/${slug}`;
+    return `/documentaries/${slug}`;
+  };
+
+  const openQuickView = () => {
+    if (!documentary.id) { onClick(); return; }
+    // Tag the mediaType so the modal's More-info routing lands on
+    // /documentaries even when the row didn't ship the field.
+    mediaModalStore.open({ ...documentary, mediaType: documentary.mediaType ?? 'documentary' });
+  };
+
+  const navigate = () => {
+    if (!documentary.id) { onClick(); return; }
+    goto(detailPath());
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
-      navigate();
+      openQuickView();
     }
   };
 </script>
@@ -53,7 +65,7 @@
   aria-label={`Watch ${documentary.title}`}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
-  onclick={navigate}
+  onclick={openQuickView}
   onkeydown={handleKeyDown}
 >
   <div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">

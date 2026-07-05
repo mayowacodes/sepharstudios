@@ -28,6 +28,9 @@ export type MediaItem = {
   // camelCase (DB fields)
   backdropUrl?: string | null;
   posterUrl?: string | null;
+  // 16:9 landscape poster — the quick-view modal prefers it over the
+  // full-res backdrop for its preview slot. Shipped by mediaCardColumns.
+  posterLandscapeUrl?: string | null;
   releaseDate?: string | null;
   voteAverage?: string | null;
   voteCount?: string | null;

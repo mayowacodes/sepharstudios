@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation';
   import { myList } from '$lib/stores/myList';
   import { isRecentlyAdded } from '$lib/utils/recency';
+  import { mediaModalStore } from '$lib/stores/mediaModalStore';
+  import type { MediaItem } from '$lib/types/media';
 
   let { show, onClick = () => {}, onHover = () => {} }: {
     show: {
@@ -57,20 +59,31 @@
     }
   };
 
-  const navigate = () => {
-    // Card click goes to the show's detail page first (description +
-    // episodes + preview); the detail page's Watch CTA hops to /watch.
-    // Kids/teens-categorized shows route through the audience portal.
-    if (!show.id) { onClick(); return; }
+  // Card click opens the global quick-view modal; the inner Play pill
+  // navigates straight to the detail page (description + episodes).
+  // Kids/teens-categorized shows route through the audience portal.
+  const detailPath = () => {
     const slug = show.slug || show.id;
-    if (show.category === 'kids') goto(`/kids/kiddies/${slug}`);
-    else if (show.category === 'teens') goto(`/kids/teens/${slug}`);
-    else goto(`/shows/${slug}`);
+    if (show.category === 'kids') return `/kids/kiddies/${slug}`;
+    if (show.category === 'teens') return `/kids/teens/${slug}`;
+    return `/shows/${slug}`;
+  };
+
+  const openQuickView = () => {
+    if (!show.id) { onClick(); return; }
+    // The inline prop type is a structural subset of MediaItem; tag the
+    // mediaType so the modal's More-info routing lands on /shows.
+    mediaModalStore.open({ ...show, mediaType: 'series' } as MediaItem);
+  };
+
+  const navigate = () => {
+    if (!show.id) { onClick(); return; }
+    goto(detailPath());
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
-      navigate();
+      openQuickView();
     }
   };
 </script>
@@ -82,7 +95,7 @@
   aria-label={`Watch ${show.title}`}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
-  onclick={navigate}
+  onclick={openQuickView}
   onkeydown={handleKeyDown}
 >
   <div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">

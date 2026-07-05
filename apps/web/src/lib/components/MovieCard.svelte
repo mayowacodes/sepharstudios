@@ -7,13 +7,13 @@
   import { Play, Bookmark, BookmarkCheck } from '@lucide/svelte';
   import { isRecentlyAdded } from '$lib/utils/recency';
 
-  // Click on a card opens the audience-specific detail page (description
-  // + preview + Watch CTA). The kids/teens portals reuse this same
-  // catalog component, so the card detects the row's `category` and
-  // routes through `/kids/kiddies/<slug>` or `/kids/teens/<slug>` for
-  // those audiences instead of the general `/movies/<slug>`. General-
-  // audience rows (no category or anything outside the kids/teens
-  // taxonomy) keep going to /movies.
+  // Click on a card opens the QUICK-VIEW MODAL (Netflix-style overlay
+  // with trailer/backdrop + Play + My List + More info) — restored as
+  // the primary card interaction. The modal is mounted globally in the
+  // (app) layout; opening it is just a store write, no navigation.
+  // The inner Play pill goes straight to the audience-specific detail
+  // page instead: kids/teens rows route through their portals, general
+  // rows to /movies/<slug>.
   const detailPath = (media: MediaItem) => {
     const slug = media.slug || media.id;
     if (media.category === 'kids') return `/kids/kiddies/${slug}`;
@@ -22,12 +22,7 @@
   };
 
   const openModal = (media: MediaItem) => {
-    // mediaModalStore was a legacy quick-view overlay; with proper
-    // detail pages live (/movies/<slug>, /kids/.../<slug>) we just
-    // navigate. Keeping both wired produced a flash of the modal on
-    // top of the new page that read as "the page scrolled to top"
-    // because the user never saw the navigation render.
-    goto(detailPath(media), { replaceState: false });
+    mediaModalStore.open(media);
   };
 
   let { movie, onClick = () => {}, onHover = () => {} }: { movie: MediaItem; onClick?: () => void; onHover?: () => void } = $props();
@@ -171,7 +166,7 @@
     <div class="mt-3 flex items-center gap-2">
       <button
         class="inline-flex items-center gap-1 rounded-full bg-[#FF5E0E] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition"
-        onclick={(e) => { e.stopPropagation(); openModal(movie); }}
+        onclick={(e) => { e.stopPropagation(); goto(detailPath(movie)); }}
         aria-label={`Play ${movie.title}`}
       >
         <Play class="h-3.5 w-3.5" />

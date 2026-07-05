@@ -1,21 +1,18 @@
 <script lang="ts">
     import HeroCarousel from '$lib/components/HeroCarousel.svelte';
     import MediaGrid from '$lib/components/MediaGrid.svelte';
-    import MediaModal from '$lib/components/MovieModal.svelte';
-    import type { MediaItem } from '$lib/types/media';
-    
+
     import { faithMovies } from '$lib/data/movies';
     import { faithTVShows } from '$lib/data/shows';
     import { faithDocumentaries } from '$lib/data/documentaries';
-    
+
     // Select featured content (could also be a separate featured.ts file)
     const featuredContent = [
       ...faithMovies.filter(m => m.featured),
       ...faithTVShows.filter(s => s.featured),
       ...faithDocumentaries.filter(d => d.featured)
     ];
-    
-    let activeModal: MediaItem | null = null;
+
     let activeScripture: string | null = null;
   </script>
   
@@ -42,11 +39,8 @@
       <MediaGrid mediaItems={faithDocumentaries} title="Christian Documentaries" />
     </section>
     
-    <!-- Modal for detailed view -->
-    {#if activeModal}
-      <MediaModal  />
-    {/if}
-    
+    <!-- Quick-view modal is mounted globally in the (app) layout now. -->
+
     <!-- Scripture Modal -->
     {#if activeScripture}
       <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">

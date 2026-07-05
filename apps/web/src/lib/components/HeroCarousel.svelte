@@ -4,7 +4,6 @@
   import { fade } from 'svelte/transition';
   import type { MediaItem } from '../types/media';
   import SkeletonLoader from '$lib/components/widgets/SkeletonLoader.svelte';
-  import { goto } from '$app/navigation';
 
   let { mediaItems = [], sectionTitle = 'Trending' }: { mediaItems?: MediaItem[]; sectionTitle?: string } = $props();
 
@@ -12,8 +11,11 @@
   let loading = $state(false);
 
   const openModal = (media: MediaItem) => {
+    // Quick view only — the old version ALSO fired goto('/movies/<id>')
+    // "for deep linking", which navigated underneath the opening modal
+    // (the same dual-fire bug MediaGrid had). The modal's own More-info
+    // button is the deep link now.
     mediaModalStore.open(media);
-    goto(`/movies/${media.id}`); // update URL for deep link
   };
 
   const handleMouseEnter = (item: MediaItem) => {

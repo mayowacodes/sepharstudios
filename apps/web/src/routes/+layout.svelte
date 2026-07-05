@@ -30,9 +30,21 @@
 
 	onMount(() => {
 		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('/sw.js').catch(() => {
-				// SW registration failed — offline downloads will not work
-			});
+			// updateViaCache: 'none' — always fetch sw.js from the network
+			// when checking for updates, and reg.update() forces that check
+			// on every page load. Without these, a browser could hold a
+			// buggy service worker for up to ~24h after a deploy shipped
+			// the fix (the exact failure mode behind "clicking a card jumps
+			// back to the top of the page": the old SW's navigation
+			// intercept threw and served the cached shell). skipWaiting()
+			// + clients.claim() in sw.js then swap the new worker in
+			// immediately once fetched.
+			navigator.serviceWorker
+				.register('/sw.js', { updateViaCache: 'none' })
+				.then((reg) => reg.update().catch(() => {}))
+				.catch(() => {
+					// SW registration failed — offline downloads will not work
+				});
 		}
 	});
 </script>
