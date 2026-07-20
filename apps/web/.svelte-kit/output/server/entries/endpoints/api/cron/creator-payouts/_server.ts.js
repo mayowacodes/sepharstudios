@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { H as mediaLibrary, T as creators, U as mediaWatchProgress, Y as payouts, a as user, gt as transactions, q as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
+import { $ as payouts, K as mediaLibrary, O as creators, Z as paymentIntents, a as user, bt as transactions, q as mediaWatchProgress, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { i as transferStc, r as isTreasuryReady } from "../../../../../chunks/stc-transfer.js";
 import { json } from "@sveltejs/kit";
@@ -175,7 +175,7 @@ var POST = async ({ request }) => {
 					await db.update(transactions).set({
 						status: "completed",
 						txHash: txHash.txHash
-					}).where(and(eq(transactions.userId, creator.userId), eq(transactions.type, "creator_payout"), eq(transactions.currency, "STC"), eq(transactions.status, "pending"), sql`${transactions.createdAt} >= ${now}`));
+					}).where(and(eq(transactions.userId, creator.userId), eq(transactions.type, "creator_payout"), eq(transactions.currency, "STC"), eq(transactions.status, "pending"), gte(transactions.createdAt, now)));
 					results.stcSettled += 1;
 				} else results.stcQueued += 1;
 			} catch (err) {

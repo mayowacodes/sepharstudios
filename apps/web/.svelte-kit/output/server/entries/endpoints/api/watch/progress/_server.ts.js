@@ -1,4 +1,5 @@
-import { $ as playlists, Q as playlistItems, U as mediaWatchProgress, bt as watchSessionMeta, gt as transactions, s as achievements, st as reviews, t as db, ut as streaks, vt as userAchievements } from "../../../../../chunks/drizzle.js";
+import { E as creatorEarnings, K as mediaLibrary, St as userAchievements, bt as transactions, dt as reviews, mt as streaks, nt as playlistItems, q as mediaWatchProgress, rt as playlists, s as achievements, t as db, wt as watchSessionMeta } from "../../../../../chunks/drizzle.js";
+import { n as publish } from "../../../../../chunks/sse.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { n as scoreWatchEngagement } from "../../../../../chunks/ai-token-scoring.js";
 import { t as track } from "../../../../../chunks/analytics.js";
@@ -83,6 +84,20 @@ async function updateStreak(userId, profileId) {
 	}).where(eq(streaks.userId, userId));
 	return newStreak;
 }
+var ENGAGEMENT_MULTIPLIER = {
+	high: 2,
+	medium: 1.3,
+	low: 1,
+	suspicious: 0
+};
+function computeCreatorEarning(input) {
+	const multiplier = ENGAGEMENT_MULTIPLIER[input.engagementQuality ?? "low"] ?? 1;
+	const rawCents = 2 * Math.max(0, Math.min(1, input.completionPercent / 100)) * multiplier;
+	return {
+		amountCents: Math.round(rawCents),
+		engagementMultiplier: multiplier
+	};
+}
 //#endregion
 //#region src/routes/api/watch/progress/+server.ts
 var POST = async ({ request, locals }) => {
@@ -92,6 +107,27 @@ var POST = async ({ request, locals }) => {
 	const userId = session.user.id;
 	const completionPercent = durationSeconds ? Math.round(positionSeconds / durationSeconds * 100) : 0;
 	const isCompleted = completionPercent >= 90;
+	async function publishWatchEvent(kind, mid, pct) {
+		try {
+			const [row] = await db.select({
+				title: mediaLibrary.title,
+				creatorId: mediaLibrary.creatorId
+			}).from(mediaLibrary).where(eq(mediaLibrary.id, mid)).limit(1);
+			if (!row) return;
+			const event = {
+				kind,
+				contentId: mid,
+				title: row.title,
+				userId,
+				completionPercent: pct,
+				at: (/* @__PURE__ */ new Date()).toISOString()
+			};
+			publish("analytics:watch-events:all", event);
+			if (row.creatorId) publish(`analytics:watch-events:creator:${row.creatorId}`, event);
+		} catch (err) {
+			console.warn("[watch/progress] publishWatchEvent failed", err);
+		}
+	}
 	const existing = await db.select().from(mediaWatchProgress).where(and(eq(mediaWatchProgress.userId, userId), eq(mediaWatchProgress.contentId, contentId), episodeId ? eq(mediaWatchProgress.episodeId, episodeId) : eq(mediaWatchProgress.contentId, contentId))).limit(1);
 	const now = /* @__PURE__ */ new Date();
 	let justCompleted = false;
@@ -129,6 +165,7 @@ var POST = async ({ request, locals }) => {
 			isCompleted
 		});
 		justCompleted = isCompleted;
+		publishWatchEvent("watch_start", contentId, completionPercent);
 		const fp = fingerprintFromHeaders(request.headers);
 		await db.insert(watchSessionMeta).values({
 			userId,
@@ -139,6 +176,7 @@ var POST = async ({ request, locals }) => {
 			country: fp.country
 		}).catch((err) => console.warn("[watch/progress] watch_session_meta insert failed:", err));
 	}
+	if (justCompleted) publishWatchEvent("watch_complete", contentId, completionPercent);
 	if (justCompleted) {
 		const newStreak = await updateStreak(userId, profileId ?? null);
 		const awarded = await checkAndAwardAchievements(userId, profileId ?? null, {
@@ -177,6 +215,28 @@ var POST = async ({ request, locals }) => {
 				source: "watch_complete"
 			}
 		}).catch((err) => console.error("[watch/progress] failed to write STC ledger row:", err));
+		try {
+			const [content] = await db.select({ creatorId: mediaLibrary.creatorId }).from(mediaLibrary).where(eq(mediaLibrary.id, contentId)).limit(1);
+			const creatorId = content?.creatorId;
+			if (creatorId && creatorId !== userId && reward?.engagementQuality !== "suspicious") {
+				const earning = computeCreatorEarning({
+					completionPercent,
+					engagementQuality: reward?.engagementQuality ?? "low"
+				});
+				if (earning.amountCents > 0) await db.insert(creatorEarnings).values({
+					creatorId,
+					contentId,
+					viewerId: userId,
+					amountCents: earning.amountCents,
+					completionPercent,
+					engagementQuality: reward?.engagementQuality ?? null,
+					engagementMultiplier: Math.round(earning.engagementMultiplier * 100),
+					source: "watch_complete"
+				});
+			}
+		} catch (err) {
+			console.error("[watch/progress] failed to write creator_earnings row:", err);
+		}
 		if (awarded.length > 0) await notify({
 			userId,
 			kind: "achievement",

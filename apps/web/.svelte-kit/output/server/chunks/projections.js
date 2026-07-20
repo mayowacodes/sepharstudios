@@ -1,4 +1,4 @@
-import { H as mediaLibrary } from "./drizzle.js";
+import { K as mediaLibrary } from "./drizzle.js";
 //#region src/lib/db/projections.ts
 /**
 * Card-shaped projection for `mediaLibrary` rows on list/feed endpoints
@@ -15,8 +15,11 @@ var mediaCardColumns = {
 	description: mediaLibrary.description,
 	thumbnail: mediaLibrary.thumbnail,
 	posterUrl: mediaLibrary.posterUrl,
+	posterLandscapeUrl: mediaLibrary.posterLandscapeUrl,
+	posterSquareUrl: mediaLibrary.posterSquareUrl,
 	backdropUrl: mediaLibrary.backdropUrl,
 	trailerUrl: mediaLibrary.trailerUrl,
+	logoTitleUrl: mediaLibrary.logoTitleUrl,
 	link: mediaLibrary.link,
 	slug: mediaLibrary.slug,
 	mediaType: mediaLibrary.mediaType,
@@ -37,7 +40,9 @@ var mediaCardColumns = {
 	voteAverage: mediaLibrary.voteAverage,
 	voteCount: mediaLibrary.voteCount,
 	popularity: mediaLibrary.popularity,
-	createdAt: mediaLibrary.createdAt
+	createdAt: mediaLibrary.createdAt,
+	scheduledPublishAt: mediaLibrary.scheduledPublishAt,
+	status: mediaLibrary.status
 };
 //#endregion
 export { mediaCardColumns as t };

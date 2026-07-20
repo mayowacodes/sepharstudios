@@ -1,7 +1,8 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
-import { t as notify } from "../../../../../chunks/notify.js";
+import { K as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { n as publish } from "../../../../../chunks/sse.js";
+import { t as masterPlaylistUrl } from "../../../../../chunks/encoder-playback.js";
+import { t as notify } from "../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -77,9 +78,11 @@ function verifySignature(rawBody, signature, secret) {
 var POST = async ({ request }) => {
 	const rawBody = await request.text();
 	const secret = private_env.ENCODER_WEBHOOK_SECRET;
-	if (secret) {
-		if (!verifySignature(rawBody, request.headers.get("x-encoder-signature"), secret)) return json({ error: "Invalid signature" }, { status: 401 });
+	if (!secret) {
+		console.error("[encoder/webhook] ENCODER_WEBHOOK_SECRET is not configured — rejecting webhook");
+		return json({ error: "Webhook secret not configured" }, { status: 500 });
 	}
+	if (!verifySignature(rawBody, request.headers.get("x-encoder-signature"), secret)) return json({ error: "Invalid signature" }, { status: 401 });
 	let body;
 	try {
 		body = JSON.parse(rawBody);
@@ -87,25 +90,29 @@ var POST = async ({ request }) => {
 		return json({ error: "Malformed JSON" }, { status: 400 });
 	}
 	if (!body.jobId) return json({ error: "jobId is required" }, { status: 400 });
-	const [current] = await (body.mediaId ? db.select({
+	const rowProjection = {
 		id: mediaLibrary.id,
 		title: mediaLibrary.title,
 		creatorId: mediaLibrary.creatorId,
 		processingStatus: mediaLibrary.processingStatus,
 		processingProgress: mediaLibrary.processingProgress,
-		processingStage: mediaLibrary.processingStage
-	}).from(mediaLibrary).where(eq(mediaLibrary.id, body.mediaId)).limit(1) : db.select({
-		id: mediaLibrary.id,
-		title: mediaLibrary.title,
-		creatorId: mediaLibrary.creatorId,
-		processingStatus: mediaLibrary.processingStatus,
-		processingProgress: mediaLibrary.processingProgress,
-		processingStage: mediaLibrary.processingStage
-	}).from(mediaLibrary).where(eq(mediaLibrary.encoderJobId, body.jobId)).limit(1));
+		processingStage: mediaLibrary.processingStage,
+		videoUrl: mediaLibrary.videoUrl,
+		encoderJobId: mediaLibrary.encoderJobId
+	};
+	const [current] = await (body.mediaId ? db.select(rowProjection).from(mediaLibrary).where(eq(mediaLibrary.id, body.mediaId)).limit(1) : db.select(rowProjection).from(mediaLibrary).where(eq(mediaLibrary.encoderJobId, body.jobId)).limit(1));
 	if (!current) return json({
 		ok: true,
 		matched: false
 	});
+	if (current.encoderJobId && body.jobId !== current.encoderJobId) {
+		console.info(`[encoder/webhook] ignoring stale job event: row ${current.id} is on ${current.encoderJobId}, event was for ${body.jobId}`);
+		return json({
+			ok: true,
+			matched: false,
+			stale: true
+		});
+	}
 	const updates = { updatedAt: /* @__PURE__ */ new Date() };
 	if (body.status && KNOWN_STATUSES.has(body.status)) {
 		const incomingRank = statusRank(body.status);
@@ -139,6 +146,14 @@ var POST = async ({ request }) => {
 	if (body.status === "ready") {
 		updates.processingProgress = 100;
 		updates.processingError = null;
+		if (!current.videoUrl) {
+			const jobIdForUrl = current.encoderJobId ?? body.jobId;
+			if (jobIdForUrl) try {
+				updates.videoUrl = masterPlaylistUrl(jobIdForUrl);
+			} catch (err) {
+				console.error("[encoder/webhook] masterPlaylistUrl failed:", err);
+			}
+		}
 	}
 	let updated = current;
 	if (Object.keys(updates).length > 1) {

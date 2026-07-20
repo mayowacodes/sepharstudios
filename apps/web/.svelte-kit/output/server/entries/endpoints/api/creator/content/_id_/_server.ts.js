@@ -1,4 +1,5 @@
-import { H as mediaLibrary, U as mediaWatchProgress, bt as watchSessionMeta, t as db, v as contentShares } from "../../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, b as contentShares, q as mediaWatchProgress, t as db, wt as watchSessionMeta } from "../../../../../../chunks/drizzle.js";
+import { t as permanentlyDeleteContent } from "../../../../../../chunks/content-delete.js";
 import { n as notifyAdmins, t as notify } from "../../../../../../chunks/notify.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
@@ -18,15 +19,13 @@ var ALLOWED_PATCH_FIELDS = new Set([
 	"description",
 	"contentType",
 	"ageRating",
+	"audience",
 	"genres",
 	"topics",
 	"keywords",
 	"bibleReference",
 	"language",
 	"duration",
-	"ministryAffiliation",
-	"hasSubtitles",
-	"hasClosedCaptions",
 	"thumbnail",
 	"posterUrl",
 	"posterLandscapeUrl",
@@ -41,8 +40,24 @@ var ALLOWED_PATCH_FIELDS = new Set([
 	"crew",
 	"geoMode",
 	"geoRegions",
-	"nextUpContentIds"
+	"nextUpContentIds",
+	"status"
 ]);
+var TEXT_FIELD_MAX = {
+	description: 1e4,
+	ageRating: 10,
+	bibleReference: 100,
+	language: 50,
+	duration: 50,
+	thumbnail: 2048,
+	posterUrl: 2048,
+	posterLandscapeUrl: 2048,
+	posterSquareUrl: 2048,
+	logoTitleUrl: 2048,
+	backdropUrl: 2048,
+	trailerUrl: 2048
+};
+var CREATOR_STATUS_TRANSITIONS = { coming_soon: ["submitted"] };
 var ALLOWED_VISIBILITY = new Set([
 	"public",
 	"unlisted",
@@ -51,7 +66,14 @@ var ALLOWED_VISIBILITY = new Set([
 var ALLOWED_CONTENT_TYPES = new Set([
 	"movie",
 	"show",
+	"series",
+	"short",
 	"documentary"
+]);
+var ALLOWED_AUDIENCES = new Set([
+	"general",
+	"kids",
+	"teens"
 ]);
 var ALLOWED_GEO_MODES = new Set([
 	"all",
@@ -140,11 +162,17 @@ var PATCH = async ({ params, locals, request }) => {
 			updates.mediaType = value;
 			continue;
 		}
+		if (key === "audience") {
+			if (typeof value !== "string" || !ALLOWED_AUDIENCES.has(value)) return json({ error: "Invalid audience" }, { status: 400 });
+			updates.category = value === "general" ? null : value;
+			continue;
+		}
 		if (key === "scheduledPublishAt") {
 			if (value === null || value === "") updates.scheduledPublishAt = null;
 			else if (typeof value === "string") {
 				const parsed = new Date(value);
 				if (isNaN(parsed.getTime())) return json({ error: "Invalid scheduledPublishAt" }, { status: 400 });
+				if (parsed.getTime() < Date.now() - 1440 * 60 * 1e3) return json({ error: "scheduledPublishAt must be today or in the future" }, { status: 400 });
 				updates.scheduledPublishAt = parsed;
 			}
 			continue;
@@ -222,10 +250,24 @@ var PATCH = async ({ params, locals, request }) => {
 			updates.nextUpContentIds = Array.from(new Set(cleaned));
 			continue;
 		}
-		updates[key] = value;
+		if (key === "status") {
+			const target = typeof value === "string" ? value : "";
+			const current = row.status ?? "";
+			if (!(CREATOR_STATUS_TRANSITIONS[current] ?? []).includes(target)) return json({ error: `Status transition ${current || "(none)"} → ${target || "(empty)"} is not allowed` }, { status: 400 });
+			updates.status = target;
+			continue;
+		}
+		if (value === null) {
+			updates[key] = null;
+			continue;
+		}
+		if (typeof value !== "string") return json({ error: `${key} must be a string or null` }, { status: 400 });
+		const cap = TEXT_FIELD_MAX[key] ?? 2048;
+		updates[key] = value.slice(0, cap);
 	}
 	if (Object.keys(updates).length === 1) return json({ error: "No updatable fields supplied" }, { status: 400 });
-	const [updated] = await db.update(mediaLibrary).set(updates).where(eq(mediaLibrary.id, row.id)).returning();
+	const [updated] = await db.update(mediaLibrary).set(updates).where(and(eq(mediaLibrary.id, row.id), eq(mediaLibrary.creatorId, session.user.id))).returning();
+	if (!updated) return json({ error: "Not found" }, { status: 404 });
 	if (updated.status === "published" && [
 		"title",
 		"description",
@@ -268,17 +310,61 @@ var PATCH = async ({ params, locals, request }) => {
 			actionUrl: `/admin/review/${updated.id}`
 		}).catch(() => void 0);
 	}
+	if ("status" in updates && row.status === "coming_soon" && updates.status === "submitted") {
+		console.info(`[creator/content PATCH] coming_soon → submitted (video added) on ${row.id}`);
+		notifyAdmins({
+			kind: "system",
+			title: `Coming Soon video added: "${updated.title.slice(0, 50)}"`,
+			message: "Creator attached the main video to a previously-approved Coming Soon row. Review the video, then it auto-publishes on the release date.",
+			actionUrl: `/admin/review/${updated.id}`
+		}).catch(() => void 0);
+	}
 	return json({
 		success: true,
 		content: updated
 	});
 };
-var DELETE = async ({ params, locals }) => {
+/**
+* DELETE /api/creator/content/[id][?mode=archive|delete]
+*
+* Two modes, gated by the `mode` query string. Ownership check
+* applies to both — creator can only act on rows they own; admins
+* still hit /api/admin/content/[id] for any-row access.
+*
+*   - default / mode=archive  → soft archive (status='archived',
+*     is_active=false). Sends a "Content archived" notification.
+*
+*   - mode=delete             → hard delete via the shared helper.
+*     Blocks on existing PPV purchases (409). Cancels in-flight
+*     encoder workflow. FK cascades + MinIO cleanup follow.
+*/
+var DELETE = async ({ params, url, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
 	if (![Role.CREATOR, Role.ADMIN].includes(session.user.role)) return json({ error: "Forbidden" }, { status: 403 });
 	const { row, status } = await loadOwned(params.id, session.user.id);
 	if (status !== 200) return json({ error: status === 404 ? "Not found" : "Forbidden" }, { status });
+	if ((url.searchParams.get("mode") ?? "archive") === "delete") {
+		const result = await permanentlyDeleteContent(row.id, session.user.id);
+		if (!result.ok) {
+			if (result.reason === "not_found") return json({ error: "Not found" }, { status: 404 });
+			if (result.reason === "ppv_purchases_exist") return json({
+				error: "Cannot permanently delete content with existing PPV purchases. Archive instead, or contact support to void the purchases first.",
+				blockedBy: "ppv_purchases"
+			}, { status: 409 });
+		}
+		if (session.user.id) notify({
+			userId: session.user.id,
+			kind: "system",
+			title: "Content deleted",
+			message: `"${row.title}" has been permanently deleted.`,
+			actionUrl: "/creator/content"
+		}).catch(() => void 0);
+		return json({
+			success: true,
+			deleted: true
+		});
+	}
 	await db.update(mediaLibrary).set({
 		status: "archived",
 		isActive: false,
@@ -291,7 +377,10 @@ var DELETE = async ({ params, locals }) => {
 		message: `"${row.title}" has been archived and is no longer visible to viewers.`,
 		actionUrl: "/creator/content"
 	}).catch(() => void 0);
-	return json({ success: true });
+	return json({
+		success: true,
+		archived: true
+	});
 };
 //#endregion
 export { DELETE, GET, PATCH };

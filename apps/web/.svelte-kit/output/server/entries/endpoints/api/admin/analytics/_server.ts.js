@@ -1,4 +1,4 @@
-import { H as mediaLibrary, a as user, gt as transactions, t as db } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, a as user, bt as transactions, q as mediaWatchProgress, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
@@ -15,7 +15,7 @@ var GET = async ({ locals, url }) => {
 	const startDate = /* @__PURE__ */ new Date(now.getTime() - days * 24 * 60 * 60 * 1e3);
 	const [usersAgg] = await db.select({
 		totalUsers: sql`count(*)`,
-		newUsers: sql`sum(case when ${user.createdAt} >= ${startDate} then 1 else 0 end)`,
+		newUsers: sql`sum(case when ${user.createdAt} >= ${startDate.toISOString()} then 1 else 0 end)`,
 		creators: sql`sum(case when ${user.role} = 'creator' then 1 else 0 end)`
 	}).from(user);
 	const [contentAgg] = await db.select({
@@ -23,7 +23,10 @@ var GET = async ({ locals, url }) => {
 		totalViews: sql`coalesce(sum(${mediaLibrary.viewCount}), 0)`,
 		publishedToday: sql`sum(case when ${mediaLibrary.createdAt} >= date_trunc('day', now()) and ${mediaLibrary.isActive} = true then 1 else 0 end)`
 	}).from(mediaLibrary);
-	const [revenueAgg] = await db.select({ totalRevenue: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(eq(transactions.type, "purchase"));
+	const [revenueAgg] = await db.select({ totalRevenue: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(eq(transactions.type, "purchase")).catch((err) => {
+		console.warn("[admin/analytics] revenue aggregate failed:", err instanceof Error ? err.message : err);
+		return [{ totalRevenue: 0 }];
+	});
 	const categories = await db.select({
 		category: mediaLibrary.mediaType,
 		count: sql`count(*)`,
@@ -32,7 +35,7 @@ var GET = async ({ locals, url }) => {
 	const recentUsers = await db.select({
 		createdAt: user.createdAt,
 		role: user.role
-	}).from(user).where(sql`${user.createdAt} >= ${startDate}`);
+	}).from(user).where(gte(user.createdAt, startDate));
 	const growthMap = /* @__PURE__ */ new Map();
 	for (const row of recentUsers) {
 		const dateKey = new Date(row.createdAt).toISOString().slice(0, 10);
@@ -52,7 +55,10 @@ var GET = async ({ locals, url }) => {
 	const revenueRows = await db.select({
 		amount: transactions.amount,
 		createdAt: transactions.createdAt
-	}).from(transactions).where(eq(transactions.type, "purchase"));
+	}).from(transactions).where(eq(transactions.type, "purchase")).catch((err) => {
+		console.warn("[admin/analytics] revenueRows failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const revenueMap = /* @__PURE__ */ new Map();
 	for (const row of revenueRows) {
 		const key = formatMonth(new Date(row.createdAt));
@@ -96,7 +102,10 @@ var GET = async ({ locals, url }) => {
 	const dailyRevenue = await db.select({
 		day: sql`to_char(date_trunc('day', ${transactions.createdAt}), 'YYYY-MM-DD')`,
 		amount: sql`coalesce(sum(${transactions.amount}), 0)::int`
-	}).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, since))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+	}).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, since))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`).catch((err) => {
+		console.warn("[admin/analytics] dailyRevenue failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const dailyContent = await db.select({
 		day: sql`to_char(date_trunc('day', ${mediaLibrary.createdAt}), 'YYYY-MM-DD')`,
 		count: sql`count(*)::int`
@@ -115,7 +124,10 @@ var GET = async ({ locals, url }) => {
 	for (const r of dailyRevenue) bucket(r.day, Number(r.amount), seriesRevenue);
 	for (const r of dailyContent) bucket(r.day, Number(r.count), seriesContent);
 	const [priorUsers] = await db.select({ count: sql`count(*)::int` }).from(user).where(and(gte(user.createdAt, priorSince), lt(user.createdAt, since)));
-	const [priorRevenue] = await db.select({ amount: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, priorSince), lt(transactions.createdAt, since)));
+	const [priorRevenue] = await db.select({ amount: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.type, "purchase"), gte(transactions.createdAt, priorSince), lt(transactions.createdAt, since))).catch((err) => {
+		console.warn("[admin/analytics] priorRevenue failed:", err instanceof Error ? err.message : err);
+		return [{ amount: 0 }];
+	});
 	const [priorContent] = await db.select({ count: sql`count(*)::int` }).from(mediaLibrary).where(and(gte(mediaLibrary.createdAt, priorSince), lt(mediaLibrary.createdAt, since)));
 	const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 	const pct = (cur, prior) => prior > 0 ? Math.round((cur - prior) / prior * 1e3) / 10 : cur > 0 ? 100 : 0;
@@ -124,6 +136,15 @@ var GET = async ({ locals, url }) => {
 		revenue: pct(sum(seriesRevenue), Number(priorRevenue?.amount ?? 0)),
 		content: pct(sum(seriesContent), Number(priorContent?.count ?? 0))
 	};
+	const startOfToday = /* @__PURE__ */ new Date();
+	startOfToday.setHours(0, 0, 0, 0);
+	let viewsTodayCount = 0;
+	try {
+		const [row] = await db.select({ c: sql`count(*)` }).from(mediaWatchProgress).where(gte(mediaWatchProgress.updatedAt, startOfToday));
+		viewsTodayCount = Number(row?.c ?? 0);
+	} catch (err) {
+		console.warn("[admin/analytics] viewsToday query failed", err);
+	}
 	return json({
 		platformMetrics: {
 			totalUsers: Number(usersAgg?.totalUsers ?? 0),
@@ -133,7 +154,7 @@ var GET = async ({ locals, url }) => {
 			totalRevenue: Number(revenueAgg?.totalRevenue ?? 0),
 			newUsersToday: Number(usersAgg?.newUsers ?? 0),
 			contentPublishedToday: Number(contentAgg?.publishedToday ?? 0),
-			viewsToday: 0
+			viewsToday: viewsTodayCount
 		},
 		series: {
 			users: seriesUsers,

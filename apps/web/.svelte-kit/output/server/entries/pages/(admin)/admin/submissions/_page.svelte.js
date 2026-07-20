@@ -1,7 +1,7 @@
-import { Lt as attr, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Inbox } from "../../../../../chunks/inbox.js";
 import "../../../../../chunks/toast-state.svelte.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(admin)/admin/submissions/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -28,11 +28,13 @@ function _page($$renderer, $$props) {
 				"closed"
 			]
 		};
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Inbox,
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Triage",
 			title: "Submissions",
-			subtitle: "Triage success stories, sponsorship pitches, and support tickets."
+			subtitle: "Triage success stories, sponsorship pitches, and support tickets.",
+			icon: Inbox
 		});
 		$$renderer.push(`<!----> <div class="flex flex-wrap gap-2"><!--[-->`);
 		const each_array = ensure_array_like([

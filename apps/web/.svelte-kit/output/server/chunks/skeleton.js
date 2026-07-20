@@ -1,4 +1,4 @@
-import { Rt as clsx, bt as attributes, xt as bind_props } from "./ui-libs.js";
+import { Tt as bind_props, Ut as clsx, wt as attributes } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/skeleton/skeleton.svelte
 function Skeleton($$renderer, $$props) {
@@ -6,9 +6,9 @@ function Skeleton($$renderer, $$props) {
 		let { ref = null, class: className, $$slots, $$events, ...restProps } = $$props;
 		$$renderer.push(`<div${attributes({
 			"data-slot": "skeleton",
-			class: clsx(cn("bg-accent animate-pulse rounded-md", className)),
+			class: clsx(cn("portal-skeleton rounded-md", className)),
 			...restProps
-		})}></div>`);
+		}, "svelte-18guw72")}></div>`);
 		bind_props($$props, { ref });
 	});
 }

@@ -1,4 +1,4 @@
-import { pt as supportTickets, t as db } from "../../../../../chunks/drizzle.js";
+import { _t as supportTickets, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { t as Constants } from "../../../../../chunks/constants.js";
 import { t as sendEmailAction } from "../../../../../chunks/server2.js";

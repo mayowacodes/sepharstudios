@@ -1,12 +1,13 @@
-import { Lt as attr, St as derived, vt as attr_class } from "../../../../../chunks/ui-libs.js";
-import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class } from "../../../../../chunks/ui-libs.js";
+import { t as PortalKpi } from "../../../../../chunks/PortalKpi.js";
 import { t as Circle_check } from "../../../../../chunks/circle-check.js";
 import { t as Circle_x } from "../../../../../chunks/circle-x.js";
 import { t as Clock } from "../../../../../chunks/clock.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
 import { t as Video } from "../../../../../chunks/video.js";
 import "../../../../../chunks/navigation.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import "../../../../../chunks/PortalEmptyState.js";
 import { n as ContentStatus, r as ContentType } from "../../../../../chunks/creator.js";
 //#region src/routes/(admin)/admin/content/+page.svelte
 function _page($$renderer, $$props) {
@@ -18,9 +19,8 @@ function _page($$renderer, $$props) {
 		let sortBy = "newest";
 		let currentPage = 1;
 		let itemsPerPage = 12;
-		let totalItems = 0;
-		derived(() => {
-			let filtered = allContent.filter((content) => {
+		const sortedFilteredContent = derived(() => {
+			const filtered = allContent.filter((content) => {
 				return true;
 			});
 			switch (sortBy) {
@@ -36,7 +36,7 @@ function _page($$renderer, $$props) {
 				case "creator":
 					filtered.sort((a, b) => a.creatorName.localeCompare(b.creatorName));
 					break;
-				case "priority":
+				case "priority": {
 					const priorityOrder = {
 						[ContentStatus.DRAFT]: 5,
 						[ContentStatus.SUBMITTED]: 4,
@@ -50,55 +50,59 @@ function _page($$renderer, $$props) {
 					};
 					filtered.sort((a, b) => (priorityOrder[b.status] || 0) - (priorityOrder[a.status] || 0));
 					break;
+				}
 			}
-			totalItems = filtered.length;
-			const startIndex = (currentPage - 1) * itemsPerPage;
-			return filtered.slice(startIndex, 12);
+			return filtered;
 		});
-		derived(() => Math.ceil(totalItems / itemsPerPage));
-		$$renderer.push(`<div class="container mx-auto px-4 py-4 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Video,
-			title: "Content Management",
-			subtitle: "Manage all submitted content across the platform."
+		const totalItems = derived(() => sortedFilteredContent().length);
+		derived(() => sortedFilteredContent().slice((currentPage - 1) * itemsPerPage, 12));
+		derived(() => Math.ceil(totalItems() / itemsPerPage));
+		$$renderer.push(`<div class="mx-auto px-4 py-4 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Library",
+			title: "Content management",
+			subtitle: "Every submission, published title, and archived row in one place.",
+			icon: Video
 		});
-		$$renderer.push(`<!----> <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">`);
-		KpiCard($$renderer, {
-			label: "Pending Review",
-			value: allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length,
-			icon: Clock,
-			accent: "blue",
-			variant: "compact",
-			index: 0
-		});
-		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
-			label: "Published",
-			value: allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length,
-			icon: Circle_check,
-			accent: "green",
-			variant: "compact",
-			index: 1
-		});
-		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
-			label: "Rejected",
-			value: allContent.filter((c) => c.status === ContentStatus.REJECTED).length,
-			icon: Circle_x,
-			accent: "red",
-			variant: "compact",
-			index: 2
-		});
-		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
-			label: "Total Content",
-			value: allContent.length,
-			icon: File_text,
-			accent: "purple",
-			variant: "compact",
-			index: 3
-		});
-		$$renderer.push(`<!----></div> <div class="surface-2 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4 mb-4"><div class="flex-1"><input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/></div> <div class="flex flex-wrap gap-3">`);
+		$$renderer.push(`<!----> <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><!--[-->`);
+		const each_array = ensure_array_like([
+			{
+				label: "Pending Review",
+				value: allContent.filter((c) => c.status === ContentStatus.SUBMITTED).length,
+				icon: Clock,
+				filter: ContentStatus.SUBMITTED
+			},
+			{
+				label: "Published",
+				value: allContent.filter((c) => c.status === ContentStatus.PUBLISHED).length,
+				icon: Circle_check,
+				filter: ContentStatus.PUBLISHED
+			},
+			{
+				label: "Rejected",
+				value: allContent.filter((c) => c.status === ContentStatus.REJECTED).length,
+				icon: Circle_x,
+				filter: ContentStatus.REJECTED
+			},
+			{
+				label: "Total Content",
+				value: allContent.length,
+				icon: File_text,
+				filter: "all"
+			}
+		]);
+		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+			let kpi = each_array[$$index];
+			$$renderer.push(`<button type="button"${attr_class("text-left block w-full rounded-2xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--portal-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--portal-bg-base))] svelte-uv4m4f", void 0, { "is-active": selectedStatus === kpi.filter })}${attr("aria-pressed", selectedStatus === kpi.filter)}${attr("aria-label", `Filter by ${kpi.label}`)}>`);
+			PortalKpi($$renderer, {
+				label: kpi.label,
+				value: kpi.value,
+				icon: kpi.icon
+			});
+			$$renderer.push(`<!----></button>`);
+		}
+		$$renderer.push(`<!--]--></div> <div class="surface-2 backdrop-blur-sm rounded-xl p-6"><div class="flex flex-col lg:flex-row gap-4 mb-4"><div class="flex-1"><input type="text"${attr("value", searchTerm)} placeholder="Search content, creators, or descriptions..." class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground placeholder-gray-400 focus:ring-2 focus:ring-red-600 focus:border-transparent"/></div> <div class="flex flex-wrap gap-3">`);
 		$$renderer.select({
 			value: selectedStatus,
 			class: "px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground focus:ring-2 focus:ring-red-600"

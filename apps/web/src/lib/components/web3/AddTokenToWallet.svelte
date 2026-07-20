@@ -117,8 +117,9 @@
 
     if (chainId === 137) {
       return `https://polygonscan.com/token/${address}`;
-    } else if (chainId === 80001) {
-      return `https://mumbai.polygonscan.com/token/${address}`;
+    } else if (chainId === 80002) {
+      // Amoy testnet — replaced the decommissioned Mumbai (80001).
+      return `https://amoy.polygonscan.com/token/${address}`;
     }
     return '';
   }

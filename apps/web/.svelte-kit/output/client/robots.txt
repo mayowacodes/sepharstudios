@@ -1,0 +1,29 @@
+# Sephar Studios — robots.txt
+# Permissive crawl on public catalogue + marketing pages.
+# Auth, admin, creator portal, and API routes are blocked to avoid indexing
+# session-tied pages or eating crawl budget on JSON endpoints.
+
+User-agent: *
+Allow: /
+
+# Auth + account UI
+Disallow: /auth/
+Disallow: /settings
+Disallow: /profiles
+Disallow: /dashboard
+Disallow: /checkout
+Disallow: /apply/
+
+# Admin + creator portal — these are subdomains in production but the route
+# tree is bundled, so disallow path-prefixed equivalents too.
+Disallow: /admin/
+Disallow: /creator/
+
+# API surface — these never need to appear in search results.
+Disallow: /api/
+
+# Internal SvelteKit + offline fallback
+Disallow: /sw.js
+Disallow: /offline
+
+Sitemap: https://sepharstudios.com/sitemap.xml

@@ -1,4 +1,5 @@
-import { $ as playlists, H as mediaLibrary, Q as playlistItems, t as db } from "../../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, nt as playlistItems, rt as playlists, t as db } from "../../../../../../chunks/drizzle.js";
+import { t as attachCatalogProgress } from "../../../../../../chunks/catalog-progress.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/playlists/[id]/items/+server.ts
@@ -8,12 +9,14 @@ var GET = async ({ params, locals }) => {
 		if (!session) return json({ error: "Unauthorized" }, { status: 401 });
 		const [playlist] = await db.select().from(playlists).where(and(eq(playlists.id, params.id), eq(playlists.userId, session.user.id))).limit(1);
 		if (!playlist) return json({ error: "Not found" }, { status: 404 });
-		return json(await db.select({
+		const items = await db.select({
 			itemId: playlistItems.id,
 			addedAt: playlistItems.addedAt,
 			sortOrder: playlistItems.sortOrder,
 			content: {
 				id: mediaLibrary.id,
+				slug: mediaLibrary.slug,
+				category: mediaLibrary.category,
 				title: mediaLibrary.title,
 				thumbnail: mediaLibrary.thumbnail,
 				posterUrl: mediaLibrary.posterUrl,
@@ -22,7 +25,13 @@ var GET = async ({ params, locals }) => {
 				ageRating: mediaLibrary.ageRating,
 				year: mediaLibrary.year
 			}
-		}).from(playlistItems).innerJoin(mediaLibrary, eq(playlistItems.contentId, mediaLibrary.id)).where(eq(playlistItems.playlistId, params.id)));
+		}).from(playlistItems).innerJoin(mediaLibrary, eq(playlistItems.contentId, mediaLibrary.id)).where(eq(playlistItems.playlistId, params.id));
+		const augmented = await attachCatalogProgress(items.map((it) => it.content), session.user.id);
+		const byId = new Map(augmented.map((c) => [c.id, c]));
+		return json(items.map((it) => ({
+			...it,
+			content: byId.get(it.content.id) ?? it.content
+		})));
 	} catch (e) {
 		console.error("GET /api/playlists/[id]/items failed", e);
 		return json({ error: "Failed to load playlist items" }, { status: 500 });

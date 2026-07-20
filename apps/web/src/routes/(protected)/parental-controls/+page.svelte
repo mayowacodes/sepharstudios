@@ -43,6 +43,14 @@
 
   const selected = $derived(profiles.find(p => p.id === selectedProfileId));
 
+  // Writable mirror of the active profile's content rating so the radio
+  // group can use bind:group (derived values are read-only and cannot be
+  // two-way bound). Kept in sync when the selected profile changes.
+  let contentRating = $state<string>('all');
+  $effect(() => {
+    if (selected) contentRating = selected.contentRating ?? 'all';
+  });
+
   async function savePin() {
     if (pinInput.length < 4) { pinError = 'PIN must be at least 4 digits'; return; }
     if (pinAction === 'set' && pinInput !== confirmPin) { pinError = 'PINs do not match'; return; }
@@ -194,8 +202,8 @@
                     type="radio"
                     name="contentRating"
                     value={rating.value}
-                    bind:group={selected.contentRating}
-                    onchange={() => { updateSetting(selected.id, 'contentRating', rating.value); }}
+                    bind:group={contentRating}
+                    onchange={() => { if (selectedProfileId) updateSetting(selectedProfileId, 'contentRating', rating.value); }}
                     class="accent-primary"
                   />
                   <span class="text-sm">{rating.label}</span>

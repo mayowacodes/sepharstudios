@@ -1,8 +1,6 @@
-import { Lt as attr, vt as attr_class, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../chunks/ui-libs.js";
-import "../../../../chunks/navigation.js";
-import "../../../../chunks/MovieCard.js";
+import { Ct as attr_style, Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../chunks/ui-libs.js";
+import "../../../../chunks/mediaModalStore.js";
 import { t as MediaGrid } from "../../../../chunks/MediaGrid.js";
-import "../../../../chunks/EnhancedVideoPlayer.js";
 import { t as faithDocumentaries } from "../../../../chunks/documentaries.js";
 import { t as faithTVShows } from "../../../../chunks/shows.js";
 //#region src/lib/components/widgets/SkeletonLoader.svelte
@@ -15186,9 +15184,7 @@ function _page($$renderer, $$props) {
 			mediaItems: faithDocumentaries,
 			title: "Christian Documentaries"
 		});
-		$$renderer.push(`<!----></section> `);
-		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
+		$$renderer.push(`<!----></section>  `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></main>`);
 	});

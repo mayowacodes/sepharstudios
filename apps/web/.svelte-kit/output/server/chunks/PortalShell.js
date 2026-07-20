@@ -1,4 +1,4 @@
-import { At as stringify, Dt as spread_props, It as writable, Lt as attr, Ot as store_get, St as derived, bt as attributes, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, xt as bind_props, yt as attr_style, zt as escape_html } from "./ui-libs.js";
+import { Bt as writable, Ct as attr_style, Et as derived, Ft as unsubscribe_stores, Ht as attr, Mt as store_get, Ot as ensure_array_like, Pt as stringify, St as attr_class, Tt as bind_props, Vt as snapshot, Wt as escape_html, bt as tick, jt as spread_props, wt as attributes } from "./ui-libs.js";
 import "./index-server.js";
 import { t as Icon } from "./Icon.js";
 import { t as Activity } from "./activity.js";
@@ -16,7 +16,7 @@ import { t as Loader_circle } from "./loader-circle.js";
 import { t as Log_out } from "./log-out.js";
 import { t as Message_square } from "./message-square.js";
 import { t as Monitor } from "./monitor.js";
-import { _ as Moon, a as Sidebar_menu, c as Sidebar_inset, d as Sidebar_group_label, f as Sidebar_group_content, g as Sun, i as Sidebar_provider, l as Sidebar_header, m as Sidebar_content, n as Sidebar_trigger, o as Sidebar_menu_item, p as Sidebar_footer, r as Sidebar_rail, s as Sidebar_menu_button, t as Sidebar, u as Sidebar_group } from "./sidebar.js";
+import { _ as Moon, a as Sidebar_menu, c as Sidebar_inset, d as Sidebar_group_label, f as Sidebar_group_content, g as Sun, i as Sidebar_provider, l as Sidebar_header, m as Sidebar_content, n as Sidebar_trigger, o as Sidebar_menu_item, p as Sidebar_footer, s as Sidebar_menu_button, t as Sidebar, u as Sidebar_group } from "./sidebar.js";
 import { t as Pin } from "./pin.js";
 import { t as Plus } from "./plus.js";
 import { t as Search } from "./search.js";
@@ -33,7 +33,7 @@ import { t as Video } from "./video.js";
 import { t as Wallet } from "./wallet.js";
 import { t as X } from "./x.js";
 import { t as Zap } from "./zap.js";
-import "./toast-state.svelte.js";
+import { n as toast } from "./toast-state.svelte.js";
 import { a as derivedMode, n as resetMode, r as setMode } from "./dist.js";
 import { n as goto } from "./client.js";
 import { t as page } from "./state.js";
@@ -41,6 +41,27 @@ import "./navigation.js";
 import { t as Separator } from "./separator.js";
 import { c as Dropdown_menu_content, i as Dropdown_menu_separator, l as Dropdown_menu_sub, n as Dropdown_menu_sub_content, o as Dropdown_menu_item, r as Dropdown_menu_trigger, t as Dropdown_menu_sub_trigger, u as Dropdown_menu } from "./dropdown-menu.js";
 import { a as Command_group, i as Command_item, n as Command_list, o as Command_empty, r as Command_input, s as Command_dialog, t as Command_separator } from "./command.js";
+import { AbstractChat, DefaultChatTransport } from "ai";
+//#region ../../node_modules/@lucide/svelte/dist/icons/circle-stop.svelte
+function Circle_stop($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "circle-stop" },
+		props,
+		{ iconNode: [["circle", {
+			"cx": "12",
+			"cy": "12",
+			"r": "10"
+		}], ["rect", {
+			"x": "9",
+			"y": "9",
+			"width": "6",
+			"height": "6",
+			"rx": "1"
+		}]] }
+	]));
+}
+//#endregion
 //#region ../../node_modules/@lucide/svelte/dist/icons/compass.svelte
 function Compass($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -52,6 +73,20 @@ function Compass($$renderer, $$props) {
 			"cy": "12",
 			"r": "10"
 		}], ["path", { "d": "m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" }]] }
+	]));
+}
+//#endregion
+//#region ../../node_modules/@lucide/svelte/dist/icons/history.svelte
+function History($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "history" },
+		props,
+		{ iconNode: [
+			["path", { "d": "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }],
+			["path", { "d": "M3 3v5h5" }],
+			["path", { "d": "M12 7v5l4 2" }]
+		] }
 	]));
 }
 //#endregion
@@ -67,6 +102,16 @@ function Pin_off($$renderer, $$props) {
 			["path", { "d": "m2 2 20 20" }],
 			["path", { "d": "M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h11" }]
 		] }
+	]));
+}
+//#endregion
+//#region ../../node_modules/@lucide/svelte/dist/icons/rotate-cw.svelte
+function Rotate_cw($$renderer, $$props) {
+	let { $$slots, $$events, ...props } = $$props;
+	Icon($$renderer, spread_props([
+		{ name: "rotate-cw" },
+		props,
+		{ iconNode: [["path", { "d": "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" }], ["path", { "d": "M21 3v5h-5" }]] }
 	]));
 }
 //#endregion
@@ -277,7 +322,7 @@ function PortalBreadcrumb($$renderer, $$props) {
 		function looksLikeId(s) {
 			return /^[0-9a-f-]{12,}$/i.test(s) || /^\d+$/.test(s);
 		}
-		$$renderer.push(`<nav aria-label="Breadcrumb" class="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0"><!--[-->`);
+		$$renderer.push(`<nav aria-label="Breadcrumb" class="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0 leading-none"><!--[-->`);
 		const each_array = ensure_array_like(crumbs());
 		for (let i = 0, $$length = each_array.length; i < $$length; i++) {
 			let c = each_array[i];
@@ -291,10 +336,10 @@ function PortalBreadcrumb($$renderer, $$props) {
 			$$renderer.push(`<!--]--> `);
 			if (i === crumbs().length - 1) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span class="text-foreground font-medium truncate">${escape_html(c.label)}</span>`);
+				$$renderer.push(`<span class="text-foreground font-medium truncate inline-flex items-center leading-none">${escape_html(c.label)}</span>`);
 			} else {
 				$$renderer.push("<!--[-1-->");
-				$$renderer.push(`<a${attr("href", c.href)} class="hover:text-foreground transition-colors truncate">${escape_html(c.label)}</a>`);
+				$$renderer.push(`<a${attr("href", c.href)} class="hover:text-foreground transition-colors truncate inline-flex items-center leading-none">${escape_html(c.label)}</a>`);
 			}
 			$$renderer.push(`<!--]-->`);
 		}
@@ -316,13 +361,7 @@ function openSlideOver(entry) {
 		return [...curr, entry].slice(-2);
 	});
 }
-var copilotState = writable({
-	conversationId: null,
-	messages: [],
-	pending: null,
-	sending: false,
-	queuedQuery: null
-});
+var copilotState = writable({ queuedQuery: null });
 function queueCopilotQuery(text) {
 	copilotState.update((s) => ({
 		...s,
@@ -940,6 +979,37 @@ function CommandPaletteAI($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region ../../node_modules/@ai-sdk/svelte/dist/chat.svelte.js
+var Chat = class extends AbstractChat {
+	constructor(init) {
+		super({
+			...init,
+			state: new SvelteChatState(init.messages)
+		});
+	}
+};
+var SvelteChatState = class {
+	messages;
+	status = "ready";
+	error = void 0;
+	constructor(messages = []) {
+		this.messages = messages;
+	}
+	setMessages = (messages) => {
+		this.messages = messages;
+	};
+	pushMessage = (message) => {
+		this.messages.push(message);
+	};
+	popMessage = () => {
+		this.messages.pop();
+	};
+	replaceMessage = (index, message) => {
+		this.messages[index] = message;
+	};
+	snapshot = (thing) => snapshot(thing);
+};
+//#endregion
 //#region src/lib/components/shell/CopilotRail.svelte
 function CopilotRail($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -949,71 +1019,154 @@ function CopilotRail($$renderer, $$props) {
 		*  shell level can toggle it. */
 		let { variant, open = true } = $$props;
 		let input = "";
+		let conversationId = null;
+		let conversations = [];
+		let showHistory = false;
+		const chat = new Chat({
+			transport: new DefaultChatTransport({
+				api: "/api/ai/copilot",
+				body: () => ({
+					variant,
+					conversationId
+				})
+			}),
+			onFinish: () => {
+				(/* @__PURE__ */ tick()).then(scrollToBottom);
+				refreshConversations();
+			},
+			onError: (err) => {
+				console.error("[copilot] chat error:", err);
+				toast.error(err.message || "Copilot is unavailable.");
+			}
+		});
+		async function refreshConversations() {
+			try {
+				const res = await fetch(`/api/ai/copilot/conversations?variant=${variant}`);
+				if (!res.ok) return;
+				conversations = (await res.json().catch(() => ({}))).conversations ?? [];
+			} catch (err) {
+				console.warn("[copilot] failed to load conversation list:", err);
+			}
+		}
+		function scrollToBottom() {}
+		function isApprovalRequired(output) {
+			return !!output && typeof output === "object" && output.approval === "required" && typeof output.actionId === "string";
+		}
 		const accentClass = derived(() => variant === "admin" ? "text-red-300" : "text-purple-300");
 		const sendBtnClass = derived(() => variant === "admin" ? "text-red-300 hover:text-red-200" : "text-purple-300 hover:text-purple-200");
-		$$renderer.push(`<aside${attr_class(`hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col ${open ? "w-80" : "w-12"}`)} aria-label="AI Copilot">`);
-		if (!open) {
+		const streaming = derived(() => chat.status === "submitted" || chat.status === "streaming");
+		const canSend = derived(() => !streaming() && input.trim().length > 0);
+		$$renderer.push(`<aside${attr_class(`hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col overflow-hidden ${open ? "w-80" : "w-0 border-l-0"}`)} aria-label="AI Copilot"${attr("aria-hidden", !open)}>`);
+		if (open) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<button type="button" class="flex flex-col items-center gap-3 w-full pt-4 text-muted-foreground hover:text-foreground transition-colors" aria-label="Open Copilot (⌘J)" title="Open Copilot (⌘J)">`);
+			$$renderer.push(`<header class="h-12 px-3 border-b border-white/10 flex items-center gap-2 shrink-0 relative">`);
 			Sparkles($$renderer, { class: `w-4 h-4 ${accentClass()}` });
-			$$renderer.push(`<!----> <span class="rotate-180 text-[10px] uppercase tracking-wider font-medium" style="writing-mode: vertical-rl;">Copilot ⌘J</span></button> `);
-			if (store_get($$store_subs ??= {}, "$copilotState", copilotState).messages.length > 0) {
+			$$renderer.push(`<!----> <h2 class="text-xs font-semibold text-foreground uppercase tracking-wide">Copilot</h2> <span${attr_class(`text-[10px] ${accentClass()} font-mono`)}>⌘J</span> <span class="flex-1"></span> `);
+			if (conversations.length > 0) {
 				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true"></span>`);
+				$$renderer.push(`<button type="button" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5" title="Recent conversations"${attr("aria-expanded", showHistory)}>`);
+				History($$renderer, { class: "w-3 h-3" });
+				$$renderer.push(`<!----> History</button>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]-->`);
-		} else {
-			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<header class="h-12 px-3 border-b border-white/10 flex items-center gap-2 shrink-0">`);
-			Sparkles($$renderer, { class: `w-4 h-4 ${accentClass()}` });
-			$$renderer.push(`<!----> <h2 class="text-xs font-semibold text-foreground uppercase tracking-wide">Copilot</h2> <span${attr_class(`text-[10px] ${accentClass()} font-mono`)}>⌘J</span> <span class="flex-1"></span> <button type="button" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5" title="Start a new chat">`);
+			$$renderer.push(`<!--]--> <button type="button" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5" title="Start a new chat">`);
 			Plus($$renderer, { class: "w-3 h-3" });
 			$$renderer.push(`<!----> New</button> <button type="button" class="text-muted-foreground hover:text-foreground" aria-label="Collapse Copilot (⌘J)">`);
 			Chevron_right($$renderer, { class: "w-4 h-4" });
-			$$renderer.push(`<!----></button></header> <div class="flex-1 overflow-y-auto p-3 space-y-2.5 min-h-0">`);
-			if (store_get($$store_subs ??= {}, "$copilotState", copilotState).messages.length === 0) {
+			$$renderer.push(`<!----></button> `);
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></header> <div class="flex-1 overflow-y-auto p-3 space-y-2.5 min-h-0">`);
+			if (chat.messages.length === 0) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="text-center text-muted-foreground text-xs space-y-2 py-8">`);
 				Sparkles($$renderer, { class: `w-5 h-5 ${accentClass()} mx-auto` });
 				$$renderer.push(`<!----> <p>Ask me anything about your ${escape_html(variant === "admin" ? "platform" : "content")}.</p> <p class="text-[10px] text-muted-foreground/70">${escape_html(variant === "admin" ? "Try: \"How many reviews are pending?\"" : "Try: \"Summarize my last 30 days\"")}</p></div>`);
 			} else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--> <!--[-->`);
-			const each_array = ensure_array_like(store_get($$store_subs ??= {}, "$copilotState", copilotState).messages);
-			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-				let m = each_array[$$index];
+			const each_array_1 = ensure_array_like(chat.messages);
+			for (let $$index_3 = 0, $$length = each_array_1.length; $$index_3 < $$length; $$index_3++) {
+				let m = each_array_1[$$index_3];
 				if (m.role === "user") {
 					$$renderer.push("<!--[0-->");
-					$$renderer.push(`<div class="flex justify-end"><div class="max-w-[85%] bg-primary text-primary-foreground text-xs rounded-lg px-2.5 py-1.5">${escape_html(m.content)}</div></div>`);
-				} else if (m.role === "tool") {
-					$$renderer.push("<!--[1-->");
-					$$renderer.push(`<div class="surface-2 rounded-lg px-2.5 py-1.5 text-[11px]"><div${attr_class(`text-[9px] uppercase tracking-wide ${accentClass()} mb-0.5`)}>Tool: ${escape_html(m.toolName ?? "?")}</div> <pre class="whitespace-pre-wrap text-foreground/80 max-h-24 overflow-y-auto">${escape_html(m.content.length > 400 ? m.content.slice(0, 400) + "…" : m.content)}</pre></div>`);
+					$$renderer.push(`<div class="flex justify-end"><div class="max-w-[85%] bg-primary text-primary-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line"><!--[-->`);
+					const each_array_2 = ensure_array_like(m.parts);
+					for (let $$index_1 = 0, $$length = each_array_2.length; $$index_1 < $$length; $$index_1++) {
+						let part = each_array_2[$$index_1];
+						if (part.type === "text") {
+							$$renderer.push("<!--[0-->");
+							$$renderer.push(`${escape_html(part.text)}`);
+						} else $$renderer.push("<!--[-1-->");
+						$$renderer.push(`<!--]-->`);
+					}
+					$$renderer.push(`<!--]--></div></div>`);
 				} else {
 					$$renderer.push("<!--[-1-->");
-					$$renderer.push(`<div class="flex justify-start"><div class="max-w-[85%] surface-1 text-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line">${escape_html(m.content)}</div></div>`);
+					$$renderer.push(`<!--[-->`);
+					const each_array_3 = ensure_array_like(m.parts);
+					for (let partIdx = 0, $$length = each_array_3.length; partIdx < $$length; partIdx++) {
+						let part = each_array_3[partIdx];
+						if (part.type === "text") {
+							$$renderer.push("<!--[0-->");
+							$$renderer.push(`<div class="flex justify-start"><div class="max-w-[85%] surface-1 text-foreground text-xs rounded-lg px-2.5 py-1.5 whitespace-pre-line">${escape_html(part.text)}</div></div>`);
+						} else if (part.type.startsWith("tool-")) {
+							$$renderer.push("<!--[1-->");
+							const toolName = part.type.slice(5);
+							const toolPart = part;
+							$$renderer.push(`<div class="surface-2 rounded-lg px-2.5 py-1.5 text-[11px]"><div${attr_class(`text-[9px] uppercase tracking-wide ${accentClass()} mb-0.5`)}>Tool: ${escape_html(toolName)}</div> `);
+							if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
+								$$renderer.push("<!--[0-->");
+								$$renderer.push(`<div class="text-[10px] text-muted-foreground italic">Running…</div>`);
+							} else if (toolPart.state === "output-error") {
+								$$renderer.push("<!--[1-->");
+								$$renderer.push(`<div class="text-[10px] text-red-300">Error: ${escape_html(toolPart.errorText ?? "tool failed")}</div>`);
+							} else if (isApprovalRequired(toolPart.output)) {
+								$$renderer.push("<!--[2-->");
+								const approval = toolPart.output;
+								$$renderer.push(`<div class="border border-yellow-500/40 bg-yellow-500/10 rounded-lg p-2 space-y-2 mt-1"><div class="flex items-center gap-1.5 text-[11px] text-yellow-200">`);
+								Triangle_alert($$renderer, { class: "w-3 h-3" });
+								$$renderer.push(`<!----> Approval required: ${escape_html(approval.tool ?? toolName)}</div> <pre class="text-[10px] text-yellow-100 bg-black/30 rounded p-1.5 overflow-x-auto max-h-32">${escape_html(JSON.stringify(approval.preview, null, 2))}</pre> <div class="flex gap-1.5 justify-end"><button type="button"${attr("disabled", streaming(), true)} class="text-[11px] px-2 py-1 rounded bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-0.5">`);
+								Check($$renderer, { class: "w-3 h-3" });
+								$$renderer.push(`<!----> Confirm</button></div></div>`);
+							} else if (toolPart.output !== void 0) {
+								$$renderer.push("<!--[3-->");
+								$$renderer.push(`<pre class="whitespace-pre-wrap text-foreground/80 max-h-24 overflow-y-auto">${escape_html(JSON.stringify(toolPart.output).slice(0, 400))}</pre>`);
+							} else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]--></div>`);
+						} else $$renderer.push("<!--[-1-->");
+						$$renderer.push(`<!--]-->`);
+					}
+					$$renderer.push(`<!--]-->`);
 				}
 				$$renderer.push(`<!--]-->`);
 			}
 			$$renderer.push(`<!--]--> `);
-			if (store_get($$store_subs ??= {}, "$copilotState", copilotState).pending) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<div class="border border-yellow-500/40 bg-yellow-500/10 rounded-lg p-2.5 space-y-2"><div class="flex items-center gap-1.5 text-[11px] text-yellow-200">`);
-				Triangle_alert($$renderer, { class: "w-3 h-3" });
-				$$renderer.push(`<!----> Approval required: ${escape_html(store_get($$store_subs ??= {}, "$copilotState", copilotState).pending.tool)}</div> <pre class="text-[10px] text-yellow-100 bg-black/30 rounded p-1.5 overflow-x-auto max-h-32">${escape_html(JSON.stringify(store_get($$store_subs ??= {}, "$copilotState", copilotState).pending.preview, null, 2))}</pre> <div class="flex gap-1.5 justify-end"><button type="button" class="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-foreground">Decline</button> <button type="button"${attr("disabled", store_get($$store_subs ??= {}, "$copilotState", copilotState).sending, true)} class="text-[11px] px-2 py-1 rounded bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white inline-flex items-center gap-0.5">`);
-				Check($$renderer, { class: "w-3 h-3" });
-				$$renderer.push(`<!----> Confirm</button></div></div>`);
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> `);
-			if (store_get($$store_subs ??= {}, "$copilotState", copilotState).sending) {
+			if (chat.status === "submitted") {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="text-[11px] text-muted-foreground italic">Thinking…</div>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div> <footer class="border-t border-white/10 p-2 shrink-0"><div class="relative"><textarea rows="2" placeholder="Ask the Copilot…" class="w-full surface-1 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground">`);
+			$$renderer.push(`<!--]--> `);
+			if (chat.error) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="text-[11px] text-red-300 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">⚠️ ${escape_html(chat.error.message)}</div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div> <footer class="border-t border-white/10 p-2 shrink-0"><div class="relative"><textarea rows="2" placeholder="Ask the Copilot…" class="w-full surface-1 rounded-lg pl-2.5 pr-16 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground">`);
 			const $$body = escape_html(input);
 			if ($$body) $$renderer.push(`${$$body}`);
-			$$renderer.push(`</textarea> <button type="button"${attr("disabled", store_get($$store_subs ??= {}, "$copilotState", copilotState).sending || !input.trim(), true)}${attr_class(`absolute right-1.5 bottom-1.5 ${sendBtnClass()} disabled:opacity-40`)} aria-label="Send">`);
+			$$renderer.push(`</textarea> `);
+			if (streaming()) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<button type="button" class="absolute right-8 bottom-1.5 text-muted-foreground hover:text-foreground" aria-label="Stop" title="Stop generating">`);
+				Circle_stop($$renderer, { class: "w-3.5 h-3.5" });
+				$$renderer.push(`<!----></button>`);
+			} else if (chat.messages.length > 0) {
+				$$renderer.push("<!--[1-->");
+				$$renderer.push(`<button type="button" class="absolute right-8 bottom-1.5 text-muted-foreground hover:text-foreground" aria-label="Regenerate" title="Regenerate last response">`);
+				Rotate_cw($$renderer, { class: "w-3.5 h-3.5" });
+				$$renderer.push(`<!----></button>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <button type="button"${attr("disabled", !canSend(), true)}${attr_class(`absolute right-1.5 bottom-1.5 ${sendBtnClass()} disabled:opacity-40 disabled:cursor-not-allowed hover:scale-110 disabled:hover:scale-100 transition-transform`)} aria-label="Send">`);
 			Send($$renderer, { class: "w-3.5 h-3.5" });
 			$$renderer.push(`<!----></button></div> <div class="text-[9px] text-muted-foreground mt-0.5">⌘+Enter to send</div></footer>`);
-		}
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></aside>`);
 		if ($$store_subs) unsubscribe_stores($$store_subs);
 		bind_props($$props, { open });
@@ -1094,7 +1247,7 @@ function PortalShell($$renderer, $$props) {
 					$$settled = false;
 				}
 			});
-			$$renderer.push(`<!----> <div${attr("data-portal", portal)} class="min-h-screen bg-background text-foreground"><a href="#portal-main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-primary focus:text-primary-foreground focus:px-3 focus:py-2 focus:rounded-md">Skip to main content</a> `);
+			$$renderer.push(`<!----> <div${attr("data-portal", portal)} class="min-h-screen text-[hsl(var(--portal-text))]"><a href="#portal-main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-[hsl(var(--portal-accent))] focus:text-white focus:px-3 focus:py-2 focus:rounded-md">Skip to main content</a> `);
 			if (Sidebar_provider) {
 				$$renderer.push("<!--[-->");
 				Sidebar_provider($$renderer, {
@@ -1104,14 +1257,14 @@ function PortalShell($$renderer, $$props) {
 							$$renderer.push("<!--[-->");
 							Sidebar($$renderer, {
 								collapsible: "icon",
-								class: "surface-glass",
+								class: "portal-sidebar",
 								children: ($$renderer) => {
 									if (Sidebar_header) {
 										$$renderer.push("<!--[-->");
 										Sidebar_header($$renderer, {
-											class: "border-b border-white/10",
+											class: "h-12 px-0 py-0 border-b border-[hsl(var(--portal-border)/0.7)]",
 											children: ($$renderer) => {
-												$$renderer.push(`<a${attr("href", portal === "admin" ? "/admin" : "/creator")} class="flex items-center gap-2 px-2 py-1.5 text-foreground hover:opacity-80 transition-opacity"><img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-6 w-6 object-contain shrink-0"/> <span class="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">${escape_html(portalLabel())}</span></a>`);
+												$$renderer.push(`<a${attr("href", portal === "admin" ? "/admin" : "/creator")} class="flex h-full items-center gap-2 px-2 text-[hsl(var(--portal-text))] hover:opacity-90 transition-opacity group/brand"><div class="relative flex items-center justify-center h-7 w-7 rounded-lg shrink-0 border border-[hsl(var(--portal-accent)/0.4)]" style="background: var(--portal-gradient-cta);"><img src="/logo-alone-sepharstudios-bgless.png" alt="" class="h-4 w-4 object-contain"/></div> <div class="flex flex-col leading-none gap-0.5 group-data-[collapsible=icon]:hidden"><span class="text-sm font-semibold tracking-tight leading-none">${escape_html(portalLabel())}</span> <span class="text-[10px] uppercase tracking-[0.18em] leading-none text-[hsl(var(--portal-accent))]">${escape_html(portal === "admin" ? "Mission Control" : "Cosmic Studio")}</span></div></a>`);
 											},
 											$$slots: { default: true }
 										});
@@ -1178,7 +1331,7 @@ function PortalShell($$renderer, $$props) {
 																													$$renderer.push("<!--[!-->");
 																													$$renderer.push("<!--]-->");
 																												}
-																												$$renderer.push(` <span>${escape_html(item.label)}</span></a>`);
+																												$$renderer.push(` <span class="group-data-[collapsible=icon]:hidden">${escape_html(item.label)}</span></a>`);
 																											}
 																											if (Sidebar_menu_button) {
 																												$$renderer.push("<!--[-->");
@@ -1272,7 +1425,7 @@ function PortalShell($$renderer, $$props) {
 																										$$renderer.push("<!--[-1-->");
 																										$$renderer.push(`<div class="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">${escape_html(initial())}</div>`);
 																									}
-																									$$renderer.push(`<!--]--> <span class="truncate">${escape_html(user()?.name ?? "Account")}</span></button>`);
+																									$$renderer.push(`<!--]--> <span class="truncate group-data-[collapsible=icon]:hidden">${escape_html(user()?.name ?? "Account")}</span></button>`);
 																								}
 																								if (Sidebar_menu_button) {
 																									$$renderer.push("<!--[-->");
@@ -1538,15 +1691,6 @@ function PortalShell($$renderer, $$props) {
 										$$renderer.push("<!--[!-->");
 										$$renderer.push("<!--]-->");
 									}
-									$$renderer.push(` `);
-									if (Sidebar_rail) {
-										$$renderer.push("<!--[-->");
-										Sidebar_rail($$renderer, {});
-										$$renderer.push("<!--]-->");
-									} else {
-										$$renderer.push("<!--[!-->");
-										$$renderer.push("<!--]-->");
-									}
 								},
 								$$slots: { default: true }
 							});
@@ -1581,9 +1725,9 @@ function PortalShell($$renderer, $$props) {
 									Bell($$renderer, { class: "w-4 h-4" });
 									$$renderer.push(`<!----> `);
 									$$renderer.push("<!--[-1-->");
-									$$renderer.push(`<!--]--></a> <button type="button" class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5" aria-label="Open Copilot (⌘J)">`);
+									$$renderer.push(`<!--]--></a> <button type="button" class="inline-flex items-center justify-center gap-1.5 px-2 h-8 rounded-md transition-colors"${attr_style(copilotOpen ? `background: hsl(var(--portal-accent)/0.18); color: hsl(var(--portal-accent)); border: 1px solid hsl(var(--portal-accent)/0.4);` : `background: hsl(var(--portal-bg-elevated)/0.5); color: hsl(var(--portal-text-muted)); border: 1px solid hsl(var(--portal-border));`)}${attr("aria-label", copilotOpen ? "Close Copilot (⌘J)" : "Open Copilot (⌘J)")}${attr("aria-pressed", copilotOpen)}${attr("title", copilotOpen ? "Close Copilot (⌘J)" : "Open Copilot (⌘J)")}>`);
 									Sparkles($$renderer, { class: "w-4 h-4" });
-									$$renderer.push(`<!----></button></header> <div class="flex flex-1 min-h-0"><main id="portal-main" class="flex-1 min-w-0 overflow-x-hidden">`);
+									$$renderer.push(`<!----> <span class="hidden md:inline text-[11px] font-medium">Copilot</span></button></header> <div class="flex flex-1 min-h-0"><main id="portal-main" class="flex-1 min-w-0 overflow-x-hidden">`);
 									children?.($$renderer);
 									$$renderer.push(`<!----></main> `);
 									CopilotRail($$renderer, {

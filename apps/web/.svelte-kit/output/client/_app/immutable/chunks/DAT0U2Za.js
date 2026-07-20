@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./s06JaHMU.js";import{t as n}from"./C8O-dUT5.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`rect`,{width:`14`,height:`20`,x:`5`,y:`2`,rx:`2`,ry:`2`}],[`path`,{d:`M12 18h.01`}]];n(r,t({name:`smartphone`},()=>a,{get iconNode(){return o}}))}export{r as t};

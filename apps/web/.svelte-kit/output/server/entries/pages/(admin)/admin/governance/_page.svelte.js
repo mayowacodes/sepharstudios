@@ -1,6 +1,7 @@
-import { Tt as head, wt as ensure_array_like } from "../../../../../chunks/ui-libs.js";
+import { Ot as ensure_array_like, kt as head } from "../../../../../chunks/ui-libs.js";
 import { t as Landmark } from "../../../../../chunks/landmark.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 import "../../../../../chunks/GovernanceStatusCard.js";
 //#region src/routes/(admin)/admin/governance/+page.svelte
 function _page($$renderer, $$props) {
@@ -10,15 +11,25 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New Proposal</a>`);
+				PortalButton($$renderer, {
+					href: "/admin/governance/create",
+					variant: "primary",
+					size: "sm",
+					children: ($$renderer) => {
+						$$renderer.push(`<!---->+ New Proposal`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
-				icon: Landmark,
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "DAO",
 				title: "Governance",
 				subtitle: "DAO proposals, treasury, and on-chain controls.",
+				icon: Landmark,
 				actions,
 				$$slots: { actions: true }
 			});

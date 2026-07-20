@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../chunks/shared-server.js";
-import { a as uploadAndSaveFile, i as listObjects, n as getDirectObjectUrl, o as uploadFile, t as deleteFileById } from "../../../../chunks/minio2.js";
+import { c as uploadFile, o as listObjects, r as getDirectObjectUrl, s as uploadAndSaveFile, t as deleteFileById } from "../../../../chunks/minio2.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/files/+server.ts
 var BUCKET_NAME = private_env.MINIO_BUCKET || "uploads";
@@ -24,12 +24,46 @@ var GET = async ({ locals }) => {
 		return json({ error: "Failed to list files" }, { status: 500 });
 	}
 };
+var MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+function classifyUploadError(err) {
+	const lower = (err instanceof Error ? err.message : String(err)).toLowerCase();
+	if (lower.includes("access denied") || lower.includes("signaturedoesnotmatch") || lower.includes("invalidaccesskey")) return {
+		category: "storage_auth",
+		detail: "Storage credentials rejected. Please contact support."
+	};
+	if (lower.includes("nosuchbucket") || lower.includes("bucket") && lower.includes("not")) return {
+		category: "storage_bucket_missing",
+		detail: "Storage bucket unavailable. Please contact support."
+	};
+	if (lower.includes("entitytoolarge") || lower.includes("too large")) return {
+		category: "storage_size_limit",
+		detail: "File exceeds the storage size limit."
+	};
+	if (lower.includes("econnrefused") || lower.includes("econnreset") || lower.includes("etimedout")) return {
+		category: "storage_unreachable",
+		detail: "Storage service is unreachable. Try again in a moment."
+	};
+	return {
+		category: "upload_failed",
+		detail: "Upload failed unexpectedly. Try again or contact support."
+	};
+}
 var POST = async ({ request, locals }) => {
-	if (!await locals.auth.getSession()) return json({ error: "Unauthorized" }, { status: 401 });
+	if (!await locals.auth.getSession()) return json({
+		error: "unauthorized",
+		detail: "Sign in required."
+	}, { status: 401 });
 	const formData = await request.formData();
 	const file = formData.get("file");
 	const bucket = formData.get("bucket") || BUCKET_NAME;
-	if (!file) return json({ error: "No file uploaded" }, { status: 400 });
+	if (!file) return json({
+		error: "missing_file",
+		detail: "No file was attached to the request."
+	}, { status: 400 });
+	if (file.size > MAX_UPLOAD_BYTES) return json({
+		error: "file_too_large",
+		detail: `File is ${(file.size / (1024 * 1024)).toFixed(1)} MB; the limit for image uploads is ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`
+	}, { status: 413 });
 	try {
 		return json({
 			success: true,
@@ -37,7 +71,11 @@ var POST = async ({ request, locals }) => {
 		});
 	} catch (error) {
 		console.error("API Upload error:", error);
-		return json({ error: "Upload failed" }, { status: 500 });
+		const { category, detail } = classifyUploadError(error);
+		return json({
+			error: category,
+			detail
+		}, { status: 500 });
 	}
 };
 var PUT = async ({ request, locals }) => {

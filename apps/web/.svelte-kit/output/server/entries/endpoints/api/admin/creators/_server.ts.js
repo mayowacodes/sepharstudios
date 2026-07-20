@@ -1,7 +1,7 @@
-import { H as mediaLibrary, T as creators, a as user, gt as transactions, t as db } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, O as creators, a as user, bt as transactions, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, gte, ilike, or, sql } from "drizzle-orm";
 //#region src/routes/api/admin/creators/+server.ts
 var GET = async ({ locals, url }) => {
 	const { error } = await requireAdmin(locals);
@@ -36,7 +36,10 @@ var GET = async ({ locals, url }) => {
 	const earningsAgg = await db.select({
 		userId: transactions.userId,
 		monthlyEarnings: sql`coalesce(sum(${transactions.amount}), 0)`
-	}).from(transactions).where(and(eq(transactions.type, "earn"), sql`${transactions.createdAt} >= ${monthStart}`)).groupBy(transactions.userId);
+	}).from(transactions).where(and(eq(transactions.type, "earn"), gte(transactions.createdAt, monthStart))).groupBy(transactions.userId).catch((err) => {
+		console.error("[admin/creators] transactions aggregate failed; defaulting earnings to zero:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const profileByUser = new Map(creatorProfiles.map((p) => [p.userId, p]));
 	const contentByUser = new Map(contentAgg.map((c) => [c.creatorId, c]));
 	const earningsByUser = new Map(earningsAgg.map((e) => [e.userId, e]));

@@ -1,4 +1,4 @@
-import { gt as transactions, t as db } from "../../../../../../chunks/drizzle.js";
+import { bt as transactions, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, sql } from "drizzle-orm";
 //#region src/routes/api/users/me/stc-balance/+server.ts
@@ -22,7 +22,10 @@ var GET = async ({ locals }) => {
 	const rows = await db.select({
 		status: transactions.status,
 		total: sql`coalesce(sum(${transactions.amount}), 0)`
-	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.currency, "STC"), eq(transactions.type, "earn"))).groupBy(transactions.status);
+	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.currency, "STC"), eq(transactions.type, "earn"))).groupBy(transactions.status).catch((err) => {
+		console.warn("[stc-balance] transactions query failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const balance = {
 		pending: 0,
 		completed: 0,

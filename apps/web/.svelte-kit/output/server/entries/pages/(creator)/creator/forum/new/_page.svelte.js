@@ -1,8 +1,8 @@
-import { Dt as spread_props, Lt as attr, wt as ensure_array_like, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, Wt as escape_html, jt as spread_props } from "../../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../../chunks/Icon.js";
 import { t as Arrow_left } from "../../../../../../chunks/arrow-left.js";
 import "../../../../../../chunks/navigation.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/message-square-plus.svelte
 function Message_square_plus($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -54,10 +54,12 @@ function _page($$renderer, $$props) {
 		$$renderer.push(`<div class="container mx-auto max-w-3xl py-8 px-4 space-y-6"><a href="/creator/forum" class="text-xs text-primary hover:opacity-80 inline-flex items-center gap-1">`);
 		Arrow_left($$renderer, { class: "w-3 h-3" });
 		$$renderer.push(`<!----> Back to forum</a> `);
-		PageHeader($$renderer, {
-			icon: Message_square_plus,
-			title: "Start a Discussion",
-			subtitle: "All posts are moderated by AI before publishing. Be kind and on-topic."
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Community",
+			title: "Start a discussion",
+			subtitle: "All posts are moderated by AI before publishing. Be kind and on-topic.",
+			icon: Message_square_plus
 		});
 		$$renderer.push(`<!----> <form class="surface-2 backdrop-blur-sm rounded-xl p-6 space-y-4"><div><label for="thread-title" class="block text-foreground font-medium mb-2">Title *</label> <input id="thread-title" type="text"${attr("value", title)} minlength="5" maxlength="255" required="" class="w-full px-4 py-2 surface-2 border border-border rounded-lg text-foreground focus:outline-none focus:border-purple-500"/></div> <div><label for="thread-category" class="block text-foreground font-medium mb-2">Category *</label> `);
 		$$renderer.select({

@@ -1,8 +1,10 @@
-import { At as stringify, Dt as spread_props, Lt as attr, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html, jt as spread_props } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
 import { t as Plus } from "../../../../../chunks/plus.js";
+import { n as goto } from "../../../../../chunks/client.js";
 import "../../../../../chunks/navigation.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/messages-square.svelte
 function Messages_square($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -75,17 +77,26 @@ function _page($$renderer, $$props) {
 			if (diff < 6048e5) return `${Math.floor(diff / 864e5)}d ago`;
 			return new Date(iso).toLocaleDateString();
 		}
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<button type="button" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">`);
-				Plus($$renderer, { class: "w-3 h-3" });
-				$$renderer.push(`<!----> New discussion</button>`);
+				PortalButton($$renderer, {
+					variant: "primary",
+					size: "sm",
+					onclick: () => goto("/creator/forum/new"),
+					children: ($$renderer) => {
+						Plus($$renderer, { class: "w-3.5 h-3.5" });
+						$$renderer.push(`<!----> New discussion`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
-				icon: Messages_square,
-				title: "Community Forum",
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Community",
+				title: "Forum",
 				subtitle: "Connect, learn, and grow with fellow faith-based creators.",
+				icon: Messages_square,
 				actions,
 				$$slots: { actions: true }
 			});

@@ -14,7 +14,12 @@ import Redis from "ioredis";
 */
 var client = null;
 function buildClient() {
-	const c = new Redis(private_env.REDIS_URL || "redis://localhost:6379", {
+	const explicit = private_env.REDIS_URL;
+	const url = explicit || "redis://localhost:6379";
+	const safeUrl = url.replace(/(:\/\/[^:@/]+:)([^@]+)(@)/, "$1***$3");
+	if (!explicit) console.warn(`[redis] REDIS_URL is not set; falling back to ${safeUrl}. Set REDIS_URL in the runtime environment (Dokploy → app → env) to point at your Redis service.`);
+	else console.log(`[redis] connecting to ${safeUrl}`);
+	const c = new Redis(url, {
 		maxRetriesPerRequest: 3,
 		enableReadyCheck: true,
 		retryStrategy: (times) => Math.min(times * 200, 2e3),

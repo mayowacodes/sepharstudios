@@ -170,6 +170,47 @@
   const sendBtnClass = $derived(variant === 'admin' ? 'text-red-300 hover:text-red-200' : 'text-purple-300 hover:text-purple-200');
   const streaming = $derived(chat.status === 'submitted' || chat.status === 'streaming');
   const canSend = $derived(!streaming && input.trim().length > 0);
+
+  // ── Friendly progress line ────────────────────────────────────────
+  // Plain human sentences only — never tool ids or internal states.
+  // Derived from the Chat status + the shape of the last assistant
+  // message: no text yet + a tool running → "Looking that up…";
+  // text flowing → "Writing the answer…". When a stream completes,
+  // a green "Done" flashes for ~2s then fades.
+  let doneFlash = $state(false);
+  let doneTimer: ReturnType<typeof setTimeout> | null = null;
+  let wasStreaming = false;
+  $effect(() => {
+    if (streaming) {
+      wasStreaming = true;
+      doneFlash = false;
+      if (doneTimer) { clearTimeout(doneTimer); doneTimer = null; }
+    } else if (wasStreaming) {
+      wasStreaming = false;
+      doneFlash = true;
+      doneTimer = setTimeout(() => { doneFlash = false; }, 2000);
+    }
+  });
+
+  const statusLabel = $derived.by(() => {
+    if (doneFlash) return 'Done';
+    if (chat.status === 'submitted') return 'Thinking…';
+    if (chat.status !== 'streaming') return '';
+    const last = chat.messages[chat.messages.length - 1];
+    if (!last || last.role !== 'assistant') return 'Thinking…';
+    let hasText = false;
+    let toolRunning = false;
+    for (const part of last.parts) {
+      if (part.type === 'text' && part.text.trim()) hasText = true;
+      const state = (part as { state?: string }).state;
+      if (part.type.startsWith('tool-') && (state === 'input-streaming' || state === 'input-available')) {
+        toolRunning = true;
+      }
+    }
+    if (toolRunning && !hasText) return 'Looking that up for you…';
+    if (hasText) return 'Writing the answer…';
+    return 'Thinking…';
+  });
 </script>
 
 <!-- Rail fully collapses to width 0 when closed so the main pane
@@ -313,6 +354,24 @@
         </div>
       {/if}
     </div>
+
+    {#if statusLabel}
+      <!-- Friendly progress strip — plain sentences streamed states,
+           green check on completion, fades out after ~2s. -->
+      <div
+        class="px-3 py-1 shrink-0 flex items-center gap-1.5 text-[10px] {doneFlash ? 'text-emerald-300' : 'text-muted-foreground italic'}"
+        aria-live="polite"
+      >
+        {#if doneFlash}
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        {:else}
+          <span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0"></span>
+        {/if}
+        <span>{statusLabel}</span>
+      </div>
+    {/if}
 
     <footer class="border-t border-white/10 p-2 shrink-0">
       <div class="relative">

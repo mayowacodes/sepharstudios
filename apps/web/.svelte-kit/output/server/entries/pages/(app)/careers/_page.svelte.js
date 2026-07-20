@@ -1,4 +1,4 @@
-import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../chunks/ui-libs.js";
 //#region src/routes/(app)/careers/+page.svelte
 function _page($$renderer) {
 	head("1n6ke1x", $$renderer, ($$renderer) => {

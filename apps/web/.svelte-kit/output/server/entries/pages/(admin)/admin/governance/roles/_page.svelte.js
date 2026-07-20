@@ -1,6 +1,6 @@
-import { Tt as head } from "../../../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Shield_check } from "../../../../../../chunks/shield-check.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#endregion
 //#region src/routes/(admin)/admin/governance/roles/+page.svelte
 function _page($$renderer, $$props) {
@@ -10,11 +10,13 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Roles - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Shield_check,
-			title: "Role Permissions",
-			subtitle: "Who can do what across the platform."
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "DAO · Access",
+			title: "Role permissions",
+			subtitle: "Who can do what across the platform.",
+			icon: Shield_check
 		});
 		$$renderer.push(`<!----> `);
 		$$renderer.push("<!--[0-->");

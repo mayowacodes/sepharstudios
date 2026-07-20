@@ -10,7 +10,7 @@ return {
 	assets: new Set(["asl-logo.png","favicon-96x96.png","favicon.ico","favicon.svg","logo&name-sepharstudios.png","logo-alone-sepharstudios-bgless.png","logo-alone-sepharstudios.png","logo_name-sepharstudios.png","manifest.json","name-alone-sepharstudios.png","pwa-192x192.png","pwa-512x512.png","pwa-maskable-192x192.png","pwa-maskable-512x512.png","robots.txt","screenshot-mobile.webp","screenshot-wide.webp","sw.js"]),
 	mimeTypes: {".png":"image/png",".svg":"image/svg+xml",".json":"application/json",".txt":"text/plain",".webp":"image/webp",".js":"text/javascript"},
 	_: {
-		client: null,
+		client: {start:"_app/immutable/entry/start.BHLVIrvi.js",app:"_app/immutable/entry/app.BO4qooV9.js",imports:["_app/immutable/entry/start.BHLVIrvi.js","_app/immutable/chunks/BUTViEfE.js","_app/immutable/chunks/s06JaHMU.js","_app/immutable/chunks/-c01j_DQ.js","_app/immutable/chunks/CbTZKJ_u.js","_app/immutable/entry/app.BO4qooV9.js","_app/immutable/chunks/kNaey6uv.js","_app/immutable/chunks/s06JaHMU.js","_app/immutable/chunks/-c01j_DQ.js"],stylesheets:["_app/immutable/assets/ui-libs.C1tyNZCz.css","_app/immutable/assets/ui-libs.C1tyNZCz.css"],fonts:[],uses_env_dynamic_public:true},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -137,7 +137,13 @@ return {
 			__memo(() => import('./nodes/124.js')),
 			__memo(() => import('./nodes/125.js')),
 			__memo(() => import('./nodes/126.js')),
-			__memo(() => import('./nodes/127.js'))
+			__memo(() => import('./nodes/127.js')),
+			__memo(() => import('./nodes/128.js')),
+			__memo(() => import('./nodes/129.js')),
+			__memo(() => import('./nodes/130.js')),
+			__memo(() => import('./nodes/131.js')),
+			__memo(() => import('./nodes/132.js')),
+			__memo(() => import('./nodes/133.js'))
 		],
 		remotes: {
 			
@@ -168,7 +174,7 @@ return {
 				id: "/(protected)/achievements",
 				pattern: /^\/achievements\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 104 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 107 },
 				endpoint: null
 			},
 			{
@@ -431,6 +437,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/admin/agent-runs/_server.ts.js'))
 			},
 			{
+				id: "/api/admin/agents/status",
+				pattern: /^\/api\/admin\/agents\/status\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/agents/status/_server.ts.js'))
+			},
+			{
 				id: "/api/admin/agents/[name]/fire",
 				pattern: /^\/api\/admin\/agents\/([^/]+?)\/fire\/?$/,
 				params: [{"name":"name","optional":false,"rest":false,"chained":false}],
@@ -464,6 +477,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/admin/analytics/_server.ts.js'))
+			},
+			{
+				id: "/api/admin/analytics/stream",
+				pattern: /^\/api\/admin\/analytics\/stream\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/analytics/stream/_server.ts.js'))
 			},
 			{
 				id: "/api/admin/communications",
@@ -963,6 +983,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/ai/copilot/_server.ts.js'))
 			},
 			{
+				id: "/api/ai/copilot/approve",
+				pattern: /^\/api\/ai\/copilot\/approve\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/ai/copilot/approve/_server.ts.js'))
+			},
+			{
+				id: "/api/ai/copilot/conversations",
+				pattern: /^\/api\/ai\/copilot\/conversations\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/ai/copilot/conversations/_server.ts.js'))
+			},
+			{
 				id: "/api/ai/creator-insights",
 				pattern: /^\/api\/ai\/creator-insights\/?$/,
 				params: [],
@@ -1040,6 +1074,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/auth/_...all_/_server.ts.js'))
 			},
 			{
+				id: "/api/coming-soon",
+				pattern: /^\/api\/coming-soon\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/coming-soon/_server.ts.js'))
+			},
+			{
+				id: "/api/coming-soon/[contentId]/notify",
+				pattern: /^\/api\/coming-soon\/([^/]+?)\/notify\/?$/,
+				params: [{"name":"contentId","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/coming-soon/_contentId_/notify/_server.ts.js'))
+			},
+			{
 				id: "/api/contact",
 				pattern: /^\/api\/contact\/?$/,
 				params: [],
@@ -1094,6 +1142,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/creator/analytics/_server.ts.js'))
+			},
+			{
+				id: "/api/creator/analytics/stream",
+				pattern: /^\/api\/creator\/analytics\/stream\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/creator/analytics/stream/_server.ts.js'))
 			},
 			{
 				id: "/api/creator/application",
@@ -1341,6 +1396,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/creator/payouts/stripe/status/_server.ts.js'))
 			},
 			{
+				id: "/api/creator/people/lookup",
+				pattern: /^\/api\/creator\/people\/lookup\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/creator/people/lookup/_server.ts.js'))
+			},
+			{
 				id: "/api/creator/profile",
 				pattern: /^\/api\/creator\/profile\/?$/,
 				params: [],
@@ -1369,6 +1431,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/creator/tax-forms/_server.ts.js'))
 			},
 			{
+				id: "/api/creator/trailer-upload/commit",
+				pattern: /^\/api\/creator\/trailer-upload\/commit\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/creator/trailer-upload/commit/_server.ts.js'))
+			},
+			{
+				id: "/api/creator/trailer-upload/sign",
+				pattern: /^\/api\/creator\/trailer-upload\/sign\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/creator/trailer-upload/sign/_server.ts.js'))
+			},
+			{
 				id: "/api/cron/ab-auto-promote",
 				pattern: /^\/api\/cron\/ab-auto-promote\/?$/,
 				params: [],
@@ -1381,6 +1457,13 @@ return {
 				params: [{"name":"name","optional":false,"rest":false,"chained":false}],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/cron/agents/_name_/_server.ts.js'))
+			},
+			{
+				id: "/api/cron/analytics-rollup",
+				pattern: /^\/api\/cron\/analytics-rollup\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/cron/analytics-rollup/_server.ts.js'))
 			},
 			{
 				id: "/api/cron/creator-payouts",
@@ -1607,6 +1690,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/files/_server.ts.js'))
 			},
 			{
+				id: "/api/files/commit",
+				pattern: /^\/api\/files\/commit\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/files/commit/_server.ts.js'))
+			},
+			{
+				id: "/api/files/sign",
+				pattern: /^\/api\/files\/sign\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/files/sign/_server.ts.js'))
+			},
+			{
 				id: "/api/forum/replies/[id]",
 				pattern: /^\/api\/forum\/replies\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
@@ -1703,6 +1800,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/milestones/_server.ts.js'))
+			},
+			{
+				id: "/api/my-list/[contentId]",
+				pattern: /^\/api\/my-list\/([^/]+?)\/?$/,
+				params: [{"name":"contentId","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/my-list/_contentId_/_server.ts.js'))
 			},
 			{
 				id: "/api/notifications",
@@ -1999,6 +2103,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/watch/live/_id_/stream/_server.ts.js'))
 			},
 			{
+				id: "/api/watch/mark/[contentId]",
+				pattern: /^\/api\/watch\/mark\/([^/]+?)\/?$/,
+				params: [{"name":"contentId","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/watch/mark/_contentId_/_server.ts.js'))
+			},
+			{
 				id: "/api/watch/progress",
 				pattern: /^\/api\/watch\/progress\/?$/,
 				params: [],
@@ -2027,64 +2138,64 @@ return {
 				endpoint: null
 			},
 			{
-				id: "/(app)/archive",
-				pattern: /^\/archive\/?$/,
-				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 46 },
-				endpoint: null
-			},
-			{
 				id: "/(auth)/auth/forget-password",
 				pattern: /^\/auth\/forget-password\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 73 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 76 },
 				endpoint: null
 			},
 			{
 				id: "/(auth)/auth/forget-password/success",
 				pattern: /^\/auth\/forget-password\/success\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 74 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 77 },
 				endpoint: null
 			},
 			{
 				id: "/(auth)/auth/login",
 				pattern: /^\/auth\/login\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 75 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 78 },
 				endpoint: null
 			},
 			{
 				id: "/(auth)/auth/register",
 				pattern: /^\/auth\/register\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 76 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 79 },
 				endpoint: null
 			},
 			{
 				id: "/(auth)/auth/reset-password",
 				pattern: /^\/auth\/reset-password\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 77 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 80 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/browse",
 				pattern: /^\/browse\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 47 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 46 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/careers",
 				pattern: /^\/careers\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 48 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 47 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/checkout",
 				pattern: /^\/checkout\/?$/,
+				params: [],
+				page: { layouts: [0,3,], errors: [1,,], leaf: 48 },
+				endpoint: null
+			},
+			{
+				id: "/(app)/coming-soon",
+				pattern: /^\/coming-soon\/?$/,
 				params: [],
 				page: { layouts: [0,3,], errors: [1,,], leaf: 49 },
 				endpoint: null
@@ -2107,189 +2218,189 @@ return {
 				id: "/(creator)/creator",
 				pattern: /^\/creator\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 78 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 81 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/agreement",
 				pattern: /^\/creator\/agreement\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 79 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 82 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/analytics-help",
 				pattern: /^\/creator\/analytics-help\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 81 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 84 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/analytics",
 				pattern: /^\/creator\/analytics\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 80 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 83 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/best-practices",
 				pattern: /^\/creator\/best-practices\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 82 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 85 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/content",
 				pattern: /^\/creator\/content\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 83 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 86 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/content/[id]",
 				pattern: /^\/creator\/content\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 84 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 87 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/content/[id]/episodes",
 				pattern: /^\/creator\/content\/([^/]+?)\/episodes\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 85 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 88 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/copyright",
 				pattern: /^\/creator\/copyright\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 86 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 89 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/earnings",
 				pattern: /^\/creator\/earnings\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 87 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 90 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/earnings/tax-forms",
 				pattern: /^\/creator\/earnings\/tax-forms\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 88 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 91 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/events",
 				pattern: /^\/creator\/events\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 89 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 92 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/forum",
 				pattern: /^\/creator\/forum\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 90 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 93 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/forum/new",
 				pattern: /^\/creator\/forum\/new\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 91 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 94 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/forum/[id]",
 				pattern: /^\/creator\/forum\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 92 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 95 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/guidelines",
 				pattern: /^\/creator\/guidelines\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 93 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 96 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/inbox",
 				pattern: /^\/creator\/inbox\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 94 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 97 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/live",
 				pattern: /^\/creator\/live\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 95 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 98 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/moderation",
 				pattern: /^\/creator\/moderation\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 96 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 99 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/newsletter",
 				pattern: /^\/creator\/newsletter\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 97 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 100 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/profile",
 				pattern: /^\/creator\/profile\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 98 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 101 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/success-stories",
 				pattern: /^\/creator\/success-stories\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 99 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 102 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/support",
 				pattern: /^\/creator\/support\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 100 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 103 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/tech-support",
 				pattern: /^\/creator\/tech-support\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 101 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 104 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/test",
 				pattern: /^\/creator\/test\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 102 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 105 },
 				endpoint: null
 			},
 			{
 				id: "/(creator)/creator/upload",
 				pattern: /^\/creator\/upload\/?$/,
 				params: [],
-				page: { layouts: [0,5,], errors: [1,,], leaf: 103 },
+				page: { layouts: [0,5,], errors: [1,,], leaf: 106 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/dashboard",
 				pattern: /^\/dashboard\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 105 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 108 },
 				endpoint: null
 			},
 			{
@@ -2307,192 +2418,234 @@ return {
 				endpoint: null
 			},
 			{
+				id: "/(app)/documentaries/[slug]",
+				pattern: /^\/documentaries\/([^/]+?)\/?$/,
+				params: [{"name":"slug","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,3,], errors: [1,,], leaf: 54 },
+				endpoint: null
+			},
+			{
 				id: "/(protected)/documentation",
 				pattern: /^\/documentation\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 106 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 109 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/exchange",
 				pattern: /^\/exchange\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 54 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 55 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/faq",
 				pattern: /^\/faq\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 55 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 56 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/features",
 				pattern: /^\/features\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 56 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 57 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/guidelines",
 				pattern: /^\/guidelines\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 57 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 58 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/help",
 				pattern: /^\/help\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 58 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 59 },
+				endpoint: null
+			},
+			{
+				id: "/kids",
+				pattern: /^\/kids\/?$/,
+				params: [],
+				page: { layouts: [0,8,], errors: [1,,], leaf: 120 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies",
 				pattern: /^\/kids\/kiddies\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 117 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 121 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies/bible-quiz",
 				pattern: /^\/kids\/kiddies\/bible-quiz\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 118 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 122 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies/documentaries",
 				pattern: /^\/kids\/kiddies\/documentaries\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 119 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 123 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies/movies",
 				pattern: /^\/kids\/kiddies\/movies\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 120 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 124 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies/profile",
 				pattern: /^\/kids\/kiddies\/profile\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 121 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 125 },
 				endpoint: null
 			},
 			{
 				id: "/kids/kiddies/shows",
 				pattern: /^\/kids\/kiddies\/shows\/?$/,
 				params: [],
-				page: { layouts: [0,9,], errors: [1,,], leaf: 122 },
+				page: { layouts: [0,9,], errors: [1,,], leaf: 126 },
+				endpoint: null
+			},
+			{
+				id: "/kids/kiddies/[slug]",
+				pattern: /^\/kids\/kiddies\/([^/]+?)\/?$/,
+				params: [{"name":"slug","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,9,], errors: [1,,], leaf: 127 },
 				endpoint: null
 			},
 			{
 				id: "/kids/teens",
 				pattern: /^\/kids\/teens\/?$/,
 				params: [],
-				page: { layouts: [0,8,], errors: [1,,], leaf: 123 },
+				page: { layouts: [0,8,], errors: [1,,], leaf: 128 },
+				endpoint: null
+			},
+			{
+				id: "/kids/teens/[slug]",
+				pattern: /^\/kids\/teens\/([^/]+?)\/?$/,
+				params: [{"name":"slug","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,8,], errors: [1,,], leaf: 129 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/liquidity",
 				pattern: /^\/liquidity\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 59 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 60 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/milestones",
 				pattern: /^\/milestones\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 107 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 110 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/movies",
 				pattern: /^\/movies\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 60 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 61 },
+				endpoint: null
+			},
+			{
+				id: "/(app)/movies/[slug]",
+				pattern: /^\/movies\/([^/]+?)\/?$/,
+				params: [{"name":"slug","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,3,], errors: [1,,], leaf: 62 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/my-studios",
 				pattern: /^\/my-studios\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 61 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 63 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/offline",
 				pattern: /^\/offline\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 62 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 64 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/parental-controls",
 				pattern: /^\/parental-controls\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 108 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 111 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/plans",
 				pattern: /^\/plans\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 63 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 65 },
 				endpoint: __memo(() => import('./entries/endpoints/(app)/plans/_server.ts.js'))
 			},
 			{
 				id: "/(app)/press",
 				pattern: /^\/press\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 64 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 66 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/privacy",
 				pattern: /^\/privacy\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 65 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 67 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/profiles",
 				pattern: /^\/profiles\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 110 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 113 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/profile",
 				pattern: /^\/profile\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 109 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 112 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/search",
 				pattern: /^\/search\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 66 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 68 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/settings",
 				pattern: /^\/settings\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 111 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 114 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/shows",
 				pattern: /^\/shows\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 67 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 69 },
+				endpoint: null
+			},
+			{
+				id: "/(app)/shows/[slug]",
+				pattern: /^\/shows\/([^/]+?)\/?$/,
+				params: [{"name":"slug","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,3,], errors: [1,,], leaf: 70 },
 				endpoint: null
 			},
 			{
@@ -2506,84 +2659,84 @@ return {
 				id: "/(app)/sponsorships",
 				pattern: /^\/sponsorships\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 68 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 71 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/staking",
 				pattern: /^\/staking\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 69 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 72 },
 				endpoint: null
 			},
 			{
 				id: "/(web3)/subscription",
 				pattern: /^\/subscription\/?$/,
 				params: [],
-				page: { layouts: [0,7,], errors: [1,,], leaf: 114 },
+				page: { layouts: [0,7,], errors: [1,,], leaf: 117 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/terms",
 				pattern: /^\/terms\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 70 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 73 },
 				endpoint: null
 			},
 			{
 				id: "/(web3)/tokens",
 				pattern: /^\/tokens\/?$/,
 				params: [],
-				page: { layouts: [0,7,], errors: [1,,], leaf: 115 },
+				page: { layouts: [0,7,], errors: [1,,], leaf: 118 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/token",
 				pattern: /^\/token\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 71 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 74 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/users",
 				pattern: /^\/users\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 112 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 115 },
 				endpoint: null
 			},
 			{
 				id: "/(web3)/wallet",
 				pattern: /^\/wallet\/?$/,
 				params: [],
-				page: { layouts: [0,7,], errors: [1,,], leaf: 116 },
+				page: { layouts: [0,7,], errors: [1,,], leaf: 119 },
 				endpoint: null
 			},
 			{
 				id: "/(protected)/watchlist",
 				pattern: /^\/watchlist\/?$/,
 				params: [],
-				page: { layouts: [0,6,], errors: [1,,], leaf: 113 },
+				page: { layouts: [0,6,], errors: [1,,], leaf: 116 },
 				endpoint: null
 			},
 			{
 				id: "/watch/live/[id]",
 				pattern: /^\/watch\/live\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,], errors: [1,], leaf: 124 },
+				page: { layouts: [0,], errors: [1,], leaf: 130 },
 				endpoint: null
 			},
 			{
 				id: "/watch/[id]",
 				pattern: /^\/watch\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,], errors: [1,], leaf: 125 },
+				page: { layouts: [0,], errors: [1,], leaf: 131 },
 				endpoint: null
 			},
 			{
 				id: "/(app)/webinars",
 				pattern: /^\/webinars\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 72 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 75 },
 				endpoint: null
 			}
 		],

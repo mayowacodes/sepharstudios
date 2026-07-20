@@ -1,5 +1,6 @@
-import { At as stringify, Dt as spread_props, Lt as attr, Rt as clsx, St as derived, vt as attr_class, yt as attr_style, zt as escape_html } from "./ui-libs.js";
+import { Ct as attr_style, Et as derived, Ht as attr, Pt as stringify, St as attr_class, Ut as clsx, Wt as escape_html, jt as spread_props } from "./ui-libs.js";
 import { t as Icon } from "./Icon.js";
+import { t as Arrow_up_right } from "./arrow-up-right.js";
 import { t as Skeleton } from "./skeleton.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/arrow-down-right.svelte
 function Arrow_down_right($$renderer, $$props) {
@@ -8,16 +9,6 @@ function Arrow_down_right($$renderer, $$props) {
 		{ name: "arrow-down-right" },
 		props,
 		{ iconNode: [["path", { "d": "m7 7 10 10" }], ["path", { "d": "M17 7v10H7" }]] }
-	]));
-}
-//#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/arrow-up-right.svelte
-function Arrow_up_right($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "arrow-up-right" },
-		props,
-		{ iconNode: [["path", { "d": "M7 7h10v10" }], ["path", { "d": "M7 17 17 7" }]] }
 	]));
 }
 //#endregion
@@ -206,4 +197,4 @@ function KpiCard($$renderer, $$props) {
 	});
 }
 //#endregion
-export { Arrow_up_right as n, KpiCard as t };
+export { KpiCard as t };

@@ -1,4 +1,4 @@
-import { Rt as clsx, vt as attr_class } from "./ui-libs.js";
+import { St as attr_class, Ut as clsx } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/spin-loader/spin-loader.svelte
 function Spin_loader($$renderer, $$props) {

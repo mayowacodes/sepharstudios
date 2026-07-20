@@ -1,4 +1,4 @@
-import { Dt as spread_props, g as Label$1, xt as bind_props } from "./ui-libs.js";
+import { Tt as bind_props, b as Label$1, jt as spread_props } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/label/label.svelte
 function Label($$renderer, $$props) {

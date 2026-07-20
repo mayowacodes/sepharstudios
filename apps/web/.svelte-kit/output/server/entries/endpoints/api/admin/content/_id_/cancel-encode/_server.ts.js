@@ -1,21 +1,24 @@
-import { H as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, t as db } from "../../../../../../../chunks/drizzle.js";
+import { t as cancelEncoderWorkflow } from "../../../../../../../chunks/temporal-client.js";
 import { r as Role } from "../../../../../../../chunks/constants.js";
-import { t as cancelEncoderJob } from "../../../../../../../chunks/encoder-orchestrator.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/admin/content/[id]/cancel-encode/+server.ts
 /**
 * POST /api/admin/content/[id]/cancel-encode
 *
-* Admin cancels an in-flight encode. We call the orchestrator's cancel
-* endpoint (gateway model — only the platform talks to the orchestrator);
-* it flips state to CANCELLED and the worker tears down FFmpeg on its next
-* /control poll. A `cancelled` progress webhook then arrives here and
-* settles the row.
+* Admin cancels an in-flight encode. The workflowId IS the encoderJobId
+* (we set it explicitly when starting the workflow at /commit), so
+* cancellation is direct.
 *
-* We optimistically mark `processingStatus='cancelled'` immediately so
-* the UI doesn't spin while the worker poll round-trip plays out, BUT we
-* preserve the existing encoderJobId so the webhook can still match.
+* Temporal raises CancelledFailure inside the running workflow. The
+* encode-hls activity wires that to ffmpeg SIGTERM (see the
+* `ctx.cancellationSignal` handler in encode-hls.activity.ts), so the
+* worker tears down cleanly. The workflow then emits a `cancelled`
+* progress webhook which settles `processing_status` on this row.
+*
+* We optimistically set 'cancelled' here so the UI doesn't spin while the
+* webhook round-trip plays out.
 */
 var POST = async ({ params, locals }) => {
 	const session = await locals.auth.getSession();
@@ -32,11 +35,11 @@ var POST = async ({ params, locals }) => {
 	if (!row.encoderJobId) return json({ error: "No active encoder job for this content" }, { status: 409 });
 	if (["ready", "cancelled"].includes(row.processingStatus ?? "")) return json({ error: `Job is already ${row.processingStatus}` }, { status: 409 });
 	try {
-		await cancelEncoderJob(row.encoderJobId);
+		await cancelEncoderWorkflow(row.encoderJobId);
 	} catch (err) {
-		console.error(`[admin cancel-encode] orchestrator cancel failed for ${contentId}:`, err);
+		console.error(`[admin cancel-encode] Temporal cancel failed for ${contentId}:`, err);
 		return json({
-			error: "Orchestrator cancel failed",
+			error: "Temporal cancel failed",
 			detail: err instanceof Error ? err.message : "unknown"
 		}, { status: 502 });
 	}

@@ -1,0 +1,55 @@
+{
+  "name": "Sephar Studios",
+  "short_name": "Sephar",
+  "description": "Faith-based streaming — watch, earn, and own your entertainment.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#0b0c10",
+  "theme_color": "#FF5E0E",
+  "orientation": "portrait-primary",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo-alone-sepharstudios-bgless.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-alone-sepharstudios-bgless.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.webp",
+      "sizes": "1920x1080",
+      "type": "image/webp",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Home",
+      "url": "/dashboard",
+      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
+    },
+    {
+      "name": "My List",
+      "short_name": "List",
+      "url": "/watchlist",
+      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
+    }
+  ]
+}

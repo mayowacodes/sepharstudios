@@ -1,4 +1,4 @@
-import { H as mediaLibrary, t as db } from "./drizzle.js";
+import { K as mediaLibrary, t as db } from "./drizzle.js";
 import { n as notifyAdmins } from "./notify.js";
 import { n as tryParseJson, t as runAi } from "./ai.js";
 import { eq } from "drizzle-orm";

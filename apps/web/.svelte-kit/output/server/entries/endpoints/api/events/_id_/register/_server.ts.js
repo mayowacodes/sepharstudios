@@ -1,4 +1,4 @@
-import { O as eventRegistrations, k as events, t as db } from "../../../../../../chunks/drizzle.js";
+import { M as events, j as eventRegistrations, t as db } from "../../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, sql } from "drizzle-orm";

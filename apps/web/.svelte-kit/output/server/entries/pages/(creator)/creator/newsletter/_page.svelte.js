@@ -1,15 +1,17 @@
-import { Lt as attr } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr } from "../../../../../chunks/ui-libs.js";
 import { t as Mail } from "../../../../../chunks/mail.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/newsletter/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let email = "";
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Mail,
-			title: "Creator Newsletter",
-			subtitle: "Stay informed with the latest updates, tips, and opportunities."
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Updates",
+			title: "Creator newsletter",
+			subtitle: "Stay informed with the latest updates, tips, and opportunities.",
+			icon: Mail
 		});
 		$$renderer.push(`<!----> `);
 		$$renderer.push("<!--[0-->");

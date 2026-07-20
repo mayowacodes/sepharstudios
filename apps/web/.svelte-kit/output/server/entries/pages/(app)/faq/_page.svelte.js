@@ -1,4 +1,4 @@
-import { Lt as attr, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../chunks/ui-libs.js";
 //#region src/routes/(app)/faq/+page.svelte
 function _page($$renderer) {
 	const faqs = [

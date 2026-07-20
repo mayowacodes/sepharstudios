@@ -1,4 +1,4 @@
-import { At as stringify, Dt as spread_props, Lt as attr, St as derived, Tt as head, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html, jt as spread_props, kt as head } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
 import { t as Calendar } from "../../../../../chunks/calendar.js";
 import { t as External_link } from "../../../../../chunks/external-link.js";
@@ -8,7 +8,7 @@ import { t as Users } from "../../../../../chunks/users.js";
 import { t as Input } from "../../../../../chunks/input.js";
 import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { a as Card, i as Card_content } from "../../../../../chunks/card.js";
 import { t as Label } from "../../../../../chunks/label.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/square-pen.svelte
@@ -136,7 +136,7 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<title>Events · Admin</title>`);
 				});
 			});
-			$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+			$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 			{
 				function actions($$renderer) {
 					Button($$renderer, {
@@ -150,10 +150,12 @@ function _page($$renderer, $$props) {
 						$$slots: { default: true }
 					});
 				}
-				PageHeader($$renderer, {
-					icon: Calendar,
+				PortalHero($$renderer, {
+					compact: true,
+					eyebrow: "Calendar",
 					title: "Events",
 					subtitle: "Webinars, workshops, conferences. Powers /webinars and /creator/events.",
+					icon: Calendar,
 					actions,
 					$$slots: { actions: true }
 				});

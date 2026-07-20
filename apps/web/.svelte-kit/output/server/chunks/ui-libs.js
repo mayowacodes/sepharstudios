@@ -16694,6 +16694,317 @@ function Select_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region ../../node_modules/bits-ui/dist/bits/tabs/tabs.svelte.js
+var tabsAttrs = createBitsAttrs({
+	component: "tabs",
+	parts: [
+		"root",
+		"list",
+		"trigger",
+		"content"
+	]
+});
+var TabsRootContext = new Context("Tabs.Root");
+var TabsRootState = class TabsRootState {
+	static create(opts) {
+		return TabsRootContext.set(new TabsRootState(opts));
+	}
+	opts;
+	attachment;
+	rovingFocusGroup;
+	triggerIds = [];
+	valueToTriggerId = new SvelteMap();
+	valueToContentId = new SvelteMap();
+	constructor(opts) {
+		this.opts = opts;
+		this.attachment = attachRef(opts.ref);
+		this.rovingFocusGroup = new RovingFocusGroup({
+			candidateAttr: tabsAttrs.trigger,
+			rootNode: this.opts.ref,
+			loop: this.opts.loop,
+			orientation: this.opts.orientation
+		});
+	}
+	registerTrigger(id, value) {
+		this.triggerIds.push(id);
+		this.valueToTriggerId.set(value, id);
+		return () => {
+			this.triggerIds = this.triggerIds.filter((triggerId) => triggerId !== id);
+			this.valueToTriggerId.delete(value);
+		};
+	}
+	registerContent(id, value) {
+		this.valueToContentId.set(value, id);
+		return () => {
+			this.valueToContentId.delete(value);
+		};
+	}
+	setValue(v) {
+		this.opts.value.current = v;
+	}
+	#props = derived(() => ({
+		id: this.opts.id.current,
+		"data-orientation": this.opts.orientation.current,
+		[tabsAttrs.root]: "",
+		...this.attachment
+	}));
+	get props() {
+		return this.#props();
+	}
+	set props($$value) {
+		return this.#props($$value);
+	}
+};
+var TabsListState = class TabsListState {
+	static create(opts) {
+		return new TabsListState(opts, TabsRootContext.get());
+	}
+	opts;
+	root;
+	attachment;
+	#isDisabled = derived(() => this.root.opts.disabled.current);
+	constructor(opts, root) {
+		this.opts = opts;
+		this.root = root;
+		this.attachment = attachRef(opts.ref);
+	}
+	#props = derived(() => ({
+		id: this.opts.id.current,
+		role: "tablist",
+		"aria-orientation": this.root.opts.orientation.current,
+		"data-orientation": this.root.opts.orientation.current,
+		[tabsAttrs.list]: "",
+		"data-disabled": boolToEmptyStrOrUndef(this.#isDisabled()),
+		...this.attachment
+	}));
+	get props() {
+		return this.#props();
+	}
+	set props($$value) {
+		return this.#props($$value);
+	}
+};
+var TabsTriggerState = class TabsTriggerState {
+	static create(opts) {
+		return new TabsTriggerState(opts, TabsRootContext.get());
+	}
+	opts;
+	root;
+	attachment;
+	#tabIndex = 0;
+	#isActive = derived(() => this.root.opts.value.current === this.opts.value.current);
+	#isDisabled = derived(() => this.opts.disabled.current || this.root.opts.disabled.current);
+	#ariaControls = derived(() => this.root.valueToContentId.get(this.opts.value.current));
+	constructor(opts, root) {
+		this.opts = opts;
+		this.root = root;
+		this.attachment = attachRef(opts.ref);
+		watch([() => this.opts.id.current, () => this.opts.value.current], ([id, value]) => {
+			return this.root.registerTrigger(id, value);
+		});
+		this.onfocus = this.onfocus.bind(this);
+		this.onclick = this.onclick.bind(this);
+		this.onkeydown = this.onkeydown.bind(this);
+	}
+	#activate() {
+		if (this.root.opts.value.current === this.opts.value.current) return;
+		this.root.setValue(this.opts.value.current);
+	}
+	onfocus(_) {
+		if (this.root.opts.activationMode.current !== "automatic" || this.#isDisabled()) return;
+		this.#activate();
+	}
+	onclick(_) {
+		if (this.#isDisabled()) return;
+		this.#activate();
+	}
+	onkeydown(e) {
+		if (this.#isDisabled()) return;
+		if (e.key === " " || e.key === "Enter") {
+			e.preventDefault();
+			this.#activate();
+			return;
+		}
+		this.root.rovingFocusGroup.handleKeydown(this.opts.ref.current, e);
+	}
+	#props = derived(() => ({
+		id: this.opts.id.current,
+		role: "tab",
+		"data-state": getTabDataState(this.#isActive()),
+		"data-value": this.opts.value.current,
+		"data-orientation": this.root.opts.orientation.current,
+		"data-disabled": boolToEmptyStrOrUndef(this.#isDisabled()),
+		"aria-selected": boolToStr(this.#isActive()),
+		"aria-controls": this.#ariaControls(),
+		[tabsAttrs.trigger]: "",
+		disabled: boolToTrueOrUndef(this.#isDisabled()),
+		tabindex: this.#tabIndex,
+		onclick: this.onclick,
+		onfocus: this.onfocus,
+		onkeydown: this.onkeydown,
+		...this.attachment
+	}));
+	get props() {
+		return this.#props();
+	}
+	set props($$value) {
+		return this.#props($$value);
+	}
+};
+var TabsContentState = class TabsContentState {
+	static create(opts) {
+		return new TabsContentState(opts, TabsRootContext.get());
+	}
+	opts;
+	root;
+	attachment;
+	#isActive = derived(() => this.root.opts.value.current === this.opts.value.current);
+	#ariaLabelledBy = derived(() => this.root.valueToTriggerId.get(this.opts.value.current));
+	constructor(opts, root) {
+		this.opts = opts;
+		this.root = root;
+		this.attachment = attachRef(opts.ref);
+		watch([() => this.opts.id.current, () => this.opts.value.current], ([id, value]) => {
+			return this.root.registerContent(id, value);
+		});
+	}
+	#props = derived(() => ({
+		id: this.opts.id.current,
+		role: "tabpanel",
+		hidden: boolToTrueOrUndef(!this.#isActive()),
+		tabindex: 0,
+		"data-value": this.opts.value.current,
+		"data-state": getTabDataState(this.#isActive()),
+		"aria-labelledby": this.#ariaLabelledBy(),
+		"data-orientation": this.root.opts.orientation.current,
+		[tabsAttrs.content]: "",
+		...this.attachment
+	}));
+	get props() {
+		return this.#props();
+	}
+	set props($$value) {
+		return this.#props($$value);
+	}
+};
+function getTabDataState(condition) {
+	return condition ? "active" : "inactive";
+}
+//#endregion
+//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs.svelte
+function Tabs($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		const uid = props_id($$renderer);
+		let { id = createId(uid), ref = null, value = "", onValueChange = noop, orientation = "horizontal", loop = true, activationMode = "automatic", disabled = false, children, child, $$slots, $$events, ...restProps } = $$props;
+		const rootState = TabsRootState.create({
+			id: boxWith(() => id),
+			value: boxWith(() => value, (v) => {
+				value = v;
+				onValueChange(v);
+			}),
+			orientation: boxWith(() => orientation),
+			loop: boxWith(() => loop),
+			activationMode: boxWith(() => activationMode),
+			disabled: boxWith(() => disabled),
+			ref: boxWith(() => ref, (v) => ref = v)
+		});
+		const mergedProps = derived(() => mergeProps(restProps, rootState.props));
+		if (child) {
+			$$renderer.push("<!--[0-->");
+			child($$renderer, { props: mergedProps() });
+			$$renderer.push(`<!---->`);
+		} else {
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<div${attributes({ ...mergedProps() })}>`);
+			children?.($$renderer);
+			$$renderer.push(`<!----></div>`);
+		}
+		$$renderer.push(`<!--]-->`);
+		bind_props($$props, {
+			ref,
+			value
+		});
+	});
+}
+//#endregion
+//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-content.svelte
+function Tabs_content($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		const uid = props_id($$renderer);
+		let { children, child, id = createId(uid), ref = null, value, $$slots, $$events, ...restProps } = $$props;
+		const contentState = TabsContentState.create({
+			value: boxWith(() => value),
+			id: boxWith(() => id),
+			ref: boxWith(() => ref, (v) => ref = v)
+		});
+		const mergedProps = derived(() => mergeProps(restProps, contentState.props));
+		if (child) {
+			$$renderer.push("<!--[0-->");
+			child($$renderer, { props: mergedProps() });
+			$$renderer.push(`<!---->`);
+		} else {
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<div${attributes({ ...mergedProps() })}>`);
+			children?.($$renderer);
+			$$renderer.push(`<!----></div>`);
+		}
+		$$renderer.push(`<!--]-->`);
+		bind_props($$props, { ref });
+	});
+}
+//#endregion
+//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-list.svelte
+function Tabs_list($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		const uid = props_id($$renderer);
+		let { child, children, id = createId(uid), ref = null, $$slots, $$events, ...restProps } = $$props;
+		const listState = TabsListState.create({
+			id: boxWith(() => id),
+			ref: boxWith(() => ref, (v) => ref = v)
+		});
+		const mergedProps = derived(() => mergeProps(restProps, listState.props));
+		if (child) {
+			$$renderer.push("<!--[0-->");
+			child($$renderer, { props: mergedProps() });
+			$$renderer.push(`<!---->`);
+		} else {
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<div${attributes({ ...mergedProps() })}>`);
+			children?.($$renderer);
+			$$renderer.push(`<!----></div>`);
+		}
+		$$renderer.push(`<!--]-->`);
+		bind_props($$props, { ref });
+	});
+}
+//#endregion
+//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-trigger.svelte
+function Tabs_trigger($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		const uid = props_id($$renderer);
+		let { child, children, disabled = false, id = createId(uid), type = "button", value, ref = null, $$slots, $$events, ...restProps } = $$props;
+		const triggerState = TabsTriggerState.create({
+			id: boxWith(() => id),
+			disabled: boxWith(() => disabled ?? false),
+			value: boxWith(() => value),
+			ref: boxWith(() => ref, (v) => ref = v)
+		});
+		const mergedProps = derived(() => mergeProps(restProps, triggerState.props, { type }));
+		if (child) {
+			$$renderer.push("<!--[0-->");
+			child($$renderer, { props: mergedProps() });
+			$$renderer.push(`<!---->`);
+		} else {
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<button${attributes({ ...mergedProps() })}>`);
+			children?.($$renderer);
+			$$renderer.push(`<!----></button>`);
+		}
+		$$renderer.push(`<!--]-->`);
+		bind_props($$props, { ref });
+	});
+}
+//#endregion
 //#region ../../node_modules/bits-ui/dist/internal/timeout-fn.js
 var TimeoutFn = class {
 	#interval;
@@ -17504,4 +17815,4 @@ function Tooltip_provider($$renderer, $$props) {
 	});
 }
 //#endregion
-export { useId as $, Menu_sub as A, stringify as At, Select_scroll_up_button as B, async_mode_flag as Bt, Popover_trigger as C, element as Ct, Menu_separator as D, spread_props as Dt, Menu_sub_content as E, render as Et, Command_group_items as F, readable as Ft, Select_content as G, setContext as Gt, Select_viewport as H, run as Ht, Command_group_heading as I, writable as It, Avatar_image as J, Separator as K, Command_group as L, attr as Lt, Command_list as M, html as Mt, Command_item as N, derived$1 as Nt, Menu_group as O, store_get as Ot, Command_input as P, get$3 as Pt, Dialog_overlay as Q, Command_empty as R, clsx$1 as Rt, Dialog as S, derived as St, Menu_sub_trigger as T, head as Tt, Select_group as U, getContext as Ut, Select_scroll_down_button as V, noop$1 as Vt, Select_item as W, hasContext as Wt, Dialog_description as X, Avatar as Y, Dialog_trigger as Z, Menu_trigger as _, hydratable as _t, Tooltip as a, Accordion_item as at, Dialog_content as b, attributes as bt, Scroll_area_corner as c, MediaQuery as ct, Scroll_area_viewport as d, asClassComponent as dt, Portal as et, Scroll_area as f, on as ft, Label as g, tick as gt, Popover as h, settled as ht, Tooltip_content as i, Accordion_header as it, Command_separator as j, unsubscribe_stores as jt, Menu_item as k, store_set as kt, Scroll_area_thumb as l, SvelteSet as lt, Radio_group as m, onDestroy as mt, Tooltip_arrow as n, Accordion_content as nt, Select_trigger as o, Accordion as ot, Radio_group_item as p, index_server_exports as pt, Avatar_fallback as q, Tooltip_trigger as r, Accordion_trigger as rt, Select as s, mergeProps as st, Tooltip_provider as t, Dialog_title as tt, Scroll_area_scrollbar as u, createSubscriber as ut, Dropdown_menu_content as v, attr_class as vt, Popover_content as w, ensure_array_like as wt, Dialog_close as x, bind_props as xt, Menu as y, attr_style as yt, Command as z, escape_html as zt };
+export { Avatar as $, Menu_sub_content as A, render as At, Command_group_heading as B, writable as Bt, Menu as C, attr_style as Ct, Popover_trigger as D, element as Dt, Dialog as E, derived as Et, Command_separator as F, unsubscribe_stores as Ft, Select_scroll_down_button as G, async_mode_flag as Gt, Command_empty as H, attr as Ht, Command_list as I, html as It, Select_item as J, getContext as Jt, Select_viewport as K, noop$1 as Kt, Command_item as L, derived$1 as Lt, Menu_group as M, store_get as Mt, Menu_item as N, store_set as Nt, Popover_content as O, ensure_array_like as Ot, Menu_sub as P, stringify as Pt, Avatar_image as Q, Command_input as R, get$3 as Rt, Dropdown_menu_content as S, attr_class as St, Dialog_close as T, bind_props as Tt, Command as U, clsx$1 as Ut, Command_group as V, snapshot as Vt, Select_scroll_up_button as W, escape_html as Wt, Separator as X, setContext as Xt, Select_content as Y, hasContext as Yt, Avatar_fallback as Z, Radio_group_item as _, index_server_exports as _t, Tooltip as a, Dialog_title as at, Label as b, tick as bt, Tabs_content as c, Accordion_header as ct, Select as d, mergeProps as dt, Dialog_description as et, Scroll_area_corner as f, MediaQuery as ft, Scroll_area as g, on as gt, Scroll_area_viewport as h, asClassComponent as ht, Tooltip_content as i, Portal as it, Menu_separator as j, spread_props as jt, Menu_sub_trigger as k, head as kt, Tabs as l, Accordion_item as lt, Scroll_area_scrollbar as m, createSubscriber as mt, Tooltip_arrow as n, Dialog_overlay as nt, Tabs_trigger as o, Accordion_content as ot, Scroll_area_thumb as p, SvelteSet as pt, Select_group as q, run as qt, Tooltip_trigger as r, useId as rt, Tabs_list as s, Accordion_trigger as st, Tooltip_provider as t, Dialog_trigger as tt, Select_trigger as u, Accordion as ut, Radio_group as v, onDestroy as vt, Dialog_content as w, attributes as wt, Menu_trigger as x, hydratable as xt, Popover as y, settled as yt, Command_group_items as z, readable as zt };

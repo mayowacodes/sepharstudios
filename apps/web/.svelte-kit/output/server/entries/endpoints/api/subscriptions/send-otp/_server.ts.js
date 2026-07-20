@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { _t as trialBlacklist, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, xt as trialBlacklist } from "../../../../../chunks/drizzle.js";
 import { n as createOtp, r as getPhoneHash, t as OtpCooldownError } from "../../../../../chunks/otp.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";

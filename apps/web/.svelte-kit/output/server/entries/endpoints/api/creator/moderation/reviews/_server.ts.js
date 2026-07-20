@@ -1,4 +1,4 @@
-import { H as mediaLibrary, a as user, o as abuseReports, st as reviews, t as db } from "../../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, a as user, dt as reviews, o as abuseReports, t as db } from "../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
@@ -37,10 +37,11 @@ var GET = async ({ url, locals }) => {
 		reviewerName: user.name,
 		reviewerImage: user.image
 	}).from(reviews).leftJoin(user, eq(reviews.userId, user.id)).where(inArray(reviews.contentId, contentIds)).orderBy(desc(reviews.createdAt)).limit(200);
-	const reportRows = await db.select({
+	const reviewIds = rows.map((r) => r.id);
+	const reportRows = reviewIds.length === 0 ? [] : await db.select({
 		targetId: abuseReports.targetId,
 		count: sql`count(*)::int`
-	}).from(abuseReports).where(and(eq(abuseReports.targetType, "review"), eq(abuseReports.status, "open"), inArray(abuseReports.targetId, rows.map((r) => r.id)))).groupBy(abuseReports.targetId);
+	}).from(abuseReports).where(and(eq(abuseReports.targetType, "review"), eq(abuseReports.status, "open"), inArray(abuseReports.targetId, reviewIds))).groupBy(abuseReports.targetId);
 	const reportMap = new Map(reportRows.map((r) => [r.targetId, Number(r.count)]));
 	const enriched = rows.map((r) => ({
 		...r,

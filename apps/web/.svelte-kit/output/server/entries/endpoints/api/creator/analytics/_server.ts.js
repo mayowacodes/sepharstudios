@@ -1,4 +1,4 @@
-import { H as mediaLibrary, T as creators, U as mediaWatchProgress, a as user, bt as watchSessionMeta, st as reviews, t as db, v as contentShares } from "../../../../../chunks/drizzle.js";
+import { G as mediaAnalyticsDaily, K as mediaLibrary, a as user, b as contentShares, dt as reviews, q as mediaWatchProgress, t as db, wt as watchSessionMeta } from "../../../../../chunks/drizzle.js";
 import { t as getRedis } from "../../../../../chunks/redis.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
@@ -25,217 +25,263 @@ var PERIOD_DAYS = {
 	"90d": 90,
 	"all": null
 };
+function emptyAnalyticsPayload() {
+	return {
+		overview: {
+			totalViews: 0,
+			totalWatchTime: 0,
+			averageWatchTime: 0,
+			completionRate: 0,
+			totalLikes: 0,
+			totalShares: 0,
+			activeViewers: 0,
+			growthRate: 0
+		},
+		contentPerformance: [],
+		viewsByDevice: [],
+		demographics: {
+			ageGroups: [],
+			genderDistribution: [],
+			topCountries: []
+		},
+		engagementTrends: [],
+		series: {
+			views: [],
+			watchMinutes: [],
+			completion: []
+		},
+		deltas: {
+			views: 0,
+			watchTime: 0,
+			completion: 0
+		}
+	};
+}
 var GET = async ({ locals, url }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
-	const [creator] = await db.select().from(creators).where(eq(creators.userId, session.user.id)).limit(1);
-	if (!creator) return json({ error: "Not a creator" }, { status: 403 });
-	const period = url.searchParams.get("period") ?? "30d";
-	const days = PERIOD_DAYS[period] ?? 30;
-	const cutoff = days ? /* @__PURE__ */ new Date(Date.now() - days * 864e5) : null;
-	const priorCutoff = days ? /* @__PURE__ */ new Date(Date.now() - days * 2 * 864e5) : null;
-	const contentRows = await db.select({
-		id: mediaLibrary.id,
-		title: mediaLibrary.title,
-		viewCount: mediaLibrary.viewCount,
-		thumbnail: mediaLibrary.thumbnail,
-		duration: mediaLibrary.duration,
-		createdAt: mediaLibrary.createdAt
-	}).from(mediaLibrary).where(eq(mediaLibrary.creatorId, session.user.id));
-	if (contentRows.length === 0) return json(emptyResponse(period));
-	const contentIds = contentRows.map((c) => c.id);
-	const progressFilter = cutoff ? and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, cutoff)) : inArray(mediaWatchProgress.contentId, contentIds);
-	const perContent = await db.select({
-		contentId: mediaWatchProgress.contentId,
-		views: sql`count(*)::int`,
-		completedWatches: sql`sum(case when ${mediaWatchProgress.isCompleted} then 1 else 0 end)::int`,
-		avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`,
-		watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`
-	}).from(mediaWatchProgress).where(progressFilter).groupBy(mediaWatchProgress.contentId);
-	const reviewAgg = await db.select({
-		contentId: reviews.contentId,
-		likes: sql`count(*)::int`,
-		avgRating: sql`coalesce(avg(${reviews.rating}), 0)`
-	}).from(reviews).where(and(inArray(reviews.contentId, contentIds), eq(reviews.isApproved, true))).groupBy(reviews.contentId);
-	const reviewByContent = new Map(reviewAgg.map((r) => [r.contentId, r]));
-	const progressByContent = new Map(perContent.map((p) => [p.contentId, p]));
-	let totalViews = 0;
-	let totalWatchSeconds = 0;
-	let totalCompleted = 0;
-	let totalCompletionPctSum = 0;
-	let totalLikes = 0;
-	const contentPerformance = contentRows.map((c) => {
-		const p = progressByContent.get(c.id);
-		const r = reviewByContent.get(c.id);
-		const views = Number(p?.views ?? 0);
-		const completed = Number(p?.completedWatches ?? 0);
-		const avgCompletion = Number(p?.avgCompletion ?? 0);
-		const watchSeconds = Number(p?.watchSeconds ?? 0);
-		const likes = Number(r?.likes ?? 0);
-		totalViews += views;
-		totalWatchSeconds += watchSeconds;
-		totalCompleted += completed;
-		totalCompletionPctSum += avgCompletion * views;
-		totalLikes += likes;
-		return {
-			id: c.id,
-			title: c.title,
-			thumbnail: c.thumbnail,
-			views,
-			watchTime: Math.round(watchSeconds / 60),
-			likes,
-			completionRate: Math.round(avgCompletion),
-			engagement: views > 0 ? Number((likes / views).toFixed(2)) : 0
-		};
-	}).sort((a, b) => b.views - a.views);
-	const avgWatchMinutes = totalViews > 0 ? Math.round(totalWatchSeconds / totalViews / 60 * 10) / 10 : 0;
-	const overallCompletionRate = totalViews > 0 ? Math.round(totalCompletionPctSum / totalViews) : 0;
-	const sharesFilter = cutoff ? and(inArray(contentShares.contentId, contentIds), gte(contentShares.createdAt, cutoff)) : inArray(contentShares.contentId, contentIds);
-	const [shareAgg] = await db.select({ total: sql`count(*)::int` }).from(contentShares).where(sharesFilter);
-	const totalShares = Number(shareAgg?.total ?? 0);
-	let activeViewers = 0;
 	try {
-		const redis = getRedis();
-		const key = `creator:active-viewers:${session.user.id}`;
-		const horizon = Date.now() - 6e4;
-		await redis.zremrangebyscore(key, 0, horizon);
-		activeViewers = await redis.zcard(key);
-	} catch {
-		activeViewers = 0;
-	}
-	let growthRate = 0;
-	if (cutoff && priorCutoff) {
-		const [priorAgg] = await db.select({ views: sql`count(*)::int` }).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, priorCutoff), lt(mediaWatchProgress.updatedAt, cutoff)));
-		const priorViews = Number(priorAgg?.views ?? 0);
-		if (priorViews > 0) growthRate = Math.round((totalViews - priorViews) / priorViews * 100);
-		else if (totalViews > 0) growthRate = 100;
-	}
-	const metaFilter = cutoff ? and(inArray(watchSessionMeta.contentId, contentIds), gte(watchSessionMeta.createdAt, cutoff)) : inArray(watchSessionMeta.contentId, contentIds);
-	const deviceRows = await db.select({
-		deviceType: watchSessionMeta.deviceType,
-		count: sql`count(*)::int`
-	}).from(watchSessionMeta).where(metaFilter).groupBy(watchSessionMeta.deviceType);
-	const deviceTotal = deviceRows.reduce((sum, r) => sum + Number(r.count), 0);
-	const viewsByDevice = deviceRows.filter((r) => r.deviceType).map((r) => ({
-		device: r.deviceType ?? "unknown",
-		count: Number(r.count),
-		pct: deviceTotal > 0 ? Math.round(Number(r.count) / deviceTotal * 100) : 0
-	})).sort((a, b) => b.count - a.count);
-	const topCountries = (await db.select({
-		country: watchSessionMeta.country,
-		count: sql`count(*)::int`
-	}).from(watchSessionMeta).where(metaFilter).groupBy(watchSessionMeta.country).orderBy(sql`count(*) desc`).limit(10)).filter((r) => r.country).map((r) => ({
-		country: r.country ?? "XX",
-		count: Number(r.count)
-	}));
-	let trends = [];
-	const seriesDays = Math.min(days ?? 30, 30);
-	const seriesViews = new Array(seriesDays).fill(0);
-	const seriesWatchMinutes = new Array(seriesDays).fill(0);
-	const seriesCompletion = new Array(seriesDays).fill(0);
-	if (days && days <= 90) {
-		const trendRows = await db.select({
-			day: sql`to_char(date_trunc('day', ${mediaWatchProgress.updatedAt}), 'YYYY-MM-DD')`,
+		const period = url.searchParams.get("period") ?? "30d";
+		const days = PERIOD_DAYS[period] ?? 30;
+		const cutoff = days ? /* @__PURE__ */ new Date(Date.now() - days * 864e5) : null;
+		const priorCutoff = days ? /* @__PURE__ */ new Date(Date.now() - days * 2 * 864e5) : null;
+		const contentRows = await db.select({
+			id: mediaLibrary.id,
+			title: mediaLibrary.title,
+			viewCount: mediaLibrary.viewCount,
+			thumbnail: mediaLibrary.thumbnail,
+			duration: mediaLibrary.duration,
+			createdAt: mediaLibrary.createdAt
+		}).from(mediaLibrary).where(eq(mediaLibrary.creatorId, session.user.id));
+		if (contentRows.length === 0) return json(emptyResponse(period));
+		const contentIds = contentRows.map((c) => c.id);
+		const progressFilter = cutoff ? and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, cutoff)) : inArray(mediaWatchProgress.contentId, contentIds);
+		const sharesFilter = cutoff ? and(inArray(contentShares.contentId, contentIds), gte(contentShares.createdAt, cutoff)) : inArray(contentShares.contentId, contentIds);
+		const metaFilter = cutoff ? and(inArray(watchSessionMeta.contentId, contentIds), gte(watchSessionMeta.createdAt, cutoff)) : inArray(watchSessionMeta.contentId, contentIds);
+		const activeViewersQ = (async () => {
+			try {
+				const redis = getRedis();
+				const key = `creator:active-viewers:${session.user.id}`;
+				const horizon = Date.now() - 6e4;
+				await redis.zremrangebyscore(key, 0, horizon);
+				return await redis.zcard(key);
+			} catch {
+				return 0;
+			}
+		})();
+		const priorWindowQ = cutoff && priorCutoff ? db.select({
 			views: sql`count(*)::int`,
 			watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
 			avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
-		}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, cutoff))).groupBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`).orderBy(sql`date_trunc('day', ${mediaWatchProgress.updatedAt})`);
+		}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, priorCutoff), lt(mediaWatchProgress.updatedAt, cutoff))).then((r) => r[0]) : Promise.resolve(void 0);
+		const trendRowsQ = days && days <= 90 ? db.select({
+			day: sql`to_char(${mediaAnalyticsDaily.day}, 'YYYY-MM-DD')`,
+			views: sql`sum(${mediaAnalyticsDaily.views})::int`,
+			watchSeconds: sql`coalesce(sum(${mediaAnalyticsDaily.watchSeconds}), 0)`,
+			avgCompletion: sql`CASE WHEN sum(${mediaAnalyticsDaily.views}) > 0
+					THEN sum(${mediaAnalyticsDaily.completionPctSum}) / sum(${mediaAnalyticsDaily.views})
+					ELSE 0 END`
+		}).from(mediaAnalyticsDaily).where(and(inArray(mediaAnalyticsDaily.contentId, contentIds), gte(mediaAnalyticsDaily.day, sql`${cutoff.toISOString().slice(0, 10)}::date`))).groupBy(mediaAnalyticsDaily.day).orderBy(mediaAnalyticsDaily.day) : Promise.resolve([]);
+		const [perContent, reviewAgg, shareAgg, activeViewers, priorWindow, deviceRows, countryRows, trendRows, ageRows, genderRows] = await Promise.all([
+			db.select({
+				contentId: mediaWatchProgress.contentId,
+				views: sql`count(*)::int`,
+				completedWatches: sql`sum(case when ${mediaWatchProgress.isCompleted} then 1 else 0 end)::int`,
+				avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`,
+				watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`
+			}).from(mediaWatchProgress).where(progressFilter).groupBy(mediaWatchProgress.contentId),
+			db.select({
+				contentId: reviews.contentId,
+				likes: sql`count(*)::int`,
+				avgRating: sql`coalesce(avg(${reviews.rating}), 0)`
+			}).from(reviews).where(and(inArray(reviews.contentId, contentIds), eq(reviews.isApproved, true))).groupBy(reviews.contentId),
+			db.select({ total: sql`count(*)::int` }).from(contentShares).where(sharesFilter).then((r) => r[0]),
+			activeViewersQ,
+			priorWindowQ,
+			db.select({
+				deviceType: watchSessionMeta.deviceType,
+				count: sql`count(*)::int`
+			}).from(watchSessionMeta).where(metaFilter).groupBy(watchSessionMeta.deviceType),
+			db.select({
+				country: watchSessionMeta.country,
+				count: sql`count(*)::int`
+			}).from(watchSessionMeta).where(metaFilter).groupBy(watchSessionMeta.country).orderBy(sql`count(*) desc`).limit(10),
+			trendRowsQ,
+			db.select({
+				bucket: sql`
+					CASE
+						WHEN ${user.dateOfBirth} IS NULL THEN NULL
+						WHEN date_part('year', age(${user.dateOfBirth})) < 18 THEN '<18'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 25 THEN '18-24'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 35 THEN '25-34'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 45 THEN '35-44'
+						WHEN date_part('year', age(${user.dateOfBirth})) < 55 THEN '45-54'
+						ELSE '55+'
+					END
+				`,
+				count: sql`count(*)::int`
+			}).from(watchSessionMeta).innerJoin(user, eq(user.id, watchSessionMeta.userId)).where(and(inArray(watchSessionMeta.contentId, contentIds), isNotNull(user.dateOfBirth), cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`)).groupBy(sql`1`),
+			db.select({
+				gender: user.gender,
+				count: sql`count(*)::int`
+			}).from(watchSessionMeta).innerJoin(user, eq(user.id, watchSessionMeta.userId)).where(and(inArray(watchSessionMeta.contentId, contentIds), isNotNull(user.gender), cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`)).groupBy(user.gender)
+		]);
+		const reviewByContent = new Map(reviewAgg.map((r) => [r.contentId, r]));
+		const progressByContent = new Map(perContent.map((p) => [p.contentId, p]));
+		let totalViews = 0;
+		let totalWatchSeconds = 0;
+		let totalCompleted = 0;
+		let totalCompletionPctSum = 0;
+		let totalLikes = 0;
+		const contentPerformance = contentRows.map((c) => {
+			const p = progressByContent.get(c.id);
+			const r = reviewByContent.get(c.id);
+			const views = Number(p?.views ?? 0);
+			const completed = Number(p?.completedWatches ?? 0);
+			const avgCompletion = Number(p?.avgCompletion ?? 0);
+			const watchSeconds = Number(p?.watchSeconds ?? 0);
+			const likes = Number(r?.likes ?? 0);
+			totalViews += views;
+			totalWatchSeconds += watchSeconds;
+			totalCompleted += completed;
+			totalCompletionPctSum += avgCompletion * views;
+			totalLikes += likes;
+			return {
+				id: c.id,
+				title: c.title,
+				thumbnail: c.thumbnail,
+				views,
+				watchTime: Math.round(watchSeconds / 60),
+				likes,
+				completionRate: Math.round(avgCompletion),
+				engagement: views > 0 ? Number((likes / views).toFixed(2)) : 0
+			};
+		}).sort((a, b) => b.views - a.views);
+		const avgWatchMinutes = totalViews > 0 ? Math.round(totalWatchSeconds / totalViews / 60 * 10) / 10 : 0;
+		const overallCompletionRate = totalViews > 0 ? Math.round(totalCompletionPctSum / totalViews) : 0;
+		const totalShares = Number(shareAgg?.total ?? 0);
+		let growthRate = 0;
+		if (priorWindow) {
+			const priorViews = Number(priorWindow.views ?? 0);
+			if (priorViews > 0) growthRate = Math.round((totalViews - priorViews) / priorViews * 100);
+			else if (totalViews > 0) growthRate = 100;
+		}
+		const deviceTotal = deviceRows.reduce((sum, r) => sum + Number(r.count), 0);
+		const viewsByDevice = deviceRows.filter((r) => r.deviceType).map((r) => ({
+			device: r.deviceType ?? "unknown",
+			count: Number(r.count),
+			pct: deviceTotal > 0 ? Math.round(Number(r.count) / deviceTotal * 100) : 0
+		})).sort((a, b) => b.count - a.count);
+		const topCountries = countryRows.filter((r) => r.country).map((r) => ({
+			country: r.country ?? "XX",
+			count: Number(r.count)
+		}));
+		let trends = [];
+		const seriesDays = Math.min(days ?? 30, 30);
+		const seriesViews = new Array(seriesDays).fill(0);
+		const seriesWatchMinutes = new Array(seriesDays).fill(0);
+		const seriesCompletion = new Array(seriesDays).fill(0);
 		trends = trendRows.map((r) => ({
 			date: r.day,
 			views: Number(r.views)
 		}));
-		const today = /* @__PURE__ */ new Date();
-		today.setHours(0, 0, 0, 0);
-		for (const r of trendRows) {
-			const d = new Date(r.day);
-			const ago = Math.floor((today.getTime() - d.getTime()) / 864e5);
-			const idx = seriesDays - 1 - ago;
-			if (idx >= 0 && idx < seriesDays) {
-				seriesViews[idx] = Number(r.views);
-				seriesWatchMinutes[idx] = Math.round(Number(r.watchSeconds) / 60);
-				seriesCompletion[idx] = Math.round(Number(r.avgCompletion));
+		{
+			const today = /* @__PURE__ */ new Date();
+			today.setHours(0, 0, 0, 0);
+			for (const r of trendRows) {
+				const d = new Date(r.day);
+				const ago = Math.floor((today.getTime() - d.getTime()) / 864e5);
+				const idx = seriesDays - 1 - ago;
+				if (idx >= 0 && idx < seriesDays) {
+					seriesViews[idx] = Number(r.views);
+					seriesWatchMinutes[idx] = Math.round(Number(r.watchSeconds) / 60);
+					seriesCompletion[idx] = Math.round(Number(r.avgCompletion));
+				}
 			}
 		}
-	}
-	let watchTimeDelta = 0;
-	let completionDelta = 0;
-	if (cutoff && priorCutoff) {
-		const [priorRow] = await db.select({
-			watchSeconds: sql`coalesce(sum(${mediaWatchProgress.positionSeconds}), 0)`,
-			avgCompletion: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)`
-		}).from(mediaWatchProgress).where(and(inArray(mediaWatchProgress.contentId, contentIds), gte(mediaWatchProgress.updatedAt, priorCutoff), lt(mediaWatchProgress.updatedAt, cutoff)));
-		const priorWatchSeconds = Number(priorRow?.watchSeconds ?? 0);
-		const priorAvgCompletion = Number(priorRow?.avgCompletion ?? 0);
-		if (priorWatchSeconds > 0) watchTimeDelta = Math.round((totalWatchSeconds - priorWatchSeconds) / priorWatchSeconds * 1e3) / 10;
-		else if (totalWatchSeconds > 0) watchTimeDelta = 100;
-		if (priorAvgCompletion > 0) completionDelta = Math.round((overallCompletionRate - priorAvgCompletion) / priorAvgCompletion * 1e3) / 10;
-		else if (overallCompletionRate > 0) completionDelta = 100;
-	}
-	const ageGroups = (await db.select({
-		bucket: sql`
-				CASE
-					WHEN ${user.dateOfBirth} IS NULL THEN NULL
-					WHEN date_part('year', age(${user.dateOfBirth})) < 18 THEN '<18'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 25 THEN '18-24'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 35 THEN '25-34'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 45 THEN '35-44'
-					WHEN date_part('year', age(${user.dateOfBirth})) < 55 THEN '45-54'
-					ELSE '55+'
-				END
-			`,
-		count: sql`count(*)::int`
-	}).from(watchSessionMeta).innerJoin(user, eq(user.id, watchSessionMeta.userId)).where(and(inArray(watchSessionMeta.contentId, contentIds), isNotNull(user.dateOfBirth), cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`)).groupBy(sql`1`)).filter((r) => r.bucket).map((r) => ({
-		bucket: r.bucket ?? "unknown",
-		count: Number(r.count)
-	})).sort((a, b) => {
-		const order = [
-			"<18",
-			"18-24",
-			"25-34",
-			"35-44",
-			"45-54",
-			"55+"
-		];
-		return order.indexOf(a.bucket) - order.indexOf(b.bucket);
-	});
-	const genderDistribution = (await db.select({
-		gender: user.gender,
-		count: sql`count(*)::int`
-	}).from(watchSessionMeta).innerJoin(user, eq(user.id, watchSessionMeta.userId)).where(and(inArray(watchSessionMeta.contentId, contentIds), isNotNull(user.gender), cutoff ? gte(watchSessionMeta.createdAt, cutoff) : sql`true`)).groupBy(user.gender)).filter((r) => r.gender).map((r) => ({
-		gender: r.gender ?? "unknown",
-		count: Number(r.count)
-	}));
-	return json({
-		period,
-		overview: {
-			totalViews,
-			totalWatchTime: Math.round(totalWatchSeconds / 60),
-			averageWatchTime: avgWatchMinutes,
-			completionRate: overallCompletionRate,
-			totalLikes,
-			totalShares,
-			activeViewers,
-			growthRate
-		},
-		contentPerformance,
-		viewsByDevice,
-		demographics: {
-			ageGroups,
-			genderDistribution,
-			topCountries
-		},
-		engagementTrends: trends,
-		series: {
-			views: seriesViews,
-			watchMinutes: seriesWatchMinutes,
-			completion: seriesCompletion
-		},
-		deltas: {
-			views: growthRate,
-			watchTime: watchTimeDelta,
-			completion: completionDelta
+		let watchTimeDelta = 0;
+		let completionDelta = 0;
+		if (priorWindow) {
+			const priorWatchSeconds = Number(priorWindow.watchSeconds ?? 0);
+			const priorAvgCompletion = Number(priorWindow.avgCompletion ?? 0);
+			if (priorWatchSeconds > 0) watchTimeDelta = Math.round((totalWatchSeconds - priorWatchSeconds) / priorWatchSeconds * 1e3) / 10;
+			else if (totalWatchSeconds > 0) watchTimeDelta = 100;
+			if (priorAvgCompletion > 0) completionDelta = Math.round((overallCompletionRate - priorAvgCompletion) / priorAvgCompletion * 1e3) / 10;
+			else if (overallCompletionRate > 0) completionDelta = 100;
 		}
-	});
+		const ageGroups = ageRows.filter((r) => r.bucket).map((r) => ({
+			bucket: r.bucket ?? "unknown",
+			count: Number(r.count)
+		})).sort((a, b) => {
+			const order = [
+				"<18",
+				"18-24",
+				"25-34",
+				"35-44",
+				"45-54",
+				"55+"
+			];
+			return order.indexOf(a.bucket) - order.indexOf(b.bucket);
+		});
+		const genderDistribution = genderRows.filter((r) => r.gender).map((r) => ({
+			gender: r.gender ?? "unknown",
+			count: Number(r.count)
+		}));
+		return json({
+			period,
+			overview: {
+				totalViews,
+				totalWatchTime: Math.round(totalWatchSeconds / 60),
+				averageWatchTime: avgWatchMinutes,
+				completionRate: overallCompletionRate,
+				totalLikes,
+				totalShares,
+				activeViewers,
+				growthRate
+			},
+			contentPerformance,
+			viewsByDevice,
+			demographics: {
+				ageGroups,
+				genderDistribution,
+				topCountries
+			},
+			engagementTrends: trends,
+			series: {
+				views: seriesViews,
+				watchMinutes: seriesWatchMinutes,
+				completion: seriesCompletion
+			},
+			deltas: {
+				views: growthRate,
+				watchTime: watchTimeDelta,
+				completion: completionDelta
+			}
+		});
+	} catch (err) {
+		console.error("[creator/analytics] pipeline failed; returning empty payload:", err instanceof Error ? err.message : err);
+		return json(emptyAnalyticsPayload());
+	}
 };
 function emptyResponse(period) {
 	return {

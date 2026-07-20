@@ -155,8 +155,7 @@
             type="radio"
             name="contentType"
             value={type.value}
-            checked={contentType === type.value}
-            onchange={() => (contentType = type.value)}
+            bind:group={contentType}
             class="sr-only"
           />
           <div class="p-4 border-2 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] {contentType === type.value ? 'border-primary bg-primary/10 shadow-[0_0_15px_hsla(var(--primary)/0.25)] scale-[1.02]' : 'border-border bg-white/2 hover:border-muted-foreground/30'}">
@@ -243,8 +242,7 @@
             type="radio"
             name="audience"
             value={a.value}
-            checked={audience === a.value}
-            onchange={() => (audience = a.value)}
+            bind:group={audience}
             class="sr-only"
           />
           <div class="p-4 border-2 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] {audience === a.value ? 'border-primary bg-primary/10 shadow-[0_0_15px_hsla(var(--primary)/0.25)] scale-[1.02]' : 'border-border bg-white/2 hover:border-muted-foreground/30'}">
@@ -312,8 +310,7 @@
             type="radio"
             name="ageRating"
             value={rating.value}
-            checked={ageRating === rating.value}
-            onchange={() => (ageRating = rating.value)}
+            bind:group={ageRating}
             class="sr-only"
           />
           <div class="p-3 border-2 rounded-xl text-center transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] {ageRating === rating.value ? 'border-secondary bg-secondary/10 shadow-[0_0_15px_hsla(var(--secondary)/0.25)] scale-[1.02]' : 'border-border bg-white/2 hover:border-muted-foreground/30'}">

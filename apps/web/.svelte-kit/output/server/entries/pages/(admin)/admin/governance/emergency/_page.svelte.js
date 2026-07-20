@@ -1,6 +1,6 @@
-import { Lt as attr, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, Wt as escape_html, kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Triangle_alert } from "../../../../../../chunks/triangle-alert.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#region src/routes/(admin)/admin/governance/emergency/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -11,11 +11,16 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Emergency - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
-		PageHeader($$renderer, {
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "DAO · Critical",
+			title: "Emergency controls",
+			subtitle: "Security-incident pause + audit log.",
 			icon: Triangle_alert,
-			title: "Emergency Controls",
-			subtitle: "Security-incident pause + audit log."
+			statusDot: true,
+			statusText: "Pause + audit",
+			statusTone: "danger"
 		});
 		$$renderer.push(`<!----> <div class="rounded-xl border border-border/40 surface-1 p-4 space-y-3"><h2 class="text-lg text-foreground font-semibold">Trigger Emergency Pause</h2> <p class="text-xs text-muted-foreground">Use only for security incidents. Reason is mandatory and audited.</p> <textarea class="w-full min-h-24 bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground">`);
 		const $$body = escape_html(reason);

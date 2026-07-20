@@ -1,7 +1,6 @@
-import { Dt as spread_props, It as writable, Lt as attr, Ot as store_get, Tt as head, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Bt as writable, Ft as unsubscribe_stores, Ht as attr, Mt as store_get, Ot as ensure_array_like, St as attr_class, Tt as bind_props, Wt as escape_html, jt as spread_props, kt as head } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
-import { t as WalletConnect } from "../../../../chunks/WalletConnect.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
 import { t as Chevron_right } from "../../../../chunks/chevron-right.js";
 import { n as Clapperboard, t as List_video } from "../../../../chunks/list-video.js";
@@ -20,6 +19,7 @@ import { a as Sheet_trigger, i as Sheet_content, o as Sheet } from "../../../../
 import { a as isConnected } from "../../../../chunks/wallet2.js";
 import { n as RecentlyWatched, t as Recommendations } from "../../../../chunks/Recommendations2.js";
 import "../../../../chunks/contracts2.js";
+import { t as WalletConnect } from "../../../../chunks/WalletConnect.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/circle-plus.svelte
 function Circle_plus($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -55,8 +55,8 @@ var currentProfile = writable(null);
 function EditProfileModal($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { isOpen = false, profile, onSave, onClose } = $$props;
-		let newName = profile.name;
-		let newAvatarUrl = profile.avatarUrl ?? "";
+		let newName = "";
+		let newAvatarUrl = "";
 		if (isOpen) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="edit-profile-title" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm"><h2 id="edit-profile-title" class="text-xl font-semibold mb-4">Edit Profile</h2> <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700">Profile Name</label> <input id="name" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newName)} placeholder="Enter profile name"/></div> <div class="mb-4"><label for="avatar" class="block text-sm font-medium text-gray-700">Avatar URL</label> <input id="avatar" type="text" class="mt-1 p-2 w-full border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"${attr("value", newAvatarUrl)} placeholder="Enter avatar URL or base64 image"/></div> <div class="flex justify-end gap-4"><button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button> <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>`);
@@ -325,8 +325,8 @@ function AccountSettings($$renderer, $$props) {
 			email: "user@example.com",
 			password: "••••••••"
 		} } = $$props;
-		let newEmail = accountSettings.email;
-		let newPassword = accountSettings.password;
+		let newEmail = "";
+		let newPassword = "";
 		const updateAccountDetails = () => {
 			accountSettings.email = newEmail;
 			accountSettings.password = newPassword;

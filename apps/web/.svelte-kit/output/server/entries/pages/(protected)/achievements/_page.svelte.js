@@ -1,4 +1,4 @@
-import { St as derived, Tt as head, wt as ensure_array_like } from "../../../../chunks/ui-libs.js";
+import { Et as derived, Ot as ensure_array_like, kt as head } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/Icon.js";
 import "../../../../chunks/star.js";
 import { t as Trophy } from "../../../../chunks/trophy.js";

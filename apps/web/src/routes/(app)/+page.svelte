@@ -369,7 +369,7 @@
             </div>
             <h3 class="text-lg font-bold mb-2">Earn While You Watch</h3>
             <p class="text-white/55 text-sm font-light leading-relaxed">
-              Earn <span class="text-white/80 font-medium">1 STC per hour</span> of content watched, up to <span class="text-white/80 font-medium">5 STC per day</span>. Refer a friend and get a <span class="text-white/80 font-medium">10 STC bonus</span> when they subscribe.
+              Earn <span class="text-white/80 font-medium">1 STC per 20 hours</span> of content watched, up to <span class="text-white/80 font-medium">5 STC per day</span>. Refer a friend and get a <span class="text-white/80 font-medium">10 STC bonus</span> when they subscribe.
             </p>
           </div>
 

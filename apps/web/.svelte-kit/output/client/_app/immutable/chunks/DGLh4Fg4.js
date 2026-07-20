@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./s06JaHMU.js";import{t as n}from"./C8O-dUT5.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z`}]];n(r,t({name:`message-square`},()=>a,{get iconNode(){return o}}))}export{r as t};

@@ -1,4 +1,4 @@
-import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../chunks/ui-libs.js";
 import { t as PortalShell } from "../../../../chunks/PortalShell.js";
 /* empty css                      */
 import { t as page } from "../../../../chunks/state.js";

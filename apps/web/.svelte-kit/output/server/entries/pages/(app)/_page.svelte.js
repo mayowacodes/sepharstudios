@@ -1,15 +1,19 @@
-import { St as derived } from "../../../chunks/ui-libs.js";
+import { Et as derived } from "../../../chunks/ui-libs.js";
 import { t as Constants } from "../../../chunks/constants.js";
 import "../../../chunks/Icon.js";
 import "../../../chunks/circle-play.js";
 import "../../../chunks/coins.js";
 import "../../../chunks/crown.js";
+import "../../../chunks/film.js";
 import "../../../chunks/lock.js";
 import { t as Mail } from "../../../chunks/mail.js";
+import "../../../chunks/play.js";
 import { t as Shield_alert } from "../../../chunks/shield-alert.js";
 import "../../../chunks/sparkles.js";
 import "../../../chunks/trending-up.js";
 import "../../../chunks/users.js";
+import "../../../chunks/ComingSoonRow.js";
+import "../../../chunks/volume-x.js";
 import { t as X } from "../../../chunks/x.js";
 import "../../../chunks/zap.js";
 import { t as page } from "../../../chunks/state.js";
@@ -62,6 +66,25 @@ function _page($$renderer, $$props) {
 				items: data.documentaries || []
 			}
 		]);
+		const featuredTrailer = derived(() => {
+			const pools = [
+				data.movies,
+				data.shows,
+				data.documentaries
+			];
+			for (const pool of pools) {
+				const match = pool?.find((m) => typeof m.trailerUrl === "string" && m.trailerUrl.startsWith("http"));
+				if (match) return match;
+			}
+			return null;
+		});
+		derived(() => {
+			if (!featuredTrailer()) return "/movies";
+			const slug = featuredTrailer().slug || featuredTrailer().id || "";
+			if (featuredTrailer().category === "kids") return `/kids/kiddies/${slug}`;
+			if (featuredTrailer().category === "teens") return `/kids/teens/${slug}`;
+			return `/movies/${slug}`;
+		});
 		$$renderer.push(`<div class="relative overflow-hidden min-h-screen bg-(--surface-charcoal) text-white"><div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div> `);
 		AccessDeniedBanner($$renderer, {});
 		$$renderer.push(`<!----> <main class="container relative z-10 pt-32 pb-16 mx-auto px-4">`);

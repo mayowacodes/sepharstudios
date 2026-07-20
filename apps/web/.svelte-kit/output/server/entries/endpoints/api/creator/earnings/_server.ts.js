@@ -1,7 +1,7 @@
 import { n as public_env, t as private_env } from "../../../../../chunks/shared-server.js";
-import { H as mediaLibrary, T as creators, U as mediaWatchProgress, gt as transactions, t as db, tt as ppvPurchases } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, O as creators, at as ppvPurchases, bt as transactions, q as mediaWatchProgress, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { createPublicClient, http, isAddress, parseAbi } from "viem";
 import { polygon, polygonAmoy } from "viem/chains";
 //#region src/lib/server/creator-tier.ts
@@ -95,9 +95,12 @@ var GET = async ({ locals }) => {
 	const aggregates = await db.select({
 		currency: transactions.currency,
 		total: sql`coalesce(sum(${transactions.amount}), 0)`,
-		month: sql`coalesce(sum(case when ${transactions.createdAt} >= ${monthStart} then ${transactions.amount} else 0 end), 0)`,
-		year: sql`coalesce(sum(case when ${transactions.createdAt} >= ${yearStart} then ${transactions.amount} else 0 end), 0)`
-	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"))).groupBy(transactions.currency);
+		month: sql`coalesce(sum(case when ${transactions.createdAt} >= ${monthStart.toISOString()} then ${transactions.amount} else 0 end), 0)`,
+		year: sql`coalesce(sum(case when ${transactions.createdAt} >= ${yearStart.toISOString()} then ${transactions.amount} else 0 end), 0)`
+	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"))).groupBy(transactions.currency).catch((err) => {
+		console.warn("[creator/earnings] aggregates failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const totals = {
 		monthCents: 0,
 		yearCents: 0,
@@ -121,7 +124,10 @@ var GET = async ({ locals }) => {
 		status: transactions.status,
 		createdAt: transactions.createdAt,
 		metadata: transactions.metadata
-	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"))).orderBy(desc(transactions.createdAt)).limit(20);
+	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"))).orderBy(desc(transactions.createdAt)).limit(20).catch((err) => {
+		console.warn("[creator/earnings] recentPayments failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const contentRows = await db.select({
 		id: mediaLibrary.id,
 		title: mediaLibrary.title,
@@ -139,7 +145,7 @@ var GET = async ({ locals }) => {
 		const ppvRows = await db.select({
 			contentId: ppvPurchases.contentId,
 			lifetimeCents: sql`coalesce(sum(${ppvPurchases.amountPaidCents}), 0)::int`,
-			last30dCents: sql`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
+			last30dCents: sql`coalesce(sum(case when ${ppvPurchases.createdAt} >= ${thirtyDaysAgo.toISOString()} then ${ppvPurchases.amountPaidCents} else 0 end), 0)::int`,
 			purchaseCount: sql`count(*)::int`
 		}).from(ppvPurchases).where(inArray(ppvPurchases.contentId, contentIds)).groupBy(ppvPurchases.contentId);
 		const ppvMap = new Map(ppvRows.map((r) => [r.contentId, r]));
@@ -164,7 +170,10 @@ var GET = async ({ locals }) => {
 	const dailyRows = await db.select({
 		day: sql`to_char(date_trunc('day', ${transactions.createdAt}), 'YYYY-MM-DD')`,
 		cents: sql`coalesce(sum(${transactions.amount}), 0)::int`
-	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), gte(transactions.createdAt, sinceDate))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`);
+	}).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), gte(transactions.createdAt, sinceDate))).groupBy(sql`date_trunc('day', ${transactions.createdAt})`).catch((err) => {
+		console.warn("[creator/earnings] dailyRows failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const today = /* @__PURE__ */ new Date();
 	today.setHours(0, 0, 0, 0);
 	for (const r of dailyRows) {
@@ -175,7 +184,10 @@ var GET = async ({ locals }) => {
 	}
 	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
-	const [lastMonthAgg] = await db.select({ total: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"), gte(transactions.createdAt, lastMonthStart), sql`${transactions.createdAt} < ${lastMonthEnd}`));
+	const [lastMonthAgg] = await db.select({ total: sql`coalesce(sum(${transactions.amount}), 0)::int` }).from(transactions).where(and(eq(transactions.userId, session.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"), gte(transactions.createdAt, lastMonthStart), lt(transactions.createdAt, lastMonthEnd))).catch((err) => {
+		console.warn("[creator/earnings] lastMonthAgg failed:", err instanceof Error ? err.message : err);
+		return [{ total: 0 }];
+	});
 	const lastMonthCents = Number(lastMonthAgg?.total ?? 0);
 	const earningsDelta = lastMonthCents > 0 ? Math.round((totals.monthCents - lastMonthCents) / lastMonthCents * 1e3) / 10 : totals.monthCents > 0 ? 100 : 0;
 	const tierResolved = await resolveCreatorTier({

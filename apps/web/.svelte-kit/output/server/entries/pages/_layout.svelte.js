@@ -1,4 +1,4 @@
-import { At as stringify, Dt as spread_props, Ht as run, Lt as attr, Mt as html, Ot as store_get, Rt as clsx, St as derived, Tt as head, bt as attributes, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../chunks/ui-libs.js";
+import { Ct as attr_style, Et as derived, Ft as unsubscribe_stores, Ht as attr, It as html, Mt as store_get, Ot as ensure_array_like, Pt as stringify, St as attr_class, Ut as clsx, Wt as escape_html, jt as spread_props, kt as head, qt as run, wt as attributes } from "../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../chunks/constants.js";
 /* empty css                */
 import { a as cn, i as sonnerContext, r as toastState, t as SonnerState } from "../../chunks/toast-state.svelte.js";
@@ -630,7 +630,20 @@ function _layout($$renderer, $$props) {
 		});
 		Toaster($$renderer, {
 			richColors: true,
-			position: "top-center"
+			position: "top-right",
+			theme: "dark",
+			closeButton: true,
+			expand: false,
+			visibleToasts: 4,
+			toastOptions: {
+				duration: 4500,
+				classes: {
+					toast: "portal-toast",
+					title: "portal-toast-title",
+					description: "portal-toast-desc",
+					closeButton: "portal-toast-close"
+				}
+			}
 		});
 		$$renderer.push(`<!----> `);
 		Mode_watcher($$renderer, {

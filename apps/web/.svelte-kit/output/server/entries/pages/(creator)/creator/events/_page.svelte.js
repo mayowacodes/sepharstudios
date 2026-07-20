@@ -1,7 +1,7 @@
-import { Lt as attr, St as derived, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Calendar } from "../../../../../chunks/calendar.js";
 import "../../../../../chunks/navigation.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/events/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -29,11 +29,13 @@ function _page($$renderer, $$props) {
 				masterclass: "🎓"
 			}[type] || "📅";
 		}
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Calendar,
-			title: "Creator Events",
-			subtitle: "Learn, grow, and connect with fellow faith-based creators."
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Calendar",
+			title: "Events",
+			subtitle: "Learn, grow, and connect with fellow faith-based creators.",
+			icon: Calendar
 		});
 		$$renderer.push(`<!----> `);
 		if (featured()) {

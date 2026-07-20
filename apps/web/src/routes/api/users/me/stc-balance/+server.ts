@@ -2,6 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { transactions } from '$lib/db/schema/sepharstudios';
 import { and, eq, sql } from 'drizzle-orm';
+import { getStcProgress, HOURS_PER_TOKEN, MAX_TOKENS_PER_DAY } from '$lib/server/stc-hours';
 
 /**
  * GET /api/users/me/stc-balance
@@ -51,10 +52,18 @@ export const GET: RequestHandler = async ({ locals }) => {
     else if (row.status === 'failed') balance.failed = total;
   }
 
+  const progress = await getStcProgress(session.user.id).catch(() => null);
+
   return json({
     currency: 'STC',
     pending: balance.pending,
     completed: balance.completed,
-    total: balance.pending + balance.completed
+    total: balance.pending + balance.completed,
+    hoursPerToken: HOURS_PER_TOKEN,
+    maxTokensPerDay: MAX_TOKENS_PER_DAY,
+    hoursWatched: progress?.hoursWatched ?? 0,
+    hoursToNextToken: progress?.hoursToNextToken ?? HOURS_PER_TOKEN,
+    dailyCapRemaining: progress?.dailyCapRemaining ?? MAX_TOKENS_PER_DAY,
+    readyToClaim: progress?.readyToClaim ?? false
   });
 };

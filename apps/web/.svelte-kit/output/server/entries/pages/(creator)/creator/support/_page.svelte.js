@@ -1,12 +1,12 @@
-import { Dt as spread_props, jt as unsubscribe_stores, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ft as unsubscribe_stores, Ot as ensure_array_like, St as attr_class, Wt as escape_html, jt as spread_props } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
-import "../../../../../chunks/WalletConnect.js";
 import "../../../../../chunks/navigation.js";
 import "../../../../../chunks/button.js";
 import "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import "../../../../../chunks/card.js";
 import "../../../../../chunks/wallet2.js";
+import "../../../../../chunks/WalletConnect.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/life-buoy.svelte
 function Life_buoy($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -74,11 +74,13 @@ function _page($$renderer, $$props) {
 				icon: "📞"
 			}
 		];
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Life_buoy,
-			title: "Creator Support",
-			subtitle: "Get help with your creator journey on Sephar Studios."
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Help",
+			title: "Creator support",
+			subtitle: "Get help with your creator journey on Sephar Studios.",
+			icon: Life_buoy
 		});
 		$$renderer.push(`<!----> <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-1"><div class="surface-2 backdrop-blur-sm rounded-xl p-4 sticky top-6"><nav class="space-y-2"><!--[-->`);
 		const each_array = ensure_array_like(sections);

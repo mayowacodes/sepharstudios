@@ -1,4 +1,4 @@
-import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
@@ -66,12 +66,39 @@ var POST = async ({ request, locals }) => {
 	const id = crypto.randomUUID();
 	const title = String(data.title || "").trim();
 	if (!title) return json({ error: "Title is required" }, { status: 400 });
+	const cleanPeople = (value, kind) => {
+		if (!Array.isArray(value)) return [];
+		return value.slice(0, 50).flatMap((v) => {
+			if (!v || typeof v !== "object") return [];
+			const name = String(v.name ?? "").trim();
+			const role = String(v.role ?? "").trim();
+			if (!name || !role) return [];
+			const out = {
+				name: name.slice(0, 120),
+				role: role.slice(0, 80)
+			};
+			const photoUrl = v.photoUrl;
+			if (typeof photoUrl === "string" && photoUrl) out.photoUrl = photoUrl.slice(0, 500);
+			if (kind === "cast") {
+				const characterName = v.characterName;
+				if (typeof characterName === "string" && characterName) out.characterName = characterName.trim().slice(0, 120);
+			}
+			return [out];
+		});
+	};
+	let scheduledPublishAt = null;
+	if (data.comingSoon && data.comingSoonReleaseDate) {
+		const ts = Date.parse(String(data.comingSoonReleaseDate));
+		if (!Number.isNaN(ts)) scheduledPublishAt = new Date(ts);
+	}
+	const category = data.audience === "kids" ? "kids" : data.audience === "teens" ? "teens" : null;
 	try {
 		await db.insert(mediaLibrary).values({
 			id,
-			title,
-			description: data.description,
+			title: title.slice(0, 255),
+			description: typeof data.description === "string" ? data.description.slice(0, 1e4) : null,
 			mediaType: data.contentType,
+			category,
 			ageRating: data.ageRating,
 			thumbnail: data.assets?.thumbnail,
 			posterUrl: data.assets?.posterPortrait,
@@ -85,6 +112,8 @@ var POST = async ({ request, locals }) => {
 			genres: data.genre || [],
 			topics: data.themes || [],
 			keywords: data.keywords || [],
+			cast: cleanPeople(data.cast, "cast"),
+			crew: cleanPeople(data.crew, "crew"),
 			duration: data.duration?.toString() || null,
 			isActive: false,
 			isNew: true,
@@ -93,7 +122,8 @@ var POST = async ({ request, locals }) => {
 			slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${id.slice(0, 5)}`,
 			link: `/watch/${id}`,
 			videoUrl: data.videoUrl || null,
-			processingStatus: "not_started"
+			processingStatus: "not_started",
+			scheduledPublishAt
 		});
 		return json({
 			success: true,

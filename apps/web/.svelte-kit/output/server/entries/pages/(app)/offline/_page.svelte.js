@@ -1,4 +1,4 @@
-import { Dt as spread_props } from "../../../../chunks/ui-libs.js";
+import { jt as spread_props } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Wifi } from "../../../../chunks/wifi.js";
 import { t as Button } from "../../../../chunks/button.js";

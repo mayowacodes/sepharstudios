@@ -1,4 +1,4 @@
-import { Tt as head } from "../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../chunks/ui-libs.js";
 import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
 import { n as LazySTCTokenDashboard } from "../../../../chunks/web3-lazy.js";
 //#region src/routes/(web3)/tokens/+page.svelte

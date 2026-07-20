@@ -1,4 +1,4 @@
-import { V as liveStreams, a as user, t as db } from "../../../../../chunks/drizzle.js";
+import { W as liveStreams, a as user, t as db } from "../../../../../chunks/drizzle.js";
 import { error } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/watch/live/[id]/+page.server.ts

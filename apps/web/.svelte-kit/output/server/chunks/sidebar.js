@@ -1,4 +1,4 @@
-import { At as stringify, Dt as spread_props, Gt as setContext, Lt as attr, Rt as clsx, St as derived, Ut as getContext, a as Tooltip$1, bt as attributes, ct as MediaQuery, et as Portal, i as Tooltip_content$1, n as Tooltip_arrow, r as Tooltip_trigger$1, st as mergeProps, t as Tooltip_provider$1, vt as attr_class, xt as bind_props, zt as escape_html } from "./ui-libs.js";
+import { Et as derived, Ht as attr, Jt as getContext, Pt as stringify, St as attr_class, Tt as bind_props, Ut as clsx, Wt as escape_html, Xt as setContext, a as Tooltip$1, dt as mergeProps, ft as MediaQuery, i as Tooltip_content$1, it as Portal, jt as spread_props, n as Tooltip_arrow, r as Tooltip_trigger$1, t as Tooltip_provider$1, wt as attributes } from "./ui-libs.js";
 import { t as Icon } from "./Icon.js";
 import { t as cn } from "./utils2.js";
 import "./input.js";
@@ -622,7 +622,7 @@ function Sidebar_rail($$renderer, $$props) {
 			"aria-label": "Toggle Sidebar",
 			tabindex: -1,
 			title: "Toggle Sidebar",
-			class: clsx(cn("hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-end-4 group-data-[side=right]:start-0 after:absolute after:inset-y-0 after:start-[calc(1/2*100%-1px)] after:w-[2px] sm:flex", "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize", "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize", "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:start-full", "[[data-side=left][data-collapsible=offcanvas]_&]:-end-2", "[[data-side=right][data-collapsible=offcanvas]_&]:-start-2", className)),
+			class: clsx(cn("hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-inset-e-4 group-data-[side=right]:inset-s-0 after:absolute after:inset-y-0 after:inset-s-[calc(1/2*100%-1px)] after:w-0.5 sm:flex", "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize", "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize", "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:inset-s-full", "[[data-side=left][data-collapsible=offcanvas]_&]:-inset-e-2", "[[data-side=right][data-collapsible=offcanvas]_&]:-inset-s-2", className)),
 			...restProps
 		})}>`);
 		children?.($$renderer);
@@ -702,7 +702,7 @@ function Sidebar($$renderer, $$props) {
 										"data-sidebar": "sidebar",
 										"data-slot": "sidebar",
 										"data-mobile": "true",
-										class: "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden",
+										class: "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0",
 										style: `--sidebar-width: ${stringify(SIDEBAR_WIDTH_MOBILE)};`,
 										side,
 										children: ($$renderer) => {
@@ -770,7 +770,7 @@ function Sidebar($$renderer, $$props) {
 				$$renderer.push("<!--[-1-->");
 				$$renderer.push(`<div class="text-sidebar-foreground group peer hidden md:block"${attr("data-state", sidebar.state)}${attr("data-collapsible", sidebar.state === "collapsed" ? collapsible : "")}${attr("data-variant", variant)}${attr("data-side", side)} data-slot="sidebar"><div data-slot="sidebar-gap"${attr_class(clsx(cn("relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear", "group-data-[collapsible=offcanvas]:w-0", "group-data-[side=right]:rotate-180", variant === "floating" || variant === "inset" ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]" : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)")))}></div> <div${attributes({
 					"data-slot": "sidebar-container",
-					class: clsx(cn("fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex", side === "left" ? "start-0 group-data-[collapsible=offcanvas]:start-[calc(var(--sidebar-width)*-1)]" : "end-0 group-data-[collapsible=offcanvas]:end-[calc(var(--sidebar-width)*-1)]", variant === "floating" || variant === "inset" ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]" : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-e group-data-[side=right]:border-s", className)),
+					class: clsx(cn("fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex", side === "left" ? "inset-s-0 group-data-[collapsible=offcanvas]:-inset-s-(--sidebar-width)" : "inset-e-0 group-data-[collapsible=offcanvas]:-inset-e-(--sidebar-width)", variant === "floating" || variant === "inset" ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]" : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-e group-data-[side=right]:border-s", className)),
 					...restProps
 				})}><div data-sidebar="sidebar" data-slot="sidebar-inner" class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm">`);
 				children?.($$renderer);

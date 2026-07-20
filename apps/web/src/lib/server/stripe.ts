@@ -26,7 +26,8 @@ export function getStripe(): Stripe {
 		throw new Error('STRIPE_SECRET_KEY is not configured');
 	}
 	cached = new Stripe(env.STRIPE_SECRET_KEY, {
-		apiVersion: '2026-05-27.dahlia',
+		// Pinned to the version the installed stripe package's types target.
+		apiVersion: '2026-06-24.dahlia',
 		typescript: true
 	});
 	return cached;

@@ -1,0 +1,1 @@
+.portal-halo-pulse.svelte-1klpdpr{border:1px solid var(--ring);opacity:.35;animation:2.4s ease-in-out infinite svelte-1klpdpr-portal-halo}@keyframes svelte-1klpdpr-portal-halo{0%,to{opacity:.35;transform:scale(1)}50%{opacity:0;transform:scale(1.08)}}@media (prefers-reduced-motion:reduce){.portal-halo-pulse.svelte-1klpdpr{opacity:.25;animation:none}}

@@ -3,6 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { mediaWatchProgress, reviews, playlistItems, playlists, transactions, watchSessionMeta, creatorEarnings, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { and, eq } from 'drizzle-orm';
 import { checkAndAwardAchievements, updateStreak } from '$lib/server/achievements';
+import { awardWatchHourTokens, getStcProgress } from '$lib/server/stc-hours';
 import { scoreWatchEngagement } from '$lib/server/ai-token-scoring';
 import { computeCreatorEarning, type EngagementQuality } from '$lib/server/earnings-config';
 import { notify } from '$lib/server/notify';
@@ -189,28 +190,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			baseStcReward: 10
 		});
 
-		// Record the earned STC as a pending ledger entry. There is no on-chain
-		// transfer yet (treasury-wallet custody is a separate design decision —
-		// see docs/NEXT_ROUND.md). Once that lands, a worker flips this row's
-		// status from 'pending' → 'completed' and fills in `txHash`.
-		const rewardAmount = reward?.recommendedStcReward ?? 0;
-		if (rewardAmount > 0) {
-			await db.insert(transactions).values({
-				id: crypto.randomUUID(),
-				userId,
-				type: 'earn',
-				amount: rewardAmount,
-				currency: 'STC',
-				status: 'pending',
-				metadata: {
-					contentId,
-					completionPercent,
-					engagementQuality: reward?.engagementQuality ?? null,
-					tokenMultiplier: reward?.tokenMultiplier ?? null,
-					source: 'watch_complete'
-				}
-			}).catch((err) => console.error('[watch/progress] failed to write STC ledger row:', err));
-		}
+		// Viewers now earn STC from cumulative watch hours (1 STC per 20h,
+		// max 5/day) — see lib/server/stc-hours.ts. `rewardAmount` reflects how
+		// many tokens the completion unlocked from the hours accrual, used only
+		// for the notification copy below. The old per-completion token engine
+		// was replaced by this hours-based rule.
+		const rewardAmount = await awardWatchHourTokens(userId);
 
 		// Creator-side earnings — separate ledger from the viewer's STC
 		// reward above. Pays the creator a cents amount tied to completion +

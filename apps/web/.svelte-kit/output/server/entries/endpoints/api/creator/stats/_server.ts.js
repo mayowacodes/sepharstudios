@@ -1,7 +1,7 @@
-import { H as mediaLibrary, gt as transactions, t as db } from "../../../../../chunks/drizzle.js";
+import { E as creatorEarnings, K as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 //#region src/routes/api/creator/stats/+server.ts
 var GET = async ({ locals }) => {
 	const session = await locals.auth.getSession();
@@ -23,10 +23,10 @@ var GET = async ({ locals }) => {
 	}
 	let monthlyEarnings = 0;
 	try {
-		const [earningsRow] = await db.select({ monthlyEarnings: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(sql`${transactions.userId} = ${creatorId} and ${transactions.type} = 'earn' and ${transactions.createdAt} >= ${monthStart}`);
-		monthlyEarnings = Number(earningsRow?.monthlyEarnings ?? 0);
+		const [earningsRow] = await db.select({ cents: sql`coalesce(sum(${creatorEarnings.amountCents}), 0)` }).from(creatorEarnings).where(and(eq(creatorEarnings.creatorId, creatorId), gte(creatorEarnings.createdAt, monthStart)));
+		monthlyEarnings = Number(earningsRow?.cents ?? 0) / 100;
 	} catch (err) {
-		console.warn("[api/creator/stats] transactions query failed:", err);
+		console.warn("[api/creator/stats] creator_earnings query failed:", err);
 	}
 	return json({
 		totalContent: Number(counts?.totalContent ?? 0),

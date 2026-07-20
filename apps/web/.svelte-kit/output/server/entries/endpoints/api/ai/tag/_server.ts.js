@@ -1,8 +1,54 @@
-import { H as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { a as extractJsonObject, n as callAgent, t as SEPHAR_SYSTEM_PROMPT } from "../../../../../chunks/ai-provider.js";
 import { i as enforceRateLimit, t as AI_AGENT_LIMIT } from "../../../../../chunks/rate-limit.js";
-import { n as generateContentMetadata } from "../../../../../chunks/ai-tagging.js";
 import { error, json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+//#region src/lib/server/ai-tagging.ts
+async function generateContentMetadata(title, description, contentType) {
+	const result = await callAgent([{
+		role: "system",
+		content: SEPHAR_SYSTEM_PROMPT
+	}, {
+		role: "user",
+		content: `Analyze this faith-based ${contentType} and return a JSON object with metadata.
+
+Title: "${title}"
+Description: "${description}"
+
+Return ONLY this JSON structure, nothing else:
+{
+  "genres": ["Drama"],
+  "topics": ["Redemption", "Faith"],
+  "keywords": ["christian movie", "faith journey"],
+  "moodTags": ["emotional", "uplifting"],
+  "bibleReference": "Romans 8:28",
+  "ageRating": "All",
+  "shortDescription": "A compelling story about...",
+  "sensitiveFlags": []
+}
+
+Rules:
+- genres: 1–3 items from [Drama, Comedy, Documentary, Animation, Action, Romance, Thriller, Biography, Kids, Worship, Sermon]
+- topics: 2–5 faith/life themes
+- keywords: 4–8 SEO-friendly terms
+- moodTags: 2–4 from [emotional, uplifting, thought-provoking, slow-burn, fast-paced, inspirational, heavy, light, family-friendly, intense]
+- bibleReference: single most relevant Bible reference, or "" if none
+- ageRating: one of "All", "7+", "12+", "16+"
+- shortDescription: max 150 characters
+- sensitiveFlags: content warnings if any, empty array if none`
+	}], {
+		temperature: .2,
+		maxTokens: 512
+	});
+	if (!result) return null;
+	const parsed = extractJsonObject(result.content);
+	if (!parsed) return null;
+	return {
+		...parsed,
+		aiProvider: `${result.provider}/${result.model}`
+	};
+}
+//#endregion
 //#region src/routes/api/ai/tag/+server.ts
 /**
 * POST /api/ai/tag

@@ -1,4 +1,4 @@
-import { zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
 import { t as Circle_alert } from "../../../../../chunks/circle-alert.js";
 import { t as Coins } from "../../../../../chunks/coins.js";
@@ -11,7 +11,7 @@ import { t as Users } from "../../../../../chunks/users.js";
 import { t as Input } from "../../../../../chunks/input.js";
 import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../../chunks/card.js";
 import { t as Label } from "../../../../../chunks/label.js";
 //#region src/routes/(admin)/admin/tokenomics/+page.svelte
@@ -173,11 +173,13 @@ function _page($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-			PageHeader($$renderer, {
-				icon: Coins,
+			$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Token economy",
 				title: "Tokenomics",
-				subtitle: "STC token economics and revenue distribution."
+				subtitle: "STC token economics and revenue distribution.",
+				icon: Coins
 			});
 			$$renderer.push(`<!----> `);
 			Card($$renderer, {

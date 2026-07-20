@@ -1,4 +1,4 @@
-import { It as writable } from "./ui-libs.js";
+import { Bt as writable } from "./ui-libs.js";
 import "./index-server.js";
 //#region src/lib/stores/live-region.ts
 /**

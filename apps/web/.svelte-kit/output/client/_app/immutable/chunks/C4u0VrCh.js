@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./s06JaHMU.js";import{t as n}from"./C8O-dUT5.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`path`,{d:`M5 12h14`}],[`path`,{d:`m12 5 7 7-7 7`}]];n(r,t({name:`arrow-right`},()=>a,{get iconNode(){return o}}))}export{r as t};

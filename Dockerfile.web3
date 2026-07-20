@@ -16,7 +16,11 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/contracts/package.json ./packages/contracts/
 
 # Install all dependencies
-RUN bun install --frozen-lockfile
+# --linker=hoisted: Bun 1.3 defaults workspaces to isolated installs
+# (symlinks into node_modules/.bun), which dangle after the stage-2
+# node_modules copy and crash the server with ERR_MODULE_NOT_FOUND.
+# Hoisted mode produces real directories that survive the copy.
+RUN bun install --frozen-lockfile --linker=hoisted
 
 # Copy all source code
 COPY apps ./apps
@@ -53,6 +57,11 @@ RUN bun run build
 # Verify build output
 RUN ls -la build/ && echo "Build completed successfully!"
 
+# Hoisted installs may not create apps/web/node_modules at all (no
+# version conflicts → everything hoists to root). Docker COPY fails on
+# a missing source dir, so guarantee it exists (empty = no-op merge).
+RUN mkdir -p /app/apps/web/node_modules
+
 # ==========================================
 # Stage 2: Production
 # ==========================================
@@ -66,6 +75,16 @@ COPY --from=builder /app/apps/web/package.json ./package.json
 
 # Copy node_modules (includes all workspace packages)
 COPY --from=builder /app/node_modules ./node_modules
+
+# Merge the app-local node_modules too — version-conflicted packages
+# don't hoist to root and would otherwise be missing at runtime.
+COPY --from=builder /app/apps/web/node_modules ./node_modules
+
+# Fail the BUILD if runtime deps didn't survive as resolvable modules
+# (dangling symlinks fail `test -e` on the file behind them).
+RUN test -e node_modules/drizzle-orm/package.json \
+	&& test -e node_modules/postgres/package.json \
+	|| (echo "FATAL: runtime node_modules missing/dangling — check --linker=hoisted in builder" && exit 1)
 
 # Copy workspace packages (for runtime imports)
 COPY --from=builder /app/packages ./packages

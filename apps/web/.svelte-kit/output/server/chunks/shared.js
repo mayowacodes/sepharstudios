@@ -1,4 +1,4 @@
-import { _t as hydratable } from "./ui-libs.js";
+import { xt as hydratable } from "./ui-libs.js";
 import { HttpError, SvelteKitError } from "@sveltejs/kit/internal";
 import * as devalue from "devalue";
 //#region ../../node_modules/@sveltejs/kit/src/utils/functions.js

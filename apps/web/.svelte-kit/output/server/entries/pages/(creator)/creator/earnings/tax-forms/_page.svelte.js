@@ -1,11 +1,11 @@
-import { Lt as attr, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { Ht as attr, Wt as escape_html } from "../../../../../../chunks/ui-libs.js";
 import { t as Arrow_left } from "../../../../../../chunks/arrow-left.js";
 import "../../../../../../chunks/circle-check.js";
 import "../../../../../../chunks/circle-x.js";
 import "../../../../../../chunks/clock.js";
 import { t as File_text } from "../../../../../../chunks/file-text.js";
 import { t as Skeleton } from "../../../../../../chunks/skeleton.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/earnings/tax-forms/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -18,13 +18,15 @@ function _page($$renderer, $$props) {
 		let citySZ = "";
 		let tin = "";
 		let signedAs = "";
-		$$renderer.push(`<div class="container mx-auto py-8 px-4 max-w-3xl space-y-6"><a href="/creator/earnings" class="text-xs text-purple-300 hover:text-purple-200 inline-flex items-center gap-1">`);
+		$$renderer.push(`<div class="mx-auto py-8 px-4 max-w-4xl space-y-6"><a href="/creator/earnings" class="text-xs inline-flex items-center gap-1 transition-colors" style="color: hsl(var(--portal-accent));">`);
 		Arrow_left($$renderer, { class: "w-3 h-3" });
 		$$renderer.push(`<!----> Back to earnings</a> `);
-		PageHeader($$renderer, {
-			icon: File_text,
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Compliance",
 			title: "Tax forms",
-			subtitle: "Submit a W-9 (US persons), W-8BEN (foreign individuals), or W-8BEN-E (foreign entities). Admin reviews and confirms before annual 1099 generation."
+			subtitle: "Submit a W-9 (US persons), W-8BEN (foreign individuals), or W-8BEN-E (foreign entities). Admin reviews and confirms before annual 1099 generation.",
+			icon: File_text
 		});
 		$$renderer.push(`<!----> <section class="surface-1 rounded-xl p-5 space-y-4"><h2 class="text-sm font-semibold text-foreground">Submit a new form</h2> <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label for="form-kind" class="block text-xs text-foreground/80 mb-1">Form</label> `);
 		$$renderer.select({

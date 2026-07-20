@@ -1,0 +1,1 @@
+import{$t as e,Ht as t,Kt as n,Sn as r,Tn as i,en as a,hn as o}from"../chunks/s06JaHMU.js";/* empty css                */import{t as s}from"../chunks/B3VYp1LR2.js";function c(c,l){t(`fkwoe4`,e=>{o(()=>{r.title=`Admin - Sephar Studios`})}),s(c,{portal:`admin`,children:(t,r)=>{var o=a();n(i(o),()=>l.children),e(t,o)},$$slots:{default:!0}})}export{c as component};

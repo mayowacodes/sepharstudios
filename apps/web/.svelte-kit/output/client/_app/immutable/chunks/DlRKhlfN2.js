@@ -1,0 +1,1 @@
+import{Hn as e}from"./s06JaHMU.js";import"./CbTZKJ_u.js";var t=e(``),n=0,r=[],i=null;function a(e){if(!e.trim())return;let a=Date.now();r.push(e.trim().slice(0,200)),i&&clearTimeout(i);let o=Math.max(0,600-(a-n));i=setTimeout(()=>{let e=r.join(` · `);r=[],i=null,n=Date.now(),t.set(``),setTimeout(()=>t.set(e),30)},o)}var o=t;export{o as n,a as t};

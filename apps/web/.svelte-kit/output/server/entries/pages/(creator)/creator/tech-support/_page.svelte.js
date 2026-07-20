@@ -1,6 +1,6 @@
-import { Lt as attr, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Wrench } from "../../../../../chunks/wrench.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/tech-support/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -51,11 +51,13 @@ function _page($$renderer, $$props) {
 				label: "Other Technical Issue"
 			}
 		];
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Wrench,
-			title: "Technical Support",
-			subtitle: "Get personalized help from our technical support team."
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Help",
+			title: "Technical support",
+			subtitle: "Get personalized help from our technical support team.",
+			icon: Wrench
 		});
 		$$renderer.push(`<!----> `);
 		{

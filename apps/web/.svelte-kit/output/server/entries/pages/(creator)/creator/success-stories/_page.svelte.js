@@ -1,6 +1,6 @@
-import { At as stringify, Lt as attr, St as derived, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Trophy } from "../../../../../chunks/trophy.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/success-stories/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -162,11 +162,13 @@ function _page($$renderer, $$props) {
 				monetization: "yellow"
 			}[category] || "gray";
 		}
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Trophy,
-			title: "Success Stories",
-			subtitle: "Be inspired by fellow creators making a real impact through their ministry."
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Inspiration",
+			title: "Success stories",
+			subtitle: "Be inspired by fellow creators making a real impact through their ministry.",
+			icon: Trophy
 		});
 		$$renderer.push(`<!----> <div class="bg-linear-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl p-6"><h2 class="text-xl font-bold text-foreground mb-4 text-center">🌟 Community Impact</h2> <div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="text-center"><div class="text-2xl font-bold text-purple-400">12.8M</div> <div class="text-sm text-purple-200">Total Views</div></div> <div class="text-center"><div class="text-2xl font-bold text-blue-400">340+</div> <div class="text-sm text-blue-200">Active Creators</div></div> <div class="text-center"><div class="text-2xl font-bold text-green-400">89</div> <div class="text-sm text-green-200">Countries Reached</div></div> <div class="text-center"><div class="text-2xl font-bold text-orange-400">15K+</div> <div class="text-sm text-orange-200">Lives Changed</div></div></div></div> <div class="surface-2 backdrop-blur-sm rounded-xl p-6"><h3 class="text-xl font-bold text-foreground mb-6">🏆 Featured Success Stories</h3> <div class="grid grid-cols-1 md:grid-cols-3 gap-6"><!--[-->`);
 		const each_array = ensure_array_like(featuredStories());

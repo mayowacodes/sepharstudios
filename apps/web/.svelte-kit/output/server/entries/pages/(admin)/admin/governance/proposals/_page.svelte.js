@@ -1,6 +1,7 @@
-import { Tt as head } from "../../../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as File_text } from "../../../../../../chunks/file-text.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../../chunks/PortalButton.js";
 //#region src/routes/(admin)/admin/governance/proposals/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -9,15 +10,25 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Proposals - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-4">`);
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-4 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<a href="/admin/governance/create" class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New</a>`);
+				PortalButton($$renderer, {
+					href: "/admin/governance/create",
+					variant: "primary",
+					size: "sm",
+					children: ($$renderer) => {
+						$$renderer.push(`<!---->+ New`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
-				icon: File_text,
-				title: "Governance Proposals",
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "DAO",
+				title: "Proposals",
 				subtitle: "Pending, queued, and historical DAO proposals.",
+				icon: File_text,
 				actions,
 				$$slots: { actions: true }
 			});

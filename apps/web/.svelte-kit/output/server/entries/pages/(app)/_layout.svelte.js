@@ -1,4 +1,4 @@
-import { Dt as spread_props, It as writable, Lt as attr, Rt as clsx, St as derived, c as Scroll_area_corner, d as Scroll_area_viewport, f as Scroll_area$1, l as Scroll_area_thumb, u as Scroll_area_scrollbar$1, vt as attr_class, wt as ensure_array_like, xt as bind_props, zt as escape_html } from "../../../chunks/ui-libs.js";
+import { Bt as writable, Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class, Tt as bind_props, Ut as clsx, Wt as escape_html, f as Scroll_area_corner, g as Scroll_area$1, h as Scroll_area_viewport, jt as spread_props, m as Scroll_area_scrollbar$1, p as Scroll_area_thumb } from "../../../chunks/ui-libs.js";
 import "../../../chunks/index-server.js";
 import { t as Icon } from "../../../chunks/Icon.js";
 import { t as Bell } from "../../../chunks/bell.js";
@@ -21,6 +21,7 @@ import { t as Button } from "../../../chunks/button.js";
 import { a as Sheet_trigger, i as Sheet_content, n as Sheet_title, o as Sheet, r as Sheet_header, t as Sheet_description } from "../../../chunks/sheet.js";
 import { a as Dropdown_menu_label, c as Dropdown_menu_content, i as Dropdown_menu_separator, o as Dropdown_menu_item, r as Dropdown_menu_trigger, u as Dropdown_menu } from "../../../chunks/dropdown-menu.js";
 import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../chunks/avatar.js";
+import "../../../chunks/mediaModalStore.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/menu.svelte
 function Menu($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -115,7 +116,9 @@ function MyStudiosDrawer($$renderer, $$props) {
 						side: "left",
 						class: "w-[min(380px,95vw)] h-full p-0 overflow-hidden border-r border-white/5 bg-transparent",
 						children: ($$renderer) => {
-							$$renderer.push(`<div class="studios-panel svelte-1hr5ab1" role="region" aria-label="My Studios"><div class="studios-hero svelte-1hr5ab1"><div class="studios-hero-bg svelte-1hr5ab1"></div> <div class="studios-hero-content svelte-1hr5ab1"><div class="studios-avatar svelte-1hr5ab1">`);
+							$$renderer.push(`<div class="studios-panel svelte-1hr5ab1" role="region" aria-label="My Studios"><button type="button" class="studios-close svelte-1hr5ab1" aria-label="Close My Studios">`);
+							X($$renderer, { size: 18 });
+							$$renderer.push(`<!----></button> <div class="studios-hero svelte-1hr5ab1"><div class="studios-hero-bg svelte-1hr5ab1"></div> <div class="studios-hero-content svelte-1hr5ab1"><div class="studios-avatar svelte-1hr5ab1">`);
 							if (userData()?.image) {
 								$$renderer.push("<!--[0-->");
 								$$renderer.push(`<img${attr("src", userData().image)}${attr("alt", userData().name ?? "User")} class="w-full h-full object-cover rounded-full svelte-1hr5ab1"/>`);
@@ -448,11 +451,12 @@ function User($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="flex items-center gap-4">`);
+			$$renderer.push(`<div class="flex items-center gap-2 sm:gap-4">`);
 			if (user) {
 				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="hidden lg:block w-full max-w-md">`);
 				Search_1($$renderer, {});
-				$$renderer.push(`<!----> `);
+				$$renderer.push(`<!----></div> `);
 				Sheet($$renderer, {
 					get open() {
 						return isNotificationOpen;
@@ -682,7 +686,7 @@ function Header($$renderer, $$props) {
 		const navLinkClass = (path) => `relative inline-flex items-center h-9 text-sm font-medium leading-none transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${isActive(path) ? "after:w-full text-white" : "after:w-0 hover:after:w-full text-white/80"}`;
 		if (!isKidsPage()) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<header${attr_class(`transition-transform duration-300 ease-in-out sticky top-0 z-40 w-full border-b border-white/10 surface-glass `)}><div class="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 mx-auto px-4"><div class="flex gap-6 md:gap-10 items-center">`);
+			$$renderer.push(`<header${attr_class(`transition-transform duration-300 ease-in-out sticky top-0 z-40 w-full border-b border-white/10 surface-glass `)}><div class="flex h-16 items-center justify-between gap-2 mx-auto px-3 sm:px-4 max-w-(--breakpoint-2xl)"><div class="flex items-center gap-2 md:gap-8 min-w-0">`);
 			Sheet($$renderer, {
 				children: ($$renderer) => {
 					{
@@ -691,7 +695,7 @@ function Header($$renderer, $$props) {
 								{
 									variant: "ghost",
 									size: "icon",
-									class: "md:hidden text-white/80 hover:text-white"
+									class: "md:hidden text-white/80 hover:text-white -ml-1 shrink-0"
 								},
 								props,
 								{
@@ -711,20 +715,20 @@ function Header($$renderer, $$props) {
 					$$renderer.push(`<!----> `);
 					Sheet_content($$renderer, {
 						side: "left",
-						class: "p-4 space-y-4 surface-glass border-white/10",
+						class: "p-0 surface-glass border-white/10 w-[min(320px,85vw)]",
 						children: ($$renderer) => {
-							$$renderer.push(`<!--[-->`);
+							$$renderer.push(`<div class="h-full overflow-y-auto py-4"><div class="px-4 mb-2 text-[10px] uppercase tracking-widest text-white/40 font-semibold">Browse</div> <!--[-->`);
 							const each_array = ensure_array_like(navItems);
 							for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 								let item = each_array[$$index];
-								$$renderer.push(`<a${attr("href", item.href)} class="block text-lg font-semibold text-white/90 hover:text-white">${escape_html(item.label)}</a>`);
+								$$renderer.push(`<a${attr("href", item.href)}${attr_class(`block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white ${isActive(item.href) ? "text-white bg-white/5 border-l-2 border-[#FF5E0E]" : ""}`)}>${escape_html(item.label)}</a>`);
 							}
-							$$renderer.push(`<!--]--> <hr class="border-white/10"/> <a href="/kids/kiddies" class="block text-lg font-semibold pl-4 text-white/90 hover:text-white">Kiddies</a> <a href="/kids/teens" class="block text-lg font-semibold pl-4 text-white/90 hover:text-white">Teens</a> <a href="/archive" class="block font-semibold pl-4 text-sm text-muted-foreground">Archive Videos</a> <a href="/mayowa" class="block font-semibold pl-4 text-sm text-muted-foreground">Mayowa's Films</a> `);
+							$$renderer.push(`<!--]--> <div class="px-4 mt-4 mb-2 text-[10px] uppercase tracking-widest text-white/40 font-semibold">Kids</div> <a href="/kids/kiddies" class="block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white">Kiddies</a> <a href="/kids/teens" class="block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white">Teens</a> `);
 							if (isAuthenticated()) {
 								$$renderer.push("<!--[0-->");
-								$$renderer.push(`<hr class="border-white/10"/> <a href="/watchlist" class="block text-lg font-semibold text-white/90 hover:text-white">My List</a> <a href="/my-studios?tab=downloads" class="block text-lg font-semibold text-white/90 hover:text-white">Downloads</a> <a href="/my-studios?tab=recent" class="block text-lg font-semibold text-white/90 hover:text-white">Recently Watched</a> <a href="/settings" class="block text-lg font-semibold text-white/90 hover:text-white">Settings</a>`);
+								$$renderer.push(`<div class="px-4 mt-4 mb-2 text-[10px] uppercase tracking-widest text-white/40 font-semibold">Your stuff</div> <a href="/my-studios?tab=downloads" class="block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white">Downloads</a> <a href="/my-studios?tab=recent" class="block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white">Recently Watched</a> <a href="/settings" class="block px-4 py-3 text-base font-medium text-white/90 hover:bg-white/5 hover:text-white">Settings</a>`);
 							} else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]-->`);
+							$$renderer.push(`<!--]--></div>`);
 						},
 						$$slots: { default: true }
 					});
@@ -732,7 +736,7 @@ function Header($$renderer, $$props) {
 				},
 				$$slots: { default: true }
 			});
-			$$renderer.push(`<!----> `);
+			$$renderer.push(`<!----> <div class="min-w-0">`);
 			if (isAuthenticated()) {
 				$$renderer.push("<!--[0-->");
 				MyStudiosDrawer($$renderer, {});
@@ -740,18 +744,13 @@ function Header($$renderer, $$props) {
 				$$renderer.push("<!--[-1-->");
 				Logo($$renderer, {});
 			}
-			$$renderer.push(`<!--]--> <nav class="hidden md:flex gap-6 items-center text-white/80"><!--[-->`);
+			$$renderer.push(`<!--]--></div> <nav class="hidden md:flex gap-5 lg:gap-6 items-center text-white/80"><!--[-->`);
 			const each_array_1 = ensure_array_like(navItems);
 			for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
 				let { href, label } = each_array_1[$$index_1];
 				$$renderer.push(`<a${attr("href", href)}${attr_class(clsx(navLinkClass(href)))}>${escape_html(label)}</a>`);
 			}
-			$$renderer.push(`<!--]--> <details class="relative group"><summary${attr_class(`relative inline-flex items-center h-9 leading-none cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith("/kids/") ? "after:w-full text-white" : "after:w-0 hover:after:w-full"}`)}>Kids</summary> <div class="absolute left-0 mt-2 w-48 rounded-lg z-50 surface-glass border-white/10"><a href="/kids/kiddies" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Kiddies</a> <a href="/kids/teens" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Teens</a> <hr class="my-1 border-white/10"/> <a href="/archive" class="block px-4 py-2 hover:bg-white/10 transition-colors text-sm text-muted-foreground">Archive Videos</a> <a href="/mayowa" class="block px-4 py-2 hover:bg-white/10 transition-colors text-sm text-muted-foreground">Mayowa's Films</a></div></details> `);
-			if (isAuthenticated()) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<a href="/watchlist"${attr_class(clsx(navLinkClass("/watchlist")))}>My List</a>`);
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></nav></div> <div class="ml-auto flex items-center gap-2"><a href="/search" aria-label="Search" title="Search" class="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></a> `);
+			$$renderer.push(`<!--]--> <details class="relative group"><summary${attr_class(`relative inline-flex items-center h-9 leading-none cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith("/kids/") ? "after:w-full text-white" : "after:w-0 hover:after:w-full"}`)}>Kids</summary> <div class="absolute left-0 mt-2 w-48 rounded-lg z-50 surface-glass border-white/10"><a href="/kids/kiddies" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Kiddies</a> <a href="/kids/teens" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Teens</a></div></details></nav></div> <div class="flex items-center gap-1 sm:gap-2 shrink-0"><a href="/search" aria-label="Search" title="Search" class="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></a> `);
 			User($$renderer, {});
 			$$renderer.push(`<!----></div></div></header>`);
 		} else $$renderer.push("<!--[-1-->");
@@ -840,6 +839,14 @@ function Footer($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region src/lib/components/widgets/LazyMovieModal.svelte
+function LazyMovieModal($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->`);
+	});
+}
+//#endregion
 //#region src/routes/(app)/+layout.svelte
 function _layout($$renderer, $$props) {
 	let { children } = $$props;
@@ -849,6 +856,8 @@ function _layout($$renderer, $$props) {
 	children($$renderer);
 	$$renderer.push(`<!----></main> `);
 	Footer($$renderer, {});
+	$$renderer.push(`<!----> `);
+	LazyMovieModal($$renderer, {});
 	$$renderer.push(`<!----></div>`);
 }
 //#endregion

@@ -1,4 +1,4 @@
-import { C as creatorApplications, H as mediaLibrary, a as user, t as db } from "../../../../../chunks/drizzle.js";
+import { K as mediaLibrary, T as creatorApplications, a as user, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { eq, sql } from "drizzle-orm";
@@ -30,8 +30,8 @@ var GET = async ({ locals }) => {
 	try {
 		[applicationStats] = await db.select({
 			pendingApplications: sql`sum(case when ${creatorApplications.status} = 'pending' then 1 else 0 end)`,
-			approved7: sql`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf7} then 1 else 0 end)`,
-			approved30: sql`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf30} then 1 else 0 end)`,
+			approved7: sql`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf7.toISOString()} then 1 else 0 end)`,
+			approved30: sql`sum(case when ${creatorApplications.status} = 'approved' and ${creatorApplications.reviewedAt} >= ${startOf30.toISOString()} then 1 else 0 end)`,
 			avgApprovalHours: sql`avg(extract(epoch from (${creatorApplications.reviewedAt} - ${creatorApplications.createdAt})))/3600`
 		}).from(creatorApplications);
 	} catch (err) {

@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { O as eventRegistrations, k as events, t as db } from "../../../../../chunks/drizzle.js";
+import { M as events, j as eventRegistrations, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";

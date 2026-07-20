@@ -1,4 +1,4 @@
-import { K as notifications, t as db } from "../../../../../chunks/drizzle.js";
+import { X as notifications, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/notifications/[id]/+server.ts

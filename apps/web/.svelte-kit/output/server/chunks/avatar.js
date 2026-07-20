@@ -1,4 +1,4 @@
-import { Dt as spread_props, J as Avatar_image$1, Y as Avatar$1, q as Avatar_fallback$1, xt as bind_props } from "./ui-libs.js";
+import { $ as Avatar$1, Q as Avatar_image$1, Tt as bind_props, Z as Avatar_fallback$1, jt as spread_props } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/components/ui/avatar/avatar.svelte
 function Avatar($$renderer, $$props) {

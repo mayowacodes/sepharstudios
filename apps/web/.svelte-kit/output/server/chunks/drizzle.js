@@ -2,7 +2,7 @@ import { t as __exportAll } from "./rolldown-runtime.js";
 import { t as private_env } from "./shared-server.js";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { bigint, boolean, date, index, integer, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, date, doublePrecision, index, integer, jsonb, pgTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 //#region src/lib/db/schema/sepharstudios.ts
 var files = pgTable("files", {
@@ -195,6 +195,8 @@ var mediaLibrary = pgTable("media_library", {
 	assignedTo: text("assigned_to").references(() => user.id, { onDelete: "set null" }),
 	assignedAt: timestamp("assigned_at"),
 	assignedBy: text("assigned_by").references(() => user.id, { onDelete: "set null" }),
+	editedBy: text("edited_by").references(() => user.id, { onDelete: "set null" }),
+	editedAt: timestamp("edited_at"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
@@ -213,6 +215,18 @@ var episodes = pgTable("episodes", {
 	airDate: varchar("air_date", { length: 20 }),
 	createdAt: timestamp("created_at").defaultNow().notNull()
 });
+var mediaAnalyticsDaily = pgTable("media_analytics_daily", {
+	contentId: text("content_id").notNull().references(() => mediaLibrary.id, { onDelete: "cascade" }),
+	day: date("day").notNull(),
+	views: integer("views").notNull().default(0),
+	watchSeconds: bigint("watch_seconds", { mode: "number" }).notNull().default(0),
+	completedWatches: integer("completed_watches").notNull().default(0),
+	completionPctSum: doublePrecision("completion_pct_sum").notNull().default(0),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (t) => ({
+	pk: primaryKey({ columns: [t.contentId, t.day] }),
+	dayIdx: index("media_analytics_daily_day_idx").on(t.day)
+}));
 var contentSubtitleTracks = pgTable("content_subtitle_tracks", {
 	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
 	contentId: text("content_id").notNull().references(() => mediaLibrary.id, { onDelete: "cascade" }),
@@ -951,6 +965,28 @@ var aiCallLog = pgTable("ai_call_log", {
 	userIdx: index("ai_call_log_user_idx").on(t.userId, t.createdAt),
 	surfaceIdx: index("ai_call_log_surface_idx").on(t.surface)
 }));
+var creatorEarnings = pgTable("creator_earnings", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	creatorId: text("creator_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+	contentId: text("content_id").notNull(),
+	viewerId: text("viewer_id").references(() => user.id, { onDelete: "set null" }),
+	amountCents: integer("amount_cents").notNull(),
+	completionPercent: integer("completion_percent").notNull(),
+	engagementQuality: varchar("engagement_quality", { length: 20 }),
+	engagementMultiplier: integer("engagement_multiplier_x100").notNull(),
+	source: varchar("source", { length: 40 }).notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull()
+}, (t) => ({
+	creatorMonthIdx: index("creator_earnings_creator_month_idx").on(t.creatorId, t.createdAt),
+	contentIdx: index("creator_earnings_content_idx").on(t.contentId)
+}));
+var comingSoonSubscriptions = pgTable("coming_soon_subscriptions", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+	contentId: text("content_id").notNull().references(() => mediaLibrary.id, { onDelete: "cascade" }),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	notifiedAt: timestamp("notified_at")
+}, (t) => ({ contentPendingIdx: index("css_content_pending_idx").on(t.contentId) }));
 //#endregion
 //#region src/lib/db/schema.ts
 var schema_exports = /* @__PURE__ */ __exportAll({
@@ -967,6 +1003,7 @@ var schema_exports = /* @__PURE__ */ __exportAll({
 	aiActionLog: () => aiActionLog,
 	aiCallLog: () => aiCallLog,
 	bibleStoryProgress: () => bibleStoryProgress,
+	comingSoonSubscriptions: () => comingSoonSubscriptions,
 	contentPricing: () => contentPricing,
 	contentShares: () => contentShares,
 	contentSubtitleTracks: () => contentSubtitleTracks,
@@ -974,6 +1011,7 @@ var schema_exports = /* @__PURE__ */ __exportAll({
 	copilotConversations: () => copilotConversations,
 	copilotMessages: () => copilotMessages,
 	creatorApplications: () => creatorApplications,
+	creatorEarnings: () => creatorEarnings,
 	creatorFollowers: () => creatorFollowers,
 	creators: () => creators,
 	cronState: () => cronState,
@@ -992,6 +1030,7 @@ var schema_exports = /* @__PURE__ */ __exportAll({
 	governanceProposals: () => governanceProposals,
 	liveChatMessages: () => liveChatMessages,
 	liveStreams: () => liveStreams,
+	mediaAnalyticsDaily: () => mediaAnalyticsDaily,
 	mediaLibrary: () => mediaLibrary,
 	mediaWatchProgress: () => mediaWatchProgress,
 	newsletterSubscriptions: () => newsletterSubscriptions,
@@ -1096,4 +1135,4 @@ var db = drizzle(postgres(private_env.DATABASE_URL, {
 	connect_timeout: 10
 }), { schema: schema_exports });
 //#endregion
-export { playlists as $, familyAddons as A, liveChatMessages as B, creatorApplications as C, episodes as D, cronState as E, governanceAuditEntries as F, notificationPreferences as G, mediaLibrary as H, governanceMemberships as I, payoutDisputes as J, notifications as K, governancePauseEvents as L, forumLikes as M, forumReplies as N, eventRegistrations as O, forumThreads as P, playlistItems as Q, governanceProposalApprovals as R, copilotMessages as S, creators as T, mediaWatchProgress as U, liveStreams as V, newsletterSubscriptions as W, paystackEvents as X, payouts as Y, paystackSubscriptions as Z, contentPricing as _, trialBlacklist as _t, user as a, refunds as at, contentThumbnailVariants as b, watchSessionMeta as bt, adminMessageTemplates as c, sponsorshipApplications as ct, adminSettings as d, subscriptions as dt, ppvContent as et, adminTokenomicsSettings as f, successStories as ft, aiCallLog as g, transactions as gt, aiActionLog as h, taxForms as ht, session as i, quizSessions as it, files as j, events as k, adminMessages as l, stcStakes as lt, agentRuns as m, tax1099Forms as mt, account as n, profiles as nt, abuseReports as o, reviewHelpful as ot, adminWorkflowRules as p, supportTickets as pt, paymentIntents as q, schema as r, pushSubscriptions as rt, achievements as s, reviews as st, db as t, ppvPurchases as tt, adminPolicies as u, streaks as ut, contentShares as v, userAchievements as vt, creatorFollowers as w, copilotConversations as x, contentSubtitleTracks as y, userMilestones as yt, governanceProposals as z };
+export { payouts as $, episodes as A, governancePauseEvents as B, copilotConversations as C, userMilestones as Ct, creatorFollowers as D, creatorEarnings as E, forumLikes as F, mediaAnalyticsDaily as G, governanceProposals as H, forumReplies as I, newsletterSubscriptions as J, mediaLibrary as K, forumThreads as L, events as M, familyAddons as N, creators as O, files as P, payoutDisputes as Q, governanceAuditEntries as R, contentThumbnailVariants as S, userAchievements as St, creatorApplications as T, liveChatMessages as U, governanceProposalApprovals as V, liveStreams as W, notifications as X, notificationPreferences as Y, paymentIntents as Z, bibleStoryProgress as _, supportTickets as _t, user as a, ppvPurchases as at, contentShares as b, transactions as bt, adminMessageTemplates as c, quizSessions as ct, adminSettings as d, reviews as dt, paystackEvents as et, adminTokenomicsSettings as f, sponsorshipApplications as ft, aiCallLog as g, successStories as gt, aiActionLog as h, subscriptions as ht, session as i, ppvContent as it, eventRegistrations as j, cronState as k, adminMessages as l, refunds as lt, agentRuns as m, streaks as mt, account as n, playlistItems as nt, abuseReports as o, profiles as ot, adminWorkflowRules as p, stcStakes as pt, mediaWatchProgress as q, schema as r, playlists as rt, achievements as s, pushSubscriptions as st, db as t, paystackSubscriptions as tt, adminPolicies as u, reviewHelpful as ut, comingSoonSubscriptions as v, tax1099Forms as vt, copilotMessages as w, watchSessionMeta as wt, contentSubtitleTracks as x, trialBlacklist as xt, contentPricing as y, taxForms as yt, governanceMemberships as z };

@@ -1,0 +1,1 @@
+import{$t as e,Kt as t,Xn as n,tn as r,wn as i}from"../chunks/s06JaHMU.js";var a=r(`<div class="animate-in"><!></div>`);function o(r,o){var s=a();t(i(s),()=>o.children),n(s),e(r,s)}export{o as component};

@@ -1,4 +1,4 @@
-import { Dt as spread_props } from "./ui-libs.js";
+import { jt as spread_props } from "./ui-libs.js";
 import { t as Icon } from "./Icon.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/play.svelte
 function Play($$renderer, $$props) {

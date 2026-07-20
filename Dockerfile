@@ -11,8 +11,18 @@ COPY packages/web3/package.json ./packages/web3/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/contracts/package.json ./packages/contracts/
 
-# Install all workspace dependencies
-RUN bun install --frozen-lockfile
+# Install all workspace dependencies.
+#
+# --linker=hoisted is CRITICAL on Bun 1.3+: isolated installs became the
+# workspace default, which turns apps/web/node_modules/* into symlinks
+# aimed at the root node_modules/.bun store via relative paths
+# (../../../node_modules/.bun/...). The stage-2 COPY below relocates
+# those symlinks to /app/node_modules where the same relative path
+# resolves past the filesystem root — every package dangles and the
+# server dies with ERR_MODULE_NOT_FOUND (drizzle-orm was the first
+# casualty). Hoisted mode produces real directories, which survive the
+# copy-merge exactly as they did before the Bun 1.3 upgrade.
+RUN bun install --frozen-lockfile --linker=hoisted
 
 # Copy all source code
 COPY . .
@@ -36,6 +46,12 @@ ENV BODY_SIZE_LIMIT=10485760
 # Build the web app from its own directory
 RUN cd apps/web && bun run build
 
+# With --linker=hoisted and no version conflicts, Bun hoists EVERYTHING
+# to the root node_modules and never creates apps/web/node_modules at
+# all — and Docker COPY hard-fails on a missing source dir. Guarantee
+# it exists (empty is fine; the stage-2 merge just becomes a no-op).
+RUN mkdir -p apps/web/node_modules
+
 # Stage 2: Create the lean production image
 FROM oven/bun:1.3.9-slim
 
@@ -46,6 +62,20 @@ COPY --from=builder /app/apps/web/package.json ./package.json
 
 # Copy root node_modules (contains workspace packages like @sephar/web3)
 COPY --from=builder /app/node_modules ./node_modules
+
+# Some packages (drizzle-orm, svelte, better-auth, etc.) are stored in the
+# app's local node_modules rather than hoisted to root. Merge them so the
+# server can resolve them at runtime. Overwrites of same-version duplicates
+# in the root are harmless.
+COPY --from=builder /app/apps/web/node_modules ./node_modules
+
+# Fail the BUILD (not production at 3am) if the runtime deps didn't
+# survive the copy-merge as resolvable modules. `test -e package.json`
+# inside the package dir follows symlinks, so a dangling link fails too.
+RUN test -e node_modules/drizzle-orm/package.json \
+	&& test -e node_modules/postgres/package.json \
+	&& test -e node_modules/better-auth/package.json \
+	|| (echo "FATAL: runtime node_modules are missing or dangling after copy-merge — check the --linker=hoisted install in the builder stage" && exit 1)
 
 # Copy the built application (adapter-node output)
 COPY --from=builder /app/apps/web/build ./build

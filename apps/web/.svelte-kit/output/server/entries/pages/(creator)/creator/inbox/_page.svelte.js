@@ -1,11 +1,11 @@
-import { Lt as attr, St as derived, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import "../../../../../chunks/Icon.js";
 import { t as Archive } from "../../../../../chunks/archive.js";
 import "../../../../../chunks/circle-check.js";
 import { t as Inbox } from "../../../../../chunks/inbox.js";
 import { t as Skeleton } from "../../../../../chunks/skeleton.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
-import "../../../../../chunks/EmptyState.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import "../../../../../chunks/PortalEmptyState.js";
 //#endregion
 //#region src/routes/(creator)/creator/inbox/+page.svelte
 function _page($$renderer, $$props) {
@@ -16,11 +16,13 @@ function _page($$renderer, $$props) {
 		let bulkBusy = false;
 		const selectedIds = derived(() => Object.keys(selected).filter((id) => selected[id]));
 		const allVisibleSelected = derived(() => messages.length > 0 && messages.every((m) => selected[m.id]));
-		$$renderer.push(`<div class="container mx-auto py-8 px-4 max-w-3xl space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Inbox,
+		$$renderer.push(`<div class="mx-auto py-8 px-4 max-w-4xl space-y-6">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Messages",
 			title: "Inbox",
-			subtitle: "Messages from Sephar Studios about your content, applications, and account."
+			subtitle: "Messages from Sephar Studios about your content, applications, and account.",
+			icon: Inbox
 		});
 		$$renderer.push(`<!----> <div class="flex flex-wrap gap-2 items-center"><!--[-->`);
 		const each_array = ensure_array_like([

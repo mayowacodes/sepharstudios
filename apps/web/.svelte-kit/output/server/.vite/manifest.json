@@ -65,6 +65,26 @@
       "_shared-server.js"
     ]
   },
+  "_ComingSoonCard.js": {
+    "file": "chunks/ComingSoonCard.js",
+    "name": "ComingSoonCard",
+    "imports": [
+      "_bell-ring.js",
+      "_bell.js",
+      "_navigation.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_ComingSoonRow.js": {
+    "file": "chunks/ComingSoonRow.js",
+    "name": "ComingSoonRow",
+    "imports": [
+      "_ComingSoonCard.js",
+      "_Icon.js",
+      "_sparkles.js",
+      "_ui-libs.js"
+    ]
+  },
   "_ContentThreadPanel.js": {
     "file": "chunks/ContentThreadPanel.js",
     "name": "ContentThreadPanel",
@@ -77,19 +97,15 @@
       "_toast-state.svelte.js"
     ]
   },
-  "_EmptyState.js": {
-    "file": "chunks/EmptyState.js",
-    "name": "EmptyState",
+  "_FeaturedBillboardPanel.js": {
+    "file": "chunks/FeaturedBillboardPanel.js",
+    "name": "FeaturedBillboardPanel",
     "imports": [
-      "_ui-libs.js"
-    ]
-  },
-  "_EnhancedVideoPlayer.js": {
-    "file": "chunks/EnhancedVideoPlayer.js",
-    "name": "EnhancedVideoPlayer",
-    "imports": [
+      "_ComingSoonRow.js",
       "_button.js",
-      "_dropdown-menu.js",
+      "_circle-play.js",
+      "_volume-x.js",
+      "_navigation.js",
       "_ui-libs.js"
     ]
   },
@@ -111,9 +127,11 @@
     "file": "chunks/KidsMediaPage.js",
     "name": "KidsMediaPage",
     "imports": [
+      "_myList.js",
+      "_recency.js",
+      "_bookmark.js",
       "_navigation.js",
-      "_ui-libs.js",
-      "_index-server.js"
+      "_ui-libs.js"
     ]
   },
   "_KpiCard.js": {
@@ -122,7 +140,30 @@
     "imports": [
       "_skeleton.js",
       "_Icon.js",
+      "_arrow-up-right.js",
       "_ui-libs.js"
+    ]
+  },
+  "_MediaDetailPage.js": {
+    "file": "chunks/MediaDetailPage.js",
+    "name": "MediaDetailPage",
+    "imports": [
+      "_button.js",
+      "_ReviewSection.js",
+      "_myList.js",
+      "_bell-ring.js",
+      "_bell.js",
+      "_bookmark.js",
+      "_check-check.js",
+      "_check.js",
+      "_circle-play.js",
+      "_rotate-ccw.js",
+      "_volume-x.js",
+      "_x.js",
+      "_navigation.js",
+      "_client.js",
+      "_ui-libs.js",
+      "_toast-state.svelte.js"
     ]
   },
   "_MediaGrid.js": {
@@ -137,11 +178,13 @@
     "file": "chunks/MovieCard.js",
     "name": "MovieCard",
     "imports": [
+      "_mediaModalStore.js",
+      "_myList.js",
+      "_recency.js",
       "_bookmark.js",
       "_play.js",
       "_navigation.js",
-      "_ui-libs.js",
-      "_index-server.js"
+      "_ui-libs.js"
     ]
   },
   "_PWAInstallPrompt.Cw6HcEey.css": {
@@ -161,16 +204,61 @@
       "_app/immutable/assets/PWAInstallPrompt.Cw6HcEey.css"
     ]
   },
-  "_PageHeader.js": {
-    "file": "chunks/PageHeader.js",
-    "name": "PageHeader",
+  "_PortalButton.js": {
+    "file": "chunks/PortalButton.js",
+    "name": "PortalButton",
     "imports": [
       "_ui-libs.js"
     ]
   },
-  "_PortalShell.BIq1BoRD.css": {
-    "file": "_app/immutable/assets/PortalShell.BIq1BoRD.css",
-    "src": "_PortalShell.BIq1BoRD.css"
+  "_PortalDataTable.js": {
+    "file": "chunks/PortalDataTable.js",
+    "name": "PortalDataTable",
+    "imports": [
+      "_search.js",
+      "_x.js",
+      "_ui-libs.js"
+    ],
+    "css": [
+      "_app/immutable/assets/PortalDataTable.mn8s654k.css"
+    ]
+  },
+  "_PortalDataTable.mn8s654k.css": {
+    "file": "_app/immutable/assets/PortalDataTable.mn8s654k.css",
+    "src": "_PortalDataTable.mn8s654k.css"
+  },
+  "_PortalEmptyState.Clfqtv4R.css": {
+    "file": "_app/immutable/assets/PortalEmptyState.Clfqtv4R.css",
+    "src": "_PortalEmptyState.Clfqtv4R.css"
+  },
+  "_PortalEmptyState.js": {
+    "file": "chunks/PortalEmptyState.js",
+    "name": "PortalEmptyState",
+    "imports": [
+      "_ui-libs.js"
+    ],
+    "css": [
+      "_app/immutable/assets/PortalEmptyState.Clfqtv4R.css"
+    ]
+  },
+  "_PortalHero.js": {
+    "file": "chunks/PortalHero.js",
+    "name": "PortalHero",
+    "imports": [
+      "_ui-libs.js"
+    ]
+  },
+  "_PortalKpi.js": {
+    "file": "chunks/PortalKpi.js",
+    "name": "PortalKpi",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_PortalShell._wPY6-_N.css": {
+    "file": "_app/immutable/assets/PortalShell._wPY6-_N.css",
+    "src": "_PortalShell._wPY6-_N.css"
   },
   "_PortalShell.js": {
     "file": "chunks/PortalShell.js",
@@ -221,7 +309,7 @@
       "_index-server.js"
     ],
     "css": [
-      "_app/immutable/assets/PortalShell.BIq1BoRD.css"
+      "_app/immutable/assets/PortalShell._wPY6-_N.css"
     ]
   },
   "_Recommendations2.js": {
@@ -236,6 +324,16 @@
     "name": "ReportButton",
     "imports": [
       "_flag.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_ReviewSection.js": {
+    "file": "chunks/ReviewSection.js",
+    "name": "ReviewSection",
+    "imports": [
+      "_ReportButton.js",
+      "_constants.js",
+      "_Icon.js",
       "_ui-libs.js"
     ]
   },
@@ -273,7 +371,7 @@
       "_card.js",
       "_contracts2.js",
       "_wallet2.js",
-      "_Icon.js",
+      "_check-check.js",
       "_coins.js",
       "_copy.js",
       "_external-link.js",
@@ -304,10 +402,6 @@
       "_drizzle.js"
     ]
   },
-  "_admin.js": {
-    "file": "chunks/admin.js",
-    "name": "admin"
-  },
   "_ai-moderation.js": {
     "file": "chunks/ai-moderation.js",
     "name": "ai-moderation",
@@ -328,13 +422,6 @@
     "name": "ai-settings",
     "imports": [
       "_drizzle.js"
-    ]
-  },
-  "_ai-tagging.js": {
-    "file": "chunks/ai-tagging.js",
-    "name": "ai-tagging",
-    "imports": [
-      "_ai-provider.js"
     ]
   },
   "_ai-token-scoring.js": {
@@ -360,9 +447,9 @@
       "_shared-server.js"
     ]
   },
-  "_app.DX4Rw-FB.css": {
-    "file": "_app/immutable/assets/app.DX4Rw-FB.css",
-    "src": "_app.DX4Rw-FB.css"
+  "_app.DQStIF-K.css": {
+    "file": "_app/immutable/assets/app.DQStIF-K.css",
+    "src": "_app.DQStIF-K.css"
   },
   "_app.js": {
     "file": "chunks/app.js",
@@ -400,6 +487,14 @@
       "_ui-libs.js"
     ]
   },
+  "_arrow-up-right.js": {
+    "file": "chunks/arrow-up-right.js",
+    "name": "arrow-up-right",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
   "_auth-client.js": {
     "file": "chunks/auth-client.js",
     "name": "auth-client",
@@ -432,6 +527,14 @@
       "_ui-libs.js"
     ]
   },
+  "_baby.js": {
+    "file": "chunks/baby.js",
+    "name": "baby",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
   "_badge.js": {
     "file": "chunks/badge.js",
     "name": "badge",
@@ -443,6 +546,14 @@
   "_banknote.js": {
     "file": "chunks/banknote.js",
     "name": "banknote",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_bell-ring.js": {
+    "file": "chunks/bell-ring.js",
+    "name": "bell-ring",
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
@@ -504,9 +615,24 @@
       "_ui-libs.js"
     ]
   },
+  "_catalog-progress.js": {
+    "file": "chunks/catalog-progress.js",
+    "name": "catalog-progress",
+    "imports": [
+      "_drizzle.js"
+    ]
+  },
   "_chart-column.js": {
     "file": "chunks/chart-column.js",
     "name": "chart-column",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_check-check.js": {
+    "file": "chunks/check-check.js",
+    "name": "check-check",
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
@@ -640,6 +766,16 @@
       "_ui-libs.js"
     ]
   },
+  "_content-delete.js": {
+    "file": "chunks/content-delete.js",
+    "name": "content-delete",
+    "imports": [
+      "_drizzle.js",
+      "_minio2.js",
+      "_temporal-client.js",
+      "_shared-server.js"
+    ]
+  },
   "_content-scan.js": {
     "file": "chunks/content-scan.js",
     "name": "content-scan",
@@ -746,9 +882,9 @@
       "_ui-libs.js"
     ]
   },
-  "_encoder-orchestrator.js": {
-    "file": "chunks/encoder-orchestrator.js",
-    "name": "encoder-orchestrator",
+  "_encoder-playback.js": {
+    "file": "chunks/encoder-playback.js",
+    "name": "encoder-playback",
     "imports": [
       "_shared-server.js"
     ]
@@ -796,6 +932,14 @@
   "_file-text.js": {
     "file": "chunks/file-text.js",
     "name": "file-text",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_film.js": {
+    "file": "chunks/film.js",
+    "name": "film",
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
@@ -971,6 +1115,22 @@
       "_ui-libs.js"
     ]
   },
+  "_media-detail-load.js": {
+    "file": "chunks/media-detail-load.js",
+    "name": "media-detail-load",
+    "imports": [
+      "_drizzle.js",
+      "_encoder-playback.js"
+    ]
+  },
+  "_mediaModalStore.js": {
+    "file": "chunks/mediaModalStore.js",
+    "name": "mediaModalStore",
+    "imports": [
+      "_ui-libs.js",
+      "_index-server.js"
+    ]
+  },
   "_meilisearch2.js": {
     "file": "chunks/meilisearch2.js",
     "name": "meilisearch",
@@ -1005,6 +1165,17 @@
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
+    ]
+  },
+  "_myList.js": {
+    "file": "chunks/myList.js",
+    "name": "myList",
+    "imports": [
+      "_navigation.js",
+      "_client.js",
+      "_ui-libs.js",
+      "_toast-state.svelte.js",
+      "_index-server.js"
     ]
   },
   "_navigation.js": {
@@ -1104,13 +1275,17 @@
       "_redis.js"
     ]
   },
+  "_recency.js": {
+    "file": "chunks/recency.js",
+    "name": "recency"
+  },
   "_recommendations.js": {
     "file": "chunks/recommendations.js",
     "name": "recommendations",
     "imports": [
       "_drizzle.js",
       "_ai-provider.js",
-      "_ai-tagging.js"
+      "_redis.js"
     ]
   },
   "_redis.js": {
@@ -1123,6 +1298,14 @@
   "_refresh-cw.js": {
     "file": "chunks/refresh-cw.js",
     "name": "refresh-cw",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
+  "_rocket.js": {
+    "file": "chunks/rocket.js",
+    "name": "rocket",
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
@@ -1257,12 +1440,19 @@
       "_ui-libs.js"
     ]
   },
+  "_skeleton.D38UF9u5.css": {
+    "file": "_app/immutable/assets/skeleton.D38UF9u5.css",
+    "src": "_skeleton.D38UF9u5.css"
+  },
   "_skeleton.js": {
     "file": "chunks/skeleton.js",
     "name": "skeleton",
     "imports": [
       "_utils2.js",
       "_ui-libs.js"
+    ],
+    "css": [
+      "_app/immutable/assets/skeleton.D38UF9u5.css"
     ]
   },
   "_smartphone.js": {
@@ -1336,12 +1526,27 @@
       "_ui-libs.js"
     ]
   },
+  "_tabs.js": {
+    "file": "chunks/tabs.js",
+    "name": "tabs",
+    "imports": [
+      "_utils2.js",
+      "_ui-libs.js"
+    ]
+  },
   "_target.js": {
     "file": "chunks/target.js",
     "name": "target",
     "imports": [
       "_Icon.js",
       "_ui-libs.js"
+    ]
+  },
+  "_temporal-client.js": {
+    "file": "chunks/temporal-client.js",
+    "name": "temporal-client",
+    "imports": [
+      "_shared-server.js"
     ]
   },
   "_textarea.js": {
@@ -1475,6 +1680,14 @@
       "_ui-libs.js"
     ]
   },
+  "_volume-x.js": {
+    "file": "chunks/volume-x.js",
+    "name": "volume-x",
+    "imports": [
+      "_Icon.js",
+      "_ui-libs.js"
+    ]
+  },
   "_wallet.js": {
     "file": "chunks/wallet.js",
     "name": "wallet",
@@ -1598,7 +1811,7 @@
       "_ui-libs.js"
     ],
     "css": [
-      "_app/immutable/assets/app.DX4Rw-FB.css"
+      "_app/immutable/assets/app.DQStIF-K.css"
     ]
   },
   "src/routes/(admin)/admin/+page.svelte": {
@@ -1607,8 +1820,10 @@
     "src": "src/routes/(admin)/admin/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalKpi.js",
+      "_PortalHero.js",
+      "_arrow-up-right.js",
       "_banknote.js",
       "_circle-check.js",
       "_circle-x.js",
@@ -1631,7 +1846,8 @@
     "src": "src/routes/(admin)/admin/abuse/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_check.js",
       "_flag.js",
@@ -1647,8 +1863,11 @@
     "src": "src/routes/(admin)/admin/ai-runs/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalKpi.js",
+      "_PortalDataTable.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_Icon.js",
       "_circle-check.js",
@@ -1665,9 +1884,9 @@
     "src": "src/routes/(admin)/admin/analytics/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
       "_TrendChart.js",
+      "_PortalKpi.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -1679,6 +1898,7 @@
       "_crown.js",
       "_dollar-sign.js",
       "_file-text.js",
+      "_radio.js",
       "_refresh-cw.js",
       "_trending-up.js",
       "_users.js",
@@ -1695,8 +1915,9 @@
     "src": "src/routes/(admin)/admin/communications/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
       "_StatChip.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_message-square.js",
       "_ui-libs.js",
       "_toast-state.svelte.js"
@@ -1708,8 +1929,9 @@
     "src": "src/routes/(admin)/admin/content/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalKpi.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_creator.js",
       "_circle-check.js",
       "_circle-x.js",
@@ -1718,6 +1940,9 @@
       "_video.js",
       "_navigation.js",
       "_ui-libs.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.-NhSHDVw.css"
     ]
   },
   "src/routes/(admin)/admin/creator-applications/+page.svelte": {
@@ -1726,7 +1951,7 @@
     "src": "src/routes/(admin)/admin/creator-applications/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_button.js",
       "_file-check.js",
       "_loader-circle.js",
@@ -1740,7 +1965,8 @@
     "isEntry": true,
     "imports": [
       "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -1752,9 +1978,12 @@
       "_credit-card.js",
       "_dollar-sign.js",
       "_file-text.js",
+      "_mail.js",
+      "_send.js",
       "_user-plus.js",
       "_users.js",
       "_wallet.js",
+      "_x.js",
       "_ui-libs.js"
     ]
   },
@@ -1773,8 +2002,8 @@
     "src": "src/routes/(admin)/admin/dashboard/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
       "_StatChip.js",
+      "_PortalHero.js",
       "_badge.js",
       "_card.js",
       "_activity.js",
@@ -1797,7 +2026,8 @@
     "src": "src/routes/(admin)/admin/disputes/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_shield-alert.js",
       "_ui-libs.js"
@@ -1809,7 +2039,7 @@
     "src": "src/routes/(admin)/admin/events/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -1831,7 +2061,8 @@
     "isEntry": true,
     "imports": [
       "_GovernanceStatusCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_landmark.js",
       "_ui-libs.js"
     ]
@@ -1842,7 +2073,7 @@
     "src": "src/routes/(admin)/admin/governance/create/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_Icon.js",
       "_ui-libs.js"
     ]
@@ -1853,7 +2084,7 @@
     "src": "src/routes/(admin)/admin/governance/emergency/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_triangle-alert.js",
       "_ui-libs.js"
     ]
@@ -1864,7 +2095,7 @@
     "src": "src/routes/(admin)/admin/governance/execution/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_Icon.js",
       "_ui-libs.js"
     ]
@@ -1875,7 +2106,8 @@
     "src": "src/routes/(admin)/admin/governance/proposals/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_file-text.js",
       "_ui-libs.js"
     ]
@@ -1886,7 +2118,8 @@
     "src": "src/routes/(admin)/admin/governance/reports/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_chart-column.js",
       "_download.js",
       "_ui-libs.js"
@@ -1898,7 +2131,7 @@
     "src": "src/routes/(admin)/admin/governance/roles/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_shield-check.js",
       "_ui-libs.js"
     ]
@@ -1910,7 +2143,7 @@
     "isEntry": true,
     "imports": [
       "_GovernanceStatusCard.js",
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_wallet.js",
       "_ui-libs.js"
     ]
@@ -1921,13 +2154,17 @@
     "src": "src/routes/(admin)/admin/payouts/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalDataTable.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_Icon.js",
       "_circle-check.js",
       "_rotate-ccw.js",
       "_wallet.js",
-      "_ui-libs.js"
+      "_ui-libs.js",
+      "_toast-state.svelte.js"
     ]
   },
   "src/routes/(admin)/admin/policies/+page.svelte": {
@@ -1936,8 +2173,9 @@
     "src": "src/routes/(admin)/admin/policies/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
       "_StatChip.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_file-text.js",
       "_ui-libs.js"
     ]
@@ -1948,10 +2186,13 @@
     "src": "src/routes/(admin)/admin/refunds/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_banknote.js",
       "_search.js",
+      "_x.js",
       "_ui-libs.js"
     ]
   },
@@ -1961,14 +2202,19 @@
     "src": "src/routes/(admin)/admin/review/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_EmptyState.js",
-      "_PageHeader.js",
       "_StatChip.js",
-      "_admin.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
+      "_tabs.js",
       "_Icon.js",
+      "_circle-check.js",
+      "_clock.js",
+      "_film.js",
       "_inbox.js",
+      "_loader-circle.js",
       "_shield-check.js",
       "_shield.js",
+      "_triangle-alert.js",
       "_users.js",
       "_wrench.js",
       "_ui-libs.js"
@@ -1980,18 +2226,23 @@
     "src": "src/routes/(admin)/admin/review/[id]/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_tabs.js",
       "_ContentThreadPanel.js",
       "_VideoPlayer.js",
-      "_admin.js",
       "_Icon.js",
+      "_archive.js",
       "_arrow-left.js",
+      "_bell.js",
       "_circle-check.js",
       "_circle-x.js",
       "_file-text.js",
-      "_shield-check.js",
+      "_film.js",
+      "_loader-circle.js",
+      "_rocket.js",
       "_sparkles.js",
+      "_trash-2.js",
       "_triangle-alert.js",
+      "_navigation.js",
       "_state.js",
       "_ui-libs.js"
     ]
@@ -2002,7 +2253,8 @@
     "src": "src/routes/(admin)/admin/settings/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_rotate-ccw.js",
       "_save.js",
       "_settings.js",
@@ -2015,7 +2267,7 @@
     "src": "src/routes/(admin)/admin/submissions/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_inbox.js",
       "_ui-libs.js",
       "_toast-state.svelte.js"
@@ -2028,7 +2280,8 @@
     "isEntry": true,
     "imports": [
       "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_activity.js",
       "_circle-check.js",
@@ -2044,10 +2297,8 @@
     "src": "src/routes/(admin)/admin/tax-forms/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_skeleton.js",
-      "_circle-check.js",
-      "_circle-x.js",
       "_file-text.js",
       "_ui-libs.js"
     ]
@@ -2058,7 +2309,7 @@
     "src": "src/routes/(admin)/admin/tokenomics/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -2085,10 +2336,12 @@
     "src": "src/routes/(admin)/admin/users/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalKpi.js",
+      "_PortalDataTable.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
-      "_search.js",
       "_shield-alert.js",
       "_users.js",
       "_ui-libs.js"
@@ -2100,7 +2353,8 @@
     "src": "src/routes/(admin)/admin/users/[id]/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_arrow-left.js",
       "_banknote.js",
@@ -2118,8 +2372,9 @@
     "src": "src/routes/(admin)/admin/workflow/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
       "_StatChip.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_Icon.js",
       "_ui-libs.js"
     ]
@@ -2134,6 +2389,7 @@
       "_button.js",
       "_dropdown-menu.js",
       "_sheet.js",
+      "_mediaModalStore.js",
       "_utils2.js",
       "_Icon.js",
       "_bell.js",
@@ -2155,7 +2411,7 @@
       "_index-server.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.o8adiJnb.css"
+      "_app/immutable/assets/_layout.D8q8Cvw8.css"
     ]
   },
   "src/routes/(app)/+page.server.ts": {
@@ -2164,7 +2420,9 @@
     "src": "src/routes/(app)/+page.server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_projections.js",
+      "_catalog-progress.js"
     ]
   },
   "src/routes/(app)/+page.svelte": {
@@ -2175,18 +2433,22 @@
     "imports": [
       "_MediaGrid.js",
       "_constants.js",
+      "_ComingSoonRow.js",
       "_Recommendations2.js",
       "_button.js",
       "_Icon.js",
       "_circle-play.js",
       "_coins.js",
       "_crown.js",
+      "_film.js",
       "_lock.js",
       "_mail.js",
+      "_play.js",
       "_shield-alert.js",
       "_sparkles.js",
       "_trending-up.js",
       "_users.js",
+      "_volume-x.js",
       "_x.js",
       "_zap.js",
       "_navigation.js",
@@ -2256,23 +2518,14 @@
       "_app/immutable/assets/_page.DcpkZ3B0.css"
     ]
   },
-  "src/routes/(app)/archive/+page.svelte": {
-    "file": "entries/pages/(app)/archive/_page.svelte.js",
-    "name": "entries/pages/(app)/archive/_page.svelte",
-    "src": "src/routes/(app)/archive/+page.svelte",
-    "isEntry": true,
-    "imports": [
-      "_EnhancedVideoPlayer.js",
-      "_ui-libs.js"
-    ]
-  },
   "src/routes/(app)/browse/+page.server.ts": {
     "file": "entries/pages/(app)/browse/_page.server.ts.js",
     "name": "entries/pages/(app)/browse/_page.server.ts",
     "src": "src/routes/(app)/browse/+page.server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_projections.js"
     ]
   },
   "src/routes/(app)/browse/+page.svelte": {
@@ -2308,6 +2561,28 @@
       "_credit-card.js",
       "_gift.js",
       "_shield.js",
+      "_ui-libs.js"
+    ]
+  },
+  "src/routes/(app)/coming-soon/+page.server.ts": {
+    "file": "entries/pages/(app)/coming-soon/_page.server.ts.js",
+    "name": "entries/pages/(app)/coming-soon/_page.server.ts",
+    "src": "src/routes/(app)/coming-soon/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_projections.js"
+    ]
+  },
+  "src/routes/(app)/coming-soon/+page.svelte": {
+    "file": "entries/pages/(app)/coming-soon/_page.svelte.js",
+    "name": "entries/pages/(app)/coming-soon/_page.svelte",
+    "src": "src/routes/(app)/coming-soon/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ComingSoonCard.js",
+      "_Icon.js",
+      "_sparkles.js",
       "_ui-libs.js"
     ]
   },
@@ -2373,7 +2648,8 @@
     "imports": [
       "_documentaries.js",
       "_drizzle.js",
-      "_projections.js"
+      "_projections.js",
+      "_catalog-progress.js"
     ]
   },
   "src/routes/(app)/documentaries/+page.svelte": {
@@ -2382,12 +2658,35 @@
     "src": "src/routes/(app)/documentaries/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_button.js",
+      "_FeaturedBillboardPanel.js",
+      "_ComingSoonRow.js",
+      "_mediaModalStore.js",
+      "_myList.js",
+      "_recency.js",
       "_bookmark.js",
-      "_circle-play.js",
       "_play.js",
       "_navigation.js",
       "_state.js",
+      "_ui-libs.js"
+    ]
+  },
+  "src/routes/(app)/documentaries/[slug]/+page.server.ts": {
+    "file": "entries/pages/(app)/documentaries/_slug_/_page.server.ts.js",
+    "name": "entries/pages/(app)/documentaries/_slug_/_page.server.ts",
+    "src": "src/routes/(app)/documentaries/[slug]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_media-detail-load.js"
+    ]
+  },
+  "src/routes/(app)/documentaries/[slug]/+page.svelte": {
+    "file": "entries/pages/(app)/documentaries/_slug_/_page.svelte.js",
+    "name": "entries/pages/(app)/documentaries/_slug_/_page.svelte",
+    "src": "src/routes/(app)/documentaries/[slug]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_MediaDetailPage.js",
+      "_constants.js",
       "_ui-libs.js"
     ]
   },
@@ -2425,11 +2724,9 @@
     "isEntry": true,
     "imports": [
       "_MediaGrid.js",
-      "_MovieCard.js",
-      "_EnhancedVideoPlayer.js",
       "_documentaries.js",
       "_shows.js",
-      "_navigation.js",
+      "_mediaModalStore.js",
       "_ui-libs.js"
     ]
   },
@@ -2492,7 +2789,8 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_projections.js"
+      "_projections.js",
+      "_catalog-progress.js"
     ]
   },
   "src/routes/(app)/movies/+page.svelte": {
@@ -2501,12 +2799,33 @@
     "src": "src/routes/(app)/movies/+page.svelte",
     "isEntry": true,
     "imports": [
+      "_FeaturedBillboardPanel.js",
       "_MovieCard.js",
-      "_button.js",
-      "_circle-play.js",
+      "_ComingSoonRow.js",
+      "_navigation.js",
       "_state.js",
       "_ui-libs.js",
       "_index-server.js"
+    ]
+  },
+  "src/routes/(app)/movies/[slug]/+page.server.ts": {
+    "file": "entries/pages/(app)/movies/_slug_/_page.server.ts.js",
+    "name": "entries/pages/(app)/movies/_slug_/_page.server.ts",
+    "src": "src/routes/(app)/movies/[slug]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_media-detail-load.js"
+    ]
+  },
+  "src/routes/(app)/movies/[slug]/+page.svelte": {
+    "file": "entries/pages/(app)/movies/_slug_/_page.svelte.js",
+    "name": "entries/pages/(app)/movies/_slug_/_page.svelte",
+    "src": "src/routes/(app)/movies/[slug]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_MediaDetailPage.js",
+      "_constants.js",
+      "_ui-libs.js"
     ]
   },
   "src/routes/(app)/my-studios/+page.svelte": {
@@ -2611,6 +2930,8 @@
     "isEntry": true,
     "imports": [
       "_button.js",
+      "_myList.js",
+      "_bookmark.js",
       "_loader-circle.js",
       "_play.js",
       "_search.js",
@@ -2628,7 +2949,8 @@
     "imports": [
       "_shows.js",
       "_drizzle.js",
-      "_projections.js"
+      "_projections.js",
+      "_catalog-progress.js"
     ]
   },
   "src/routes/(app)/shows/+page.svelte": {
@@ -2637,14 +2959,36 @@
     "src": "src/routes/(app)/shows/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_button.js",
+      "_FeaturedBillboardPanel.js",
+      "_ComingSoonRow.js",
+      "_mediaModalStore.js",
+      "_myList.js",
+      "_recency.js",
       "_bookmark.js",
-      "_circle-play.js",
       "_play.js",
       "_navigation.js",
       "_state.js",
-      "_ui-libs.js",
-      "_index-server.js"
+      "_ui-libs.js"
+    ]
+  },
+  "src/routes/(app)/shows/[slug]/+page.server.ts": {
+    "file": "entries/pages/(app)/shows/_slug_/_page.server.ts.js",
+    "name": "entries/pages/(app)/shows/_slug_/_page.server.ts",
+    "src": "src/routes/(app)/shows/[slug]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_media-detail-load.js"
+    ]
+  },
+  "src/routes/(app)/shows/[slug]/+page.svelte": {
+    "file": "entries/pages/(app)/shows/_slug_/_page.svelte.js",
+    "name": "entries/pages/(app)/shows/_slug_/_page.svelte",
+    "src": "src/routes/(app)/shows/[slug]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_MediaDetailPage.js",
+      "_constants.js",
+      "_ui-libs.js"
     ]
   },
   "src/routes/(app)/sponsorships/+page.server.ts": {
@@ -2865,7 +3209,16 @@
       "_ui-libs.js"
     ],
     "css": [
-      "_app/immutable/assets/app.DX4Rw-FB.css"
+      "_app/immutable/assets/app.DQStIF-K.css"
+    ]
+  },
+  "src/routes/(creator)/creator/+page.server.ts": {
+    "file": "entries/pages/(creator)/creator/_page.server.ts.js",
+    "name": "entries/pages/(creator)/creator/_page.server.ts",
+    "src": "src/routes/(creator)/creator/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
     ]
   },
   "src/routes/(creator)/creator/+page.svelte": {
@@ -2874,18 +3227,24 @@
     "src": "src/routes/(creator)/creator/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalKpi.js",
+      "_PortalHero.js",
+      "_Icon.js",
+      "_arrow-up-right.js",
+      "_bell.js",
       "_chart-column.js",
       "_circle-check.js",
       "_clock.js",
       "_dollar-sign.js",
       "_eye.js",
-      "_house.js",
+      "_film.js",
       "_message-square.js",
       "_sparkles.js",
+      "_triangle-alert.js",
       "_upload.js",
       "_video.js",
+      "_state.js",
       "_ui-libs.js"
     ]
   },
@@ -2895,7 +3254,7 @@
     "src": "src/routes/(creator)/creator/agreement/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_file-text.js",
       "_ui-libs.js"
     ]
@@ -2906,7 +3265,7 @@
     "src": "src/routes/(creator)/creator/analytics-help/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_chart-column.js",
       "_ui-libs.js"
     ]
@@ -2917,12 +3276,18 @@
     "src": "src/routes/(creator)/creator/analytics/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_EmptyState.js",
       "_KpiCard.js",
-      "_PageHeader.js",
       "_TrendChart.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
+      "_Icon.js",
       "_chart-column.js",
+      "_clock.js",
+      "_eye.js",
+      "_heart.js",
+      "_radio.js",
+      "_target.js",
       "_ui-libs.js"
     ]
   },
@@ -2932,7 +3297,7 @@
     "src": "src/routes/(creator)/creator/best-practices/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_target.js",
       "_ui-libs.js"
     ]
@@ -2943,7 +3308,8 @@
     "src": "src/routes/(creator)/creator/content/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_creator.js",
       "_upload.js",
       "_video.js",
@@ -2964,6 +3330,7 @@
       "_archive.js",
       "_arrow-left.js",
       "_external-link.js",
+      "_trash-2.js",
       "_navigation.js",
       "_client.js",
       "_state.js",
@@ -2977,7 +3344,8 @@
     "src": "src/routes/(creator)/creator/content/[id]/episodes/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_arrow-left.js",
       "_plus.js",
       "_tv.js",
@@ -2992,7 +3360,7 @@
     "src": "src/routes/(creator)/creator/copyright/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_button.js",
       "_file-text.js",
       "_mail.js",
@@ -3007,8 +3375,8 @@
     "src": "src/routes/(creator)/creator/earnings/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_KpiCard.js",
-      "_PageHeader.js",
+      "_PortalKpi.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -3036,7 +3404,7 @@
     "src": "src/routes/(creator)/creator/earnings/tax-forms/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_arrow-left.js",
       "_circle-check.js",
@@ -3052,7 +3420,7 @@
     "src": "src/routes/(creator)/creator/events/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_calendar.js",
       "_navigation.js",
       "_ui-libs.js"
@@ -3064,10 +3432,12 @@
     "src": "src/routes/(creator)/creator/forum/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_Icon.js",
       "_plus.js",
       "_navigation.js",
+      "_client.js",
       "_ui-libs.js"
     ]
   },
@@ -3094,7 +3464,7 @@
     "src": "src/routes/(creator)/creator/forum/new/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_Icon.js",
       "_arrow-left.js",
       "_navigation.js",
@@ -3107,7 +3477,7 @@
     "src": "src/routes/(creator)/creator/guidelines/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_book-open.js",
       "_ui-libs.js"
     ]
@@ -3118,8 +3488,8 @@
     "src": "src/routes/(creator)/creator/inbox/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_EmptyState.js",
-      "_PageHeader.js",
+      "_PortalEmptyState.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_Icon.js",
       "_archive.js",
@@ -3134,7 +3504,7 @@
     "src": "src/routes/(creator)/creator/live/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_copy.js",
       "_eye.js",
@@ -3150,9 +3520,10 @@
     "src": "src/routes/(creator)/creator/moderation/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_skeleton.js",
       "_shield-check.js",
+      "_triangle-alert.js",
       "_ui-libs.js"
     ]
   },
@@ -3162,7 +3533,7 @@
     "src": "src/routes/(creator)/creator/newsletter/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_mail.js",
       "_ui-libs.js"
     ]
@@ -3173,7 +3544,8 @@
     "src": "src/routes/(creator)/creator/profile/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalButton.js",
+      "_PortalHero.js",
       "_save.js",
       "_user.js",
       "_ui-libs.js"
@@ -3185,7 +3557,7 @@
     "src": "src/routes/(creator)/creator/success-stories/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_trophy.js",
       "_ui-libs.js"
     ]
@@ -3196,7 +3568,7 @@
     "src": "src/routes/(creator)/creator/support/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_badge.js",
       "_button.js",
       "_card.js",
@@ -3213,7 +3585,7 @@
     "src": "src/routes/(creator)/creator/tech-support/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_wrench.js",
       "_ui-libs.js"
     ]
@@ -3233,9 +3605,11 @@
     "src": "src/routes/(creator)/creator/upload/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_PageHeader.js",
+      "_PortalHero.js",
       "_creator.js",
       "_upload.js",
+      "_user.js",
+      "_x.js",
       "_state.js",
       "_ui-libs.js",
       "_toast-state.svelte.js"
@@ -3315,6 +3689,7 @@
       "_Icon.js",
       "_book-open.js",
       "_external-link.js",
+      "_rocket.js",
       "_settings.js",
       "_ui-libs.js"
     ]
@@ -3462,6 +3837,7 @@
     "isEntry": true,
     "imports": [
       "_button.js",
+      "_myList.js",
       "_Icon.js",
       "_play.js",
       "_trash-2.js",
@@ -3545,7 +3921,7 @@
     ],
     "css": [
       "_app/immutable/assets/_layout.BZf23aTk.css",
-      "_app/immutable/assets/app.DX4Rw-FB.css"
+      "_app/immutable/assets/app.DQStIF-K.css"
     ]
   },
   "src/routes/api/achievements/+server.ts": {
@@ -3603,6 +3979,16 @@
       "_shared-server.js"
     ]
   },
+  "src/routes/api/admin/agents/status/+server.ts": {
+    "file": "entries/endpoints/api/admin/agents/status/_server.ts.js",
+    "name": "entries/endpoints/api/admin/agents/status/_server.ts",
+    "src": "src/routes/api/admin/agents/status/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_shared-server.js"
+    ]
+  },
   "src/routes/api/admin/ai/config/+server.ts": {
     "file": "entries/endpoints/api/admin/ai/config/_server.ts.js",
     "name": "entries/endpoints/api/admin/ai/config/_server.ts",
@@ -3643,6 +4029,15 @@
       "_admin-auth.js"
     ]
   },
+  "src/routes/api/admin/analytics/stream/+server.ts": {
+    "file": "entries/endpoints/api/admin/analytics/stream/_server.ts.js",
+    "name": "entries/endpoints/api/admin/analytics/stream/_server.ts",
+    "src": "src/routes/api/admin/analytics/stream/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_sse.js"
+    ]
+  },
   "src/routes/api/admin/communications/+server.ts": {
     "file": "entries/endpoints/api/admin/communications/_server.ts.js",
     "name": "entries/endpoints/api/admin/communications/_server.ts",
@@ -3678,7 +4073,9 @@
     "src": "src/routes/api/admin/content/[id]/+server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_content-delete.js",
+      "_encoder-playback.js"
     ]
   },
   "src/routes/api/admin/content/[id]/assign/+server.ts": {
@@ -3700,7 +4097,7 @@
     "imports": [
       "_constants.js",
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_temporal-client.js"
     ]
   },
   "src/routes/api/admin/content/[id]/ppv/+server.ts": {
@@ -3856,7 +4253,7 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_temporal-client.js"
     ]
   },
   "src/routes/api/admin/encoder/jobs/[mediaId]/retry/+server.ts": {
@@ -3866,7 +4263,9 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_minio2.js",
+      "_temporal-client.js",
+      "_shared-server.js"
     ]
   },
   "src/routes/api/admin/events/+server.ts": {
@@ -4339,7 +4738,26 @@
     "imports": [
       "_constants.js",
       "_drizzle.js",
-      "_ai.js"
+      "_ai-settings.js",
+      "_shared-server.js"
+    ]
+  },
+  "src/routes/api/ai/copilot/approve/+server.ts": {
+    "file": "entries/endpoints/api/ai/copilot/approve/_server.ts.js",
+    "name": "entries/endpoints/api/ai/copilot/approve/_server.ts",
+    "src": "src/routes/api/ai/copilot/approve/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
+    ]
+  },
+  "src/routes/api/ai/copilot/conversations/+server.ts": {
+    "file": "entries/endpoints/api/ai/copilot/conversations/_server.ts.js",
+    "name": "entries/endpoints/api/ai/copilot/conversations/_server.ts",
+    "src": "src/routes/api/ai/copilot/conversations/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
     ]
   },
   "src/routes/api/ai/creator-insights/+server.ts": {
@@ -4431,7 +4849,7 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_ai-tagging.js",
+      "_ai-provider.js",
       "_rate-limit.js"
     ]
   },
@@ -4452,6 +4870,25 @@
     "isEntry": true,
     "imports": [
       "_auth.js"
+    ]
+  },
+  "src/routes/api/coming-soon/+server.ts": {
+    "file": "entries/endpoints/api/coming-soon/_server.ts.js",
+    "name": "entries/endpoints/api/coming-soon/_server.ts",
+    "src": "src/routes/api/coming-soon/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_projections.js"
+    ]
+  },
+  "src/routes/api/coming-soon/[contentId]/notify/+server.ts": {
+    "file": "entries/endpoints/api/coming-soon/_contentId_/notify/_server.ts.js",
+    "name": "entries/endpoints/api/coming-soon/_contentId_/notify/_server.ts",
+    "src": "src/routes/api/coming-soon/[contentId]/notify/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
     ]
   },
   "src/routes/api/contact/+server.ts": {
@@ -4520,6 +4957,16 @@
       "_redis.js"
     ]
   },
+  "src/routes/api/creator/analytics/stream/+server.ts": {
+    "file": "entries/endpoints/api/creator/analytics/stream/_server.ts.js",
+    "name": "entries/endpoints/api/creator/analytics/stream/_server.ts",
+    "src": "src/routes/api/creator/analytics/stream/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_constants.js",
+      "_sse.js"
+    ]
+  },
   "src/routes/api/creator/application/+server.ts": {
     "file": "entries/endpoints/api/creator/application/_server.ts.js",
     "name": "entries/endpoints/api/creator/application/_server.ts",
@@ -4548,6 +4995,7 @@
     "imports": [
       "_constants.js",
       "_drizzle.js",
+      "_content-delete.js",
       "_notify.js"
     ],
     "dynamicImports": [
@@ -4869,6 +5317,15 @@
       "_stripe2.js"
     ]
   },
+  "src/routes/api/creator/people/lookup/+server.ts": {
+    "file": "entries/endpoints/api/creator/people/lookup/_server.ts.js",
+    "name": "entries/endpoints/api/creator/people/lookup/_server.ts",
+    "src": "src/routes/api/creator/people/lookup/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
+    ]
+  },
   "src/routes/api/creator/profile/+server.ts": {
     "file": "entries/endpoints/api/creator/profile/_server.ts.js",
     "name": "entries/endpoints/api/creator/profile/_server.ts",
@@ -4908,6 +5365,30 @@
       "_drizzle.js"
     ]
   },
+  "src/routes/api/creator/trailer-upload/commit/+server.ts": {
+    "file": "entries/endpoints/api/creator/trailer-upload/commit/_server.ts.js",
+    "name": "entries/endpoints/api/creator/trailer-upload/commit/_server.ts",
+    "src": "src/routes/api/creator/trailer-upload/commit/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_constants.js",
+      "_drizzle.js",
+      "_temporal-client.js",
+      "_shared-server.js"
+    ]
+  },
+  "src/routes/api/creator/trailer-upload/sign/+server.ts": {
+    "file": "entries/endpoints/api/creator/trailer-upload/sign/_server.ts.js",
+    "name": "entries/endpoints/api/creator/trailer-upload/sign/_server.ts",
+    "src": "src/routes/api/creator/trailer-upload/sign/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_constants.js",
+      "_drizzle.js",
+      "_minio2.js",
+      "_shared-server.js"
+    ]
+  },
   "src/routes/api/creators/[id]/follow/+server.ts": {
     "file": "entries/endpoints/api/creators/_id_/follow/_server.ts.js",
     "name": "entries/endpoints/api/creators/_id_/follow/_server.ts",
@@ -4941,6 +5422,16 @@
       "_shared-server.js"
     ]
   },
+  "src/routes/api/cron/analytics-rollup/+server.ts": {
+    "file": "entries/endpoints/api/cron/analytics-rollup/_server.ts.js",
+    "name": "entries/endpoints/api/cron/analytics-rollup/_server.ts",
+    "src": "src/routes/api/cron/analytics-rollup/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_shared-server.js"
+    ]
+  },
   "src/routes/api/cron/creator-payouts/+server.ts": {
     "file": "entries/endpoints/api/cron/creator-payouts/_server.ts.js",
     "name": "entries/endpoints/api/cron/creator-payouts/_server.ts",
@@ -4959,10 +5450,6 @@
     "src": "src/routes/api/cron/encoder-poll/+server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js",
-      "_encoder-orchestrator.js",
-      "_notify.js",
-      "_sse.js",
       "_shared-server.js"
     ]
   },
@@ -5029,6 +5516,7 @@
     "imports": [
       "_drizzle.js",
       "_notifications.js",
+      "_notify.js",
       "_shared-server.js"
     ]
   },
@@ -5104,7 +5592,8 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_minio2.js",
+      "_shared-server.js"
     ]
   },
   "src/routes/api/encoder/jobs/[jobId]/+server.ts": {
@@ -5113,8 +5602,7 @@
     "src": "src/routes/api/encoder/jobs/[jobId]/+server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_drizzle.js"
     ]
   },
   "src/routes/api/encoder/jobs/[jobId]/commit/+server.ts": {
@@ -5124,7 +5612,8 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_temporal-client.js",
+      "_shared-server.js"
     ]
   },
   "src/routes/api/encoder/jobs/[jobId]/playback/+server.ts": {
@@ -5134,7 +5623,7 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
-      "_encoder-orchestrator.js"
+      "_encoder-playback.js"
     ]
   },
   "src/routes/api/encoder/live-finalize/+server.ts": {
@@ -5227,6 +5716,7 @@
     "isEntry": true,
     "imports": [
       "_drizzle.js",
+      "_encoder-playback.js",
       "_notify.js",
       "_sse.js",
       "_shared-server.js"
@@ -5274,6 +5764,26 @@
     "file": "entries/endpoints/api/files/_server.ts.js",
     "name": "entries/endpoints/api/files/_server.ts",
     "src": "src/routes/api/files/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_minio2.js",
+      "_shared-server.js"
+    ]
+  },
+  "src/routes/api/files/commit/+server.ts": {
+    "file": "entries/endpoints/api/files/commit/_server.ts.js",
+    "name": "entries/endpoints/api/files/commit/_server.ts",
+    "src": "src/routes/api/files/commit/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_minio2.js"
+    ]
+  },
+  "src/routes/api/files/sign/+server.ts": {
+    "file": "entries/endpoints/api/files/sign/_server.ts.js",
+    "name": "entries/endpoints/api/files/sign/_server.ts",
+    "src": "src/routes/api/files/sign/+server.ts",
     "isEntry": true,
     "imports": [
       "_minio2.js",
@@ -5421,6 +5931,15 @@
       "_drizzle.js"
     ]
   },
+  "src/routes/api/my-list/[contentId]/+server.ts": {
+    "file": "entries/endpoints/api/my-list/_contentId_/_server.ts.js",
+    "name": "entries/endpoints/api/my-list/_contentId_/_server.ts",
+    "src": "src/routes/api/my-list/[contentId]/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
+    ]
+  },
   "src/routes/api/notifications/+server.ts": {
     "file": "entries/endpoints/api/notifications/_server.ts.js",
     "name": "entries/endpoints/api/notifications/_server.ts",
@@ -5525,7 +6044,8 @@
     "src": "src/routes/api/playlists/[id]/items/+server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_catalog-progress.js"
     ]
   },
   "src/routes/api/ppv/check-access/[contentId]/+server.ts": {
@@ -5650,6 +6170,7 @@
     "src": "src/routes/api/search/+server.ts",
     "isEntry": true,
     "imports": [
+      "_catalog-progress.js",
       "_meilisearch2.js"
     ]
   },
@@ -5845,6 +6366,15 @@
       "_sse.js"
     ]
   },
+  "src/routes/api/watch/mark/[contentId]/+server.ts": {
+    "file": "entries/endpoints/api/watch/mark/_contentId_/_server.ts.js",
+    "name": "entries/endpoints/api/watch/mark/_contentId_/_server.ts",
+    "src": "src/routes/api/watch/mark/[contentId]/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js"
+    ]
+  },
   "src/routes/api/watch/progress/+server.ts": {
     "file": "entries/endpoints/api/watch/progress/_server.ts.js",
     "name": "entries/endpoints/api/watch/progress/_server.ts",
@@ -5855,6 +6385,7 @@
       "_ai-token-scoring.js",
       "_analytics.js",
       "_notify.js",
+      "_sse.js",
       "_ua-country.js"
     ]
   },
@@ -5878,7 +6409,7 @@
       "_button.js",
       "_dropdown-menu.js",
       "_portal-navigation.js",
-      "_Icon.js",
+      "_baby.js",
       "_chevron-down.js",
       "_users.js",
       "_navigation.js",
@@ -5888,6 +6419,18 @@
     ],
     "css": [
       "_app/immutable/assets/_layout.9pp-kqXI.css"
+    ]
+  },
+  "src/routes/kids/+page.svelte": {
+    "file": "entries/pages/kids/_page.svelte.js",
+    "name": "entries/pages/kids/_page.svelte",
+    "src": "src/routes/kids/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_arrow-right.js",
+      "_baby.js",
+      "_users.js",
+      "_ui-libs.js"
     ]
   },
   "src/routes/kids/kiddies/+layout.ts": {
@@ -5914,7 +6457,8 @@
     "src": "src/routes/kids/kiddies/+page.server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_projections.js"
     ]
   },
   "src/routes/kids/kiddies/+page.svelte": {
@@ -5924,6 +6468,26 @@
     "isEntry": true,
     "imports": [
       "_MediaGrid.js",
+      "_ui-libs.js"
+    ]
+  },
+  "src/routes/kids/kiddies/[slug]/+page.server.ts": {
+    "file": "entries/pages/kids/kiddies/_slug_/_page.server.ts.js",
+    "name": "entries/pages/kids/kiddies/_slug_/_page.server.ts",
+    "src": "src/routes/kids/kiddies/[slug]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_media-detail-load.js"
+    ]
+  },
+  "src/routes/kids/kiddies/[slug]/+page.svelte": {
+    "file": "entries/pages/kids/kiddies/_slug_/_page.svelte.js",
+    "name": "entries/pages/kids/kiddies/_slug_/_page.svelte",
+    "src": "src/routes/kids/kiddies/[slug]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_MediaDetailPage.js",
+      "_constants.js",
       "_ui-libs.js"
     ]
   },
@@ -5983,7 +6547,8 @@
     "src": "src/routes/kids/teens/+page.server.ts",
     "isEntry": true,
     "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_projections.js"
     ]
   },
   "src/routes/kids/teens/+page.svelte": {
@@ -5997,6 +6562,26 @@
     ],
     "css": [
       "_app/immutable/assets/_page.Brez6pGR.css"
+    ]
+  },
+  "src/routes/kids/teens/[slug]/+page.server.ts": {
+    "file": "entries/pages/kids/teens/_slug_/_page.server.ts.js",
+    "name": "entries/pages/kids/teens/_slug_/_page.server.ts",
+    "src": "src/routes/kids/teens/[slug]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_media-detail-load.js"
+    ]
+  },
+  "src/routes/kids/teens/[slug]/+page.svelte": {
+    "file": "entries/pages/kids/teens/_slug_/_page.svelte.js",
+    "name": "entries/pages/kids/teens/_slug_/_page.svelte",
+    "src": "src/routes/kids/teens/[slug]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_MediaDetailPage.js",
+      "_constants.js",
+      "_ui-libs.js"
     ]
   },
   "src/routes/sitemap.xml/+server.ts": {
@@ -6017,7 +6602,7 @@
     "imports": [
       "_drizzle.js",
       "_role-labels.js",
-      "_encoder-orchestrator.js",
+      "_encoder-playback.js",
       "_ua-country.js"
     ]
   },
@@ -6029,10 +6614,10 @@
     "imports": [
       "_ReportButton.js",
       "_constants.js",
+      "_ReviewSection.js",
       "_VideoPlayer.js",
       "_role-labels.js",
       "_copilot.js",
-      "_Icon.js",
       "_navigation.js",
       "_client.js",
       "_state.js",

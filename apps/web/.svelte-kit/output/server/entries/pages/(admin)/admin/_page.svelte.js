@@ -1,5 +1,6 @@
-import { Lt as attr, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
-import { n as Arrow_up_right, t as KpiCard } from "../../../../chunks/KpiCard.js";
+import { Ht as attr, Ot as ensure_array_like, Wt as escape_html } from "../../../../chunks/ui-libs.js";
+import { t as PortalKpi } from "../../../../chunks/PortalKpi.js";
+import { t as Arrow_up_right } from "../../../../chunks/arrow-up-right.js";
 import { t as Banknote } from "../../../../chunks/banknote.js";
 import { t as Circle_check } from "../../../../chunks/circle-check.js";
 import { t as Circle_x } from "../../../../chunks/circle-x.js";
@@ -13,7 +14,8 @@ import { t as Sparkles } from "../../../../chunks/sparkles.js";
 import { t as Triangle_alert } from "../../../../chunks/triangle-alert.js";
 import { t as Users } from "../../../../chunks/users.js";
 import { t as Video } from "../../../../chunks/video.js";
-import { t as PageHeader } from "../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../chunks/PortalButton.js";
 //#region src/routes/(admin)/admin/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -66,65 +68,66 @@ function _page($$renderer, $$props) {
 				accent: "cyan"
 			}
 		];
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<a href="/admin/ai-runs" class="hidden md:inline-flex items-center gap-1.5 text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground transition-colors">`);
-				Sparkles($$renderer, { class: "w-3.5 h-3.5" });
-				$$renderer.push(`<!----> AI Runs</a>`);
+				PortalButton($$renderer, {
+					href: "/admin/ai-runs",
+					variant: "secondary",
+					size: "md",
+					children: ($$renderer) => {
+						Sparkles($$renderer, { class: "w-4 h-4" });
+						$$renderer.push(`<!----> AI Runs`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
+			PortalHero($$renderer, {
+				eyebrow: "Mission Control",
+				title: "Platform pulse",
+				subtitle: "Reviews, encoder health, creator community. Everything you need to keep the studio humming.",
 				icon: Shield_check,
-				title: "Admin",
-				subtitle: "Platform overview, content review, creator community.",
+				statusDot: true,
+				statusText: adminStats.pendingReviews === 0 ? "All systems nominal" : `${adminStats.pendingReviews} review${adminStats.pendingReviews === 1 ? "" : "s"} pending`,
+				statusTone: adminStats.pendingReviews === 0 ? "success" : adminStats.pendingReviews < 5 ? "warning" : "danger",
 				actions,
 				$$slots: { actions: true }
 			});
 		}
 		$$renderer.push(`<!----> <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">`);
-		KpiCard($$renderer, {
+		PortalKpi($$renderer, {
 			label: "Pending Reviews",
 			value: adminStats.pendingReviews,
 			icon: Clock,
-			accent: "yellow",
-			href: "/admin/review",
-			index: 0
+			href: "/admin/review"
 		});
 		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
+		PortalKpi($$renderer, {
 			label: "Active Creators",
 			value: adminStats.totalCreators,
 			icon: Users,
-			accent: "blue",
-			href: "/admin/creators",
-			index: 1
+			href: "/admin/creators"
 		});
 		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
+		PortalKpi($$renderer, {
 			label: "Published",
 			value: adminStats.publishedContent,
 			icon: Circle_check,
-			accent: "green",
-			href: "/admin/content?status=approved",
-			index: 2
+			href: "/admin/content?status=approved"
 		});
 		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
+		PortalKpi($$renderer, {
 			label: "Rejected",
 			value: adminStats.rejectedContent,
 			icon: Circle_x,
-			accent: "red",
-			href: "/admin/content?status=rejected",
-			index: 3
+			href: "/admin/content?status=rejected"
 		});
 		$$renderer.push(`<!----> `);
-		KpiCard($$renderer, {
+		PortalKpi($$renderer, {
 			label: "Platform Views",
-			value: adminStats.totalViews.toLocaleString(),
+			value: adminStats.totalViews,
 			icon: Eye,
-			accent: "purple",
-			href: "/admin/analytics",
-			index: 4
+			href: "/admin/analytics"
 		});
 		$$renderer.push(`<!----></div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-3"><section class="lg:col-span-2 surface-1 rounded-xl p-5"><header class="flex items-center justify-between mb-4"><div class="flex items-center gap-2">`);
 		Triangle_alert($$renderer, { class: "w-4 h-4 text-yellow-500" });

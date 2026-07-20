@@ -24,3 +24,7 @@ DOKPLOY_ENV.txt
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local secrets — never commit
+web3 keys.txt
+packages/contracts/.env

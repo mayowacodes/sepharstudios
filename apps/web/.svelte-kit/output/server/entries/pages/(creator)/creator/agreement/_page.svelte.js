@@ -1,6 +1,6 @@
-import { vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/agreement/+page.svelte
 function _page($$renderer) {
 	let activeSection = "overview";
@@ -36,11 +36,13 @@ function _page($$renderer) {
 			icon: "👥"
 		}
 	];
-	$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-	PageHeader($$renderer, {
-		icon: File_text,
-		title: "Creator Agreement",
-		subtitle: "Terms and conditions for content creators on Sephar Studios."
+	$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-5xl">`);
+	PortalHero($$renderer, {
+		compact: true,
+		eyebrow: "Legal",
+		title: "Creator agreement",
+		subtitle: "Terms and conditions for content creators on Sephar Studios.",
+		icon: File_text
 	});
 	$$renderer.push(`<!----> `);
 	$$renderer.push("<!--[-1-->");

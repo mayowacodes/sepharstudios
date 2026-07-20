@@ -1,4 +1,4 @@
-import { H as mediaLibrary, st as reviews, t as db } from "../../../../chunks/drizzle.js";
+import { K as mediaLibrary, dt as reviews, t as db } from "../../../../chunks/drizzle.js";
 import { a as take } from "../../../../chunks/rate-limit.js";
 import { r as scoreReviewQuality, t as moderateComment } from "../../../../chunks/ai-moderation.js";
 import { json } from "@sveltejs/kit";

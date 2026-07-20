@@ -1,10 +1,10 @@
-import { Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ot as ensure_array_like, Wt as escape_html, kt as head } from "../../../../../chunks/ui-libs.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
 import { t as Mail } from "../../../../../chunks/mail.js";
 import { t as Shield_check } from "../../../../../chunks/shield-check.js";
 import { t as Triangle_alert } from "../../../../../chunks/triangle-alert.js";
 import { t as Button } from "../../../../../chunks/button.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/copyright/+page.svelte
 function _page($$renderer) {
 	const sections = [
@@ -72,11 +72,13 @@ agent: copyright@sepharstudios.com.`
 		});
 		$$renderer.push(`<meta name="description" content="Copyright, licensing and DMCA policy for Sephar Studios creators."/>`);
 	});
-	$$renderer.push(`<div class="container mx-auto max-w-3xl py-6 px-4 space-y-6">`);
-	PageHeader($$renderer, {
-		icon: Shield_check,
-		title: "Copyright & Licensing",
-		subtitle: "Last updated 2026-05-27. By uploading you agree to every clause below."
+	$$renderer.push(`<div class="mx-auto max-w-4xl py-6 px-4 space-y-6">`);
+	PortalHero($$renderer, {
+		compact: true,
+		eyebrow: "Legal",
+		title: "Copyright & licensing",
+		subtitle: "Last updated 2026-05-27. By uploading you agree to every clause below.",
+		icon: Shield_check
 	});
 	$$renderer.push(`<!----> <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex gap-3">`);
 	Triangle_alert($$renderer, { class: "w-5 h-5 text-yellow-300 shrink-0 mt-0.5" });

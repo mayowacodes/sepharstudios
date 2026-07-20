@@ -9,6 +9,7 @@
   import { Sheet, SheetTrigger, SheetContent } from '$lib/components/ui/sheet';
   import { Menu } from '@lucide/svelte';
   import User from '../widgets/User.svelte';
+  import StreakStcWidget from '../widgets/StreakStcWidget.svelte';
   import type { User as UserType } from '$lib/auth';
 
   export const isNotificationOpen = writable(false);
@@ -148,6 +149,9 @@
       <a href="/search" aria-label="Search" title="Search" class="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </a>
+      {#if isAuthenticated && !page.url.pathname.startsWith('/token')}
+        <StreakStcWidget variant="compact" />
+      {/if}
       <User />
     </div>
   </div>

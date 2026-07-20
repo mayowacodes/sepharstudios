@@ -87,6 +87,54 @@ export async function askCompanion(
 	return { answer: result.content, suggestedFollowUps: [], aiProvider: `${result.provider}/${result.model}` };
 }
 
+/**
+ * Streaming variant of the companion prompt. The JSON envelope the
+ * blocking path uses ({"answer": ...}) can't be token-streamed — the
+ * viewer would watch JSON syntax type itself out. Instead the model
+ * writes the answer as plain prose and appends the follow-up
+ * suggestions AFTER a sentinel marker on the final line. The SSE
+ * endpoint holds back a small tail buffer while emitting tokens, so
+ * the marker never reaches the client as visible text; the parsed
+ * follow-ups ship in the terminal `done` event instead.
+ */
+export const FOLLOWUPS_MARKER = '[[FOLLOWUPS]]';
+
+const COMPANION_SYSTEM_STREAMING = (ctx: CompanionContext) => `
+${SEPHAR_SYSTEM_PROMPT}
+
+You are the Watch Companion for this content:
+- Title: "${ctx.contentTitle}"
+- Type: ${ctx.contentType}
+- Description: "${ctx.contentDescription}"
+${ctx.bibleReference ? `- Bible Reference: ${ctx.bibleReference}` : ''}
+${ctx.genres?.length ? `- Genres: ${ctx.genres.join(', ')}` : ''}
+${ctx.topics?.length ? `- Themes: ${ctx.topics.join(', ')}` : ''}
+
+Your role: Help viewers understand this content more deeply.
+Answer questions about scenes, characters, themes, and faith lessons.
+Provide biblical context when relevant. Keep answers warm, clear,
+and under 200 words unless the question demands a longer response.
+
+Respond in PLAIN TEXT (no JSON, no markdown headings). After your
+answer, on a new line, output exactly:
+${FOLLOWUPS_MARKER} ["follow-up question 1", "follow-up question 2"]
+with 2-3 short follow-up questions the viewer might find interesting.
+`.trim();
+
+/** Build the model message array for a streaming companion turn. */
+export function buildCompanionStreamMessages(
+	context: CompanionContext,
+	history: CompanionMessage[],
+	userMessage: string
+): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+	const recentHistory = history.slice(-6);
+	return [
+		{ role: 'system', content: COMPANION_SYSTEM_STREAMING(context) },
+		...recentHistory.map((m) => ({ role: m.role, content: m.content })),
+		{ role: 'user', content: userMessage }
+	];
+}
+
 export async function getSceneInsight(
 	contentTitle: string,
 	bibleReference: string,

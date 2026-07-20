@@ -1,4 +1,4 @@
-import { Ut as getContext } from "./ui-libs.js";
+import { Jt as getContext } from "./ui-libs.js";
 import { a as navigating$1, i as stores } from "./client.js";
 Object.defineProperty({
 	get from() {

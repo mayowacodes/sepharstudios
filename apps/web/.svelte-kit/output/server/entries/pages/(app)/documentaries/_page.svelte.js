@@ -1,21 +1,33 @@
-import { At as stringify, Lt as attr, St as derived, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
-import { t as Bookmark } from "../../../../chunks/bookmark.js";
-import { t as Circle_play } from "../../../../chunks/circle-play.js";
+import { Ct as attr_style, Et as derived, Ft as unsubscribe_stores, Ht as attr, Mt as store_get, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html, kt as head } from "../../../../chunks/ui-libs.js";
+import { n as Bookmark_check, t as Bookmark } from "../../../../chunks/bookmark.js";
 import { t as Play } from "../../../../chunks/play.js";
+import { t as ComingSoonRow } from "../../../../chunks/ComingSoonRow.js";
 import { t as page } from "../../../../chunks/state.js";
 import "../../../../chunks/navigation.js";
-import { t as Button } from "../../../../chunks/button.js";
+import "../../../../chunks/mediaModalStore.js";
+import { t as myList } from "../../../../chunks/myList.js";
+import { t as isRecentlyAdded } from "../../../../chunks/recency.js";
+import { t as FeaturedBillboardPanel } from "../../../../chunks/FeaturedBillboardPanel.js";
 //#region src/lib/components/DocumentaryCard.svelte
 function DocumentaryCard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		var $$store_subs;
 		let { documentary, onClick = () => {}, onHover = () => {} } = $$props;
 		$$renderer.push(`<div role="button" tabindex="0" class="relative group w-full rounded-2xl overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:scale-[1.02]"${attr("aria-label", `Watch ${documentary.title}`)}><div class="relative aspect-2/3 bg-muted rounded-2xl overflow-hidden surface-card">`);
 		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<img${attr("src", documentary.thumbnail || "/placeholder-vertical.jpg")} alt="" width="280" height="420" loading="lazy" decoding="async" class="w-full h-full object-cover"/>`);
-		$$renderer.push(`<!--]--> <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div></div> `);
+		$$renderer.push(`<img${attr("src", documentary.posterUrl || documentary.poster_url || documentary.thumbnail || "/placeholder-vertical.jpg")} alt="" width="280" height="420" loading="lazy" decoding="async" class="w-full h-full object-cover"/>`);
+		$$renderer.push(`<!--]--> <div class="absolute inset-0 veil-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300"></div> `);
+		if (typeof documentary.progressPercent === "number" && documentary.progressPercent > 0 && documentary.progressPercent < 95) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="absolute inset-x-0 bottom-0 h-1 bg-black/40 z-20"><div class="h-full bg-[#FF5E0E]"${attr_style(`width: ${stringify(Math.max(2, Math.min(100, documentary.progressPercent)))}%`)}></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--></div> `);
 		if (documentary.isNew) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">New Episode</div>`);
+			$$renderer.push(`<div class="absolute top-2 left-2 bg-[#FFBF00] text-black text-xs px-2 py-0.5 rounded-full z-30">New Documentary</div>`);
+		} else if (isRecentlyAdded(documentary.createdAt)) {
+			$$renderer.push("<!--[1-->");
+			$$renderer.push(`<div class="absolute top-2 left-2 bg-[#FF5E0E] text-white text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full z-30 shadow">Just added</div>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> <div class="absolute inset-0 p-3 flex flex-col justify-end z-20 transition-opacity duration-300 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"><h3 class="text-sm font-semibold line-clamp-2 text-white">${escape_html(documentary.title)}</h3> <div class="text-xs mt-1 flex flex-wrap gap-2 text-white/70">`);
 		if (documentary.rating) {
@@ -34,9 +46,18 @@ function DocumentaryCard($$renderer, $$props) {
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div> <div class="mt-3 flex items-center gap-2"><button class="inline-flex items-center gap-1 rounded-full bg-[#FF5E0E] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(255,94,14,0.4)] hover:bg-[#FF5E0E]/90 transition"${attr("aria-label", `Play ${documentary.title}`)}>`);
 		Play($$renderer, { class: "h-3.5 w-3.5" });
-		$$renderer.push(`<!----> Play</button> <button class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition"${attr("aria-label", `Add ${documentary.title} to My List`)}>`);
-		Bookmark($$renderer, { class: "h-3.5 w-3.5" });
-		$$renderer.push(`<!----> My List</button></div></div></div>`);
+		$$renderer.push(`<!----> Play</button> <button class="inline-flex items-center gap-1 rounded-full border border-[#FFBF00]/60 px-3 py-1 text-xs font-semibold text-[#FFBF00] hover:bg-[#FFBF00]/10 transition disabled:opacity-60 disabled:cursor-not-allowed"${attr("disabled", !documentary.id || !!documentary.id && store_get($$store_subs ??= {}, "$myList", myList).pending.has(documentary.id), true)}${attr("aria-label", documentary.id && store_get($$store_subs ??= {}, "$myList", myList).ids.has(documentary.id) ? `Remove ${documentary.title} from My List` : `Add ${documentary.title} to My List`)}>`);
+		if (documentary.id && store_get($$store_subs ??= {}, "$myList", myList).ids.has(documentary.id)) {
+			$$renderer.push("<!--[0-->");
+			Bookmark_check($$renderer, { class: "h-3.5 w-3.5" });
+			$$renderer.push(`<!----> In My List`);
+		} else {
+			$$renderer.push("<!--[-1-->");
+			Bookmark($$renderer, { class: "h-3.5 w-3.5" });
+			$$renderer.push(`<!----> My List`);
+		}
+		$$renderer.push(`<!--]--></button></div></div></div>`);
+		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
 //#endregion
@@ -62,8 +83,10 @@ function _page($$renderer, $$props) {
 		});
 		let selectedCategory = null;
 		let selectedTopic = null;
+		let onlyInProgress = page.url.searchParams.get("inProgress") === "1";
+		const hasAnyProgress = derived(() => allDocumentaries().some((d) => typeof d.progressPercent === "number" && d.progressPercent > 0 && d.progressPercent < 95));
 		let filteredDocumentaries = derived(() => allDocumentaries().filter((doc) => {
-			return true;
+			return !onlyInProgress || typeof doc.progressPercent === "number" && doc.progressPercent > 0 && doc.progressPercent < 95;
 		}));
 		let categories = derived(() => {
 			const allCategories = /* @__PURE__ */ new Set();
@@ -85,35 +108,14 @@ function _page($$renderer, $$props) {
 		$$renderer.push(`<div class="relative overflow-hidden min-h-screen bg-var(--surface-charcoal) text-white"><div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,94,14,0.18),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(255,191,0,0.2),transparent_40%)]"></div> <main class="w-full max-w-7xl mx-auto px-6 md:px-8 py-10 relative z-10"><section class="relative text-center space-y-4 pb-10 max-w-4xl mx-auto"><div class="absolute -top-20 left-1/2 -translate-x-1/2 h-48 w-48 rounded-full bg-[#FFBF00]/20 blur-3xl halo-ring opacity-60"></div> <div class="inline-flex items-center gap-2 rounded-full border border-[#FFBF00]/30 bg-[#FFBF00]/10 px-4 py-1 text-xs uppercase tracking-[0.2em] text-[#FFBF00]"><span class="h-2 w-2 rounded-full bg-[#FFBF00] shadow-[0_0_12px_rgba(255,191,0,0.6)]"></span> Deep Dive</div> <h1 class="text-5xl sm:text-6xl font-extrabold text-display">Documentary Collection</h1> <p class="text-white/70 text-lg">Explore faith, history, and inspiring journeys in depth.</p></section> `);
 		if (featuredDocumentary()) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<section class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 surface-glass"><img${attr("src", featuredDocumentary().backdropUrl || featuredDocumentary().thumbnail)}${attr("alt", featuredDocumentary().title)} class="absolute inset-0 h-full w-full object-cover opacity-40"/> <div class="absolute inset-0 veil-strong"></div> <div class="relative z-10 grid gap-6 p-8 lg:grid-cols-[1.2fr_0.8fr]"><div class="space-y-4"><div class="inline-flex items-center gap-2 rounded-full border border-[#FFBF00]/30 bg-[#FFBF00]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#FFBF00]"><span class="h-2 w-2 rounded-full bg-[#FFBF00] shadow-[0_0_12px_rgba(255,191,0,0.6)]"></span> Just Added</div> <h2 class="text-4xl sm:text-5xl font-extrabold text-display">${escape_html(featuredDocumentary().title)}</h2> <p class="text-white/70 line-clamp-3 max-w-xl">${escape_html(featuredDocumentary().description)}</p> <div class="flex flex-wrap gap-3 text-sm text-white/60">`);
-			if (featuredDocumentary().year) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span>${escape_html(featuredDocumentary().year)}</span>`);
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> `);
-			if (featuredDocumentary().duration) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span>${escape_html(featuredDocumentary().duration)}</span>`);
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> `);
-			if (featuredDocumentary().quality) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`<span>${escape_html(featuredDocumentary().quality)}</span>`);
-			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div> <div class="flex flex-wrap gap-3 pt-2">`);
-			Button($$renderer, {
-				size: "lg",
-				class: "bg-[#FF5E0E] hover:bg-[#FF5E0E]/90 text-white shadow-[0_0_20px_rgba(255,94,14,0.4)]",
-				href: `/watch/${stringify(featuredDocumentary().id)}`,
-				children: ($$renderer) => {
-					Circle_play($$renderer, { class: "mr-2 h-5 w-5" });
-					$$renderer.push(`<!----> Watch Now`);
-				},
-				$$slots: { default: true }
+			FeaturedBillboardPanel($$renderer, {
+				featured: featuredDocumentary(),
+				label: "Just Added"
 			});
-			$$renderer.push(`<!----></div></div> <div class="hidden lg:block"><div class="h-full w-full rounded-2xl overflow-hidden border border-[#FFBF00]/40 halo-ring"><img${attr("src", featuredDocumentary().thumbnail)}${attr("alt", featuredDocumentary().title)} class="h-full w-full object-cover"/></div></div></div></section>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
+		ComingSoonRow($$renderer, { items: data.comingSoon ?? [] });
+		$$renderer.push(`<!----> `);
 		if (user()) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<p class="text-center text-white/70 font-semibold mb-6">Welcome, ${escape_html(user().name)}!</p>`);
@@ -156,7 +158,12 @@ function _page($$renderer, $$props) {
 			}
 			$$renderer.push(`<!--]-->`);
 		});
-		$$renderer.push(`</div></div> `);
+		$$renderer.push(`</div> `);
+		if (hasAnyProgress()) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="w-full md:w-auto flex md:items-end"><button type="button"${attr_class(`w-full md:w-auto px-4 py-3 rounded-xl border text-sm font-semibold transition-colors ${onlyInProgress ? "border-[#FF5E0E] bg-[#FF5E0E]/20 text-white shadow-[0_0_18px_rgba(255,94,14,0.35)]" : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"}`)}${attr("aria-pressed", onlyInProgress)}>${escape_html(onlyInProgress ? "Showing in progress" : "Continue watching")}</button></div>`);
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
 		if (filteredDocumentaries().length === 0) {

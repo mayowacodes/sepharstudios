@@ -1,5 +1,5 @@
 import { t as private_env } from "./shared-server.js";
-import { j as files, t as db } from "./drizzle.js";
+import { P as files, t as db } from "./drizzle.js";
 import { t as BUCKETS } from "./minio.js";
 import "drizzle-orm";
 import { Client } from "minio";
@@ -7,13 +7,28 @@ import { Client } from "minio";
 var ENDPOINT = private_env.MINIO_ENDPOINT || "s3.sepharstudios.com";
 var PORT = Number(private_env.MINIO_PORT) || 443;
 var USE_SSL = private_env.MINIO_USE_SSL === "true" || PORT === 443;
-var PUBLIC_BASE_URL = "s3.sepharstudios.com";
+var PUBLIC_BASE_URL = private_env.MINIO_PUBLIC_ENDPOINT || "s3.sepharstudios.com";
+var PUBLIC_PORT = Number(private_env.MINIO_PUBLIC_PORT) || 443;
+var PUBLIC_USE_SSL = private_env.MINIO_PUBLIC_USE_SSL !== "false";
+var ACCESS_KEY = private_env.MINIO_ACCESS_KEY || private_env.MINIO_ROOT_USER || "";
+var SECRET_KEY = private_env.MINIO_SECRET_KEY || private_env.MINIO_ROOT_PASSWORD || "";
+var ACCESS_KEY_PREVIEW = ACCESS_KEY ? `${ACCESS_KEY.slice(0, 4)}…(${ACCESS_KEY.length} chars)` : "(empty — env var not set)";
+var SECRET_KEY_PREVIEW = SECRET_KEY ? `***(${SECRET_KEY.length} chars)` : "(empty — env var not set)";
+console.log(`[minio] internal=${USE_SSL ? "https" : "http"}://${ENDPOINT}:${PORT} public=${PUBLIC_USE_SSL ? "https" : "http"}://${PUBLIC_BASE_URL}:${PUBLIC_PORT} accessKey=${ACCESS_KEY_PREVIEW} secretKey=${SECRET_KEY_PREVIEW}`);
+if (!ACCESS_KEY || !SECRET_KEY) console.error("[minio] MISSING CREDENTIALS — set MINIO_ACCESS_KEY and MINIO_SECRET_KEY (or legacy MINIO_ROOT_USER / MINIO_ROOT_PASSWORD) on the SvelteKit container. All bucketExists/makeBucket/putObject calls will fail with InvalidAccessKeyId until these are present.");
 var minioClient = new Client({
 	endPoint: ENDPOINT,
 	port: PORT,
 	useSSL: USE_SSL,
-	accessKey: private_env.MINIO_ROOT_USER,
-	secretKey: private_env.MINIO_ROOT_PASSWORD
+	accessKey: ACCESS_KEY,
+	secretKey: SECRET_KEY
+});
+var minioPublicClient = new Client({
+	endPoint: PUBLIC_BASE_URL,
+	port: PUBLIC_PORT,
+	useSSL: PUBLIC_USE_SSL,
+	accessKey: ACCESS_KEY,
+	secretKey: SECRET_KEY
 });
 var encoderMinioClient = new Client({
 	endPoint: private_env.ENCODER_MINIO_ENDPOINT || "encoder-s3.sepharstudios.com",
@@ -43,6 +58,35 @@ async function getEncoderPresignedUploadUrl(bucketName, objectName, expirySecond
 		return await encoderMinioClient.presignedPutObject(bucketName, objectName, expirySeconds);
 	} catch (error) {
 		console.error("Error generating encoder presigned PUT URL:", error);
+		throw error;
+	}
+}
+/**
+* Generate a presigned PUT URL for the MAIN MinIO.
+*
+* Lets the browser upload directly to MinIO without round-tripping the file
+* through SvelteKit. Used for creator-wizard image assets (posters,
+* backdrops, thumbnails, logos) so a 5 MB hero background never has to fit
+* inside the adapter's BODY_SIZE_LIMIT and never gets caught by an
+* upstream reverse-proxy body cap.
+*
+* Caller flow:
+*   1. POST /api/files/sign → returns { uploadUrl, objectName }
+*   2. Browser PUTs the file bytes directly to `uploadUrl` (XHR with
+*      `upload.onprogress` for the progress bar; bytes go straight to
+*      MinIO, not through us).
+*   3. POST /api/files/commit { objectName, ... } → records the row in
+*      filesTable and returns the durable directUrl.
+*
+* The 15-minute expiry is comfortably longer than any real upload but
+* short enough that a leaked URL can't be reused indefinitely.
+*/
+async function getMainPresignedUploadUrl(bucketName, objectName, expirySeconds = 900) {
+	try {
+		await createBucket(bucketName);
+		return await minioPublicClient.presignedPutObject(bucketName, objectName, expirySeconds);
+	} catch (error) {
+		console.error("Error generating main presigned PUT URL:", error);
 		throw error;
 	}
 }
@@ -127,4 +171,4 @@ async function listObjects(bucketName, prefix, recursive = true) {
 	}
 }
 //#endregion
-export { uploadAndSaveFile as a, listObjects as i, getDirectObjectUrl as n, uploadFile as o, getEncoderPresignedUploadUrl as r, deleteFileById as t };
+export { getMainPresignedUploadUrl as a, uploadFile as c, getEncoderPresignedUploadUrl as i, encoderMinioClient as n, listObjects as o, getDirectObjectUrl as r, uploadAndSaveFile as s, deleteFileById as t };

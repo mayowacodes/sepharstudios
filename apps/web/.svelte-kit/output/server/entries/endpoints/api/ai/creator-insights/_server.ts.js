@@ -1,4 +1,4 @@
-import { H as mediaLibrary, T as creators, U as mediaWatchProgress, gt as transactions, t as db, w as creatorFollowers } from "../../../../../chunks/drizzle.js";
+import { D as creatorFollowers, K as mediaLibrary, O as creators, bt as transactions, q as mediaWatchProgress, t as db } from "../../../../../chunks/drizzle.js";
 import { a as extractJsonObject, n as callAgent, r as callChat, t as SEPHAR_SYSTEM_PROMPT } from "../../../../../chunks/ai-provider.js";
 import { i as enforceRateLimit, t as AI_AGENT_LIMIT } from "../../../../../chunks/rate-limit.js";
 import { error, json } from "@sveltejs/kit";
@@ -137,7 +137,10 @@ var GET = async ({ locals }) => {
 		const [completionRow] = await db.select({ avg: sql`coalesce(avg(${mediaWatchProgress.completionPercent}), 0)` }).from(mediaWatchProgress).where(inArray(mediaWatchProgress.contentId, contentIds));
 		avgCompletionRate = Math.round(Number(completionRow?.avg ?? 0));
 	}
-	const [revRow] = await db.select({ total: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(and(eq(transactions.userId, locals.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"), eq(transactions.currency, "USD")));
+	const [revRow] = await db.select({ total: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(and(eq(transactions.userId, locals.user.id), eq(transactions.type, "creator_payout"), eq(transactions.status, "completed"), eq(transactions.currency, "USD"))).catch((err) => {
+		console.warn("[ai/creator-insights] revRow failed:", err instanceof Error ? err.message : err);
+		return [{ total: 0 }];
+	});
 	const totalRevenueUSD = Number(revRow?.total ?? 0) / 100;
 	const thirtyDaysAgo = /* @__PURE__ */ new Date(Date.now() - 30 * 864e5);
 	const [followRow] = await db.select({ count: sql`count(*)::int` }).from(creatorFollowers).where(and(eq(creatorFollowers.creatorId, creator.id), gte(creatorFollowers.createdAt, thirtyDaysAgo), eq(creatorFollowers.status, "active")));

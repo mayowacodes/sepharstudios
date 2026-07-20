@@ -1,5 +1,5 @@
-import { Dt as spread_props, Lt as attr, St as derived, vt as attr_class, zt as escape_html } from "../../../chunks/ui-libs.js";
-import { t as Icon } from "../../../chunks/Icon.js";
+import { Et as derived, Ht as attr, St as attr_class, Wt as escape_html, jt as spread_props } from "../../../chunks/ui-libs.js";
+import { t as Baby } from "../../../chunks/baby.js";
 import { t as Chevron_down } from "../../../chunks/chevron-down.js";
 import { t as Users } from "../../../chunks/users.js";
 import { t as beforeNavigate } from "../../../chunks/client.js";
@@ -8,21 +8,6 @@ import "../../../chunks/navigation.js";
 import { t as Button } from "../../../chunks/button.js";
 import { c as Dropdown_menu_content, o as Dropdown_menu_item, r as Dropdown_menu_trigger, u as Dropdown_menu } from "../../../chunks/dropdown-menu.js";
 import "../../../chunks/portal-navigation.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/baby.svelte
-function Baby($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "baby" },
-		props,
-		{ iconNode: [
-			["path", { "d": "M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5" }],
-			["path", { "d": "M15 12h.01" }],
-			["path", { "d": "M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1" }],
-			["path", { "d": "M9 12h.01" }]
-		] }
-	]));
-}
-//#endregion
 //#region src/lib/components/kids/SafeExplorationMode.svelte
 function SafeExplorationMode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

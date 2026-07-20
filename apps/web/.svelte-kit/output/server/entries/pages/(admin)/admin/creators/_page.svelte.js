@@ -1,4 +1,4 @@
-import { Dt as spread_props, Lt as attr, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr, Wt as escape_html, jt as spread_props } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
 import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
 import { t as Clock } from "../../../../../chunks/clock.js";
@@ -6,13 +6,17 @@ import "../../../../../chunks/coins.js";
 import "../../../../../chunks/credit-card.js";
 import { t as Dollar_sign } from "../../../../../chunks/dollar-sign.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
+import { t as Mail } from "../../../../../chunks/mail.js";
+import { t as Send } from "../../../../../chunks/send.js";
 import { t as User_plus } from "../../../../../chunks/user-plus.js";
 import { t as Users } from "../../../../../chunks/users.js";
 import "../../../../../chunks/wallet.js";
+import { t as X } from "../../../../../chunks/x.js";
 import "../../../../../chunks/input.js";
 import "../../../../../chunks/button.js";
 import "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 import "../../../../../chunks/card.js";
 import "../../../../../chunks/label.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/megaphone.svelte
@@ -73,19 +77,47 @@ function _page($$renderer, $$props) {
 				return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
 			});
 		}
-		$$renderer.push(`<div class="container mx-auto px-4 py-4 space-y-6">`);
+		let broadcastOpen = false;
+		let broadcastSubject = "";
+		let broadcastBody = "";
+		let broadcastTarget = "active";
+		let broadcastSending = false;
+		let inviteOpen = false;
+		let inviteEmail = "";
+		let inviteName = "";
+		let inviteSending = false;
+		$$renderer.push(`<div class="mx-auto px-4 py-4 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<button class="text-xs surface-1 hover:surface-2 rounded-full px-3 py-1.5 text-foreground inline-flex items-center gap-1 transition-colors">`);
-				Megaphone($$renderer, { class: "w-3 h-3" });
-				$$renderer.push(`<!----> Send broadcast</button> <button class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium inline-flex items-center gap-1 transition-opacity">`);
-				User_plus($$renderer, { class: "w-3 h-3" });
-				$$renderer.push(`<!----> Invite creator</button>`);
+				PortalButton($$renderer, {
+					variant: "secondary",
+					size: "sm",
+					onclick: () => broadcastOpen = true,
+					children: ($$renderer) => {
+						Megaphone($$renderer, { class: "w-3.5 h-3.5" });
+						$$renderer.push(`<!----> Broadcast`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!----> `);
+				PortalButton($$renderer, {
+					variant: "primary",
+					size: "sm",
+					onclick: () => inviteOpen = true,
+					children: ($$renderer) => {
+						User_plus($$renderer, { class: "w-3.5 h-3.5" });
+						$$renderer.push(`<!----> Invite creator`);
+					},
+					$$slots: { default: true }
+				});
+				$$renderer.push(`<!---->`);
 			}
-			PageHeader($$renderer, {
-				icon: Users,
-				title: "Creator Management",
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Community",
+				title: "Creator management",
 				subtitle: "Manage creators and their content on the platform.",
+				icon: Users,
 				actions,
 				$$slots: { actions: true }
 			});
@@ -197,9 +229,46 @@ function _page($$renderer, $$props) {
 		$$renderer.push(`<!--]--></div></div> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
-		$$renderer.push("<!--[-1-->");
+		if (broadcastOpen) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true"><div class="surface-glass border border-border rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4"><div class="flex items-center justify-between"><h3 class="text-base font-semibold text-foreground inline-flex items-center gap-2">`);
+			Megaphone($$renderer, { class: "w-4 h-4 text-primary" });
+			$$renderer.push(`<!----> Broadcast to creators</h3> <button class="text-muted-foreground hover:text-foreground" aria-label="Close">`);
+			X($$renderer, { class: "w-4 h-4" });
+			$$renderer.push(`<!----></button></div> <div><label for="b-target" class="block text-xs uppercase tracking-wide text-muted-foreground mb-1">Audience</label> `);
+			$$renderer.select({
+				id: "b-target",
+				value: broadcastTarget,
+				class: "w-full surface-1 rounded-md px-3 py-2 text-sm text-foreground"
+			}, ($$renderer) => {
+				$$renderer.option({ value: "active" }, ($$renderer) => {
+					$$renderer.push(`Active creators only`);
+				});
+				$$renderer.option({ value: "pending" }, ($$renderer) => {
+					$$renderer.push(`Pending creators only`);
+				});
+				$$renderer.option({ value: "all" }, ($$renderer) => {
+					$$renderer.push(`All creators`);
+				});
+			});
+			$$renderer.push(`</div> <div><label for="b-subject" class="block text-xs uppercase tracking-wide text-muted-foreground mb-1">Subject</label> <input id="b-subject" type="text"${attr("value", broadcastSubject)} maxlength="120" class="w-full surface-1 rounded-md px-3 py-2 text-sm text-foreground"/></div> <div><label for="b-body" class="block text-xs uppercase tracking-wide text-muted-foreground mb-1">Message</label> <textarea id="b-body" rows="5" class="w-full surface-1 rounded-md px-3 py-2 text-sm text-foreground resize-none">`);
+			const $$body = escape_html(broadcastBody);
+			if ($$body) $$renderer.push(`${$$body}`);
+			$$renderer.push(`</textarea></div> <p class="text-xs text-muted-foreground">Will send to ${escape_html(creators.filter((c) => c.status === broadcastTarget).length)} creator${escape_html(creators.filter((c) => c.status === broadcastTarget).length === 1 ? "" : "s")}.</p> <div class="flex gap-2 justify-end"><button class="px-3 py-1.5 rounded-md surface-1 hover:surface-2 text-foreground text-sm">Cancel</button> <button${attr("disabled", broadcastSending, true)} class="px-3 py-1.5 rounded-md bg-primary hover:opacity-90 disabled:opacity-50 text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5">`);
+			Send($$renderer, { class: "w-3 h-3" });
+			$$renderer.push(`<!----> ${escape_html("Send broadcast")}</button></div></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
-		$$renderer.push("<!--[-1-->");
+		if (inviteOpen) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true"><div class="surface-glass border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4"><div class="flex items-center justify-between"><h3 class="text-base font-semibold text-foreground inline-flex items-center gap-2">`);
+			User_plus($$renderer, { class: "w-4 h-4 text-primary" });
+			$$renderer.push(`<!----> Invite a creator</h3> <button class="text-muted-foreground hover:text-foreground" aria-label="Close">`);
+			X($$renderer, { class: "w-4 h-4" });
+			$$renderer.push(`<!----></button></div> <div><label for="i-email" class="block text-xs uppercase tracking-wide text-muted-foreground mb-1">Email *</label> <input id="i-email" type="email"${attr("value", inviteEmail)} placeholder="creator@example.com" class="w-full surface-1 rounded-md px-3 py-2 text-sm text-foreground"/></div> <div><label for="i-name" class="block text-xs uppercase tracking-wide text-muted-foreground mb-1">Display name (optional)</label> <input id="i-name" type="text"${attr("value", inviteName)} placeholder="Their channel name" class="w-full surface-1 rounded-md px-3 py-2 text-sm text-foreground"/></div> <p class="text-xs text-muted-foreground">An invitation email with a sign-up link will be sent.</p> <div class="flex gap-2 justify-end"><button class="px-3 py-1.5 rounded-md surface-1 hover:surface-2 text-foreground text-sm">Cancel</button> <button${attr("disabled", inviteSending, true)} class="px-3 py-1.5 rounded-md bg-primary hover:opacity-90 disabled:opacity-50 text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5">`);
+			Mail($$renderer, { class: "w-3 h-3" });
+			$$renderer.push(`<!----> ${escape_html("Send invite")}</button></div></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);

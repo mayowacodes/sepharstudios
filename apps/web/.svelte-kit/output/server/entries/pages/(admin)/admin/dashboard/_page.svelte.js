@@ -1,4 +1,4 @@
-import { At as stringify, St as derived, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ct as attr_style, Et as derived, Ot as ensure_array_like, Pt as stringify, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
 import { t as Clock } from "../../../../../chunks/clock.js";
 import { t as Monitor } from "../../../../../chunks/monitor.js";
@@ -8,7 +8,7 @@ import { t as Tablet } from "../../../../../chunks/tablet.js";
 import { t as Tv } from "../../../../../chunks/tv.js";
 import { t as Users } from "../../../../../chunks/users.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../../chunks/card.js";
 import { t as StatChip } from "../../../../../chunks/StatChip.js";
 //#region src/routes/(admin)/admin/dashboard/+page.svelte
@@ -32,7 +32,7 @@ function _page($$renderer, $$props) {
 			}
 		};
 		const totalSessions = derived(() => data.deviceStats.reduce((acc, curr) => acc + curr.count, 0));
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
 				StatChip($$renderer, {
@@ -44,10 +44,12 @@ function _page($$renderer, $$props) {
 				Activity($$renderer, { class: "w-4 h-4 text-green-500 animate-pulse" });
 				$$renderer.push(`<!---->`);
 			}
-			PageHeader($$renderer, {
-				icon: Shield_check,
-				title: "Platform Pulse",
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Operations",
+				title: "Platform pulse",
 				subtitle: "Real-time device monitoring and session oversight.",
+				icon: Shield_check,
 				actions,
 				$$slots: { actions: true }
 			});

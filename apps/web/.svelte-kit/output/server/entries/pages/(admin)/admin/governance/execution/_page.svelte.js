@@ -1,6 +1,6 @@
-import { Dt as spread_props, Lt as attr, St as derived, Tt as head, wt as ensure_array_like, yt as attr_style, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { Ct as attr_style, Et as derived, Ht as attr, Ot as ensure_array_like, Wt as escape_html, jt as spread_props, kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../../chunks/Icon.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/timer.svelte
 function Timer($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -93,11 +93,13 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Execution - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Timer,
-			title: "Timelock & Execution",
-			subtitle: "Queued proposals awaiting execution windows."
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "DAO",
+			title: "Timelock & execution",
+			subtitle: "Queued proposals awaiting execution windows.",
+			icon: Timer
 		});
 		$$renderer.push(`<!----> `);
 		if (message) {

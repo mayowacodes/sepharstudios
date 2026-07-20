@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { ArrowUpDown, Wallet, RefreshCw, CheckCircle2, AlertCircle, Loader2, Coins, Zap, Lock, ExternalLink, ArrowRight } from '@lucide/svelte';
+  import StreakStcWidget from '$lib/components/widgets/StreakStcWidget.svelte';
   import { Button } from '$lib/components/ui/button';
   import { tokenAMM, usdcToken, stcToken, subscriptionContract } from '$lib/web3/contracts';
   import { isConnected, walletAddress, connectWallet } from '$lib/web3/wallet';
@@ -362,6 +363,11 @@
       {/if}
     </div>
 
+    <!-- Streak & STC Progress -->
+    <div class="mb-6">
+      <StreakStcWidget variant="detailed" />
+    </div>
+
     <!-- Main grid -->
     <div class="grid lg:grid-cols-5 gap-6">
 
@@ -628,7 +634,7 @@
               </div>
               <div>
                 <p class="font-medium">Watch content</p>
-                <p class="text-white/45 text-xs">1 STC per hour · Max 5 STC/day</p>
+                <p class="text-white/45 text-xs">1 STC per 20 hours · Max 5 STC/day</p>
               </div>
             </div>
             <div class="flex items-start gap-3">

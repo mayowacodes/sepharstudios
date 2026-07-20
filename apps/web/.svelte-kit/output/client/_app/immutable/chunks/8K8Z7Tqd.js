@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./s06JaHMU.js";import{t as n}from"./C8O-dUT5.js";function r(r,i){let a=e(i,[`$$slots`,`$$events`,`$$legacy`]),o=[[`circle`,{cx:`12`,cy:`12`,r:`10`}],[`circle`,{cx:`12`,cy:`12`,r:`6`}],[`circle`,{cx:`12`,cy:`12`,r:`2`}]];n(r,t({name:`target`},()=>a,{get iconNode(){return o}}))}export{r as t};

@@ -1,4 +1,4 @@
-import { Rt as clsx, bt as attributes } from "./ui-libs.js";
+import { Ut as clsx, wt as attributes } from "./ui-libs.js";
 import { t as File_text } from "./file-text.js";
 import { t as House } from "./house.js";
 import { t as Layout_dashboard } from "./layout-dashboard.js";

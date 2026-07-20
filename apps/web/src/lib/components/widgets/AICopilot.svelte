@@ -1,6 +1,19 @@
 <script lang="ts">
 	import { copilotContext, copilotOpen } from '$lib/stores/copilot';
 	import { tick } from 'svelte';
+	import DOMPurify from 'dompurify';
+
+	// Render assistant text as limited HTML (bold + line breaks) while
+	// stripping any injected/script markup from the LLM output.
+	function renderMessage(content: string): string {
+		const formatted = content
+			.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+			.replace(/\n/g, '<br>');
+		return DOMPurify.sanitize(formatted, {
+			ALLOWED_TAGS: ['strong', 'br', 'em', 'p', 'code', 'ul', 'ol', 'li'],
+			ALLOWED_ATTR: []
+		});
+	}
 
 	interface Props { isLoggedIn?: boolean; }
 	let { isLoggedIn = false }: Props = $props();
@@ -16,6 +29,12 @@
 	let inputValue = $state('');
 	let loading = $state(false);
 	let error = $state('');
+	// Human-friendly progress sentence streamed from the server
+	// ("Thinking about your question…", "Writing your answer…", "Done").
+	// Rendered verbatim — the server composes the copy.
+	let statusLabel = $state('');
+	let statusDone = $state(false);
+	let statusClearTimer: ReturnType<typeof setTimeout> | null = null;
 	let scrollEl: HTMLElement | undefined = $state();
 	let inputEl: HTMLInputElement | undefined = $state();
 
@@ -97,6 +116,9 @@
 		}
 
 		loading = true;
+		statusDone = false;
+		if (statusClearTimer) { clearTimeout(statusClearTimer); statusClearTimer = null; }
+		statusLabel = 'Thinking…';
 
 		try {
 			const history = messages
@@ -113,12 +135,14 @@
 						contentType: context.contentType,
 						bibleReference: context.bibleReference ?? '',
 						genres: context.genres ?? [],
-						topics: context.topics ?? []
+						topics: context.topics ?? [],
+						stream: true
 					}
 				: {
 						mode: 'general',
 						message: userMessage,
-						history
+						history,
+						stream: true
 					};
 
 			const res = await fetch('/api/ai/companion', {
@@ -127,12 +151,74 @@
 				body: JSON.stringify(body)
 			});
 
+			const contentType = res.headers.get('content-type') ?? '';
+
 			if (!res.ok) {
 				const err = await res.json().catch(() => ({}));
 				throw new Error(err.message ?? 'AI service unavailable');
 			}
 
+			// ── SSE streaming path — tokens render as the model writes ──────
+			if (contentType.includes('text/event-stream') && res.body) {
+				// Placeholder assistant bubble; tokens append into it live.
+				const draft: Message = { role: 'assistant', content: '', followUps: [] };
+				messages = [...messages, draft];
+				const draftIdx = messages.length - 1;
+
+				const reader = res.body.getReader();
+				const decoder = new TextDecoder();
+				let buffer = '';
+				let sawError = false;
+
+				const handleFrame = (frame: string) => {
+					let event = 'message';
+					let dataLine = '';
+					for (const line of frame.split('\n')) {
+						if (line.startsWith('event: ')) event = line.slice(7).trim();
+						else if (line.startsWith('data: ')) dataLine += line.slice(6);
+					}
+					if (!dataLine) return;
+					let data: { label?: string; text?: string; followUps?: string[] };
+					try { data = JSON.parse(dataLine); } catch { return; }
+
+					if (event === 'status' && data.label) {
+						statusLabel = data.label;
+					} else if (event === 'token' && typeof data.text === 'string') {
+						messages[draftIdx].content += data.text;
+					} else if (event === 'done') {
+						messages[draftIdx].followUps = data.followUps ?? [];
+						statusLabel = data.label ?? 'Done';
+						statusDone = true;
+						statusClearTimer = setTimeout(() => { statusLabel = ''; statusDone = false; }, 1800);
+					} else if (event === 'error') {
+						sawError = true;
+						error = data.label ?? 'Something went wrong. Try again.';
+					}
+				};
+
+				for (;;) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					buffer += decoder.decode(value, { stream: true });
+					// SSE frames are separated by a blank line.
+					let sep;
+					while ((sep = buffer.indexOf('\n\n')) !== -1) {
+						handleFrame(buffer.slice(0, sep));
+						buffer = buffer.slice(sep + 2);
+					}
+				}
+
+				// Drop an empty bubble if the stream errored before any text.
+				if (sawError && !messages[draftIdx].content) {
+					messages = messages.filter((_, i) => i !== draftIdx);
+				}
+				if (!statusDone) statusLabel = '';
+				return;
+			}
+
+			// ── Legacy blocking path (server without stream support) ────────
 			const data = await res.json();
+			statusLabel = '';
 			messages = [
 				...messages,
 				{
@@ -142,6 +228,7 @@
 				}
 			];
 		} catch (e: unknown) {
+			statusLabel = '';
 			error = e instanceof Error ? e.message : 'Something went wrong. Try again.';
 		} finally {
 			loading = false;
@@ -223,9 +310,7 @@
 				{/if}
 				<div class="msg-bubble">
 					<p class="msg-text">
-						{@html msg.content
-							.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-							.replace(/\n/g, '<br>')}
+						{@html renderMessage(msg.content)}
 					</p>
 
 					{#if msg.loginPrompt}
@@ -246,16 +331,20 @@
 			</div>
 		{/each}
 
-		{#if loading}
-			<div class="msg-row assistant">
-				<div class="msg-icon" aria-hidden="true">
-					<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+		{#if statusLabel}
+			<!-- Live progress line — the server streams ready-to-display
+			     sentences ("Thinking about your question…", "Writing your
+			     answer…", "Done"). Green check replaces the pulse when the
+			     turn completes, then the line fades out. -->
+			<div class="status-row" class:done={statusDone} aria-live="polite">
+				{#if statusDone}
+					<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="status-check">
+						<polyline points="20 6 9 17 4 12"></polyline>
 					</svg>
-				</div>
-				<div class="msg-bubble typing">
-					<span></span><span></span><span></span>
-				</div>
+				{:else}
+					<span class="status-pulse" aria-hidden="true"></span>
+				{/if}
+				<span class="status-text">{statusLabel}</span>
 			</div>
 		{/if}
 
@@ -519,27 +608,35 @@
 		color: white;
 	}
 
-	.typing {
+	.status-row {
 		display: flex;
-		gap: 0.25rem;
 		align-items: center;
-		padding: 0.625rem 0.875rem !important;
+		gap: 0.4rem;
+		padding: 0.15rem 0.25rem;
+		font-size: 0.7rem;
+		color: rgba(255,255,255,0.45);
+		font-style: italic;
 	}
 
-	.typing span {
-		width: 0.35rem;
-		height: 0.35rem;
+	.status-row.done {
+		color: #4ade80;
+		font-style: normal;
+	}
+
+	.status-check { color: #4ade80; flex-shrink: 0; }
+
+	.status-pulse {
+		width: 0.4rem;
+		height: 0.4rem;
 		border-radius: 9999px;
 		background: hsl(var(--primary));
-		animation: bounce 1.2s ease-in-out infinite;
+		flex-shrink: 0;
+		animation: statusPulse 1.1s ease-in-out infinite;
 	}
 
-	.typing span:nth-child(2) { animation-delay: 0.2s; }
-	.typing span:nth-child(3) { animation-delay: 0.4s; }
-
-	@keyframes bounce {
-		0%, 60%, 100% { transform: translateY(0); }
-		30% { transform: translateY(-4px); }
+	@keyframes statusPulse {
+		0%, 100% { opacity: 0.35; transform: scale(0.85); }
+		50% { opacity: 1; transform: scale(1.1); }
 	}
 
 	.copilot-error {

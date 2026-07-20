@@ -1,4 +1,4 @@
-import { N as forumReplies, P as forumThreads, a as user, o as abuseReports, t as db } from "../../../../../../chunks/drizzle.js";
+import { I as forumReplies, L as forumThreads, a as user, o as abuseReports, t as db } from "../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
@@ -30,10 +30,11 @@ var GET = async ({ locals }) => {
 		createdAt: forumReplies.createdAt,
 		authorName: user.name
 	}).from(forumReplies).leftJoin(user, eq(forumReplies.authorId, user.id)).where(inArray(forumReplies.threadId, threadIds)).orderBy(desc(forumReplies.createdAt));
-	const reportRows = await db.select({
+	const replyIds = replies.map((r) => r.id);
+	const reportRows = replyIds.length === 0 ? [] : await db.select({
 		targetId: abuseReports.targetId,
 		count: sql`count(*)::int`
-	}).from(abuseReports).where(and(eq(abuseReports.targetType, "forum_reply"), eq(abuseReports.status, "open"), inArray(abuseReports.targetId, replies.map((r) => r.id)))).groupBy(abuseReports.targetId);
+	}).from(abuseReports).where(and(eq(abuseReports.targetType, "forum_reply"), eq(abuseReports.status, "open"), inArray(abuseReports.targetId, replyIds))).groupBy(abuseReports.targetId);
 	const reportMap = new Map(reportRows.map((r) => [r.targetId, Number(r.count)]));
 	return json({
 		threads,

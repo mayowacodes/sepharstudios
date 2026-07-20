@@ -11,6 +11,7 @@ import { roles, ac } from '$lib/db/permissions';
 import { sendEmailAction } from '$lib/authentication/server';
 import { getAccountByUserId } from '$lib/db/account';
 import { track } from '$lib/server/analytics';
+import { awardSignupToken } from '$lib/server/stc-hours';
 
 const VALID_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com'];
 const normalizeName = (name: string) => {
@@ -138,6 +139,12 @@ export const auth = betterAuth({
             });
           } catch (err) {
             console.warn('[auth] default playlist bootstrap failed', err);
+          }
+          // One-time sign-up STC bonus (1 token). Best-effort.
+          try {
+            await awardSignupToken(newUserId);
+          } catch (err) {
+            console.warn('[auth] signup STC bonus failed', err);
           }
         }
       }

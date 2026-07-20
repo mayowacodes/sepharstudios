@@ -16,8 +16,8 @@ var GET = async ({ locals }) => {
 		admins: sql`sum(case when ${user.role} = 'admin' then 1 else 0 end)`,
 		editors: sql`sum(case when ${user.role} = 'editor' then 1 else 0 end)`,
 		banned: sql`sum(case when ${user.banned} = true then 1 else 0 end)`,
-		newToday: sql`sum(case when ${user.createdAt} >= ${startOfToday} then 1 else 0 end)`,
-		newWeek: sql`sum(case when ${user.createdAt} >= ${startOfWeek} then 1 else 0 end)`
+		newToday: sql`sum(case when ${user.createdAt} >= ${startOfToday.toISOString()} then 1 else 0 end)`,
+		newWeek: sql`sum(case when ${user.createdAt} >= ${startOfWeek.toISOString()} then 1 else 0 end)`
 	}).from(user);
 	return json({
 		totalUsers: Number(agg?.totalUsers ?? 0),

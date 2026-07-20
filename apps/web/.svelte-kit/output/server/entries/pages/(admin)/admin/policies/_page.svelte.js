@@ -1,12 +1,15 @@
-import { At as stringify, St as derived, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 import { t as StatChip } from "../../../../../chunks/StatChip.js";
 //#region src/routes/(admin)/admin/policies/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let policies = [];
 		let selectedCategory = "all";
+		let editingPolicy = null;
+		let showCreateModal = false;
 		const filteredPolicies = derived(() => policies.filter((policy) => true));
 		function getCategoryColor(category) {
 			switch (category) {
@@ -26,15 +29,40 @@ function _page($$renderer, $$props) {
 				default: return "bg-gray-600 text-foreground";
 			}
 		}
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		function createNewPolicy() {
+			showCreateModal = true;
+			editingPolicy = {
+				id: Date.now().toString(),
+				title: "",
+				category: "content",
+				description: "",
+				requirements: [],
+				violations: [],
+				severity: "medium",
+				isActive: true,
+				createdAt: /* @__PURE__ */ new Date(),
+				updatedAt: /* @__PURE__ */ new Date()
+			};
+		}
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<button class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New policy</button>`);
+				PortalButton($$renderer, {
+					variant: "primary",
+					size: "sm",
+					onclick: createNewPolicy,
+					children: ($$renderer) => {
+						$$renderer.push(`<!---->+ New policy`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
-				icon: File_text,
-				title: "Content Policies",
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Governance",
+				title: "Content policies",
 				subtitle: "Guidelines and standards for content review.",
+				icon: File_text,
 				actions,
 				$$slots: { actions: true }
 			});
@@ -114,7 +142,51 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]--></ul></div> <div class="flex justify-between items-center pt-4 border-t border-gray-600"><div class="text-xs text-muted-foreground">Updated ${escape_html(policy.updatedAt.toLocaleDateString())}</div> <div class="flex space-x-2"><button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">Edit</button> <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">Archive</button></div></div></div>`);
 		}
 		$$renderer.push(`<!--]--></div></div> `);
-		$$renderer.push("<!--[-1-->");
+		if (editingPolicy) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"><div class="p-6"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-foreground">${escape_html(showCreateModal ? "Create New Policy" : "Edit Policy")}</h2> <button class="text-muted-foreground hover:text-foreground" aria-label="Close policy modal"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div> <div class="space-y-4"><div><label for="policyTitle" class="block text-sm font-medium text-foreground mb-2">Policy Title</label> <input id="policyTitle" type="text"${attr("value", editingPolicy.title)} class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground" placeholder="Enter policy title..."/></div> <div class="grid grid-cols-2 gap-4"><div><label for="policyCategory" class="block text-sm font-medium text-foreground mb-2">Category</label> `);
+			$$renderer.select({
+				id: "policyCategory",
+				value: editingPolicy.category,
+				class: "w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
+			}, ($$renderer) => {
+				$$renderer.option({ value: "theological" }, ($$renderer) => {
+					$$renderer.push(`Theological`);
+				});
+				$$renderer.option({ value: "family_safety" }, ($$renderer) => {
+					$$renderer.push(`Family Safety`);
+				});
+				$$renderer.option({ value: "content" }, ($$renderer) => {
+					$$renderer.push(`Content Moderation`);
+				});
+				$$renderer.option({ value: "technical" }, ($$renderer) => {
+					$$renderer.push(`Technical`);
+				});
+			});
+			$$renderer.push(`</div> <div><label for="policySeverity" class="block text-sm font-medium text-foreground mb-2">Severity</label> `);
+			$$renderer.select({
+				id: "policySeverity",
+				value: editingPolicy.severity,
+				class: "w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"
+			}, ($$renderer) => {
+				$$renderer.option({ value: "low" }, ($$renderer) => {
+					$$renderer.push(`Low`);
+				});
+				$$renderer.option({ value: "medium" }, ($$renderer) => {
+					$$renderer.push(`Medium`);
+				});
+				$$renderer.option({ value: "high" }, ($$renderer) => {
+					$$renderer.push(`High`);
+				});
+				$$renderer.option({ value: "critical" }, ($$renderer) => {
+					$$renderer.push(`Critical`);
+				});
+			});
+			$$renderer.push(`</div></div> <div><label for="policyDescription" class="block text-sm font-medium text-foreground mb-2">Description</label> <textarea id="policyDescription" rows="3" class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground resize-none" placeholder="Describe the policy purpose and scope...">`);
+			const $$body = escape_html(editingPolicy.description);
+			if ($$body) $$renderer.push(`${$$body}`);
+			$$renderer.push(`</textarea></div></div> <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-600"><button class="bg-gray-600 hover:bg-gray-700 text-foreground px-6 py-2 rounded-lg transition-colors">Cancel</button> <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">Save Policy</button></div></div></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
 	});
 }

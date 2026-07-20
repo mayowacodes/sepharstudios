@@ -1,6 +1,6 @@
-import { Tt as head } from "../../../../../../chunks/ui-libs.js";
+import { kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Wallet } from "../../../../../../chunks/wallet.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 import "../../../../../../chunks/GovernanceStatusCard.js";
 //#endregion
 //#region src/routes/(admin)/admin/governance/treasury/+page.svelte
@@ -11,11 +11,13 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Governance Treasury - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Wallet,
-			title: "Treasury Monitor",
-			subtitle: "Pool balances, flows, and buyback execution."
+		$$renderer.push(`<div class="mx-auto px-4 py-8 space-y-6 max-w-7xl">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "DAO · Vault",
+			title: "Treasury monitor",
+			subtitle: "Pool balances, flows, and buyback execution.",
+			icon: Wallet
 		});
 		$$renderer.push(`<!----> `);
 		$$renderer.push("<!--[0-->");

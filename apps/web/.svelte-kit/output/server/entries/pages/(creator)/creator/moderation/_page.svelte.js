@@ -1,16 +1,19 @@
-import { vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Shield_check } from "../../../../../chunks/shield-check.js";
+import "../../../../../chunks/triangle-alert.js";
 import { t as Skeleton } from "../../../../../chunks/skeleton.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/moderation/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let reviewFilter = "pending";
-		$$renderer.push(`<div class="container mx-auto py-8 px-4 max-w-5xl space-y-6">`);
-		PageHeader($$renderer, {
-			icon: Shield_check,
+		$$renderer.push(`<div class="mx-auto py-8 px-4 max-w-5xl space-y-6">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "Community",
 			title: "Moderation",
-			subtitle: "Review feedback and forum activity on your content. Hide spam, approve thoughtful reviews, or lock heated threads."
+			subtitle: "Review feedback and forum activity on your content. Hide spam, approve thoughtful reviews, or lock heated threads.",
+			icon: Shield_check
 		});
 		$$renderer.push(`<!----> <div class="flex gap-2"><button type="button"${attr_class(`px-4 py-2 rounded-lg text-sm bg-purple-600 text-foreground`)}>Reviews on my content</button> <button type="button"${attr_class(`px-4 py-2 rounded-lg text-sm surface-2 text-white/80 hover:surface-3`)}>My forum threads</button></div> `);
 		{
@@ -30,8 +33,8 @@ function _page($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="space-y-2"><!--[-->`);
 				const each_array_1 = ensure_array_like(Array(3));
-				for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
-					each_array_1[$$index_1];
+				for (let i = 0, $$length = each_array_1.length; i < $$length; i++) {
+					each_array_1[i];
 					Skeleton($$renderer, { class: "h-24 rounded-xl" });
 				}
 				$$renderer.push(`<!--]--></div>`);

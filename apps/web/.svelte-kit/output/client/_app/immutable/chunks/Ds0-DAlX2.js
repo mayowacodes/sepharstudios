@@ -1,0 +1,1 @@
+import{$t as e,Kt as t,Tn as n,en as r}from"./s06JaHMU.js";function i(i,a){var o=r();t(n(o),()=>a.children),e(i,o)}export{i as t};

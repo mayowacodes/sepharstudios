@@ -1,0 +1,1 @@
+var e=336*60*60*1e3;function t(t){if(!t)return!1;let n=t instanceof Date?t.getTime():Date.parse(t);return Number.isNaN(n)?!1:Date.now()-n<=e}export{t};

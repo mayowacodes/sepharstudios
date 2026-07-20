@@ -1,16 +1,16 @@
-import { H as mediaLibrary, t as db } from "../../../../../../../../chunks/drizzle.js";
-import { t as cancelEncoderJob } from "../../../../../../../../chunks/encoder-orchestrator.js";
+import { K as mediaLibrary, t as db } from "../../../../../../../../chunks/drizzle.js";
+import { t as cancelEncoderWorkflow } from "../../../../../../../../chunks/temporal-client.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/admin/encoder/jobs/[mediaId]/cancel/+server.ts
 /**
 * POST /api/admin/encoder/jobs/[mediaId]/cancel
 *
-* System-health admin tool. Looks up the encoder job id from the media
-* row, then asks the orchestrator to cancel it (gateway model). The
-* worker tears down FFmpeg on its next /control poll and a `cancelled`
-* progress webhook settles the row. We optimistically flip the local
-* state to 'cancelled' so the dashboard reflects the action immediately.
+* System-health admin tool. Looks up the encoder workflowId from the
+* media row (which equals encoderJobId), then cancels it via Temporal.
+* The workflow emits a `cancelled` progress webhook which settles
+* processing_status. We optimistically flip the local state here so the
+* dashboard reflects the action immediately.
 */
 var POST = async ({ params, locals }) => {
 	if (locals.user?.role !== "admin") return json({ error: "Forbidden" }, { status: 403 });
@@ -23,11 +23,11 @@ var POST = async ({ params, locals }) => {
 	if (!row.encoderJobId) return json({ error: "No encoder job for this content" }, { status: 409 });
 	if (["ready", "cancelled"].includes(row.processingStatus ?? "")) return json({ error: `Job is already ${row.processingStatus}` }, { status: 409 });
 	try {
-		await cancelEncoderJob(row.encoderJobId);
+		await cancelEncoderWorkflow(row.encoderJobId);
 	} catch (err) {
-		console.error(`[admin encoder cancel] orchestrator cancel failed for ${row.id}:`, err);
+		console.error(`[admin encoder cancel] Temporal cancel failed for ${row.id}:`, err);
 		return json({
-			error: "Orchestrator cancel failed",
+			error: "Temporal cancel failed",
 			detail: err instanceof Error ? err.message : "unknown"
 		}, { status: 502 });
 	}

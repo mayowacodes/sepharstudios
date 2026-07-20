@@ -1,4 +1,4 @@
-import { Lt as attr, St as derived, mt as onDestroy, zt as escape_html } from "./ui-libs.js";
+import { Et as derived, Ht as attr, Wt as escape_html, vt as onDestroy } from "./ui-libs.js";
 import "./Icon.js";
 import { t as Message_square } from "./message-square.js";
 import { t as Send } from "./send.js";

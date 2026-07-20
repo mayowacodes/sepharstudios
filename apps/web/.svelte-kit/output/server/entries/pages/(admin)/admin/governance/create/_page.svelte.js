@@ -1,6 +1,6 @@
-import { Dt as spread_props, Lt as attr, Tt as head, wt as ensure_array_like, zt as escape_html } from "../../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, Wt as escape_html, jt as spread_props, kt as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../../chunks/Icon.js";
-import { t as PageHeader } from "../../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/file-plus-corner.svelte
 function File_plus_corner($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
@@ -64,11 +64,13 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>Create Governance Proposal - Admin</title>`);
 			});
 		});
-		$$renderer.push(`<div class="container mx-auto px-4 py-8 max-w-3xl space-y-4">`);
-		PageHeader($$renderer, {
-			icon: File_plus_corner,
-			title: "Create Proposal",
-			subtitle: "Draft a new governance proposal for the DAO."
+		$$renderer.push(`<div class="mx-auto px-4 py-8 max-w-4xl space-y-4">`);
+		PortalHero($$renderer, {
+			compact: true,
+			eyebrow: "DAO",
+			title: "Create proposal",
+			subtitle: "Draft a new governance proposal for the DAO.",
+			icon: File_plus_corner
 		});
 		$$renderer.push(`<!----> <div class="rounded-xl border border-border/40 surface-1 p-5 space-y-4"><div><label for="proposal-title" class="text-xs text-foreground/80">Title</label> <input id="proposal-title" class="mt-1 w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-foreground"${attr("value", title)}/></div> <div><label for="proposal-type" class="text-xs text-foreground/80">Type</label> `);
 		$$renderer.select({

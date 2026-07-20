@@ -1,8 +1,9 @@
-import { St as derived, mt as onDestroy } from "../../../../../../chunks/ui-libs.js";
+import { Et as derived, vt as onDestroy } from "../../../../../../chunks/ui-libs.js";
 import "../../../../../../chunks/archive.js";
 import { t as Arrow_left } from "../../../../../../chunks/arrow-left.js";
 import "../../../../../../chunks/external-link.js";
 import "../../../../../../chunks/ContentThreadPanel.js";
+import "../../../../../../chunks/trash-2.js";
 import "../../../../../../chunks/toast-state.svelte.js";
 import { t as beforeNavigate } from "../../../../../../chunks/client.js";
 import { t as page } from "../../../../../../chunks/state.js";

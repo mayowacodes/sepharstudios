@@ -1,7 +1,7 @@
-import { E as cronState, a as user, f as adminTokenomicsSettings, gt as transactions, lt as stcStakes, t as db } from "../../../../../chunks/drizzle.js";
+import { a as user, bt as transactions, f as adminTokenomicsSettings, k as cronState, pt as stcStakes, t as db } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, eq, gt, gte, sql } from "drizzle-orm";
 //#region src/routes/api/admin/tokenomics/+server.ts
 var defaultDistribution = {
 	platformOperations: 55,
@@ -17,11 +17,17 @@ var GET = async ({ locals }) => {
 	const now = /* @__PURE__ */ new Date();
 	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 	const [creatorCount] = await db.select({ totalCreators: sql`count(*)` }).from(user).where(eq(user.role, "creator"));
-	const [earnings] = await db.select({ totalPayments: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(and(eq(transactions.type, "creator_payout"), sql`${transactions.createdAt} >= ${monthStart}`));
+	const [earnings] = await db.select({ totalPayments: sql`coalesce(sum(${transactions.amount}), 0)` }).from(transactions).where(and(eq(transactions.type, "creator_payout"), gte(transactions.createdAt, monthStart))).catch((err) => {
+		console.warn("[admin/tokenomics] earnings failed:", err instanceof Error ? err.message : err);
+		return [{ totalPayments: 0 }];
+	});
 	const [topEarner] = await db.select({
 		userId: transactions.userId,
 		total: sql`sum(${transactions.amount})`
-	}).from(transactions).where(and(eq(transactions.type, "creator_payout"), sql`${transactions.createdAt} >= ${monthStart}`)).groupBy(transactions.userId).orderBy(sql`sum(${transactions.amount}) desc`).limit(1);
+	}).from(transactions).where(and(eq(transactions.type, "creator_payout"), gte(transactions.createdAt, monthStart))).groupBy(transactions.userId).orderBy(sql`sum(${transactions.amount}) desc`).limit(1).catch((err) => {
+		console.warn("[admin/tokenomics] topEarner failed:", err instanceof Error ? err.message : err);
+		return [];
+	});
 	const totalPayments = Number(earnings?.totalPayments ?? 0);
 	const totalCreators = Number(creatorCount?.totalCreators ?? 0);
 	const averageRevenue = totalCreators > 0 ? Math.round(totalPayments / totalCreators) : 0;

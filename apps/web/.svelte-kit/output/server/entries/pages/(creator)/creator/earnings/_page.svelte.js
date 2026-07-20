@@ -1,8 +1,7 @@
-import { Lt as attr, Ot as store_get, jt as unsubscribe_stores, vt as attr_class, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ft as unsubscribe_stores, Ht as attr, Mt as store_get, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
-import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
+import { t as PortalKpi } from "../../../../../chunks/PortalKpi.js";
 import { t as Calendar } from "../../../../../chunks/calendar.js";
-import { t as WalletConnect } from "../../../../../chunks/WalletConnect.js";
 import { t as Coins } from "../../../../../chunks/coins.js";
 import { t as Credit_card } from "../../../../../chunks/credit-card.js";
 import { t as Crown } from "../../../../../chunks/crown.js";
@@ -14,11 +13,12 @@ import { t as Wallet } from "../../../../../chunks/wallet.js";
 import { t as Input } from "../../../../../chunks/input.js";
 import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../../chunks/card.js";
 import { a as isConnected } from "../../../../../chunks/wallet2.js";
 import { t as Label } from "../../../../../chunks/label.js";
 import "../../../../../chunks/contracts2.js";
+import { t as WalletConnect } from "../../../../../chunks/WalletConnect.js";
 //#region src/routes/(creator)/creator/earnings/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -35,7 +35,6 @@ function _page($$renderer, $$props) {
 		};
 		let series = { earnings: [] };
 		let earningsDelta = 0;
-		let loadingEarnings = true;
 		let tokenomicsData = {
 			stcBalance: "0",
 			usdcBalance: "0",
@@ -104,61 +103,51 @@ function _page($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="space-y-8">`);
-			PageHeader($$renderer, {
-				icon: Wallet,
+			$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-8 max-w-7xl">`);
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Revenue",
 				title: "Earnings",
-				subtitle: `Track your revenue, STC tokens, and payment preferences. Tier: ${earningsData.tier === "top_performer" ? "Top Performer" : earningsData.tier === "exclusive" ? "Exclusive Partner" : "Standard"} (${earningsData.revenueShare}% share).`
+				subtitle: `Track your revenue, STC tokens, and payment preferences. Tier: ${earningsData.tier === "top_performer" ? "Top Performer" : earningsData.tier === "exclusive" ? "Exclusive Partner" : "Standard"} (${earningsData.revenueShare}% share).`,
+				icon: Wallet
 			});
 			$$renderer.push(`<!----> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">`);
-			KpiCard($$renderer, {
+			PortalKpi($$renderer, {
 				label: "This Month",
 				value: `$${(earningsData.monthCents / 100).toFixed(2)}`,
 				icon: Dollar_sign,
-				accent: "green",
 				delta: earningsDelta,
 				deltaLabel: "vs last month",
-				sparkline: series.earnings,
-				loading: loadingEarnings,
-				index: 0
+				sparkline: series.earnings
 			});
 			$$renderer.push(`<!----> `);
-			KpiCard($$renderer, {
+			PortalKpi($$renderer, {
 				label: "This Year",
 				value: `$${(earningsData.yearCents / 100).toLocaleString(void 0, {
 					minimumFractionDigits: 2,
 					maximumFractionDigits: 2
 				})}`,
 				icon: Calendar,
-				accent: "blue",
-				deltaLabel: "12 months",
-				loading: loadingEarnings,
-				index: 1
+				deltaLabel: "12 months"
 			});
 			$$renderer.push(`<!----> `);
-			KpiCard($$renderer, {
+			PortalKpi($$renderer, {
 				label: "Total Earned",
 				value: `$${(earningsData.lifetimeCents / 100).toLocaleString(void 0, {
 					minimumFractionDigits: 2,
 					maximumFractionDigits: 2
 				})}`,
 				icon: Trending_up,
-				accent: "purple",
-				deltaLabel: "lifetime",
-				loading: loadingEarnings,
-				index: 2
+				deltaLabel: "lifetime"
 			});
 			$$renderer.push(`<!----> `);
 			if (store_get($$store_subs ??= {}, "$isConnected", isConnected)) {
 				$$renderer.push("<!--[0-->");
-				KpiCard($$renderer, {
+				PortalKpi($$renderer, {
 					label: "STC Value",
 					value: `$${tokenomicsData.stcValue.toFixed(2)}`,
 					icon: Coins,
-					accent: "orange",
-					deltaLabel: `${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`,
-					loading: loadingEarnings,
-					index: 3
+					deltaLabel: `${parseFloat(tokenomicsData.totalStcEarned).toLocaleString()} STC`
 				});
 			} else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--></div> `);

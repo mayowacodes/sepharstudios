@@ -1,5 +1,5 @@
-import { Dt as spread_props, Ot as store_get, jt as unsubscribe_stores, zt as escape_html } from "./ui-libs.js";
-import { t as Icon } from "./Icon.js";
+import { Ft as unsubscribe_stores, Mt as store_get, Wt as escape_html } from "./ui-libs.js";
+import { t as Check_check } from "./check-check.js";
 import { t as Coins } from "./coins.js";
 import { t as Copy } from "./copy.js";
 import { t as External_link } from "./external-link.js";
@@ -10,16 +10,6 @@ import { t as Badge } from "./badge.js";
 import { a as Card, i as Card_content } from "./card.js";
 import { a as isConnected, i as formatAddress, n as connectWallet, o as walletAddress, r as disconnectWallet, t as account } from "./wallet2.js";
 import "./contracts2.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/check-check.svelte
-function Check_check($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "check-check" },
-		props,
-		{ iconNode: [["path", { "d": "M18 6 7 17l-5-5" }], ["path", { "d": "m22 10-7.5 7.5L13 16" }]] }
-	]));
-}
-//#endregion
 //#region src/lib/components/web3/WalletConnect.svelte
 function WalletConnect($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

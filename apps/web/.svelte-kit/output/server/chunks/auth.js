@@ -1,6 +1,6 @@
 import { n as __reExport, t as __exportAll } from "./rolldown-runtime.js";
 import { t as private_env } from "./shared-server.js";
-import { n as account, r as schema$2, t as db } from "./drizzle.js";
+import { n as account, r as schema$2, rt as playlists, t as db } from "./drizzle.js";
 import { r as Role } from "./constants.js";
 import { t as sendEmailAction } from "./server2.js";
 import { c as PACKAGE_VERSION, d as getOrigin, f as getProtocol, g as wildcardMatch, h as resolveBaseURL, i as ADMIN_ERROR_CODES, l as getBaseURL, m as isRequestLike, n as roles, o as defaultRoles, p as isDynamicBaseURLConfig, r as hasPermission, t as ac, u as getHost } from "./permissions.js";
@@ -8362,6 +8362,15 @@ var auth = betterAuth({
 					method: "email",
 					domain: email ? email.split("@")[1] : null
 				});
+				if (newUserId) try {
+					await db.insert(playlists).values({
+						userId: newUserId,
+						name: "My List",
+						isDefault: true
+					});
+				} catch (err) {
+					console.warn("[auth] default playlist bootstrap failed", err);
+				}
 			}
 		})
 	}

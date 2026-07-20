@@ -1,6 +1,7 @@
-import { Dt as spread_props, vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ht as attr, Ot as ensure_array_like, St as attr_class, Wt as escape_html, jt as spread_props } from "../../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../../chunks/Icon.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
+import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 import { t as StatChip } from "../../../../../chunks/StatChip.js";
 //#region ../../node_modules/@lucide/svelte/dist/icons/workflow.svelte
 function Workflow($$renderer, $$props) {
@@ -38,15 +39,72 @@ function _page($$renderer, $$props) {
 			approvalRate: 0,
 			pendingReviews: 0
 		};
-		$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
+		let editingRule = null;
+		function createNewRule() {
+			editingRule = {
+				id: Date.now().toString(),
+				name: "",
+				description: "",
+				conditions: [{
+					field: "",
+					operator: "",
+					value: ""
+				}],
+				actions: [{
+					type: "status_change",
+					target: "",
+					value: ""
+				}],
+				isActive: true,
+				priority: 5,
+				createdAt: /* @__PURE__ */ new Date()
+			};
+		}
+		const fieldOptions = [
+			"contentType",
+			"ageRating",
+			"status",
+			"duration",
+			"videoQuality",
+			"fileSize",
+			"rejectionCount",
+			"creatorType",
+			"ministryVerified"
+		];
+		const operatorOptions = [
+			"equals",
+			"not_equals",
+			"in",
+			"not_in",
+			"greater_than",
+			"less_than",
+			"contains"
+		];
+		const actionTypes = [
+			"status_change",
+			"assign_reviewer",
+			"send_notification",
+			"escalate"
+		];
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
 		{
 			function actions($$renderer) {
-				$$renderer.push(`<button class="text-xs bg-primary hover:opacity-90 rounded-full px-3 py-1.5 text-primary-foreground font-medium transition-opacity">+ New rule</button>`);
+				PortalButton($$renderer, {
+					variant: "primary",
+					size: "sm",
+					onclick: createNewRule,
+					children: ($$renderer) => {
+						$$renderer.push(`<!---->+ New rule`);
+					},
+					$$slots: { default: true }
+				});
 			}
-			PageHeader($$renderer, {
-				icon: Workflow,
+			PortalHero($$renderer, {
+				compact: true,
+				eyebrow: "Automation",
 				title: "Workflow",
 				subtitle: "Automate content review and approval rules.",
+				icon: Workflow,
 				actions,
 				$$slots: { actions: true }
 			});
@@ -88,7 +146,76 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]--></div></div></div> <div class="text-xs text-muted-foreground mt-4 pt-4 border-t border-border">Created ${escape_html(rule.createdAt.toLocaleDateString())}</div></div>`);
 		}
 		$$renderer.push(`<!--]--></div></div> `);
-		$$renderer.push("<!--[-1-->");
+		if (editingRule) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><div class="bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"><div class="p-6"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-foreground">${escape_html(editingRule.id.length > 10 ? "Edit Workflow Rule" : "Create Workflow Rule")}</h2> <button class="text-muted-foreground hover:text-foreground" aria-label="Close workflow rule modal"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div> <div class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="ruleName" class="block text-sm font-medium text-foreground mb-2">Rule Name</label> <input id="ruleName" type="text"${attr("value", editingRule.name)} class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground" placeholder="Enter rule name..."/></div> <div><label for="rulePriority" class="block text-sm font-medium text-foreground mb-2">Priority (0 = Highest)</label> <input id="rulePriority" type="number"${attr("value", editingRule.priority)} min="0" max="10" class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground"/></div></div> <div><label for="ruleDescription" class="block text-sm font-medium text-foreground mb-2">Description</label> <textarea id="ruleDescription" rows="2" class="w-full px-4 py-2 surface-2 border border-gray-600 rounded-lg text-foreground resize-none" placeholder="Describe what this rule does...">`);
+			const $$body = escape_html(editingRule.description);
+			if ($$body) $$renderer.push(`${$$body}`);
+			$$renderer.push(`</textarea></div> <div><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-medium text-foreground">Conditions</h3> <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Add Condition</button></div> <div class="space-y-3"><!--[-->`);
+			const each_array_3 = ensure_array_like(editingRule.conditions);
+			for (let i = 0, $$length = each_array_3.length; i < $$length; i++) {
+				let condition = each_array_3[i];
+				$$renderer.push(`<div class="surface-1 p-4 rounded-lg flex items-center space-x-3">`);
+				$$renderer.select({
+					value: condition.field,
+					class: "px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"
+				}, ($$renderer) => {
+					$$renderer.option({ value: "" }, ($$renderer) => {
+						$$renderer.push(`Select Field`);
+					});
+					$$renderer.push(`<!--[-->`);
+					const each_array_4 = ensure_array_like(fieldOptions);
+					for (let $$index_3 = 0, $$length = each_array_4.length; $$index_3 < $$length; $$index_3++) {
+						let field = each_array_4[$$index_3];
+						$$renderer.option({ value: field }, ($$renderer) => {
+							$$renderer.push(`${escape_html(field)}`);
+						});
+					}
+					$$renderer.push(`<!--]-->`);
+				});
+				$$renderer.push(` `);
+				$$renderer.select({
+					value: condition.operator,
+					class: "px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"
+				}, ($$renderer) => {
+					$$renderer.option({ value: "" }, ($$renderer) => {
+						$$renderer.push(`Operator`);
+					});
+					$$renderer.push(`<!--[-->`);
+					const each_array_5 = ensure_array_like(operatorOptions);
+					for (let $$index_4 = 0, $$length = each_array_5.length; $$index_4 < $$length; $$index_4++) {
+						let operator = each_array_5[$$index_4];
+						$$renderer.option({ value: operator }, ($$renderer) => {
+							$$renderer.push(`${escape_html(operator.replace("_", " "))}`);
+						});
+					}
+					$$renderer.push(`<!--]-->`);
+				});
+				$$renderer.push(` <input type="text"${attr("value", condition.value)} placeholder="Value" class="flex-1 px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"/> <button class="text-red-400 hover:text-red-300">×</button></div>`);
+			}
+			$$renderer.push(`<!--]--></div></div> <div><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-medium text-foreground">Actions</h3> <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Add Action</button></div> <div class="space-y-3"><!--[-->`);
+			const each_array_6 = ensure_array_like(editingRule.actions);
+			for (let i = 0, $$length = each_array_6.length; i < $$length; i++) {
+				let action = each_array_6[i];
+				$$renderer.push(`<div class="surface-1 p-4 rounded-lg flex items-center space-x-3">`);
+				$$renderer.select({
+					value: action.type,
+					class: "px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"
+				}, ($$renderer) => {
+					$$renderer.push(`<!--[-->`);
+					const each_array_7 = ensure_array_like(actionTypes);
+					for (let $$index_6 = 0, $$length = each_array_7.length; $$index_6 < $$length; $$index_6++) {
+						let actionType = each_array_7[$$index_6];
+						$$renderer.option({ value: actionType }, ($$renderer) => {
+							$$renderer.push(`${escape_html(actionType.replace("_", " "))}`);
+						});
+					}
+					$$renderer.push(`<!--]-->`);
+				});
+				$$renderer.push(` <input type="text"${attr("value", action.target)} placeholder="Target" class="flex-1 px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"/> <input type="text"${attr("value", action.value)} placeholder="Value" class="flex-1 px-3 py-2 surface-2 border border-gray-600 rounded text-foreground text-sm"/> <button class="text-red-400 hover:text-red-300">×</button></div>`);
+			}
+			$$renderer.push(`<!--]--></div></div></div> <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-600"><button class="bg-gray-600 hover:bg-gray-700 text-foreground px-6 py-2 rounded-lg transition-colors">Cancel</button> <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">Save Rule</button></div></div></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
 	});
 }

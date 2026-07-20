@@ -1,6 +1,6 @@
-import { vt as attr_class, wt as ensure_array_like, zt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ot as ensure_array_like, St as attr_class, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Chart_column } from "../../../../../chunks/chart-column.js";
-import { t as PageHeader } from "../../../../../chunks/PageHeader.js";
+import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/analytics-help/+page.svelte
 function _page($$renderer) {
 	let activeSection = "overview";
@@ -36,11 +36,13 @@ function _page($$renderer) {
 			icon: "🔧"
 		}
 	];
-	$$renderer.push(`<div class="container mx-auto px-4 py-6 space-y-6">`);
-	PageHeader($$renderer, {
-		icon: Chart_column,
-		title: "Analytics Help",
-		subtitle: "Understand your audience and optimize your content performance."
+	$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-6xl">`);
+	PortalHero($$renderer, {
+		compact: true,
+		eyebrow: "Guides",
+		title: "Analytics help",
+		subtitle: "Understand your audience and optimize your content performance.",
+		icon: Chart_column
 	});
 	$$renderer.push(`<!----> <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-1"><div class="surface-2 backdrop-blur-sm rounded-xl p-4 sticky top-6"><nav class="space-y-2"><!--[-->`);
 	const each_array = ensure_array_like(sections);
