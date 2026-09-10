@@ -1,4 +1,4 @@
-import { Et as derived, kt as head } from "../../../../chunks/ui-libs.js";
+import { Ct as derived, Et as head } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/MediaGrid.js";
 import "../../../../chunks/Recommendations2.js";
 //#region src/routes/(app)/browse/+page.svelte

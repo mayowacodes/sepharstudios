@@ -30,3 +30,4 @@ function installPolyfills() {
 }
 
 installPolyfills();
+//# sourceMappingURL=shims.js.map

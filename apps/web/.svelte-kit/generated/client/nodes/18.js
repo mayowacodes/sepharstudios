@@ -1,1 +1,3 @@
-export { default as component } from "../../../../src/routes/(admin)/admin/creator-applications/+page.svelte";
+import * as universal from "../../../../src/routes/(admin)/admin/dashboard/+page.ts";
+export { universal };
+export { default as component } from "../../../../src/routes/(admin)/admin/dashboard/+page.svelte";

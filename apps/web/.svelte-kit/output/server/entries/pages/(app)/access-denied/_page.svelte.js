@@ -1,10 +1,10 @@
-import { Et as derived, Wt as escape_html, jt as spread_props, kt as head } from "../../../../chunks/ui-libs.js";
+import { Ct as derived, Et as head, Ot as spread_props, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
 import { t as User_plus } from "../../../../chunks/user-plus.js";
 import { t as page } from "../../../../chunks/state.js";
 import { t as Button } from "../../../../chunks/button.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/shield-x.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/shield-x.svelte
 function Shield_x($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([

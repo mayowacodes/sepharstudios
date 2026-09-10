@@ -1,10 +1,10 @@
-import { St as attr_class, Ut as clsx, Wt as escape_html } from "./ui-libs.js";
+import { Rt as clsx, yt as attr_class, zt as escape_html } from "./ui-libs.js";
 import { t as Constants } from "./constants.js";
 import { t as cn } from "./utils2.js";
 import { t as Button } from "./button.js";
 import { r as Card_description, t as Card_title } from "./card.js";
 import { t as Loading_spinner } from "./loading-spinner.js";
-import { n as handleSocialSignin, t as getRedirectUrl } from "./client2.js";
+import { n as handleSocialSignin, t as getRedirectUrl } from "./client3.js";
 //#region src/lib/authentication/ui/auth-card-header.svelte
 function Auth_card_header($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

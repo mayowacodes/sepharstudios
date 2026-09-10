@@ -1,1 +1,3 @@
-export { default as component } from "../../../../../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/components/svelte-5/layout.svelte";
+import * as universal from "../../../../src/routes/(protected)/+layout.ts";
+export { universal };
+export { default as component } from "../../../../src/routes/(protected)/+layout.svelte";

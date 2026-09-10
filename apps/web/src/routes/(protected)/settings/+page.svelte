@@ -30,7 +30,7 @@
     cardBrand: string | null;
   }
 
-  type PlanName = 'freemium' | 'basic' | 'premium' | 'creator';
+  type PlanName = 'basic' | 'premium' | 'creator' | 'freemium';
 
   let prefs = $state<NotificationPrefs | null>(null);
   let sub = $state<SubscriptionStatus | null>(null);
@@ -264,7 +264,7 @@
                   bind:value={selectedPlan}
                   class="h-8 rounded-md border border-border bg-background px-2 text-sm capitalize"
                 >
-                  <option value="freemium">Freemium ($1 every 2 months)</option>
+                  <option value="basic">Free (with ads)</option>
                   <option value="basic">Basic ($4/mo)</option>
                   <option value="premium">Premium / Family ($10/mo)</option>
                   <option value="creator">Creator ($10/mo)</option>

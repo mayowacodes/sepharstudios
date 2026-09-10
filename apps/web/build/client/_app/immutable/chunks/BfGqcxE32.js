@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`rect`,{width:`16`,height:`20`,x:`4`,y:`2`,rx:`2`,ry:`2`}],[`line`,{x1:`12`,x2:`12.01`,y1:`18`,y2:`18`}]];n(i,t({name:`tablet`},()=>o,{get iconNode(){return s}}))}export{i as t};

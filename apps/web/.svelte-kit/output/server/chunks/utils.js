@@ -1,9 +1,9 @@
-import { d as coalesce_to_error, f as get_message, p as get_status } from "./shared.js";
+import { d as get_message, f as get_status, u as coalesce_to_error, x as noop, y as parse } from "./shared.js";
+import { Xt as uneval } from "./ui-libs.js";
 import { json, text } from "@sveltejs/kit";
 import { HttpError, SvelteKitError } from "@sveltejs/kit/internal";
 import { with_request_store } from "@sveltejs/kit/internal/server";
-import * as devalue from "devalue";
-//#region ../../node_modules/@sveltejs/kit/src/constants.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/constants.js
 /**
 * A fake asset path used in `vite dev` and `vite preview`, so that we can
 * serve local assets while verifying that requests are correctly prefixed
@@ -30,7 +30,147 @@ var PAGE_METHODS = [
 	"HEAD"
 ];
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/form-utils.js
+//#region ../../node_modules/.bun/set-cookie-parser@3.1.2/node_modules/set-cookie-parser/lib/set-cookie.js
+var defaultParseOptions = {
+	decodeValues: true,
+	map: false,
+	silent: false,
+	split: "auto"
+};
+function isForbiddenKey(key) {
+	return typeof key !== "string" || key in {};
+}
+function createNullObj() {
+	return Object.create(null);
+}
+function isNonEmptyString(str) {
+	return typeof str === "string" && !!str.trim();
+}
+function parseString(setCookieValue, options) {
+	var parts = setCookieValue.split(";").filter(isNonEmptyString);
+	var nameValuePairStr = parts.shift();
+	if (!nameValuePairStr) return null;
+	var parsed = parseNameValuePair(nameValuePairStr);
+	var name = parsed.name;
+	var value = parsed.value;
+	options = options ? Object.assign({}, defaultParseOptions, options) : defaultParseOptions;
+	if (isForbiddenKey(name)) return null;
+	try {
+		value = options.decodeValues ? decodeURIComponent(value) : value;
+	} catch (e) {
+		console.error("set-cookie-parser: failed to decode cookie value. Set options.decodeValues=false to disable decoding.", e);
+	}
+	var cookie = createNullObj();
+	cookie.name = name;
+	cookie.value = value;
+	parts.forEach(function(part) {
+		var sides = part.split("=");
+		var key = sides.shift().trim().toLowerCase();
+		if (isForbiddenKey(key)) return;
+		var value = sides.join("=").trim();
+		if (key === "expires") cookie.expires = new Date(value);
+		else if (key === "max-age") {
+			var n = parseInt(value, 10);
+			if (!Number.isNaN(n)) cookie.maxAge = n;
+		} else if (key === "secure") cookie.secure = true;
+		else if (key === "httponly") cookie.httpOnly = true;
+		else if (key === "samesite") cookie.sameSite = value;
+		else if (key === "partitioned") cookie.partitioned = true;
+		else if (key) cookie[key] = value;
+	});
+	return cookie;
+}
+function parseNameValuePair(nameValuePairStr) {
+	var name = "";
+	var value = "";
+	var nameValueArr = nameValuePairStr.split("=");
+	if (nameValueArr.length > 1) {
+		name = nameValueArr.shift();
+		value = nameValueArr.join("=");
+	} else value = nameValuePairStr;
+	return {
+		name,
+		value
+	};
+}
+function parseSetCookie(input, options) {
+	options = options ? Object.assign({}, defaultParseOptions, options) : defaultParseOptions;
+	if (!input) if (!options.map) return [];
+	else return createNullObj();
+	if (input.headers) if (typeof input.headers.getSetCookie === "function") input = input.headers.getSetCookie();
+	else if (input.headers["set-cookie"]) input = input.headers["set-cookie"];
+	else {
+		var sch = input.headers[Object.keys(input.headers).find(function(key) {
+			return key.toLowerCase() === "set-cookie";
+		})];
+		if (!sch && input.headers.cookie && !options.silent) console.warn("Warning: set-cookie-parser appears to have been called on a request object. It is designed to parse Set-Cookie headers from responses, not Cookie headers from requests. Set the option {silent: true} to suppress this warning.");
+		input = sch;
+	}
+	var split = options.split;
+	var isArray = Array.isArray(input);
+	if (split === "auto") split = !isArray;
+	if (!isArray) input = [input];
+	input = input.filter(isNonEmptyString);
+	if (split) input = input.map(splitCookiesString).flat();
+	if (!options.map) return input.map(function(str) {
+		return parseString(str, options);
+	}).filter(Boolean);
+	else {
+		var cookies = createNullObj();
+		return input.reduce(function(cookies, str) {
+			var cookie = parseString(str, options);
+			if (cookie && !isForbiddenKey(cookie.name)) cookies[cookie.name] = cookie;
+			return cookies;
+		}, cookies);
+	}
+}
+function splitCookiesString(cookiesString) {
+	if (Array.isArray(cookiesString)) return cookiesString;
+	if (typeof cookiesString !== "string") return [];
+	var cookiesStrings = [];
+	var pos = 0;
+	var start;
+	var ch;
+	var lastComma;
+	var nextStart;
+	var cookiesSeparatorFound;
+	function skipWhitespace() {
+		while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) pos += 1;
+		return pos < cookiesString.length;
+	}
+	function notSpecialChar() {
+		ch = cookiesString.charAt(pos);
+		return ch !== "=" && ch !== ";" && ch !== ",";
+	}
+	while (pos < cookiesString.length) {
+		start = pos;
+		cookiesSeparatorFound = false;
+		while (skipWhitespace()) {
+			ch = cookiesString.charAt(pos);
+			if (ch === ",") {
+				lastComma = pos;
+				pos += 1;
+				skipWhitespace();
+				nextStart = pos;
+				while (pos < cookiesString.length && notSpecialChar()) pos += 1;
+				if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
+					cookiesSeparatorFound = true;
+					pos = nextStart;
+					cookiesStrings.push(cookiesString.substring(start, lastComma));
+					start = pos;
+				} else pos = lastComma + 1;
+			} else pos += 1;
+		}
+		if (!cookiesSeparatorFound || pos >= cookiesString.length) cookiesStrings.push(cookiesString.substring(start, cookiesString.length));
+	}
+	return cookiesStrings;
+}
+parseSetCookie.parseSetCookie = parseSetCookie;
+parseSetCookie.parse = parseSetCookie;
+parseSetCookie.parseString = parseString;
+parseSetCookie.splitCookiesString = splitCookiesString;
+//#endregion
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/form-utils.js
 /** @import { RemoteForm } from '@sveltejs/kit' */
 /** @import { BinaryFormMeta, InternalRemoteFormIssue } from 'types' */
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
@@ -51,6 +191,8 @@ function set_nested_value(object, path_string, value) {
 	}
 	deep_set(object, split_path(path_string), value);
 }
+/** Pass this to set_nested_value to delete the last part of the given path */
+var DELETE_KEY = {};
 /**
 * Convert `FormData` into a POJO
 * @param {FormData} data
@@ -63,8 +205,8 @@ function convert_formdata(data) {
 		/** @type {any[]} */
 		let values = data.getAll(key);
 		if (is_array) key = key.slice(0, -2);
-		if (values.length > 1 && !is_array) throw new Error(`Form cannot contain duplicated keys — "${key}" has ${values.length} values`);
 		values = values.filter((entry) => typeof entry === "string" || entry.name !== "" || entry.size > 0);
+		if (values.length === 0 && !is_array) continue;
 		if (key.startsWith("n:")) {
 			key = key.slice(2);
 			values = values.map((v) => v === "" ? void 0 : parseFloat(v));
@@ -72,6 +214,7 @@ function convert_formdata(data) {
 			key = key.slice(2);
 			values = values.map((v) => v === "on");
 		}
+		if (values.length > 1 && !is_array) throw new Error(`Form cannot contain duplicated keys — "${key}" has ${values.length} values`);
 		set_nested_value(result, key, is_array ? values : values[0]);
 	}
 	return result;
@@ -171,7 +314,7 @@ async function deserialize_binary_form(request) {
 	}
 	/** @type {Array<{ offset: number, size: number }>} */
 	const file_spans = [];
-	const [data, meta] = devalue.parse(decoder.decode(data_buffer), { File: ([name, type, size, last_modified, index]) => {
+	const [data, meta] = parse(decoder.decode(data_buffer), { File: ([name, type, size, last_modified, index]) => {
 		if (typeof name !== "string" || typeof type !== "string" || typeof size !== "number" || typeof last_modified !== "number" || typeof index !== "number") throw deserialize_error("invalid file metadata");
 		let offset = file_offsets[index];
 		if (offset === void 0) throw deserialize_error("duplicate file offset table index");
@@ -196,7 +339,7 @@ async function deserialize_binary_form(request) {
 	(async () => {
 		let has_more = true;
 		while (has_more) has_more = !!await get_chunk(chunks.length);
-	})();
+	})().catch(noop);
 	return {
 		data,
 		meta,
@@ -334,12 +477,16 @@ function deep_set(object, keys, value) {
 		const inner = Object.hasOwn(current, key) ? current[key] : void 0;
 		const exists = inner != null;
 		if (exists && is_array !== Array.isArray(inner)) throw new Error(`Invalid array key ${keys[i + 1]}`);
-		if (!exists) current[key] = is_array ? [] : {};
+		if (!exists) {
+			if (value === DELETE_KEY) return;
+			current[key] = is_array ? [] : {};
+		}
 		current = current[key];
 	}
 	const final_key = keys[keys.length - 1];
 	check_prototype_pollution(final_key);
-	current[final_key] = value;
+	if (value === DELETE_KEY) delete current[final_key];
+	else current[final_key] = value;
 }
 /**
 * @param {StandardSchemaV1.Issue} issue
@@ -413,6 +560,23 @@ function get_type_prefix(field_type, is_array, input_value) {
 	return "";
 }
 /**
+* A deep-clone implementation specifically for form data, where
+* we don't need to worry about cycles and whatnot
+* @param {any} value
+* @returns {any}
+*/
+function deep_clone(value) {
+	if (value !== null && typeof value === "object") {
+		if (value instanceof File) return value;
+		if (Array.isArray(value)) return value.map(deep_clone);
+		/** @type {Record<string, any>} */
+		const clone = {};
+		for (const key of Object.keys(value)) clone[key] = deep_clone(value[key]);
+		return clone;
+	}
+	return value;
+}
+/**
 * Creates a proxy-based field accessor for form data
 * @param {any} target - Function or empty POJO
 * @param {() => Record<string, any>} get_input - Function to get current input data
@@ -423,7 +587,7 @@ function get_type_prefix(field_type, is_array, input_value) {
 */
 function create_field_proxy(target, get_input, set_input, get_issues, path = []) {
 	const get_value = () => {
-		return deep_get(get_input(), path);
+		return deep_clone(deep_get(get_input(), path));
 	};
 	return new Proxy(target, { get(target, prop) {
 		if (typeof prop === "symbol") return target[prop];
@@ -444,10 +608,11 @@ function create_field_proxy(target, get_input, set_input, get_issues, path = [])
 					path: issue.path,
 					message: issue.message
 				}));
-				return all_issues?.filter((issue) => issue.name === key)?.map((issue) => ({
+				const issues = all_issues?.filter((issue) => issue.name === key)?.map((issue) => ({
 					path: issue.path,
 					message: issue.message
 				}));
+				return issues?.length ? issues : void 0;
 			};
 			return create_field_proxy(issues_func, get_input, set_input, get_issues, [...path, prop]);
 		}
@@ -462,7 +627,8 @@ function create_field_proxy(target, get_input, set_input, get_issues, path = [])
 				const base_props = {
 					name: get_type_prefix(type, is_array, input_value) + key + (is_array ? "[]" : ""),
 					get "aria-invalid"() {
-						return key in get_issues() ? "true" : void 0;
+						const issues = get_issues();
+						return key in issues ? "true" : void 0;
 					}
 				};
 				if (type !== "text" && type !== "select" && type !== "select multiple") base_props.type = type === "file multiple" ? "file" : type;
@@ -601,7 +767,7 @@ function throw_on_old_property_access(instance) {
 	} });
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/http.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/http.js
 /**
 * Given an Accept header and a list of possible content types, pick
 * the most suitable one to respond with
@@ -642,6 +808,22 @@ function negotiate(accept, types) {
 	return accepted;
 }
 /**
+* Reads all `Set-Cookie` headers as separate values. `Headers.get('set-cookie')`
+* collapses them into a single comma-joined string that browsers cannot parse, so
+* we use `Headers.getSetCookie()` where available and fall back to splitting the
+* joined string otherwise.
+*
+* TODO 3.0 `getSetCookie` is available in Node 19.7+; once we drop support for
+* older versions we can use it directly and remove the `splitCookiesString` fallback
+* @param {Headers} headers
+* @returns {string[]}
+*/
+function get_set_cookies(headers) {
+	if (typeof headers.getSetCookie === "function") return headers.getSetCookie();
+	const set_cookie = headers.get("set-cookie");
+	return set_cookie ? splitCookiesString(set_cookie) : [];
+}
+/**
 * Returns `true` if the request contains a `content-type` header with the given type
 * @param {Request} request
 * @param  {...string} types
@@ -657,10 +839,7 @@ function is_form_content_type(request) {
 	return is_content_type(request, "application/x-www-form-urlencoded", "multipart/form-data", "text/plain", BINARY_FORM_CONTENT_TYPE);
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/misc.js
-var s = JSON.stringify;
-//#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/escape.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/escape.js
 /**
 * When inside a double-quoted attribute value, only `&` and `"` hold special meaning.
 * @see https://html.spec.whatwg.org/multipage/parsing.html#attribute-value-(double-quoted)-state
@@ -696,7 +875,7 @@ function escape_html(str, is_attr) {
 	});
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/server/utils.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/server/utils.js
 /** @import { ServerHooks } from 'types' */
 /**
 * @param {Partial<Record<import('types').HttpMethod, any>>} mod
@@ -854,10 +1033,10 @@ function create_replacer(transport) {
 	const replacer = (thing) => {
 		for (const key in transport) {
 			const encoded = transport[key].encode(thing);
-			if (encoded) return `app.decode('${key}', ${devalue.uneval(encoded, replacer)})`;
+			if (encoded) return `app.decode('${key}', ${uneval(encoded, replacer)})`;
 		}
 	};
 	return replacer;
 }
 //#endregion
-export { set_nested_value as C, PAGE_METHODS as D, MUTATIVE_METHODS as E, SVELTE_KIT_ASSETS as O, normalize_issue as S, ENDPOINT_METHODS as T, negotiate as _, get_global_name as a, deserialize_binary_form as b, handle_fatal_error as c, redirect_response as d, serialize_uses as f, is_form_content_type as g, s as h, format_server_error as i, has_prerendered_path as l, escape_html as m, count_non_ssi_comments as n, get_node_type as o, static_error_page as p, create_replacer as r, handle_error_and_jsonify as s, clarify_devalue_error as t, method_not_allowed as u, create_field_proxy as v, throw_on_old_property_access as w, flatten_issues as x, deep_set as y };
+export { set_nested_value as C, MUTATIVE_METHODS as D, ENDPOINT_METHODS as E, PAGE_METHODS as O, normalize_issue as S, parseString as T, negotiate as _, get_global_name as a, deserialize_binary_form as b, handle_fatal_error as c, redirect_response as d, serialize_uses as f, is_form_content_type as g, get_set_cookies as h, format_server_error as i, SVELTE_KIT_ASSETS as k, has_prerendered_path as l, escape_html as m, count_non_ssi_comments as n, get_node_type as o, static_error_page as p, create_replacer as r, handle_error_and_jsonify as s, clarify_devalue_error as t, method_not_allowed as u, create_field_proxy as v, throw_on_old_property_access as w, flatten_issues as x, deep_set as y };

@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`path`,{d:`M18 6 7 17l-5-5`}],[`path`,{d:`m22 10-7.5 7.5L13 16`}]];n(i,t({name:`check-check`},()=>o,{get iconNode(){return s}}))}export{i as t};

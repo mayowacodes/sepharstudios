@@ -1,4 +1,4 @@
-import { E as Dialog, T as Dialog_close, Tt as bind_props, Ut as clsx, at as Dialog_title, et as Dialog_description, it as Portal, jt as spread_props, nt as Dialog_overlay, tt as Dialog_trigger, w as Dialog_content, wt as attributes } from "./ui-libs.js";
+import { E as Dialog, Ot as spread_props, Rt as clsx, St as bind_props, T as Dialog_close, at as Dialog_title, et as Dialog_description, it as Portal, nt as Dialog_overlay, tt as Dialog_trigger, w as Dialog_content, xt as attributes } from "./ui-libs.js";
 import { t as X } from "./x.js";
 import { t as cn } from "./utils2.js";
 import { tv } from "tailwind-variants";

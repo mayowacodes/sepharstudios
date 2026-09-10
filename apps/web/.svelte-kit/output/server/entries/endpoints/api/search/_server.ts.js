@@ -1,5 +1,5 @@
-import { a as isMeiliConfigured, o as searchMedia } from "../../../../chunks/meilisearch2.js";
 import { t as attachCatalogProgress } from "../../../../chunks/catalog-progress.js";
+import { a as isMeiliConfigured, o as searchMedia } from "../../../../chunks/meilisearch2.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/search/+server.ts
 /**

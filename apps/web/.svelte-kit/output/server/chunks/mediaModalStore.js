@@ -1,4 +1,4 @@
-import { Bt as writable } from "./ui-libs.js";
+import { Gt as writable } from "./ui-libs.js";
 import "./index-server.js";
 //#region src/lib/stores/mediaModalStore.ts
 var { subscribe, update, set } = writable({

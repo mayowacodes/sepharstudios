@@ -1,4 +1,4 @@
-import { St as attr_class, Ut as clsx } from "./ui-libs.js";
+import { Rt as clsx, yt as attr_class } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/authentication/ui/loading-spinner.svelte
 function Loading_spinner($$renderer, $$props) {

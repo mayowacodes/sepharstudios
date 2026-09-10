@@ -70,8 +70,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			continue;
 		}
 		const amountCents = PLAN_PRICES_CENTS[plan];
-		if (!amountCents) {
-			results.errors.push(`sub ${sub.id}: no price for plan "${plan}"`);
+		// A free plan reaching this loop is not an error — it has no charge
+		// cycle, so there is nothing to renew. Free subscriptions are created
+		// with a null nextChargeAt and no authorization code, which the query
+		// above already excludes; this is the belt to that braces, and it must
+		// NOT be `if (!amountCents)` because 0 is a legitimate price.
+		if (amountCents === 0) {
 			continue;
 		}
 		if (!sub.paystackAuthorizationCode) {

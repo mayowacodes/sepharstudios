@@ -1,4 +1,4 @@
-import { kt as head } from "../../../../../../chunks/ui-libs.js";
+import { Et as head } from "../../../../../../chunks/ui-libs.js";
 import { t as Chart_column } from "../../../../../../chunks/chart-column.js";
 import { t as Download } from "../../../../../../chunks/download.js";
 import { t as PortalHero } from "../../../../../../chunks/PortalHero.js";

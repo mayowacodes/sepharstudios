@@ -1,5 +1,5 @@
-import { t as db, tt as paystackSubscriptions, xt as trialBlacklist } from "../../../../../chunks/drizzle.js";
-import { i as createCustomer, n as PLAN_PRICES_CENTS } from "../../../../../chunks/paystack.js";
+import { Ot as trialBlacklist, ct as paystackSubscriptions, t as db } from "../../../../../chunks/drizzle.js";
+import { c as isPlanName, i as createCustomer, s as isPaidPlan } from "../../../../../chunks/paystack.js";
 import { i as verifyOtp, r as getPhoneHash } from "../../../../../chunks/otp.js";
 import { json } from "@sveltejs/kit";
 import { eq, or } from "drizzle-orm";
@@ -15,7 +15,8 @@ var POST = async ({ request, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
 	const { plan, phone, otp, deviceFingerprint } = await request.json();
-	if (!plan || !PLAN_PRICES_CENTS[plan]) return json({ error: "Invalid plan" }, { status: 400 });
+	if (!isPlanName(plan)) return json({ error: "Invalid plan" }, { status: 400 });
+	if (!isPaidPlan(plan)) return json({ error: "This plan is free — activate it via /api/subscriptions/start-free" }, { status: 400 });
 	if (!phone?.trim() || !otp?.trim()) return json({ error: "Phone number and verification code are required" }, { status: 400 });
 	if (!await verifyOtp(phone, otp)) return json({ error: "Invalid or expired verification code" }, { status: 400 });
 	const existingSub = await db.select({

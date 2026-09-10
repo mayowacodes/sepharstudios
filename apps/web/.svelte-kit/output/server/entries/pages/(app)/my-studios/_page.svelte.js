@@ -1,4 +1,4 @@
-import { Bt as writable, Ft as unsubscribe_stores, Ht as attr, Mt as store_get, Ot as ensure_array_like, St as attr_class, Tt as bind_props, Wt as escape_html, jt as spread_props, kt as head } from "../../../../chunks/ui-libs.js";
+import { Et as head, Gt as writable, Lt as attr, Mt as unsubscribe_stores, Ot as spread_props, St as bind_props, Tt as ensure_array_like, kt as store_get, yt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import "../../../../chunks/index-server.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
@@ -20,7 +20,7 @@ import { a as isConnected } from "../../../../chunks/wallet2.js";
 import { n as RecentlyWatched, t as Recommendations } from "../../../../chunks/Recommendations2.js";
 import "../../../../chunks/contracts2.js";
 import { t as WalletConnect } from "../../../../chunks/WalletConnect.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/circle-plus.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/circle-plus.svelte
 function Circle_plus($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -38,7 +38,7 @@ function Circle_plus($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/pencil.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/pencil.svelte
 function Pencil($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([

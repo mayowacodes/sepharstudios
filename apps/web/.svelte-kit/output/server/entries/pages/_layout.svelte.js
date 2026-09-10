@@ -1,13 +1,14 @@
-import { Ct as attr_style, Et as derived, Ft as unsubscribe_stores, Ht as attr, It as html, Mt as store_get, Ot as ensure_array_like, Pt as stringify, St as attr_class, Ut as clsx, Wt as escape_html, jt as spread_props, kt as head, qt as run, wt as attributes } from "../../chunks/ui-libs.js";
+import { Ct as derived, Et as head, Ft as hasContext, It as setContext, Lt as attr, Mt as unsubscribe_stores, Nt as html, Ot as spread_props, Pt as getContext, Rt as clsx, Tt as ensure_array_like, Vt as on, Yt as run, bt as attr_style, jt as stringify, kt as store_get, mt as createSubscriber, xt as attributes, yt as attr_class, zt as escape_html } from "../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../chunks/constants.js";
-/* empty css                */
-import { a as cn, i as sonnerContext, r as toastState, t as SonnerState } from "../../chunks/toast-state.svelte.js";
-import { t as Mode_watcher } from "../../chunks/dist.js";
+/* empty css               */
+import { i as cn, r as toastState, t as SonnerState } from "../../chunks/toast-state.svelte.js";
+import { t as Mode_watcher } from "../../chunks/dist2.js";
 import { t as page } from "../../chunks/state.js";
 import { t as PWAInstallPrompt } from "../../chunks/PWAInstallPrompt.js";
 import { n as copilotOpen, t as copilotContext } from "../../chunks/copilot.js";
 import { n as liveRegionBuffer } from "../../chunks/live-region.js";
-//#region ../../node_modules/svelte-sonner/dist/Loader.svelte
+import DOMPurify from "dompurify";
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/Loader.svelte
 var bars = Array(12).fill(0);
 function Loader($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -23,12 +24,251 @@ function Loader($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/types.js
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/internal/configurable-globals.js
+var defaultWindow = void 0;
+//#endregion
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/internal/utils/dom.js
+/**
+* Handles getting the active element in a document or shadow root.
+* If the active element is within a shadow root, it will traverse the shadow root
+* to find the active element.
+* If not, it will return the active element in the document.
+*
+* @param document A document or shadow root to get the active element from.
+* @returns The active element in the document or shadow root.
+*/
+function getActiveElement(document) {
+	let activeElement = document.activeElement;
+	while (activeElement?.shadowRoot) {
+		const node = activeElement.shadowRoot.activeElement;
+		if (node === activeElement) break;
+		else activeElement = node;
+	}
+	return activeElement;
+}
+//#endregion
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/utilities/active-element/active-element.svelte.js
+var ActiveElement = class {
+	#document;
+	#subscribe;
+	constructor(options = {}) {
+		const { window = defaultWindow, document = window?.document } = options;
+		if (window === void 0) return;
+		this.#document = document;
+		this.#subscribe = createSubscriber((update) => {
+			const cleanupFocusIn = on(window, "focusin", update);
+			const cleanupFocusOut = on(window, "focusout", update);
+			return () => {
+				cleanupFocusIn();
+				cleanupFocusOut();
+			};
+		});
+	}
+	get current() {
+		this.#subscribe?.();
+		if (!this.#document) return null;
+		return getActiveElement(this.#document);
+	}
+};
+new ActiveElement();
+//#endregion
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/utilities/context/context.js
+var Context = class {
+	#name;
+	#key;
+	/**
+	* @param name The name of the context.
+	* This is used for generating the context key and error messages.
+	*/
+	constructor(name) {
+		this.#name = name;
+		this.#key = Symbol(name);
+	}
+	/**
+	* The key used to get and set the context.
+	*
+	* It is not recommended to use this value directly.
+	* Instead, use the methods provided by this class.
+	*/
+	get key() {
+		return this.#key;
+	}
+	/**
+	* Checks whether this has been set in the context of a parent component.
+	*
+	* Must be called during component initialisation.
+	*/
+	exists() {
+		return hasContext(this.#key);
+	}
+	/**
+	* Retrieves the context that belongs to the closest parent component.
+	*
+	* Must be called during component initialisation.
+	*
+	* @throws An error if the context does not exist.
+	*/
+	get() {
+		const context = getContext(this.#key);
+		if (context === void 0) throw new Error(`Context "${this.#name}" not found`);
+		return context;
+	}
+	/**
+	* Retrieves the context that belongs to the closest parent component,
+	* or the given fallback value if the context does not exist.
+	*
+	* Must be called during component initialisation.
+	*/
+	getOr(fallback) {
+		const context = getContext(this.#key);
+		if (context === void 0) return fallback;
+		return context;
+	}
+	/**
+	* Associates the given value with the current component and returns it.
+	*
+	* Must be called during component initialisation.
+	*/
+	set(context) {
+		return setContext(this.#key, context);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/utilities/watch/watch.svelte.js
+function runWatcher(sources, flush, effect, options = {}) {
+	const { lazy = false } = options;
+}
+function watch(sources, effect, options) {
+	runWatcher(sources, "post", effect, options);
+}
+function watchPre(sources, effect, options) {
+	runWatcher(sources, "pre", effect, options);
+}
+watch.pre = watchPre;
+function watchOnce(source, effect) {}
+function watchOncePre(source, effect) {}
+watchOnce.pre = watchOncePre;
+//#endregion
+//#region ../../node_modules/.bun/runed@0.28.0+5726b9c92ebd8575/node_modules/runed/dist/utilities/resource/resource.svelte.js
+function debounce(fn, delay) {
+	let timeoutId;
+	let lastResolve = null;
+	return (...args) => {
+		return new Promise((resolve) => {
+			if (lastResolve) lastResolve(void 0);
+			lastResolve = resolve;
+			clearTimeout(timeoutId);
+			timeoutId = setTimeout(async () => {
+				const result = await fn(...args);
+				if (lastResolve) {
+					lastResolve(result);
+					lastResolve = null;
+				}
+			}, delay);
+		});
+	};
+}
+function throttle(fn, delay) {
+	let lastRun = 0;
+	let lastPromise = null;
+	return (...args) => {
+		const now = Date.now();
+		if (lastRun && now - lastRun < delay) return lastPromise ?? Promise.resolve(void 0);
+		lastRun = now;
+		lastPromise = fn(...args);
+		return lastPromise;
+	};
+}
+function runResource(source, fetcher, options = {}, effectFn) {
+	const { lazy = false, once = false, initialValue, debounce: debounceTime, throttle: throttleTime } = options;
+	let current = initialValue;
+	let loading = false;
+	let error = void 0;
+	let cleanupFns = [];
+	const runCleanup = () => {
+		cleanupFns.forEach((fn) => fn());
+		cleanupFns = [];
+	};
+	const onCleanup = (fn) => {
+		cleanupFns = [...cleanupFns, fn];
+	};
+	const baseFetcher = async (value, previousValue, refetching = false) => {
+		try {
+			loading = true;
+			error = void 0;
+			runCleanup();
+			const controller = new AbortController();
+			onCleanup(() => controller.abort());
+			const result = await fetcher(value, previousValue, {
+				data: current,
+				refetching,
+				onCleanup,
+				signal: controller.signal
+			});
+			current = result;
+			return result;
+		} catch (e) {
+			if (!(e instanceof DOMException && e.name === "AbortError")) error = e;
+			return;
+		} finally {
+			loading = false;
+		}
+	};
+	const runFetcher = debounceTime ? debounce(baseFetcher, debounceTime) : throttleTime ? throttle(baseFetcher, throttleTime) : baseFetcher;
+	const sources = Array.isArray(source) ? source : [source];
+	let prevValues;
+	effectFn((values, previousValues) => {
+		if (once && prevValues) return;
+		prevValues = values;
+		runFetcher(Array.isArray(source) ? values : values[0], Array.isArray(source) ? previousValues : previousValues?.[0]);
+	}, { lazy });
+	return {
+		get current() {
+			return current;
+		},
+		get loading() {
+			return loading;
+		},
+		get error() {
+			return error;
+		},
+		mutate: (value) => {
+			current = value;
+		},
+		refetch: (info) => {
+			const values = sources.map((s) => s());
+			return runFetcher(Array.isArray(source) ? values : values[0], Array.isArray(source) ? values : values[0], info ?? true);
+		}
+	};
+}
+function resource(source, fetcher, options) {
+	return runResource(source, fetcher, options, (fn, options) => {
+		const sources = Array.isArray(source) ? source : [source];
+		const getters = () => sources.map((s) => s());
+		watch(getters, (values, previousValues) => {
+			fn(values, previousValues ?? []);
+		}, options);
+	});
+}
+function resourcePre(source, fetcher, options) {
+	return runResource(source, fetcher, options, (fn, options) => {
+		const sources = Array.isArray(source) ? source : [source];
+		const getter = () => sources.map((s) => s());
+		watch.pre(getter, (values, previousValues) => {
+			fn(values, previousValues ?? []);
+		}, options);
+	});
+}
+resource.pre = resourcePre;
+new Context("richColorsContext");
+var sonnerContext = new Context("<Toaster/>");
+//#endregion
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/types.js
 function isAction(action) {
 	return action.label !== void 0;
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/internal/use-document-hidden.svelte.js
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/internal/use-document-hidden.svelte.js
 function useDocumentHidden() {
 	let current = typeof document !== "undefined" ? document.hidden : false;
 	return { get current() {
@@ -36,7 +276,7 @@ function useDocumentHidden() {
 	} };
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/Toast.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/Toast.svelte
 var TOAST_LIFETIME$1 = 4e3;
 var GAP$1 = 14;
 var TIME_BEFORE_UNMOUNT = 200;
@@ -293,32 +533,32 @@ function Toast($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/icons/SuccessIcon.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/icons/SuccessIcon.svelte
 function SuccessIcon($$renderer) {
 	$$renderer.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20" data-sonner-success-icon=""><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"></path></svg>`);
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/icons/ErrorIcon.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/icons/ErrorIcon.svelte
 function ErrorIcon($$renderer) {
 	$$renderer.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20" data-sonner-error-icon=""><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>`);
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/icons/WarningIcon.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/icons/WarningIcon.svelte
 function WarningIcon($$renderer) {
 	$$renderer.push(`<svg viewBox="0 0 64 64" fill="currentColor" height="20" width="20" data-sonner-warning-icon="" xmlns="http://www.w3.org/2000/svg"><path d="M32.427,7.987c2.183,0.124 4,1.165 5.096,3.281l17.936,36.208c1.739,3.66 -0.954,8.585 -5.373,8.656l-36.119,0c-4.022,-0.064 -7.322,-4.631 -5.352,-8.696l18.271,-36.207c0.342,-0.65 0.498,-0.838 0.793,-1.179c1.186,-1.375 2.483,-2.111 4.748,-2.063Zm-0.295,3.997c-0.687,0.034 -1.316,0.419 -1.659,1.017c-6.312,11.979 -12.397,24.081 -18.301,36.267c-0.546,1.225 0.391,2.797 1.762,2.863c12.06,0.195 24.125,0.195 36.185,0c1.325,-0.064 2.321,-1.584 1.769,-2.85c-5.793,-12.184 -11.765,-24.286 -17.966,-36.267c-0.366,-0.651 -0.903,-1.042 -1.79,-1.03Z"></path><path d="M33.631,40.581l-3.348,0l-0.368,-16.449l4.1,0l-0.384,16.449Zm-3.828,5.03c0,-0.609 0.197,-1.113 0.592,-1.514c0.396,-0.4 0.935,-0.601 1.618,-0.601c0.684,0 1.223,0.201 1.618,0.601c0.395,0.401 0.593,0.905 0.593,1.514c0,0.587 -0.193,1.078 -0.577,1.473c-0.385,0.395 -0.929,0.593 -1.634,0.593c-0.705,0 -1.249,-0.198 -1.634,-0.593c-0.384,-0.395 -0.576,-0.886 -0.576,-1.473Z"></path></svg>`);
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/icons/InfoIcon.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/icons/InfoIcon.svelte
 function InfoIcon($$renderer) {
 	$$renderer.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" height="20" width="20" data-sonner-info-icon=""><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"></path></svg>`);
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/icons/CloseIcon.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/icons/CloseIcon.svelte
 function CloseIcon($$renderer) {
 	$$renderer.push(`<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-sonner-close-icon=""><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`);
 }
 //#endregion
-//#region ../../node_modules/svelte-sonner/dist/Toaster.svelte
+//#region ../../node_modules/.bun/svelte-sonner@1.1.1+5726b9c92ebd8575/node_modules/svelte-sonner/dist/Toaster.svelte
 var VISIBLE_TOASTS_AMOUNT = 3;
 var VIEWPORT_OFFSET = "24px";
 var MOBILE_VIEWPORT_OFFSET = "16px";
@@ -387,7 +627,7 @@ function Toaster($$renderer, $$props) {
 		let actualTheme = getInitialTheme(theme);
 		const hotkeyLabel = derived(() => hotkey.join("+").replace(/Key/g, "").replace(/Digit/g, ""));
 		sonnerContext.set(new SonnerState());
-		$$renderer.push(`<section${attr("aria-label", `${stringify(containerAriaLabel)} ${stringify(hotkeyLabel())}`)}${attr("tabindex", -1)} aria-live="polite" aria-relevant="additions text" aria-atomic="false" class="svelte-1xr4pbs">`);
+		$$renderer.push(`<section${attr("aria-label", `${stringify(containerAriaLabel)} ${stringify(hotkeyLabel())}`)}${attr("tabindex", -1)} aria-live="polite" aria-relevant="additions text" aria-atomic="false" class="svelte-1s1r2we">`);
 		if (toastState.toasts.length > 0) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<!--[-->`);
@@ -406,7 +646,7 @@ function Toaster($$renderer, $$props) {
 					"data-x-position": x,
 					style: restProps.style,
 					...restProps
-				}, "svelte-1xr4pbs", void 0, {
+				}, "svelte-1s1r2we", void 0, {
 					"--front-toast-height": `${toastState.heights[0]?.height}px`,
 					"--width": `${TOAST_WIDTH}px`,
 					"--gap": `${gap}px`,
@@ -527,6 +767,22 @@ function Toaster($$renderer, $$props) {
 function AICopilot($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
+		function renderMessage(content) {
+			const formatted = content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+			return DOMPurify.sanitize(formatted, {
+				ALLOWED_TAGS: [
+					"strong",
+					"br",
+					"em",
+					"p",
+					"code",
+					"ul",
+					"ol",
+					"li"
+				],
+				ALLOWED_ATTR: []
+			});
+		}
 		let { isLoggedIn = false } = $$props;
 		let messages = [];
 		let inputValue = "";
@@ -561,7 +817,7 @@ function AICopilot($$renderer, $$props) {
 					$$renderer.push("<!--[0-->");
 					$$renderer.push(`<div class="msg-icon svelte-18brgu8" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="svelte-18brgu8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" class="svelte-18brgu8"></path></svg></div>`);
 				} else $$renderer.push("<!--[-1-->");
-				$$renderer.push(`<!--]--> <div class="msg-bubble svelte-18brgu8"><p class="msg-text svelte-18brgu8">${html(msg.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>"))}</p> `);
+				$$renderer.push(`<!--]--> <div class="msg-bubble svelte-18brgu8"><p class="msg-text svelte-18brgu8">${html(renderMessage(msg.content))}</p> `);
 				if (msg.loginPrompt) {
 					$$renderer.push("<!--[0-->");
 					$$renderer.push(`<div class="login-cta-wrap svelte-18brgu8"><a href="/auth/login" class="login-cta-btn svelte-18brgu8">Sign in — it's free</a> <a href="/auth/register" class="login-cta-link svelte-18brgu8">Create account</a></div>`);

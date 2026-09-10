@@ -1,4 +1,4 @@
-import { Ft as unsubscribe_stores, Mt as store_get, Wt as escape_html } from "./ui-libs.js";
+import { Mt as unsubscribe_stores, kt as store_get, zt as escape_html } from "./ui-libs.js";
 import { t as Check_check } from "./check-check.js";
 import { t as Coins } from "./coins.js";
 import { t as Copy } from "./copy.js";

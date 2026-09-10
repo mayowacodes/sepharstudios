@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`line`,{x1:`12`,x2:`12`,y1:`2`,y2:`22`}],[`path`,{d:`M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6`}]];n(i,t({name:`dollar-sign`},()=>o,{get iconNode(){return s}}))}export{i as t};

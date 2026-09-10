@@ -1,4 +1,5 @@
-import { bt as transactions, t as db } from "../../../../../../chunks/drizzle.js";
+import { Dt as transactions, t as db } from "../../../../../../chunks/drizzle.js";
+import { r as getStcProgress } from "../../../../../../chunks/stc-hours.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, sql } from "drizzle-orm";
 //#region src/routes/api/users/me/stc-balance/+server.ts
@@ -37,11 +38,18 @@ var GET = async ({ locals }) => {
 		else if (row.status === "completed") balance.completed = total;
 		else if (row.status === "failed") balance.failed = total;
 	}
+	const progress = await getStcProgress(session.user.id).catch(() => null);
 	return json({
 		currency: "STC",
 		pending: balance.pending,
 		completed: balance.completed,
-		total: balance.pending + balance.completed
+		total: balance.pending + balance.completed,
+		hoursPerToken: 20,
+		maxTokensPerDay: 5,
+		hoursWatched: progress?.hoursWatched ?? 0,
+		hoursToNextToken: progress?.hoursToNextToken ?? 20,
+		dailyCapRemaining: progress?.dailyCapRemaining ?? 5,
+		readyToClaim: progress?.readyToClaim ?? false
 	});
 };
 //#endregion

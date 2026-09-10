@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`path`,{d:`m21 16-4 4-4-4`}],[`path`,{d:`M17 20V4`}],[`path`,{d:`m3 8 4-4 4 4`}],[`path`,{d:`M7 4v16`}]];n(i,t({name:`arrow-up-down`},()=>o,{get iconNode(){return s}}))}export{i as t};

@@ -1,4 +1,4 @@
-import { L as forumThreads, t as db } from "../../../../../../../chunks/drizzle.js";
+import { W as forumThreads, t as db } from "../../../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 *
 * Admin-only thread mod: { isSticky?, isLocked?, status?, moderationNote? }.
 */
-var ALLOWED_STATUSES = new Set([
+var ALLOWED_STATUSES = /* @__PURE__ */ new Set([
 	"published",
 	"hidden",
 	"removed"

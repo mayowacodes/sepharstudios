@@ -41,6 +41,15 @@ import { getAIConfig } from './ai-settings';
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+import {
+	reserve,
+	settle,
+	fail,
+	approxTokens,
+	BudgetExceededError,
+	type CostCategory
+} from '$lib/server/ai-cost';
+
 export type AIProviderPreference = 'ollama' | 'openrouter' | 'auto';
 export type AIModelType = 'chat' | 'agent';
 
@@ -67,6 +76,22 @@ export interface AICallOptions {
 	timeoutMs?: number;
 	temperature?: number;
 	maxTokens?: number;
+	/**
+	 * Cost attribution. Every paid call is metered through the ledger; these
+	 * fields say who to bill it against and what to call it in reporting.
+	 *
+	 * `operation` should name the FEATURE ('ai-tagging', 'moderation',
+	 * 'companion-chat'), not the transport -- the ledger's whole value is
+	 * answering "which feature is spending the money", and 'callAI' as an
+	 * operation name answers nothing.
+	 */
+	cost?: {
+		category?: CostCategory;
+		operation: string;
+		userId?: string | null;
+		creatorId?: string | null;
+		contentId?: string | null;
+	};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,26 +141,93 @@ export async function callAI(
 
 	const callOptions = { timeoutMs, temperature, maxTokens, modelType };
 
+	// ── Cost metering ─────────────────────────────────────────────────────────
+	//
+	// Metering lives HERE, in the single router every feature already funnels
+	// through, rather than at ~15 call sites. A per-call-site approach only
+	// meters the sites someone remembered, and the ones that get forgotten are
+	// exactly the ones that quietly overspend.
+	//
+	// The reservation is provisional in one respect: `provider` may be 'auto',
+	// so which backend actually answers -- and therefore the real price -- is
+	// not known until the call returns. We reserve against the *preferred*
+	// provider and reconcile in settle() with the one that responded.
+	const cost = options.cost;
+	const inputTokens = approxTokens(messages.map((m) => m.content).join(' '));
+	const reservedProvider = provider === 'openrouter' ? 'openrouter' : 'ollama';
+
+	let reservation = null as Awaited<ReturnType<typeof reserve>> | null;
+	if (cost) {
+		try {
+			reservation = await reserve({
+				userId: cost.userId,
+				creatorId: cost.creatorId,
+				contentId: cost.contentId,
+				category: cost.category ?? 'planning',
+				operation: cost.operation,
+				provider: reservedProvider,
+				model: modelType,
+				estimatedInputUnits: inputTokens,
+				estimatedOutputUnits: maxTokens
+			});
+		} catch (err) {
+			if (err instanceof BudgetExceededError) {
+				// Refuse rather than throw. Callers already treat null as "no AI
+				// available" and degrade gracefully; turning a budget ceiling
+				// into an exception would surface a 500 on a feature that is
+				// supposed to be optional.
+				console.warn(`[ai] refused: ${err.message} (${cost.operation})`);
+				return null;
+			}
+			// A ledger failure must not take down the feature it is measuring.
+			console.error('[ai] cost reservation failed, proceeding unmetered:', err);
+		}
+	}
+
+	const scope = { userId: cost?.userId, creatorId: cost?.creatorId, contentId: cost?.contentId };
+
+	const finish = async (result: AIResponse | null): Promise<AIResponse | null> => {
+		if (!reservation) return result;
+		try {
+			if (result) {
+				await settle(
+					reservation,
+					{
+						inputUnits: inputTokens,
+						outputUnits: approxTokens(result.content),
+						provider: result.provider
+					},
+					scope
+				);
+			} else {
+				await fail(reservation, 'no provider returned a response', scope);
+			}
+		} catch (err) {
+			console.error('[ai] cost settlement failed:', err);
+		}
+		return result;
+	};
+
 	// ── OpenRouter only ───────────────────────────────────────────────────────
 	if (provider === 'openrouter') {
-		if (!env.OPENROUTER_API_KEY) return null;
-		return tryOpenRouter(messages, callOptions);
+		if (!env.OPENROUTER_API_KEY) return finish(null);
+		return finish(await tryOpenRouter(messages, callOptions));
 	}
 
 	// ── Ollama preferred (with OpenRouter fallback) ───────────────────────────
 	if (provider === 'ollama' || provider === 'auto') {
 		if (env.OLLAMA_URL) {
 			const ollamaResult = await tryOllama(messages, callOptions);
-			if (ollamaResult) return ollamaResult;
+			if (ollamaResult) return finish(ollamaResult);
 			// Ollama failed or down — fall through to OpenRouter
 		}
 
 		if (env.OPENROUTER_API_KEY) {
-			return tryOpenRouter(messages, callOptions);
+			return finish(await tryOpenRouter(messages, callOptions));
 		}
 	}
 
-	return null;
+	return finish(null);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

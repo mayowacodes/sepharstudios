@@ -1,13 +1,13 @@
-import { Et as derived, Ht as attr, It as html, Ot as ensure_array_like, St as attr_class, Wt as escape_html, kt as head, vt as onDestroy } from "../../../../chunks/ui-libs.js";
+import { Ct as derived, Et as head, Lt as attr, Nt as html, Tt as ensure_array_like, gt as onDestroy, yt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../../../chunks/constants.js";
 import { n as ShareButton, t as ReviewSection } from "../../../../chunks/ReviewSection.js";
+import { n as sectionLabel, r as translateRole } from "../../../../chunks/role-labels.js";
 import { r as invalidateAll } from "../../../../chunks/client.js";
 import { t as page } from "../../../../chunks/state.js";
 import { t as copilotContext } from "../../../../chunks/copilot.js";
 import "../../../../chunks/navigation.js";
 import { t as VideoPlayer } from "../../../../chunks/VideoPlayer.js";
 import { t as ReportButton } from "../../../../chunks/ReportButton.js";
-import { n as sectionLabel, r as translateRole } from "../../../../chunks/role-labels.js";
 //#region src/lib/components/widgets/PPVPaywall.svelte
 function PPVPaywall($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -115,6 +115,7 @@ function _page($$renderer, $$props) {
 				previewVtt: content().previewThumbnailsVtt ?? void 0,
 				previewSprites: content().previewSpriteUrls ?? [],
 				enableAds: true,
+				enableBreakAds: true,
 				onEnded: handleEnded
 			});
 		} else {

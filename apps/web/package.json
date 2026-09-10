@@ -13,13 +13,15 @@
 		"drizzle-generate": "bunx drizzle-kit generate",
 		"drizzle-migrate": "bunx drizzle-kit migrate",
 		"drizzle-studio": "bunx drizzle-kit studio",
-		"drizzle-push": "bunx drizzle-kit push"
+		"drizzle-push": "bunx drizzle-kit push",
+		"build:static": "BUILD_TARGET=static vite build"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.12.1",
 		"@lucide/svelte": "^1.16.0",
 		"@sephar/web3": "workspace:*",
 		"@sveltejs/adapter-node": "^5.5.4",
+		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.61.1",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/forms": "^0.5.11",

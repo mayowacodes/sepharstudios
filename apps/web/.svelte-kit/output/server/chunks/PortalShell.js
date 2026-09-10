@@ -1,4 +1,4 @@
-import { Bt as writable, Ct as attr_style, Et as derived, Ft as unsubscribe_stores, Ht as attr, Mt as store_get, Ot as ensure_array_like, Pt as stringify, St as attr_class, Tt as bind_props, Vt as snapshot, Wt as escape_html, bt as tick, jt as spread_props, wt as attributes } from "./ui-libs.js";
+import { Ct as derived, Gt as writable, Kt as snapshot, Lt as attr, Mt as unsubscribe_stores, Ot as spread_props, St as bind_props, Tt as ensure_array_like, bt as attr_style, jt as stringify, kt as store_get, vt as tick, xt as attributes, yt as attr_class, zt as escape_html } from "./ui-libs.js";
 import "./index-server.js";
 import { t as Icon } from "./Icon.js";
 import { t as Activity } from "./activity.js";
@@ -14,6 +14,7 @@ import { t as House } from "./house.js";
 import { t as Landmark } from "./landmark.js";
 import { t as Loader_circle } from "./loader-circle.js";
 import { t as Log_out } from "./log-out.js";
+import { t as Megaphone } from "./megaphone.js";
 import { t as Message_square } from "./message-square.js";
 import { t as Monitor } from "./monitor.js";
 import { _ as Moon, a as Sidebar_menu, c as Sidebar_inset, d as Sidebar_group_label, f as Sidebar_group_content, g as Sun, i as Sidebar_provider, l as Sidebar_header, m as Sidebar_content, n as Sidebar_trigger, o as Sidebar_menu_item, p as Sidebar_footer, s as Sidebar_menu_button, t as Sidebar, u as Sidebar_group } from "./sidebar.js";
@@ -34,7 +35,7 @@ import { t as Wallet } from "./wallet.js";
 import { t as X } from "./x.js";
 import { t as Zap } from "./zap.js";
 import { n as toast } from "./toast-state.svelte.js";
-import { a as derivedMode, n as resetMode, r as setMode } from "./dist.js";
+import { a as derivedMode, n as resetMode, r as setMode } from "./dist2.js";
 import { n as goto } from "./client.js";
 import { t as page } from "./state.js";
 import "./navigation.js";
@@ -42,7 +43,7 @@ import { t as Separator } from "./separator.js";
 import { c as Dropdown_menu_content, i as Dropdown_menu_separator, l as Dropdown_menu_sub, n as Dropdown_menu_sub_content, o as Dropdown_menu_item, r as Dropdown_menu_trigger, t as Dropdown_menu_sub_trigger, u as Dropdown_menu } from "./dropdown-menu.js";
 import { a as Command_group, i as Command_item, n as Command_list, o as Command_empty, r as Command_input, s as Command_dialog, t as Command_separator } from "./command.js";
 import { AbstractChat, DefaultChatTransport } from "ai";
-//#region ../../node_modules/@lucide/svelte/dist/icons/circle-stop.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/circle-stop.svelte
 function Circle_stop($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -62,7 +63,7 @@ function Circle_stop($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/compass.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/compass.svelte
 function Compass($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -76,7 +77,7 @@ function Compass($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/history.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/history.svelte
 function History($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -90,7 +91,7 @@ function History($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/pin-off.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/pin-off.svelte
 function Pin_off($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -105,7 +106,7 @@ function Pin_off($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/rotate-cw.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/rotate-cw.svelte
 function Rotate_cw($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -115,7 +116,7 @@ function Rotate_cw($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/icons/scale.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/scale.svelte
 function Scale($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -157,6 +158,14 @@ var ADMIN_NAV = [
 				icon: Chart_column
 			}
 		]
+	},
+	{
+		label: "Monetization",
+		items: [{
+			href: "/admin/promo",
+			label: "Promotions",
+			icon: Megaphone
+		}]
 	},
 	{
 		label: "Catalog",
@@ -979,7 +988,7 @@ function CommandPaletteAI($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/@ai-sdk/svelte/dist/chat.svelte.js
+//#region ../../node_modules/.bun/@ai-sdk+svelte@4.0.228+1c66d802e3fe106e/node_modules/@ai-sdk/svelte/dist/chat.svelte.js
 var Chat = class extends AbstractChat {
 	constructor(init) {
 		super({
@@ -1056,6 +1065,22 @@ function CopilotRail($$renderer, $$props) {
 		const sendBtnClass = derived(() => variant === "admin" ? "text-red-300 hover:text-red-200" : "text-purple-300 hover:text-purple-200");
 		const streaming = derived(() => chat.status === "submitted" || chat.status === "streaming");
 		const canSend = derived(() => !streaming() && input.trim().length > 0);
+		const statusLabel = derived(() => {
+			if (chat.status === "submitted") return "Thinking…";
+			if (chat.status !== "streaming") return "";
+			const last = chat.messages[chat.messages.length - 1];
+			if (!last || last.role !== "assistant") return "Thinking…";
+			let hasText = false;
+			let toolRunning = false;
+			for (const part of last.parts) {
+				if (part.type === "text" && part.text.trim()) hasText = true;
+				const state = part.state;
+				if (part.type.startsWith("tool-") && (state === "input-streaming" || state === "input-available")) toolRunning = true;
+			}
+			if (toolRunning && !hasText) return "Looking that up for you…";
+			if (hasText) return "Writing the answer…";
+			return "Thinking…";
+		});
 		$$renderer.push(`<aside${attr_class(`hidden md:flex relative h-full transition-[width] duration-200 border-l border-white/10 surface-glass shrink-0 flex-col overflow-hidden ${open ? "w-80" : "w-0 border-l-0"}`)} aria-label="AI Copilot"${attr("aria-hidden", !open)}>`);
 		if (open) {
 			$$renderer.push("<!--[0-->");
@@ -1148,7 +1173,15 @@ function CopilotRail($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="text-[11px] text-red-300 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">⚠️ ${escape_html(chat.error.message)}</div>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div> <footer class="border-t border-white/10 p-2 shrink-0"><div class="relative"><textarea rows="2" placeholder="Ask the Copilot…" class="w-full surface-1 rounded-lg pl-2.5 pr-16 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground">`);
+			$$renderer.push(`<!--]--></div> `);
+			if (statusLabel()) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div${attr_class(`px-3 py-1 shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground italic`)} aria-live="polite">`);
+				$$renderer.push("<!--[-1-->");
+				$$renderer.push(`<span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0"></span>`);
+				$$renderer.push(`<!--]--> <span>${escape_html(statusLabel())}</span></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <footer class="border-t border-white/10 p-2 shrink-0"><div class="relative"><textarea rows="2" placeholder="Ask the Copilot…" class="w-full surface-1 rounded-lg pl-2.5 pr-16 py-1.5 text-xs text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-muted-foreground">`);
 			const $$body = escape_html(input);
 			if ($$body) $$renderer.push(`${$$body}`);
 			$$renderer.push(`</textarea> `);

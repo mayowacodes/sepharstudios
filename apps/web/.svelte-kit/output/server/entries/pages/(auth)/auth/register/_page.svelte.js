@@ -1,4 +1,4 @@
-import { Ht as attr, Pt as stringify, Ut as clsx, Wt as escape_html, wt as attributes } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr, Rt as clsx, jt as stringify, xt as attributes, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import "../../../../../chunks/constants.js";
 import { t as Eye_off } from "../../../../../chunks/eye-off.js";
 import { t as Eye } from "../../../../../chunks/eye.js";
@@ -9,7 +9,7 @@ import { t as Button } from "../../../../../chunks/button.js";
 import { a as Card, i as Card_content, n as Card_header } from "../../../../../chunks/card.js";
 import { t as Label } from "../../../../../chunks/label.js";
 import "../../../../../chunks/loading-spinner.js";
-import { t as getRedirectUrl } from "../../../../../chunks/client2.js";
+import { t as getRedirectUrl } from "../../../../../chunks/client3.js";
 import { n as Auth_card_header, t as Social_auth_form } from "../../../../../chunks/social-auth-form.js";
 //#region src/lib/authentication/ui/email-password-form-register.svelte
 function Email_password_form_register($$renderer, $$props) {

@@ -1,4 +1,4 @@
-import { Bt as writable, Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class, Tt as bind_props, Ut as clsx, Wt as escape_html, f as Scroll_area_corner, g as Scroll_area$1, h as Scroll_area_viewport, jt as spread_props, m as Scroll_area_scrollbar$1, p as Scroll_area_thumb } from "../../../chunks/ui-libs.js";
+import { Ct as derived, Gt as writable, Lt as attr, Ot as spread_props, Rt as clsx, St as bind_props, Tt as ensure_array_like, f as Scroll_area_corner, g as Scroll_area$1, h as Scroll_area_viewport, m as Scroll_area_scrollbar$1, p as Scroll_area_thumb, yt as attr_class, zt as escape_html } from "../../../chunks/ui-libs.js";
 import "../../../chunks/index-server.js";
 import { t as Icon } from "../../../chunks/Icon.js";
 import { t as Bell } from "../../../chunks/bell.js";
@@ -21,8 +21,9 @@ import { t as Button } from "../../../chunks/button.js";
 import { a as Sheet_trigger, i as Sheet_content, n as Sheet_title, o as Sheet, r as Sheet_header, t as Sheet_description } from "../../../chunks/sheet.js";
 import { a as Dropdown_menu_label, c as Dropdown_menu_content, i as Dropdown_menu_separator, o as Dropdown_menu_item, r as Dropdown_menu_trigger, u as Dropdown_menu } from "../../../chunks/dropdown-menu.js";
 import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../chunks/avatar.js";
+import { t as StreakStcWidget } from "../../../chunks/StreakStcWidget.js";
 import "../../../chunks/mediaModalStore.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/menu.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/menu.svelte
 function Menu($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -751,6 +752,11 @@ function Header($$renderer, $$props) {
 				$$renderer.push(`<a${attr("href", href)}${attr_class(clsx(navLinkClass(href)))}>${escape_html(label)}</a>`);
 			}
 			$$renderer.push(`<!--]--> <details class="relative group"><summary${attr_class(`relative inline-flex items-center h-9 leading-none cursor-pointer list-none text-sm font-medium transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#FF5E0E] after:transition-all after:duration-300 ${page.url.pathname.startsWith("/kids/") ? "after:w-full text-white" : "after:w-0 hover:after:w-full"}`)}>Kids</summary> <div class="absolute left-0 mt-2 w-48 rounded-lg z-50 surface-glass border-white/10"><a href="/kids/kiddies" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Kiddies</a> <a href="/kids/teens" class="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors">Teens</a></div></details></nav></div> <div class="flex items-center gap-1 sm:gap-2 shrink-0"><a href="/search" aria-label="Search" title="Search" class="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></a> `);
+			if (isAuthenticated() && !page.url.pathname.startsWith("/token")) {
+				$$renderer.push("<!--[0-->");
+				StreakStcWidget($$renderer, { variant: "compact" });
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
 			User($$renderer, {});
 			$$renderer.push(`<!----></div></div></header>`);
 		} else $$renderer.push("<!--[-1-->");

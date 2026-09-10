@@ -1,9 +1,8 @@
-import { D as Popover_trigger$1, Ht as attr, O as Popover_content$1, Ot as ensure_array_like, Tt as bind_props, Wt as escape_html, it as Portal, jt as spread_props, kt as head, y as Popover$1 } from "../../../../chunks/ui-libs.js";
+import { D as Popover_trigger$1, Et as head, Lt as attr, O as Popover_content$1, Ot as spread_props, St as bind_props, Tt as ensure_array_like, it as Portal, y as Popover$1, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Chevron_down } from "../../../../chunks/chevron-down.js";
 import { t as Upload } from "../../../../chunks/upload.js";
 import { t as X } from "../../../../chunks/x.js";
-import "../../../../chunks/client.js";
-import "../../../../chunks/navigation.js";
+import "../../../../chunks/client2.js";
 import { t as cn } from "../../../../chunks/utils2.js";
 import { t as Input } from "../../../../chunks/input.js";
 import { t as Button } from "../../../../chunks/button.js";
@@ -148,7 +147,7 @@ function Popover_trigger($$renderer, $$props) {
 //#region src/routes/(app)/sponsorships/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { data, form } = $$props;
+		let { data } = $$props;
 		let isSubmitting = false;
 		let scriptFile = null;
 		let budgetFile = null;
@@ -187,7 +186,7 @@ function _page($$renderer, $$props) {
 					$$renderer.push(`<title>Movie Production Sponsorship — Sephar Studios</title>`);
 				});
 			});
-			$$renderer.push(`<div class="container mx-auto py-12 px-4"><div class="max-w-4xl mx-auto space-y-8"><div class="text-center space-y-4"><h1 class="text-4xl font-bold">Movie Production Sponsorship</h1> <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p></div> <form method="POST" action="?/submit" class="space-y-8" enctype="multipart/form-data"><div class="space-y-4"><h2 class="text-2xl font-semibold">Contact Information</h2> <div class="grid gap-4 md:grid-cols-2">`);
+			$$renderer.push(`<div class="container mx-auto py-12 px-4"><div class="max-w-4xl mx-auto space-y-8"><div class="text-center space-y-4"><h1 class="text-4xl font-bold">Movie Production Sponsorship</h1> <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p></div> <form class="space-y-8" enctype="multipart/form-data"><div class="space-y-4"><h2 class="text-2xl font-semibold">Contact Information</h2> <div class="grid gap-4 md:grid-cols-2">`);
 			if (!data?.user) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<div class="space-y-2"><label for="name" class="text-sm font-medium">Full Name</label> `);

@@ -1,4 +1,4 @@
-import { Et as derived, Ht as attr, Ot as ensure_array_like, St as attr_class, Tt as bind_props, Ut as clsx, Wt as escape_html, jt as spread_props, wt as attributes } from "../../../chunks/ui-libs.js";
+import { Ct as derived, Lt as attr, Ot as spread_props, Rt as clsx, St as bind_props, Tt as ensure_array_like, gt as onDestroy, xt as attributes, yt as attr_class, zt as escape_html } from "../../../chunks/ui-libs.js";
 import { s as getNavigation, t as Constants } from "../../../chunks/constants.js";
 import { t as Icon } from "../../../chunks/Icon.js";
 import { t as Chevron_right } from "../../../chunks/chevron-right.js";
@@ -8,16 +8,16 @@ import { _ as Moon, a as Sidebar_menu, c as Sidebar_inset, d as Sidebar_group_la
 import { t as User } from "../../../chunks/user.js";
 import { r as signOut } from "../../../chunks/auth-client.js";
 import { n as toast } from "../../../chunks/toast-state.svelte.js";
-import { i as toggleMode } from "../../../chunks/dist.js";
+import { i as toggleMode } from "../../../chunks/dist2.js";
 import { t as page } from "../../../chunks/state.js";
 import { t as cn } from "../../../chunks/utils2.js";
 import { t as Separator } from "../../../chunks/separator.js";
 import { n as buttonVariants, t as Button } from "../../../chunks/button.js";
 import { a as Dropdown_menu_label, c as Dropdown_menu_content, i as Dropdown_menu_separator, o as Dropdown_menu_item, r as Dropdown_menu_trigger, s as Dropdown_menu_group, u as Dropdown_menu } from "../../../chunks/dropdown-menu.js";
 import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../chunks/avatar.js";
-import { a as QueryClientProvider, o as useQueryClient, r as infiniteScroll, t as getRoleBadgeVariant } from "../../../chunks/fxn.js";
+import { a as setQueryClientContext, i as useQueryClient, o as QueryClient, r as infiniteScroll, t as getRoleBadgeVariant } from "../../../chunks/fxn.js";
 import { t as Badge } from "../../../chunks/badge.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/chevrons-up-down.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/chevrons-up-down.svelte
 function Chevrons_up_down($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -758,7 +758,20 @@ function Crumb_path($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/@tanstack/svelte-query-devtools/dist/Devtools.svelte
+//#region ../../node_modules/.bun/@tanstack+svelte-query@6.1.36+5726b9c92ebd8575/node_modules/@tanstack/svelte-query/dist/QueryClientProvider.svelte
+function QueryClientProvider($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		const { client = new QueryClient(), children } = $$props;
+		setQueryClientContext(client);
+		onDestroy(() => {
+			client.unmount();
+		});
+		children($$renderer);
+		$$renderer.push(`<!---->`);
+	});
+}
+//#endregion
+//#region ../../node_modules/.bun/@tanstack+svelte-query-devtools@6.1.36+f381a25fabaa8db6/node_modules/@tanstack/svelte-query-devtools/dist/Devtools.svelte
 function Devtools($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**

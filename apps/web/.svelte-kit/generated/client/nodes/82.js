@@ -1,1 +1,3 @@
-export { default as component } from "../../../../src/routes/(auth)/auth/reset-password/+page.svelte";
+import * as universal from "../../../../src/routes/(creator)/creator/+page.ts";
+export { universal };
+export { default as component } from "../../../../src/routes/(creator)/creator/+page.svelte";

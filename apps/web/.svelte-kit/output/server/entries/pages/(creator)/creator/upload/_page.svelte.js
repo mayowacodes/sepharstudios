@@ -1,4 +1,4 @@
-import { Ct as attr_style, Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Tt as bind_props, Wt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { Ct as derived, Lt as attr, St as bind_props, Tt as ensure_array_like, bt as attr_style, jt as stringify, yt as attr_class, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Upload } from "../../../../../chunks/upload.js";
 import { t as User } from "../../../../../chunks/user.js";
 import { t as X } from "../../../../../chunks/x.js";
@@ -192,16 +192,6 @@ function VideoUploadStep($$renderer, $$props) {
 		}
 		const minResolutionLabel = derived(() => `${minVideoHeight}p (${minResolutionWidth(minVideoHeight)}x${minVideoHeight})`);
 		derived(() => page.data?.user?.role === "admin");
-		new Set([
-			"video/mp4",
-			"video/quicktime",
-			"video/x-msvideo",
-			"video/avi",
-			"video/x-m4v",
-			"video/webm",
-			"video/mpeg",
-			"video/x-matroska"
-		]);
 		function formatFileSize(bytes) {
 			if (bytes === 0) return "0 Bytes";
 			const k = 1024;

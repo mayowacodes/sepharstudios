@@ -67,11 +67,29 @@ async function createRefund(options) {
 	})).data;
 }
 var PLAN_PRICES_CENTS = {
-	freemium: 100,
+	freemium: 0,
 	basic: 400,
 	premium: 1e3,
 	creator: 1e3
 };
+/**
+* Is `v` a real plan name?
+*
+* Use this instead of `!PLAN_PRICES_CENTS[plan]` for validation. Freemium costs
+* 0, and 0 is falsy — a truthiness check silently rejects the free tier as an
+* unknown plan. That is exactly the bug this replaced in
+* /api/payment/initialize and /api/subscriptions/start-trial.
+*/
+function isPlanName(v) {
+	return typeof v === "string" && Object.prototype.hasOwnProperty.call(PLAN_PRICES_CENTS, v);
+}
+/**
+* Does this plan involve money? Free plans must never reach Paystack: there is
+* nothing to charge, no authorization to store, and no renewal to schedule.
+*/
+function isPaidPlan(plan) {
+	return PLAN_PRICES_CENTS[plan] > 0;
+}
 /**
 * Per-plan capabilities. Single source of truth for profile caps, kids access,
 * ad-supported flag, and renewal cadence. The verify endpoint snapshots these
@@ -80,10 +98,10 @@ var PLAN_PRICES_CENTS = {
 */
 var PLAN_FEATURES = {
 	freemium: {
-		maxProfiles: 1,
-		kidsAllowed: false,
+		maxProfiles: 2,
+		kidsAllowed: true,
 		hasAds: true,
-		renewalIntervalMonths: 2
+		renewalIntervalMonths: 0
 	},
 	basic: {
 		maxProfiles: 2,
@@ -105,4 +123,4 @@ var PLAN_FEATURES = {
 	}
 };
 //#endregion
-export { createRefund as a, createCustomer as i, PLAN_PRICES_CENTS as n, initializeTransaction as o, chargeAuthorization as r, verifyTransaction as s, PLAN_FEATURES as t };
+export { createRefund as a, isPlanName as c, createCustomer as i, verifyTransaction as l, PLAN_PRICES_CENTS as n, initializeTransaction as o, chargeAuthorization as r, isPaidPlan as s, PLAN_FEATURES as t };

@@ -1,4 +1,4 @@
-import { Et as derived, Ot as ensure_array_like, Wt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Ct as derived, Tt as ensure_array_like, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Camera } from "../../../../chunks/camera.js";
 import "../../../../chunks/eye-off.js";
 import "../../../../chunks/eye.js";
@@ -15,7 +15,7 @@ import { n as Avatar_image, r as Avatar, t as Avatar_fallback } from "../../../.
 import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../chunks/card.js";
 import { t as Label } from "../../../../chunks/label.js";
 import "../../../../chunks/loading-spinner.js";
-import "../../../../chunks/client2.js";
+import "../../../../chunks/client3.js";
 //#region src/lib/authentication/image-cropper.ts
 var getFileFromUrl = async (url, name = "image.png") => {
 	const blob = await (await fetch(url)).blob();

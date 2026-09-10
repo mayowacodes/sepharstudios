@@ -1,4 +1,4 @@
-import { K as mediaLibrary, dt as reviews, o as abuseReports, t as db } from "../../../../../../../chunks/drizzle.js";
+import { $ as mediaLibrary, o as abuseReports, t as db, vt as reviews } from "../../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
@@ -15,7 +15,7 @@ import { and, eq } from "drizzle-orm";
 * Side effect: when a creator approves/hides, we resolve any open abuse
 * reports against that review so the queue doesn't show stale items.
 */
-var ALLOWED_ACTIONS = new Set(["approve", "hide"]);
+var ALLOWED_ACTIONS = /* @__PURE__ */ new Set(["approve", "hide"]);
 var PATCH = async ({ params, locals, request }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });

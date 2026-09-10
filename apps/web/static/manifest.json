@@ -5,21 +5,39 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
   "background_color": "#0b0c10",
   "theme_color": "#FF5E0E",
   "orientation": "portrait-primary",
-  "categories": ["entertainment", "lifestyle"],
+  "categories": [
+    "entertainment",
+    "lifestyle"
+  ],
   "icons": [
     {
-      "src": "/logo-alone-sepharstudios-bgless.png",
-      "sizes": "any",
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo-alone-sepharstudios-bgless.png",
-      "sizes": "any",
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
@@ -43,13 +61,23 @@
       "name": "Dashboard",
       "short_name": "Home",
       "url": "/dashboard",
-      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
+      "icons": [
+        {
+          "src": "/logo-alone-sepharstudios-bgless.png",
+          "sizes": "any"
+        }
+      ]
     },
     {
       "name": "My List",
       "short_name": "List",
       "url": "/watchlist",
-      "icons": [{ "src": "/logo-alone-sepharstudios-bgless.png", "sizes": "any" }]
+      "icons": [
+        {
+          "src": "/logo-alone-sepharstudios-bgless.png",
+          "sizes": "any"
+        }
+      ]
     }
   ]
 }

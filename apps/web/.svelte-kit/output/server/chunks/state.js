@@ -1,35 +1,13 @@
-import { Jt as getContext } from "./ui-libs.js";
-import { a as navigating$1, i as stores } from "./client.js";
-Object.defineProperty({
-	get from() {
-		return navigating$1.current ? navigating$1.current.from : null;
-	},
-	get to() {
-		return navigating$1.current ? navigating$1.current.to : null;
-	},
-	get type() {
-		return navigating$1.current ? navigating$1.current.type : null;
-	},
-	get willUnload() {
-		return navigating$1.current ? navigating$1.current.willUnload : null;
-	},
-	get delta() {
-		return navigating$1.current ? navigating$1.current.delta : null;
-	},
-	get complete() {
-		return navigating$1.current ? navigating$1.current.complete : null;
-	}
-}, "current", { get() {
-	throw new Error("Replace navigating.current.<prop> with navigating.<prop>");
-} });
+import { Pt as getContext } from "./ui-libs.js";
+import { i as stores } from "./client.js";
 stores.updated.check;
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/app/state/server.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/app/state/server.js
 function context() {
 	return getContext("__request__");
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/app/state/index.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/app/state/index.js
 /**
 * A read-only reactive object with information about the current page, serving several use cases:
 * - retrieving the combined `data` of all pages/layouts anywhere in your component tree (also see [loading data](https://svelte.dev/docs/kit/load))

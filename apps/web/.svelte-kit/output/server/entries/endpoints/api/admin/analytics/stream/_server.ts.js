@@ -1,5 +1,4 @@
 import { t as eventStream } from "../../../../../../chunks/sse.js";
-import "@sveltejs/kit";
 //#region src/routes/api/admin/analytics/stream/+server.ts
 /**
 * GET /api/admin/analytics/stream

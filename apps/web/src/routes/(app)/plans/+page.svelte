@@ -32,18 +32,19 @@
   // Kept in lockstep manually — when prices change, update both places.
   let plans = $state<Plan[]>([
     {
-      id: 'freemium',
-      name: 'Freemium',
-      price: 1,
-      cadence: 'every 2 months',
-      maxProfiles: 1,
-      kidsAllowed: false,
+      id: 'basic',
+      name: 'Free',
+      price: 0,
+      cadence: 'forever',
+      maxProfiles: 2,
+      kidsAllowed: true,
       hasAds: true,
       features: [
         'HD streaming with ads',
-        '1 profile',
+        '2 profiles',
+        'Kids & Teens — always ad-free',
         'Access to standard library',
-        'Cancel anytime'
+        'No card required'
       ],
       nftBenefits: [
         'Earn STC by watching',
@@ -51,29 +52,9 @@
       ]
     },
     {
-      id: 'basic',
-      name: 'Basic',
-      price: 4,
-      cadence: '/month',
-      maxProfiles: 2,
-      kidsAllowed: false,
-      hasAds: false,
-      features: [
-        'HD streaming — ad-free',
-        '2 profiles',
-        'Download on 1 device',
-        'Cancel anytime'
-      ],
-      nftBenefits: [
-        'Subscription NFT on Polygon',
-        'Earn 5 STC/day watching',
-        'Stake STC for up to 10% off'
-      ]
-    },
-    {
       id: 'premium',
       name: 'Premium (Family)',
-      price: 10,
+      price: 1,
       cadence: '/month',
       maxProfiles: 8,
       kidsAllowed: true,
@@ -175,7 +156,7 @@
 
 <svelte:head>
   <title>Plans &amp; Pricing · Sephar Studios</title>
-  <meta name="description" content="Choose your Sephar Studios plan: freemium with ads, basic ad-free, premium family (8 profiles + kids mode), or creator. STC stakers get up to 50% off." />
+  <meta name="description" content="Watch Sephar Studios free with ads — no card required. Or go ad-free from $4/month: basic, premium family (8 profiles + kids mode), or creator. STC stakers get up to 50% off." />
 </svelte:head>
 
 <div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-7xl pt-32 pb-16">
@@ -281,15 +262,22 @@
         <CardContent class="space-y-6">
           <div class="space-y-2">
             <div class="flex items-baseline flex-wrap">
-              {#if plan.originalPrice && plan.originalPrice !== plan.price}
-                <span class="text-lg line-through text-muted-foreground mr-2">
-                  ${plan.originalPrice.toFixed(2)}
-                </span>
+              {#if plan.price === 0}
+                <!-- "$0.00 forever" reads like a billing error. A free tier
+                     should say Free. -->
+                <span class="text-3xl font-bold">Free</span>
+                <span class="text-muted-foreground ml-1">{plan.cadence}</span>
+              {:else}
+                {#if plan.originalPrice && plan.originalPrice !== plan.price}
+                  <span class="text-lg line-through text-muted-foreground mr-2">
+                    ${plan.originalPrice.toFixed(2)}
+                  </span>
+                {/if}
+                <span class="text-3xl font-bold">${plan.price.toFixed(2)}</span>
+                <span class="text-muted-foreground ml-1">{plan.cadence}</span>
               {/if}
-              <span class="text-3xl font-bold">${plan.price.toFixed(2)}</span>
-              <span class="text-muted-foreground ml-1">{plan.cadence}</span>
             </div>
-            {#if userDiscount > 0 && plan.id !== 'freemium'}
+            {#if userDiscount > 0 && plan.id !== 'basic'}
               <Badge variant="secondary" class="text-xs">
                 {userDiscount}% discount from staking
               </Badge>

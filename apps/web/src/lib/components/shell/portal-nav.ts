@@ -4,8 +4,7 @@ import {
 	Users, User, ShieldAlert,
 	Banknote, Scale, Wallet, FileCheck,
 	Settings, Landmark, Upload, MessageSquare,
-	type Icon as IconType
-} from '@lucide/svelte';
+	type Icon as IconType, Megaphone } from '@lucide/svelte';
 
 /**
  * Portal navigation config. One entry per group; each group has an
@@ -36,6 +35,12 @@ export const ADMIN_NAV: NavGroup[] = [
 			{ href: '/admin/ai-runs', label: 'AI Runs', icon: Sparkles },
 			{ href: '/admin/system-health', label: 'System health', icon: Activity },
 			{ href: '/admin/analytics', label: 'Analytics', icon: BarChart3 }
+		]
+	},
+	{
+		label: 'Monetization',
+		items: [
+			{ href: '/admin/promo', label: 'Promotions', icon: Megaphone }
 		]
 	},
 	{

@@ -1,4 +1,4 @@
-import { K as mediaLibrary, t as db } from "../../../../../../chunks/drizzle.js";
+import { $ as mediaLibrary, t as db } from "../../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { inArray } from "drizzle-orm";
@@ -12,7 +12,7 @@ import { inArray } from "drizzle-orm";
 *
 * Wired from the admin content moderation page's bulk-action UI. Admin only.
 */
-var VALID_ACTIONS = new Set([
+var VALID_ACTIONS = /* @__PURE__ */ new Set([
 	"approve",
 	"reject",
 	"delete",

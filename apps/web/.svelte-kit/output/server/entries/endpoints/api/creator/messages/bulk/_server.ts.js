@@ -1,4 +1,4 @@
-import { l as adminMessages, t as db } from "../../../../../../chunks/drizzle.js";
+import { g as adminMessages, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, inArray } from "drizzle-orm";
 //#region src/routes/api/creator/messages/bulk/+server.ts
@@ -12,7 +12,7 @@ import { and, eq, inArray } from "drizzle-orm";
 * else's message ids can't archive them.
 */
 var MAX_IDS = 200;
-var ACTIONS = new Set(["archive", "read"]);
+var ACTIONS = /* @__PURE__ */ new Set(["archive", "read"]);
 var POST = async ({ request, locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });

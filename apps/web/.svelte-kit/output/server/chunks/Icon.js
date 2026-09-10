@@ -1,8 +1,8 @@
-import { Dt as element, Et as derived, Jt as getContext, Ot as ensure_array_like, Ut as clsx, wt as attributes } from "./ui-libs.js";
-//#region ../../node_modules/@lucide/svelte/dist/defaultAttributes.js
+import { Ct as derived, Pt as getContext, Rt as clsx, Tt as ensure_array_like, wt as element, xt as attributes } from "./ui-libs.js";
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/defaultAttributes.js
 /**
 * @file
-* @license @lucide/svelte v1.16.0 - ISC
+* @license @lucide/svelte v1.24.0 - ISC
 *
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
@@ -19,10 +19,10 @@ var defaultAttributes = {
 	"stroke-linejoin": "round"
 };
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/utils/hasA11yProp.js
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/utils/hasA11yProp.js
 /**
 * @file
-* @license @lucide/svelte v1.16.0 - ISC
+* @license @lucide/svelte v1.24.0 - ISC
 *
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
@@ -38,10 +38,10 @@ var hasA11yProp = (props) => {
 	return false;
 };
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/context.js
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/context.js
 /**
 * @file
-* @license @lucide/svelte v1.16.0 - ISC
+* @license @lucide/svelte v1.24.0 - ISC
 *
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
@@ -49,7 +49,7 @@ var hasA11yProp = (props) => {
 var LucideContext = Symbol("lucide-context");
 var getLucideContext = () => getContext(LucideContext);
 //#endregion
-//#region ../../node_modules/@lucide/svelte/dist/Icon.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/Icon.svelte
 function Icon($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const globalProps = getLucideContext() ?? {};

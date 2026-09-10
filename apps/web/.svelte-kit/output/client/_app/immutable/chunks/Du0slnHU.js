@@ -1,0 +1,1 @@
+import{Vn as e}from"./BsVwIFTV.js";import"./Bc9cMxm7.js";var{subscribe:t,update:n,set:r}=e({isOpen:!1,media:null}),i={subscribe:t,open:e=>n(()=>({isOpen:!0,media:e})),close:()=>r({isOpen:!1,media:null})};export{i as t};

@@ -1,0 +1,1 @@
+function e(e){if(!e)return!1;let t=e instanceof Date?e.getTime():Date.parse(e);return!Number.isNaN(t)&&Date.now()-t<=12096e5}export{e as t};

@@ -5,7 +5,7 @@ import { json } from "@sveltejs/kit";
 var modelsCache = null;
 var modelsCacheExpiry = 0;
 /** Models known to be good for structured JSON output (agent tasks) */
-var AGENT_CAPABLE = new Set([
+var AGENT_CAPABLE = /* @__PURE__ */ new Set([
 	"deepseek/deepseek-r1",
 	"deepseek/deepseek-r1:free",
 	"deepseek/deepseek-chat",
@@ -26,7 +26,7 @@ var AGENT_CAPABLE = new Set([
 	"anthropic/claude-3-haiku"
 ]);
 /** Models known to be good for chat/conversational tasks */
-var CHAT_CAPABLE = new Set([
+var CHAT_CAPABLE = /* @__PURE__ */ new Set([
 	"google/gemini-2.0-flash-001",
 	"google/gemini-2.5-flash-preview",
 	"google/gemini-2.5-pro-preview",

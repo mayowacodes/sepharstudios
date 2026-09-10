@@ -3,7 +3,7 @@ import { db } from '$lib/db/drizzle';
 import { trialBlacklist, paystackSubscriptions } from '$lib/db/schema/sepharstudios';
 import { eq, or } from 'drizzle-orm';
 import { verifyOtp, getPhoneHash } from '$lib/server/otp';
-import { createCustomer, type PlanName, PLAN_PRICES_CENTS } from '$lib/payment/paystack';
+import { createCustomer, type PlanName, isPlanName, isPaidPlan } from '$lib/payment/paystack';
 
 /**
  * POST /api/subscriptions/start-trial
@@ -23,8 +23,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		deviceFingerprint?: string;
 	};
 
-	if (!plan || !PLAN_PRICES_CENTS[plan as PlanName]) {
+	// See /api/payment/initialize: freemium is 0 cents, so a truthiness check
+	// on the price silently rejected it.
+	if (!isPlanName(plan)) {
 		return json({ error: 'Invalid plan' }, { status: 400 });
+	}
+
+	// Nothing to trial on a free plan — it is already free, permanently.
+	if (!isPaidPlan(plan)) {
+		return json(
+			{ error: 'This plan is free — activate it via /api/subscriptions/start-free' },
+			{ status: 400 }
+		);
 	}
 
 	if (!phone?.trim() || !otp?.trim()) {

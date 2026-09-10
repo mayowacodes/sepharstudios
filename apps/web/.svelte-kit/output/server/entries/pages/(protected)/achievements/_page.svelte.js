@@ -1,8 +1,7 @@
-import { Et as derived, Ot as ensure_array_like, kt as head } from "../../../../chunks/ui-libs.js";
-import "../../../../chunks/Icon.js";
+import { Ct as derived, Et as head, Tt as ensure_array_like } from "../../../../chunks/ui-libs.js";
+import "../../../../chunks/flame.js";
 import "../../../../chunks/star.js";
 import { t as Trophy } from "../../../../chunks/trophy.js";
-//#endregion
 //#region src/routes/(protected)/achievements/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

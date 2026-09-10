@@ -1,0 +1,23 @@
+# crates.io is unreachable from the primary dev machine: index.crates.io,
+# static.crates.io and crates.io all time out on :443 with zero bytes
+# transferred, over both IPv4 and IPv6, while ICMP to the same addresses
+# answers in 60ms and github.com / registry.npmjs.org respond normally. No
+# proxy is configured. That is a network-level block on crates.io, not slowness.
+#
+# These settings do NOT work around it — nothing in cargo config can open a
+# blocked port. They are kept because they cost nothing and make cargo resilient
+# on genuinely slow links (CI runners, tethered connections) rather than
+# aborting a download that would have finished.
+#
+# To build the desktop app you need one of:
+#   - CI: .github/workflows/build.yml already builds Tauri on three OSes, and
+#     GitHub runners reach crates.io fine. This is the intended path.
+#   - A network where crates.io:443 is not blocked (VPN / different ISP).
+#   - A registry mirror, configured here via [source] replacement.
+[http]
+timeout = 300
+low-speed-limit = 1
+multiplexing = false
+
+[net]
+retry = 10

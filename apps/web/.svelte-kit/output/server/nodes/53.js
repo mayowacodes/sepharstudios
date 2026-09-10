@@ -1,8 +1,8 @@
-import * as server from '../entries/pages/(app)/creators/_id_/_page.server.ts.js';
+
 
 export const index = 53;
-export { server };
-export const server_id = "src/routes/(app)/creators/[id]/+page.server.ts";
-export const imports = [];
-export const stylesheets = [];
+let component_cache;
+export const component = async () => component_cache ??= (await import('../entries/pages/(app)/device-support/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/53.B_KQ_fBA.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/CWNHS1dj2.js","_app/immutable/chunks/HuCy9WZI.js","_app/immutable/chunks/BIatSNj92.js","_app/immutable/chunks/CfIeTnH-.js","_app/immutable/chunks/Bh1jI0ca.js","_app/immutable/chunks/BfGqcxE32.js","_app/immutable/chunks/Bbiduq3k2.js","_app/immutable/chunks/DV_8MGFQ2.js","_app/immutable/chunks/BWkGkCHl2.js","_app/immutable/chunks/CL_HWHFc2.js"];
+export const stylesheets = ["_app/immutable/assets/ui-libs.C1tyNZCz.css","_app/immutable/assets/PWAInstallPrompt.Cw6HcEey.css"];
 export const fonts = [];

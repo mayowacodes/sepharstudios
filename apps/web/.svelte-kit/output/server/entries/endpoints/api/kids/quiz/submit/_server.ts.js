@@ -1,4 +1,4 @@
-import { ct as quizSessions, t as db } from "../../../../../../chunks/drizzle.js";
+import { ht as quizSessions, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/kids/quiz/submit/+server.ts

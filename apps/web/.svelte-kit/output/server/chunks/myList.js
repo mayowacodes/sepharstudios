@@ -1,4 +1,4 @@
-import { Bt as writable } from "./ui-libs.js";
+import { Gt as writable } from "./ui-libs.js";
 import "./index-server.js";
 import { n as toast } from "./toast-state.svelte.js";
 import { n as goto } from "./client.js";

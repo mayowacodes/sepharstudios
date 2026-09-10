@@ -1,4 +1,4 @@
-import { _t as supportTickets, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, wt as supportTickets } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { t as Constants } from "../../../../../chunks/constants.js";
 import { t as sendEmailAction } from "../../../../../chunks/server2.js";
@@ -31,7 +31,7 @@ var GET = async ({ url, locals }) => {
 		updatedAt: supportTickets.updatedAt
 	}).from(supportTickets).where(eq(supportTickets.userId, session.user.id)).orderBy(desc(supportTickets.createdAt)).limit(100) });
 };
-var ALLOWED_CATEGORIES = new Set([
+var ALLOWED_CATEGORIES = /* @__PURE__ */ new Set([
 	"video-playback",
 	"audio-issues",
 	"streaming-quality",
@@ -42,7 +42,7 @@ var ALLOWED_CATEGORIES = new Set([
 	"mobile",
 	"other"
 ]);
-var ALLOWED_PRIORITIES = new Set([
+var ALLOWED_PRIORITIES = /* @__PURE__ */ new Set([
 	"low",
 	"normal",
 	"high",

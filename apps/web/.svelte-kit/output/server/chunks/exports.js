@@ -1,4 +1,4 @@
-//#region ../../node_modules/@sveltejs/kit/src/utils/array.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/array.js
 /**
 * Removes nullish values from an array.
 *
@@ -12,7 +12,7 @@ function compact(arr) {
 	);
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/pathname.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/pathname.js
 var DATA_SUFFIX = "/__data.json";
 var HTML_DATA_SUFFIX = ".html__data.json";
 /** @param {string} pathname */
@@ -53,7 +53,7 @@ function strip_resolution_suffix(pathname) {
 	return pathname.slice(0, -11);
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/telemetry/noop.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/telemetry/noop.js
 /**
 * @type {Span}
 */
@@ -101,7 +101,7 @@ var noop_span_context = {
 	traceFlags: 0
 };
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/url.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/url.js
 /**
 * Matches a URI scheme. See https://www.rfc-editor.org/rfc/rfc3986#section-3.1
 * @type {RegExp}
@@ -164,6 +164,7 @@ function make_trackable(url, callback, search_params_callback, allow_hash = fals
 	/**
 	* URL properties that could change during the lifetime of the page,
 	* which excludes things like `origin`
+	* @type {(keyof URL)[]}
 	*/
 	const tracked_url_properties = [
 		"href",
@@ -220,7 +221,7 @@ function allow_nodejs_console_log(url) {
 	};
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/hash.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/hash.js
 /**
 * Hash using djb2
 * @param {import('types').StrictBody[]} values
@@ -238,7 +239,7 @@ function hash(...values) {
 	return (hash >>> 0).toString(36);
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/routing.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/routing.js
 /**
 * @param {RegExpMatchArray} match
 * @param {import('types').RouteParam[]} params
@@ -297,7 +298,7 @@ function find_route(path, routes, matchers) {
 	return null;
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/utils/exports.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/utils/exports.js
 /**
 * @param {Set<string>} expected
 */
@@ -331,7 +332,7 @@ function hint_for_supported_files(key, ext = ".js") {
 	if (valid_server_exports.has(key)) supported_files.push(`+server${ext}`);
 	if (supported_files.length > 0) return `'${key}' is a valid export in ${supported_files.slice(0, -1).join(", ")}${supported_files.length > 1 ? " or " : ""}${supported_files.at(-1)}`;
 }
-var valid_layout_exports = new Set([
+var valid_layout_exports = /* @__PURE__ */ new Set([
 	"load",
 	"prerender",
 	"csr",
@@ -339,14 +340,14 @@ var valid_layout_exports = new Set([
 	"trailingSlash",
 	"config"
 ]);
-var valid_page_exports = new Set([...valid_layout_exports, "entries"]);
-var valid_layout_server_exports = new Set([...valid_layout_exports]);
-var valid_page_server_exports = new Set([
+var valid_page_exports = /* @__PURE__ */ new Set([...valid_layout_exports, "entries"]);
+var valid_layout_server_exports = /* @__PURE__ */ new Set([...valid_layout_exports]);
+var valid_page_server_exports = /* @__PURE__ */ new Set([
 	...valid_layout_server_exports,
 	"actions",
 	"entries"
 ]);
-var valid_server_exports = new Set([
+var valid_server_exports = /* @__PURE__ */ new Set([
 	"GET",
 	"POST",
 	"PATCH",

@@ -1,4 +1,4 @@
-import { st as pushSubscriptions, t as db } from "../../../../../chunks/drizzle.js";
+import { mt as pushSubscriptions, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/push/subscribe/+server.ts

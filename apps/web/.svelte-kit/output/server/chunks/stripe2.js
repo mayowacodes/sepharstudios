@@ -21,7 +21,7 @@ function getStripe() {
 	if (cached) return cached;
 	if (!private_env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is not configured");
 	cached = new Stripe(private_env.STRIPE_SECRET_KEY, {
-		apiVersion: "2026-05-27.dahlia",
+		apiVersion: "2026-06-24.dahlia",
 		typescript: true
 	});
 	return cached;

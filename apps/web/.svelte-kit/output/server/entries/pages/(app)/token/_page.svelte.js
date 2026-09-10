@@ -1,4 +1,4 @@
-import { Ft as unsubscribe_stores, Ht as attr, Mt as store_get, St as attr_class, Wt as escape_html } from "../../../../chunks/ui-libs.js";
+import { Lt as attr, Mt as unsubscribe_stores, kt as store_get, yt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Arrow_right } from "../../../../chunks/arrow-right.js";
 import { t as Arrow_up_down } from "../../../../chunks/arrow-up-down.js";
 import { t as Circle_alert } from "../../../../chunks/circle-alert.js";
@@ -11,6 +11,7 @@ import { t as Refresh_cw } from "../../../../chunks/refresh-cw.js";
 import { t as Wallet } from "../../../../chunks/wallet.js";
 import { t as Zap } from "../../../../chunks/zap.js";
 import { t as Button } from "../../../../chunks/button.js";
+import { t as StreakStcWidget } from "../../../../chunks/StreakStcWidget.js";
 import "../../../../chunks/config.js";
 import { a as isConnected, n as connectWallet, o as walletAddress } from "../../../../chunks/wallet2.js";
 import { c as subscriptionContract, s as stcToken, u as usdcToken } from "../../../../chunks/contracts2.js";
@@ -86,7 +87,9 @@ function _page($$renderer, $$props) {
 		$$renderer.push(`<div class="flex items-center gap-2 text-white/40 text-sm">`);
 		Loader_circle($$renderer, { class: "h-4 w-4 animate-spin" });
 		$$renderer.push(`<!----> Loading pool data...</div>`);
-		$$renderer.push(`<!--]--></div> <div class="grid lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6"><div class="flex items-center justify-between mb-6"><h2 class="text-lg font-bold">Swap</h2> <div class="flex rounded-xl border border-white/10 overflow-hidden text-sm"><button${attr_class(`px-4 py-1.5 transition-colors bg-[#FF5E0E] text-white`)}>Buy STC</button> <button${attr_class(`px-4 py-1.5 transition-colors text-white/50 hover:text-white/80`)}>Sell STC</button></div></div> <div class="rounded-xl border border-white/10 bg-white/5 p-4 mb-2"><div class="flex justify-between text-xs text-white/40 mb-2"><span>You pay</span> <span>Balance: ${escape_html(usdcBalance)} ${escape_html("USDC")} `);
+		$$renderer.push(`<!--]--></div> <div class="mb-6">`);
+		StreakStcWidget($$renderer, { variant: "detailed" });
+		$$renderer.push(`<!----></div> <div class="grid lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6"><div class="flex items-center justify-between mb-6"><h2 class="text-lg font-bold">Swap</h2> <div class="flex rounded-xl border border-white/10 overflow-hidden text-sm"><button${attr_class(`px-4 py-1.5 transition-colors bg-[#FF5E0E] text-white`)}>Buy STC</button> <button${attr_class(`px-4 py-1.5 transition-colors text-white/50 hover:text-white/80`)}>Sell STC</button></div></div> <div class="rounded-xl border border-white/10 bg-white/5 p-4 mb-2"><div class="flex justify-between text-xs text-white/40 mb-2"><span>You pay</span> <span>Balance: ${escape_html(usdcBalance)} ${escape_html("USDC")} `);
 		if (store_get($$store_subs ??= {}, "$isConnected", isConnected)) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<button class="ml-1 text-[#FF5E0E] hover:underline">MAX</button>`);
@@ -203,7 +206,7 @@ function _page($$renderer, $$props) {
 		}
 		$$renderer.push(`<!--]--></div> <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5"><h3 class="font-semibold mb-3 text-sm text-white/70 uppercase tracking-wider">How to Earn STC</h3> <div class="space-y-3 text-sm"><div class="flex items-start gap-3"><div class="mt-0.5 w-7 h-7 rounded-lg bg-[#FF5E0E]/15 flex items-center justify-center shrink-0">`);
 		Zap($$renderer, { class: "h-4 w-4 text-[#FF5E0E]" });
-		$$renderer.push(`<!----></div> <div><p class="font-medium">Watch content</p> <p class="text-white/45 text-xs">1 STC per hour · Max 5 STC/day</p></div></div> <div class="flex items-start gap-3"><div class="mt-0.5 w-7 h-7 rounded-lg bg-[#FFBF00]/15 flex items-center justify-center shrink-0">`);
+		$$renderer.push(`<!----></div> <div><p class="font-medium">Watch content</p> <p class="text-white/45 text-xs">1 STC per 20 hours · Max 5 STC/day</p></div></div> <div class="flex items-start gap-3"><div class="mt-0.5 w-7 h-7 rounded-lg bg-[#FFBF00]/15 flex items-center justify-center shrink-0">`);
 		Arrow_right($$renderer, { class: "h-4 w-4 text-[#FFBF00]" });
 		$$renderer.push(`<!----></div> <div><p class="font-medium">Refer a friend</p> <p class="text-white/45 text-xs">10 STC when they subscribe</p></div></div> <div class="flex items-start gap-3"><div class="mt-0.5 w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center shrink-0">`);
 		Coins($$renderer, { class: "h-4 w-4 text-purple-400" });

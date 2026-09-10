@@ -1,9 +1,8 @@
-import { t as building } from "../chunks/environment.js";
+import { t as building } from "../chunks/internal2.js";
 import { i as session, t as db } from "../chunks/drizzle.js";
 import { t as auth } from "../chunks/auth.js";
 import { eq } from "drizzle-orm";
-import "@better-auth/core/api";
-//#region ../../node_modules/better-auth/dist/integrations/svelte-kit.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/integrations/svelte-kit.mjs
 var svelteKitHandler = async ({ auth, event, resolve, building }) => {
 	if (building) return resolve(event);
 	const { request, url } = event;
@@ -56,7 +55,7 @@ var SCANNER_PATTERNS = [
 	/^\/\.aws\//,
 	/^\/\.ssh\//
 ];
-var FORM_PROBE_POST_PATHS = new Set([
+var FORM_PROBE_POST_PATHS = /* @__PURE__ */ new Set([
 	"/",
 	"/login",
 	"/wp-login.php",
@@ -69,10 +68,46 @@ function isScannerPath(pathname) {
 function isFormProbePost(method, pathname) {
 	return method === "POST" && FORM_PROBE_POST_PATHS.has(pathname);
 }
+/**
+* Origins the Capacitor (Android) and Tauri (desktop) shells can present.
+*
+* These are fixed strings baked into the platforms — Android WebView serves the
+* bundle from `http://localhost` (or `capacitor://localhost` on the older
+* scheme), Tauri from `tauri://localhost` on Linux/macOS and
+* `https://tauri.localhost` on Windows/WebView2. No remote website can claim
+* them, so allowing them is not the same class of risk as a wildcard.
+*
+* Deliberately NOT `*`: these responses carry user data, and the native builds
+* authenticate with a bearer token, so an echo-any-origin policy would let any
+* page that got hold of a token read the API from a browser context too.
+*/
+var NATIVE_ORIGINS = /* @__PURE__ */ new Set([
+	"capacitor://localhost",
+	"http://localhost",
+	"tauri://localhost",
+	"https://tauri.localhost"
+]);
+function nativeCorsHeaders(origin) {
+	return {
+		"access-control-allow-origin": origin,
+		"access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		"access-control-allow-headers": "content-type, authorization",
+		"access-control-expose-headers": "set-auth-token",
+		"access-control-max-age": "86400",
+		"vary": "origin"
+	};
+}
 async function handle({ event, resolve }) {
 	if (isScannerPath(event.url.pathname)) return new Response("Not Found", {
 		status: 404,
 		headers: { "cache-control": "no-store" }
+	});
+	const reqOrigin = event.request.headers.get("origin") ?? "";
+	const isNativeOrigin = NATIVE_ORIGINS.has(reqOrigin);
+	const isNativeApiPath = event.url.pathname.startsWith("/api/");
+	if (isNativeOrigin && isNativeApiPath && event.request.method === "OPTIONS") return new Response(null, {
+		status: 204,
+		headers: nativeCorsHeaders(reqOrigin)
 	});
 	if (isFormProbePost(event.request.method, event.url.pathname)) return new Response("Method Not Allowed", {
 		status: 405,
@@ -130,12 +165,14 @@ async function handle({ event, resolve }) {
 	if (isCreatorsSubdomain && path === "/") return Response.redirect(`${sameOriginBase}/creator`, 307);
 	if (isAdminSubdomain && path === "/") return Response.redirect(`${sameOriginBase}/admin`, 307);
 	if (isKidsSubdomain && path === "/") return Response.redirect(`${sameOriginBase}/kids`, 307);
-	return svelteKitHandler({
+	const response = await svelteKitHandler({
 		event,
 		resolve,
 		auth,
 		building
 	});
+	if (isNativeOrigin && isNativeApiPath) for (const [k, v] of Object.entries(nativeCorsHeaders(reqOrigin))) response.headers.set(k, v);
+	return response;
 }
 //#endregion
 export { handle };

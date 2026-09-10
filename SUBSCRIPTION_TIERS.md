@@ -17,124 +17,101 @@ Both get you access — but one you actually **own**.
 
 ## The Three Tiers
 
----
-
-### 🟠 Basic — $10 / month
-
-> *The standard pass. Think of it like a library card.*
-
-**What you get:**
-- Full access to all content on the platform — films, shows, documentaries
-- Your subscription is minted as an NFT and sent to your crypto wallet
-- Earn STC tokens while watching (1 STC per hour, up to 5 STC per day)
-- Refer a friend who subscribes and earn 10 STC
-- Use earned STC to pay for future months instead of cash
-
-**Who it is for:**
-Regular viewers who want to watch Christian and faith-based content. The majority of users will start here.
-
-**The STC connection:**
-Basic is the only tier you can pay for using STC tokens. Spend 200–500 STC (depending on the current phase) and get one free month of Basic access. Premium and Creator cannot be redeemed with STC.
-
-**With staking discount applied:**
-
-| STC Locked | Lock Period | Your Monthly Price |
-|---|---|---|
-| None | — | $10.00 |
-| 1,000 STC | 3 months+ | $9.00 (10% off) |
-| 1,000 STC | 2 years | $8.00 (20% off) |
-| 3,500 STC | 2 years | $6.50 (35% off) |
-| 10,000 STC | 2 years | **$5.00 (50% off)** |
+> **Prices last verified against the code on 2026-09-10.** The authoritative
+> values live in `PLAN_PRICES_CENTS` and `PLAN_FEATURES` in
+> [apps/web/src/lib/payment/paystack.ts](apps/web/src/lib/payment/paystack.ts).
+> If this file and that file disagree, the code is right and this file is stale.
 
 ---
 
-### 🔵 Premium — $15 / month
+### ⚪ Basic — Free, forever
 
-> *The upgraded pass. Think of it like a first-class membership.*
+The entry tier. No card, no trial clock, no expiry.
 
-**What you get:**
+- HD streaming, **with ads**
+- **2 profiles**
+- **Kids & Teens access included** — and always ad-free
+- Full standard library
+
+Basic absorbed the old "Freemium" tier. The platform monetises through
+advertising and pay-per-view on Sephar-sponsored titles rather than an entry
+subscription: a paywall at the front door is the single biggest brake on
+acquisition.
+
+**Ads never run on Kids or Teens content**, on any tier. That is a category
+rule, not a plan rule — a Basic viewer watching a kids title sees no
+advertising even though their plan is ad-supported. Non-skippable advertising
+to children carries regulatory exposure (COPPA in the US, the UK CAP code) that
+the available inventory does not justify.
+
+---
+
+### 🔵 Premium (Family) — $1 / month
+
 Everything in Basic, plus:
-- Higher quality streams (HD / 4K where available)
-- Early access to new releases before they go to Basic members
-- Expanded platform features as they roll out
-- Same NFT ownership — your proof of membership lives in your wallet, not just on our servers
 
-**Who it is for:**
-Viewers who watch regularly and want the best possible experience. The extra $5 per month is the cost of the upgrade.
+- **No ads**
+- **8 profiles**
+- Kids mode with parental controls
 
-**The staking sweet spot:**
-This is where locking STC becomes most powerful. If you stake 10,000 STC for 2 years, you get 50% off — bringing Premium down to **$7.50/month**. That is cheaper than Basic without any staking at all.
-
-**With staking discount applied:**
-
-| STC Locked | Lock Period | Your Monthly Price |
-|---|---|---|
-| None | — | $15.00 |
-| 1,000 STC | 3 months+ | $13.50 (10% off) |
-| 1,000 STC | 2 years | $12.00 (20% off) |
-| 3,500 STC | 2 years | $9.75 (35% off) |
-| 10,000 STC | 2 years | **$7.50 (50% off)** |
+Replaces the old Basic + $5 family add-on, which is deprecated.
 
 ---
 
-### 🟡 Creator — $25 / month
+### 🟡 Creator — $2 / month
 
-> *The professional pass. Think of it like a backstage pass plus a business licence.*
+For people publishing to the platform. Everything in Premium, plus creator
+tooling, analytics and payouts.
 
-**What you get:**
-Everything in Basic and Premium, plus:
-- The ability to **upload your own content** and make it available on the platform
-- A **30% revenue share** on everything your content earns — paid in USDC (a stable digital dollar)
-- Access to creator analytics — see how many people watched, where they stopped, which scenes they replayed
-- Priority support and featured placement opportunities
-- The highest-tier NFT badge in your wallet, marking you as a verified creator
+- **No ads**
+- **8 profiles**
 
-**Who it is for:**
-Filmmakers, churches, ministries, independent studios, preachers, teachers — anyone who wants to both watch *and* publish faith-based content, and earn real income from it.
+Creator revenue share is a **separate axis** from the subscription tier, read
+from the CreatorPayments contract on Polygon:
 
-**The earning potential:**
-You pay $25/month. But if your film or series generates revenue, you earn 30% of it in USDC:
-
-| Your Content Earns | Your 30% Share | Net After $25 Sub Fee |
-|---|---|---|
-| $100/month | $30 | -$5 (you are still investing) |
-| $250/month | $75 | +$50 profit |
-| $500/month | $150 | +$125 profit |
-| $1,000/month | $300 | +$275 profit |
-| $5,000/month | $1,500 | +$1,475 profit |
-| $10,000/month | $3,000 | +$2,975 profit |
-
-Once your content earns more than $84/month, your creator subscription pays for itself.
-
-**Top performers earn more:**
-Creators who hit high performance metrics (views, watch time, ratings) can be elevated to 40%, 50%, or even 55% revenue share. The more exclusive your content is to the platform, the higher the percentage you can negotiate.
-
-**With staking discount applied:**
-
-| STC Locked | Lock Period | Your Monthly Price |
-|---|---|---|
-| None | — | $25.00 |
-| 1,000 STC | 3 months+ | $22.50 (10% off) |
-| 3,500 STC | 2 years | $16.25 (35% off) |
-| 10,000 STC | 2 years | **$12.50 (50% off)** |
+| Creator tier | Share |
+|---|---|
+| Standard | 30% |
+| Exclusive | 40% |
+| Top Performer | 55% |
 
 ---
 
-## Side-by-Side Comparison
+## At a glance
 
-| Feature | 🟠 Basic $10 | 🔵 Premium $15 | 🟡 Creator $25 |
-|---|:---:|:---:|:---:|
-| Watch all content | ✅ | ✅ | ✅ |
-| Earn STC by watching | ✅ | ✅ | ✅ |
-| Referral bonuses | ✅ | ✅ | ✅ |
-| High quality / early access | ❌ | ✅ | ✅ |
-| Upload your own content | ❌ | ❌ | ✅ |
-| Earn 30–55% revenue share | ❌ | ❌ | ✅ |
-| Creator analytics dashboard | ❌ | ❌ | ✅ |
-| Pay with STC tokens | ✅ only | ❌ | ❌ |
-| Staking discount (up to 50%) | ✅ | ✅ | ✅ |
-| NFT minted to your wallet | ✅ | ✅ | ✅ |
-| Proof of membership on blockchain | ✅ | ✅ | ✅ |
+| | Basic | Premium | Creator |
+|---|---|---|---|
+| Price | **Free** | $1/mo | $2/mo |
+| Ads | Yes | No | No |
+| Profiles | 2 | 8 | 8 |
+| Kids access | Yes | Yes | Yes |
+| Ads on kids/teens | **Never** | — | — |
+
+---
+
+## Pay-per-view
+
+Separate from subscriptions. Sephar-sponsored titles can carry an individual
+price, set per region. A PPV purchase is **permanent** — there is currently no
+rental window or expiry — and PPV titles have their playback URLs stripped
+server-side until purchased.
+
+---
+
+## A note on legacy plan names
+
+Subscription rows written before 2026-09-10 may store `plan = 'freemium'`. That
+name is retained in code as a deprecated alias for `basic` so those rows keep
+resolving correctly; `canonicalPlan()` in `paystack.ts` maps it. It is not
+selectable for new or changed subscriptions.
+
+---
+
+## A note on the NFT
+
+The subscription NFT described below applies to the **paid** tiers. Basic is an
+ordinary account record; there is no on-chain certificate for a plan that costs
+nothing to hold.
 
 ---
 
@@ -155,9 +132,11 @@ The NFT could be gifted or moved to a family member's wallet — the way a physi
 
 ## How to Think About Each Tier
 
-> **Basic** — I want to watch faith-based content and earn rewards while I do it.
+> **Free** — I want to see what's here before I commit anything, and I want my kids to be able to watch safely.
 >
-> **Premium** — I watch a lot and I want the best quality and first access to new releases.
+> **Basic** — I watch regularly and I would rather pay a little than sit through ads.
+>
+> **Premium** — We're a household. I want profiles for everyone and kids mode with real controls.
 >
 > **Creator** — I make content and I want to reach an audience while earning real money from it.
 
@@ -168,19 +147,19 @@ The NFT could be gifted or moved to a family member's wallet — the way a physi
 Most users follow this journey naturally:
 
 ```
-Start on Basic ($10)
-  → Watch content daily → earn 5 STC/day
-  → After 200 days → have 1,000 STC
-  → Stake 1,000 STC for 3 months → get 10% off → Basic now $9
-  → Keep watching → earn more STC
-  → After another year → have enough to stake for 20% or 35% off
-  → Basic at 50% off = $5/month — cheaper than most apps
-  → OR upgrade to Creator and monetise your own content
+Start Free ($0)
+  → Watch with ads, kids watch ad-free
+  → Earn STC while watching
+  → Ads start to grate → upgrade to Basic ($4) for ad-free
+  → Stake 1,000 STC for 3 months → 10% off
+  → Household grows → Premium ($10) for 8 profiles + kids mode
+  → OR start publishing → Creator, and earn 30–55% of your revenue
 ```
 
-The platform is designed so that simply using it — just watching — naturally builds toward long-term savings. No extra steps required.
+The platform is designed so that simply using it — just watching — naturally
+builds toward long-term savings. No extra steps required.
 
 ---
 
-*Sephar Studios · Subscription Tiers Guide · March 2026*
+*Sephar Studios · Subscription Tiers Guide · Updated 2026-09-10*
 *For full tokenomics details, see TOKENOMICS_REPORT.md and TOKENOMICS_SIMPLE.md*

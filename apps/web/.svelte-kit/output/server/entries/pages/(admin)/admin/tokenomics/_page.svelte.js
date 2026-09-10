@@ -1,4 +1,4 @@
-import { Wt as escape_html } from "../../../../../chunks/ui-libs.js";
+import { zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as Activity } from "../../../../../chunks/activity.js";
 import { t as Circle_alert } from "../../../../../chunks/circle-alert.js";
 import { t as Coins } from "../../../../../chunks/coins.js";

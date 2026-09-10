@@ -1,6 +1,5 @@
 import { t as eventStream } from "../../../../../../chunks/sse.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
-import "@sveltejs/kit";
 //#region src/routes/api/creator/analytics/stream/+server.ts
 /**
 * GET /api/creator/analytics/stream

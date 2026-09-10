@@ -1,0 +1,23 @@
+{
+	"appId": "com.sepharstudios.app",
+	"appName": "Sephar Studios",
+	"webDir": "../web/build-static",
+	"android": {
+		"allowMixedContent": false
+	},
+	"server": {
+		"androidScheme": "http",
+		"hostname": "localhost"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchAutoHide": false,
+			"backgroundColor": "#0b0c10",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#0b0c10"
+		}
+	}
+}

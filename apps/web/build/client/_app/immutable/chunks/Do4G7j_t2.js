@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`path`,{d:`m15 18-6-6 6-6`}]];n(i,t({name:`chevron-left`},()=>o,{get iconNode(){return s}}))}export{i as t};

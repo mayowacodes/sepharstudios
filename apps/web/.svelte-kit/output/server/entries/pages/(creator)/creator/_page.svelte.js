@@ -1,4 +1,4 @@
-import { Ct as attr_style, Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html, jt as spread_props, vt as onDestroy } from "../../../../chunks/ui-libs.js";
+import { Ct as derived, Lt as attr, Ot as spread_props, Tt as ensure_array_like, bt as attr_style, gt as onDestroy, jt as stringify, yt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as PortalKpi } from "../../../../chunks/PortalKpi.js";
 import { t as Arrow_up_right } from "../../../../chunks/arrow-up-right.js";
@@ -17,7 +17,7 @@ import { t as Video } from "../../../../chunks/video.js";
 import { t as page } from "../../../../chunks/state.js";
 import { t as PortalHero } from "../../../../chunks/PortalHero.js";
 import { t as PortalButton } from "../../../../chunks/PortalButton.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/wand-sparkles.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/wand-sparkles.svelte
 function Wand_sparkles($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([
@@ -54,7 +54,7 @@ function _page($$renderer, $$props) {
 			evtSource = null;
 		});
 		const firstName = derived(() => {
-			return (page.data?.user?.name ?? "").trim().split(/\s+/)[0] ?? "there";
+			return ((page.data?.user)?.name ?? "").trim().split(/\s+/)[0] ?? "there";
 		});
 		let greeting = "Welcome back";
 		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);

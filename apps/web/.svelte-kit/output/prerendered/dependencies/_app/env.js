@@ -1,0 +1,1 @@
+export const env={PUBLIC_BETTER_AUTH_URL:"https://sepharstudios.com",PUBLIC_CREATOR_PAYMENTS_AMOY:"\u003Ccontract address on Amoy>",PUBLIC_ENCODER_MINIO_URL:"https://encoder-s3.sepharstudios.com",PUBLIC_VAPID_PUBLIC_KEY:"BP6SBlpQVd-5Z0UrcdMXW9NTaHoWEzWU96Bz3WfYUEtUveKEGxUrtgcsFfxq1wMC7U4sGvAAQcN0EYBh9OOgtLw",PUBLIC_API_ORIGIN:"https://sepharstudios.com"}

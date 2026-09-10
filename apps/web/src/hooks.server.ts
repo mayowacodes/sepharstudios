@@ -83,6 +83,40 @@ function isFormProbePost(method: string, pathname: string): boolean {
   return method === 'POST' && FORM_PROBE_POST_PATHS.has(pathname);
 }
 
+/**
+ * Origins the Capacitor (Android) and Tauri (desktop) shells can present.
+ *
+ * These are fixed strings baked into the platforms — Android WebView serves the
+ * bundle from `http://localhost` (or `capacitor://localhost` on the older
+ * scheme), Tauri from `tauri://localhost` on Linux/macOS and
+ * `https://tauri.localhost` on Windows/WebView2. No remote website can claim
+ * them, so allowing them is not the same class of risk as a wildcard.
+ *
+ * Deliberately NOT `*`: these responses carry user data, and the native builds
+ * authenticate with a bearer token, so an echo-any-origin policy would let any
+ * page that got hold of a token read the API from a browser context too.
+ */
+const NATIVE_ORIGINS = new Set([
+  'capacitor://localhost',
+  'http://localhost',
+  'tauri://localhost',
+  'https://tauri.localhost'
+]);
+
+function nativeCorsHeaders(origin: string): Record<string, string> {
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'access-control-allow-headers': 'content-type, authorization',
+    // Lets the client read the rotated bearer token better-auth returns.
+    'access-control-expose-headers': 'set-auth-token',
+    'access-control-max-age': '86400',
+    // Bearer, not cookies — so credentials stay off and the origin echo above
+    // can't be paired with ambient session cookies.
+    'vary': 'origin'
+  };
+}
+
 export async function handle({ event, resolve }) {
   // Drop known vulnerability-scanner paths before they reach the router so
   // we don't burn cycles on auth/session/load chains just to hand back a
@@ -92,6 +126,17 @@ export async function handle({ event, resolve }) {
       status: 404,
       headers: { 'cache-control': 'no-store' }
     });
+  }
+
+  // CORS preflight from the native shells. Must be answered before the router
+  // runs: SvelteKit has no OPTIONS handler on these endpoints and would 405 the
+  // preflight, which the WebView reports as an opaque network failure.
+  const reqOrigin = event.request.headers.get('origin') ?? '';
+  const isNativeOrigin = NATIVE_ORIGINS.has(reqOrigin);
+  const isNativeApiPath = event.url.pathname.startsWith('/api/');
+
+  if (isNativeOrigin && isNativeApiPath && event.request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: nativeCorsHeaders(reqOrigin) });
   }
 
   // Suppress form-probe POSTs (e.g. `POST /`, `POST /wp-login.php`) before
@@ -262,5 +307,15 @@ export async function handle({ event, resolve }) {
     return Response.redirect(`${sameOriginBase}/kids`, 307);
   }
 
-  return svelteKitHandler({ event, resolve, auth, building });
+  const response = await svelteKitHandler({ event, resolve, auth, building });
+
+  // Attach CORS to the actual API response for native callers. Done here rather
+  // than per-endpoint so all 249 /api/* routes are covered by one rule.
+  if (isNativeOrigin && isNativeApiPath) {
+    for (const [k, v] of Object.entries(nativeCorsHeaders(reqOrigin))) {
+      response.headers.set(k, v);
+    }
+  }
+
+  return response;
 }

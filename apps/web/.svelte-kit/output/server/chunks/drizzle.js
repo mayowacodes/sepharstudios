@@ -1,8 +1,8 @@
-import { t as __exportAll } from "./rolldown-runtime.js";
+import { n as __exportAll } from "./rolldown-runtime.js";
 import { t as private_env } from "./shared-server.js";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { bigint, boolean, date, doublePrecision, index, integer, jsonb, pgTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, date, doublePrecision, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 //#region src/lib/db/schema/sepharstudios.ts
 var files = pgTable("files", {
@@ -987,12 +987,172 @@ var comingSoonSubscriptions = pgTable("coming_soon_subscriptions", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	notifiedAt: timestamp("notified_at")
 }, (t) => ({ contentPendingIdx: index("css_content_pending_idx").on(t.contentId) }));
+/** Who is buying. `kind='house'` is Sephar's own promo inventory / backfill. */
+var adAdvertisers = pgTable("ad_advertisers", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	name: varchar("name", { length: 200 }).notNull(),
+	slug: varchar("slug", { length: 120 }).notNull(),
+	kind: varchar("kind", { length: 20 }).notNull().default("external"),
+	contactEmail: varchar("contact_email", { length: 320 }),
+	isActive: boolean("is_active").notNull().default(true),
+	createdAt: timestamp("created_at").defaultNow().notNull()
+}, (t) => ({ slugUq: uniqueIndex("ad_advertisers_slug_uq").on(t.slug) }));
+/**
+* A flight: what runs, when, to whom, and how hard.
+*
+* `priority` orders the auction (higher wins). `goalImpressions` plus
+* `deliveredImpressions` drive both pacing and the automatic
+* active -> completed transition in the rollup cron.
+*
+* Targeting is stored as arrays rather than a rules engine because every
+* dimension here is a simple include/exclude set. An empty array means "no
+* constraint on this dimension", NOT "matches nothing" -- the decision code
+* must treat empty as a wildcard or every campaign silently stops serving.
+*/
+var adCampaigns = pgTable("ad_campaigns", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	advertiserId: text("advertiser_id").notNull().references(() => adAdvertisers.id, { onDelete: "cascade" }),
+	name: varchar("name", { length: 200 }).notNull(),
+	status: varchar("status", { length: 20 }).notNull().default("draft"),
+	priority: integer("priority").notNull().default(50),
+	startsAt: timestamp("starts_at").notNull(),
+	endsAt: timestamp("ends_at"),
+	goalImpressions: integer("goal_impressions"),
+	deliveredImpressions: integer("delivered_impressions").notNull().default(0),
+	capPerViewer: integer("cap_per_viewer"),
+	capWindowHours: integer("cap_window_hours").notNull().default(24),
+	targetGenres: jsonb("target_genres").$type().notNull().default(sql`'[]'::jsonb`),
+	targetRegions: jsonb("target_regions").$type().notNull().default(sql`'[]'::jsonb`),
+	targetDeviceTypes: jsonb("target_device_types").$type().notNull().default(sql`'[]'::jsonb`),
+	excludeContentIds: jsonb("exclude_content_ids").$type().notNull().default(sql`'[]'::jsonb`),
+	kidsSafe: boolean("kids_safe").notNull().default(false),
+	trackingMode: varchar("tracking_mode", { length: 10 }).notNull().default("server"),
+	vastCacheSeconds: integer("vast_cache_seconds").notNull().default(0),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (t) => ({
+	statusFlightIdx: index("ad_campaigns_status_flight_idx").on(t.status, t.startsAt, t.endsAt),
+	advertiserIdx: index("ad_campaigns_advertiser_idx").on(t.advertiserId)
+}));
+/**
+* The creative itself.
+*
+* `durationSeconds` is load-bearing: the pause-vs-duck decision must be made at
+* the instant the break opens, before the ad element exists. For `kind='vast'`
+* it is filled from the parsed <Duration> at decision time. When duration is
+* unknown the player defaults to pause -- never leave a movie running under an
+* ad of unknown length.
+*/
+var adCreatives = pgTable("ad_creatives", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	campaignId: text("campaign_id").notNull().references(() => adCampaigns.id, { onDelete: "cascade" }),
+	kind: varchar("kind", { length: 10 }).notNull().default("video"),
+	name: varchar("name", { length: 200 }).notNull(),
+	videoObjectKey: text("video_object_key"),
+	posterObjectKey: text("poster_object_key"),
+	durationSeconds: integer("duration_seconds"),
+	bitrateKbps: integer("bitrate_kbps"),
+	width: integer("width"),
+	height: integer("height"),
+	vastTagUrl: text("vast_tag_url"),
+	clickUrl: text("click_url"),
+	ctaLabel: varchar("cta_label", { length: 60 }),
+	headline: varchar("headline", { length: 140 }),
+	body: text("body"),
+	mobileBehavior: varchar("mobile_behavior", { length: 10 }).notNull().default("takeover"),
+	weight: integer("weight").notNull().default(1),
+	isActive: boolean("is_active").notNull().default(true),
+	createdAt: timestamp("created_at").defaultNow().notNull()
+}, (t) => ({ campaignIdx: index("ad_creatives_campaign_idx").on(t.campaignId, t.isActive) }));
+/**
+* Cue points on a title. `positionSeconds = 0` is the pre-roll.
+*
+* Placement rules (enforced when created, and re-checked at decision time
+* because breaks can be created by three different paths): at most 4 per title,
+* at least 300s apart, and none after 90% of runtime -- the end screen appears
+* at 90% and auto-advance fires at 95%, so a late break races both.
+*/
+var adBreaks = pgTable("ad_breaks", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text("content_id").notNull().references(() => mediaLibrary.id, { onDelete: "cascade" }),
+	positionSeconds: integer("position_seconds").notNull(),
+	kind: varchar("kind", { length: 12 }).notNull().default("midroll"),
+	format: varchar("format", { length: 12 }),
+	isActive: boolean("is_active").notNull().default(true),
+	createdAt: timestamp("created_at").defaultNow().notNull()
+}, (t) => ({
+	contentIdx: index("ad_breaks_content_idx").on(t.contentId, t.isActive),
+	positionUq: uniqueIndex("ad_breaks_position_uq").on(t.contentId, t.positionSeconds)
+}));
+/** Per-title opt-out, so a sensitive film can carry no advertising. */
+var adContentSettings = pgTable("ad_content_settings", {
+	contentId: text("content_id").primaryKey().references(() => mediaLibrary.id, { onDelete: "cascade" }),
+	adsEnabled: boolean("ads_enabled").notNull().default(true),
+	note: text("note"),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+/**
+* One row per ad served, mutated in place as the viewer progresses.
+*
+* `status` advances monotonically (served -> started -> q1 -> q2 -> q3 ->
+* complete) so a replayed beacon is a no-op rather than an inflated count. The
+* pre-existing impression pattern in this codebase was an unauthenticated
+* `col = col + 1` with no dedup, which is trivially inflatable.
+*
+* A BILLABLE impression is `status >= started AND watched_seconds >= 2`, not
+* `served`. The gap between served and started is the ad-block measurement and
+* the single most useful health metric for this feature.
+*/
+var adImpressions = pgTable("ad_impressions", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	decisionId: text("decision_id").notNull(),
+	campaignId: text("campaign_id").notNull().references(() => adCampaigns.id, { onDelete: "cascade" }),
+	creativeId: text("creative_id").notNull().references(() => adCreatives.id, { onDelete: "cascade" }),
+	breakId: text("break_id").references(() => adBreaks.id, { onDelete: "set null" }),
+	contentId: text("content_id").references(() => mediaLibrary.id, { onDelete: "set null" }),
+	creatorId: text("creator_id"),
+	userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+	status: varchar("status", { length: 12 }).notNull().default("served"),
+	watchedSeconds: integer("watched_seconds").notNull().default(0),
+	skipped: boolean("skipped").notNull().default(false),
+	clicked: boolean("clicked").notNull().default(false),
+	wasMuted: boolean("was_muted").notNull().default(false),
+	deviceType: varchar("device_type", { length: 20 }),
+	country: varchar("country", { length: 2 }),
+	layout: varchar("layout", { length: 12 }),
+	behavior: varchar("behavior", { length: 10 }),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	startedAt: timestamp("started_at"),
+	completedAt: timestamp("completed_at")
+}, (t) => ({
+	decisionUq: uniqueIndex("ad_impressions_decision_uq").on(t.decisionId),
+	campaignDayIdx: index("ad_impressions_campaign_day_idx").on(t.campaignId, t.createdAt),
+	contentIdx: index("ad_impressions_content_idx").on(t.contentId, t.createdAt)
+}));
+/** Daily rollup, mirroring mediaAnalyticsDaily's composite-PK shape. */
+var adCampaignDaily = pgTable("ad_campaign_daily", {
+	campaignId: text("campaign_id").notNull().references(() => adCampaigns.id, { onDelete: "cascade" }),
+	day: date("day").notNull(),
+	served: integer("served").notNull().default(0),
+	started: integer("started").notNull().default(0),
+	completed: integer("completed").notNull().default(0),
+	skipped: integer("skipped").notNull().default(0),
+	clicks: integer("clicks").notNull().default(0),
+	watchSeconds: bigint("watch_seconds", { mode: "number" }).notNull().default(0)
+}, (t) => ({ pk: primaryKey({ columns: [t.campaignId, t.day] }) }));
 //#endregion
 //#region src/lib/db/schema.ts
 var schema_exports = /* @__PURE__ */ __exportAll({
 	abuseReports: () => abuseReports,
 	account: () => account,
 	achievements: () => achievements,
+	adAdvertisers: () => adAdvertisers,
+	adBreaks: () => adBreaks,
+	adCampaignDaily: () => adCampaignDaily,
+	adCampaigns: () => adCampaigns,
+	adContentSettings: () => adContentSettings,
+	adCreatives: () => adCreatives,
+	adImpressions: () => adImpressions,
 	adminMessageTemplates: () => adminMessageTemplates,
 	adminMessages: () => adminMessages,
 	adminPolicies: () => adminPolicies,
@@ -1135,4 +1295,4 @@ var db = drizzle(postgres(private_env.DATABASE_URL, {
 	connect_timeout: 10
 }), { schema: schema_exports });
 //#endregion
-export { payouts as $, episodes as A, governancePauseEvents as B, copilotConversations as C, userMilestones as Ct, creatorFollowers as D, creatorEarnings as E, forumLikes as F, mediaAnalyticsDaily as G, governanceProposals as H, forumReplies as I, newsletterSubscriptions as J, mediaLibrary as K, forumThreads as L, events as M, familyAddons as N, creators as O, files as P, payoutDisputes as Q, governanceAuditEntries as R, contentThumbnailVariants as S, userAchievements as St, creatorApplications as T, liveChatMessages as U, governanceProposalApprovals as V, liveStreams as W, notifications as X, notificationPreferences as Y, paymentIntents as Z, bibleStoryProgress as _, supportTickets as _t, user as a, ppvPurchases as at, contentShares as b, transactions as bt, adminMessageTemplates as c, quizSessions as ct, adminSettings as d, reviews as dt, paystackEvents as et, adminTokenomicsSettings as f, sponsorshipApplications as ft, aiCallLog as g, successStories as gt, aiActionLog as h, subscriptions as ht, session as i, ppvContent as it, eventRegistrations as j, cronState as k, adminMessages as l, refunds as lt, agentRuns as m, streaks as mt, account as n, playlistItems as nt, abuseReports as o, profiles as ot, adminWorkflowRules as p, stcStakes as pt, mediaWatchProgress as q, schema as r, playlists as rt, achievements as s, pushSubscriptions as st, db as t, paystackSubscriptions as tt, adminPolicies as u, reviewHelpful as ut, comingSoonSubscriptions as v, tax1099Forms as vt, copilotMessages as w, watchSessionMeta as wt, contentSubtitleTracks as x, trialBlacklist as xt, contentPricing as y, taxForms as yt, governanceMemberships as z };
+export { mediaLibrary as $, copilotConversations as A, userMilestones as At, familyAddons as B, aiCallLog as C, successStories as Ct, contentShares as D, transactions as Dt, contentPricing as E, taxForms as Et, creators as F, governanceAuditEntries as G, forumLikes as H, cronState as I, governanceProposalApprovals as J, governanceMemberships as K, episodes as L, creatorApplications as M, creatorEarnings as N, contentSubtitleTracks as O, trialBlacklist as Ot, creatorFollowers as P, mediaAnalyticsDaily as Q, eventRegistrations as R, aiActionLog as S, subscriptions as St, comingSoonSubscriptions as T, tax1099Forms as Tt, forumReplies as U, files as V, forumThreads as W, liveChatMessages as X, governanceProposals as Y, liveStreams as Z, adminPolicies as _, reviewHelpful as _t, user as a, payoutDisputes as at, adminWorkflowRules as b, stcStakes as bt, adAdvertisers as c, paystackSubscriptions as ct, adCampaigns as d, ppvContent as dt, mediaWatchProgress as et, adContentSettings as f, ppvPurchases as ft, adminMessages as g, refunds as gt, adminMessageTemplates as h, quizSessions as ht, session as i, paymentIntents as it, copilotMessages as j, watchSessionMeta as jt, contentThumbnailVariants as k, userAchievements as kt, adBreaks as l, playlistItems as lt, adImpressions as m, pushSubscriptions as mt, account as n, notificationPreferences as nt, abuseReports as o, payouts as ot, adCreatives as p, profiles as pt, governancePauseEvents as q, schema as r, notifications as rt, achievements as s, paystackEvents as st, db as t, newsletterSubscriptions as tt, adCampaignDaily as u, playlists as ut, adminSettings as v, reviews as vt, bibleStoryProgress as w, supportTickets as wt, agentRuns as x, streaks as xt, adminTokenomicsSettings as y, sponsorshipApplications as yt, events as z };

@@ -1,8 +1,9 @@
-import { E as creatorEarnings, K as mediaLibrary, St as userAchievements, bt as transactions, dt as reviews, mt as streaks, nt as playlistItems, q as mediaWatchProgress, rt as playlists, s as achievements, t as db, wt as watchSessionMeta } from "../../../../../chunks/drizzle.js";
+import { $ as mediaLibrary, N as creatorEarnings, et as mediaWatchProgress, jt as watchSessionMeta, kt as userAchievements, lt as playlistItems, s as achievements, t as db, ut as playlists, vt as reviews, xt as streaks } from "../../../../../chunks/drizzle.js";
 import { n as publish } from "../../../../../chunks/sse.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { n as scoreWatchEngagement } from "../../../../../chunks/ai-token-scoring.js";
 import { t as track } from "../../../../../chunks/analytics.js";
+import { n as awardWatchHourTokens } from "../../../../../chunks/stc-hours.js";
 import { t as fingerprintFromHeaders } from "../../../../../chunks/ua-country.js";
 import { json } from "@sveltejs/kit";
 import { and, count, eq } from "drizzle-orm";
@@ -199,22 +200,7 @@ var POST = async ({ request, locals }) => {
 			addedToWatchlist,
 			baseStcReward: 10
 		});
-		const rewardAmount = reward?.recommendedStcReward ?? 0;
-		if (rewardAmount > 0) await db.insert(transactions).values({
-			id: crypto.randomUUID(),
-			userId,
-			type: "earn",
-			amount: rewardAmount,
-			currency: "STC",
-			status: "pending",
-			metadata: {
-				contentId,
-				completionPercent,
-				engagementQuality: reward?.engagementQuality ?? null,
-				tokenMultiplier: reward?.tokenMultiplier ?? null,
-				source: "watch_complete"
-			}
-		}).catch((err) => console.error("[watch/progress] failed to write STC ledger row:", err));
+		const rewardAmount = await awardWatchHourTokens(userId);
 		try {
 			const [content] = await db.select({ creatorId: mediaLibrary.creatorId }).from(mediaLibrary).where(eq(mediaLibrary.id, contentId)).limit(1);
 			const creatorId = content?.creatorId;

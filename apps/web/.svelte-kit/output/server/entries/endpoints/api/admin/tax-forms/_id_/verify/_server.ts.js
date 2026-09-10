@@ -1,4 +1,4 @@
-import { O as creators, t as db, yt as taxForms } from "../../../../../../../chunks/drizzle.js";
+import { Et as taxForms, F as creators, t as db } from "../../../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 *
 * Admin verdict on a submitted tax form. Notifies the creator either way.
 */
-var ALLOWED = new Set(["verified", "rejected"]);
+var ALLOWED = /* @__PURE__ */ new Set(["verified", "rejected"]);
 var PATCH = async ({ params, locals, request }) => {
 	if (locals.user?.role !== "admin") return json({ error: "Forbidden" }, { status: 403 });
 	const body = await request.json().catch(() => ({}));

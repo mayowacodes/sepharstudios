@@ -1,8 +1,8 @@
-import { P as files, t as db } from "../../../../../chunks/drizzle.js";
-import { r as getDirectObjectUrl } from "../../../../../chunks/minio2.js";
+import { V as files, t as db } from "../../../../../chunks/drizzle.js";
+import { r as getDirectObjectUrl } from "../../../../../chunks/minio.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/files/commit/+server.ts
-var ALLOWED_BUCKETS = new Set([
+var ALLOWED_BUCKETS = /* @__PURE__ */ new Set([
 	"thumbnails",
 	"avatars",
 	"uploads"

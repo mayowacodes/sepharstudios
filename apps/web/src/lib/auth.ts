@@ -3,7 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '$lib/db/drizzle';
 import { schema } from '$lib/db/schema';
 import { playlists } from '$lib/db/schema/sepharstudios';
-import { openAPI, admin as adminPlugin, customSession, magicLink } from 'better-auth/plugins';
+import { openAPI, admin as adminPlugin, customSession, magicLink, bearer } from 'better-auth/plugins';
 import { createAuthMiddleware } from 'better-auth/api';
 import { env } from '$env/dynamic/private';
 import { Role } from '$lib/constants';
@@ -23,7 +23,17 @@ const normalizeName = (name: string) => {
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL || 'http://localhost:3000',
-  trustedOrigins: env.NODE_ENV === 'production'
+  trustedOrigins: [
+    // The Capacitor (Android) and Tauri (desktop) shells are static bundles
+    // served from their own local origins, not from sepharstudios.com. Every
+    // API call they make is cross-origin, so these have to be trusted or
+    // better-auth rejects them regardless of a valid bearer token. They are
+    // safe to trust unconditionally: no remote site can claim these origins.
+    'capacitor://localhost',
+    'http://localhost',
+    'tauri://localhost',
+    'https://tauri.localhost',
+    ...(env.NODE_ENV === 'production'
     ? [
         'https://sepharstudios.com',
         'https://www.sepharstudios.com',
@@ -32,7 +42,8 @@ export const auth = betterAuth({
         'https://creator.sepharstudios.com',
         'https://kids.sepharstudios.com',
       ]
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    : ['http://localhost:3000', 'http://localhost:5173'])
+  ],
   database: drizzleAdapter(db, { provider: 'pg', schema }),
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
@@ -50,6 +61,12 @@ export const auth = betterAuth({
   },
   plugins: [
 // openAPI(),
+    // Bearer tokens for the native builds. A WebView on capacitor:// or
+    // tauri:// cannot receive the session cookie (cross-origin, and no
+    // SameSite=None path that Android/WebView2 will honour reliably), so
+    // native signs in once and carries the token in an Authorization header.
+    // Web is untouched — it keeps using cookies and never sends the header.
+    bearer(),
     adminPlugin({
       defaultRole: Role.USER,
       adminRoles: [Role.ADMIN],

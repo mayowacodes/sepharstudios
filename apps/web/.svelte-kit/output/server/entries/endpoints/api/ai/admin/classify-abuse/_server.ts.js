@@ -9,7 +9,7 @@ import { json } from "@sveltejs/kit";
 *
 * Used by the abuse queue to auto-sort + flag obvious critical reports.
 */
-var ALLOWED_SEVERITIES = new Set([
+var ALLOWED_SEVERITIES = /* @__PURE__ */ new Set([
 	"low",
 	"med",
 	"high",

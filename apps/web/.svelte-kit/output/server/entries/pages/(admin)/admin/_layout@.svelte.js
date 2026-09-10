@@ -1,6 +1,6 @@
-import { kt as head } from "../../../../chunks/ui-libs.js";
+import { Et as head } from "../../../../chunks/ui-libs.js";
 import { t as PortalShell } from "../../../../chunks/PortalShell.js";
-/* empty css                      */
+/* empty css                     */
 //#region src/routes/(admin)/admin/+layout@.svelte
 function _layout_($$renderer, $$props) {
 	let { children } = $$props;

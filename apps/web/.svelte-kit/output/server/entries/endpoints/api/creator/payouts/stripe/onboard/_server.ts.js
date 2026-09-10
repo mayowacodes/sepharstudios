@@ -1,4 +1,4 @@
-import { O as creators, t as db } from "../../../../../../../chunks/drizzle.js";
+import { F as creators, t as db } from "../../../../../../../chunks/drizzle.js";
 import { i as SiteMeta, r as Role } from "../../../../../../../chunks/constants.js";
 import { r as isStripeConfigured, t as getStripe } from "../../../../../../../chunks/stripe2.js";
 import { json } from "@sveltejs/kit";
@@ -15,7 +15,7 @@ import { eq } from "drizzle-orm";
 * AccountLink URLs are single-use and expire in 5 minutes — the client
 * calls this endpoint each time it needs to redirect.
 */
-var VALID_COUNTRIES = new Set([
+var VALID_COUNTRIES = /* @__PURE__ */ new Set([
 	"US",
 	"GB",
 	"CA",

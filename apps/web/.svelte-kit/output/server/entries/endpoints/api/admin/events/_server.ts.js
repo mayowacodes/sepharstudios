@@ -1,4 +1,4 @@
-import { M as events, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, z as events } from "../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../chunks/admin-auth.js";
 import { json } from "@sveltejs/kit";
 import { desc } from "drizzle-orm";
@@ -21,7 +21,7 @@ import { desc } from "drizzle-orm";
 *     meetingUrl?
 *   }
 */
-var VALID_KINDS = new Set([
+var VALID_KINDS = /* @__PURE__ */ new Set([
 	"webinar",
 	"workshop",
 	"fellowship",
@@ -29,7 +29,7 @@ var VALID_KINDS = new Set([
 	"qa",
 	"ama"
 ]);
-var VALID_AUDIENCES = new Set(["public", "creator"]);
+var VALID_AUDIENCES = /* @__PURE__ */ new Set(["public", "creator"]);
 var GET = async ({ locals }) => {
 	const { error } = await requireAdmin(locals);
 	if (error) return error;

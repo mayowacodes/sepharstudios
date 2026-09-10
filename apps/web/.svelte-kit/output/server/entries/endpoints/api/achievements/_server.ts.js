@@ -1,4 +1,4 @@
-import { St as userAchievements, mt as streaks, s as achievements, t as db } from "../../../../chunks/drizzle.js";
+import { kt as userAchievements, s as achievements, t as db, xt as streaks } from "../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/achievements/+server.ts

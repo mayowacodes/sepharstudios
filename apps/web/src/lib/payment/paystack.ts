@@ -136,24 +136,75 @@ export async function createRefund(options: {
 // ─── Plan amount helpers (USD cents → Paystack amount) ────────────────────────
 // Paystack processes USD in cents (100 = $1.00)
 //
-// Pricing model (2026-05-28):
-//   freemium: $1 every 2 months, 1 profile, no kids profile, ads-supported
-//   basic:    $4/month,           2 profiles, no kids profile, ad-free
-//   premium:  $10/month,          8 profiles, kids profile,    ad-free (family tier)
-//   creator:  $10/month,          for content creators (unchanged tier)
+// Pricing model (2026-09-10 — free-for-all launch, repriced):
+//   basic:    $0,        2 profiles, kids profile, ads-supported  <- entry tier
+//   premium:  $1/month,  8 profiles, kids profile, ad-free
+//   creator:  $2/month,  8 profiles, ad-free, creator tooling
 //
-// Family add-on ($5/month) is **deprecated** — its capabilities are now folded
-// into the `premium` tier. The familyAddons table remains for backwards
-// compatibility with existing subscribers.
+// `basic` absorbed the old `freemium` tier: it is now the free, ad-supported
+// entry point, and it inherited freemium's kids access. A "free for all"
+// platform that paywalls the entire kids portal is not free for the families it
+// most wants, and kids content is the strongest acquisition hook in a
+// faith-based catalog. Its 2-profile cap is a consequence of that — a kids
+// profile occupies a slot, so a 1-profile plan could not hold both a parent and
+// a child and `kidsAllowed` would have been decorative.
+//
+// `freemium` is RETAINED BELOW as a deprecated alias. Subscription rows store
+// the plan as a plain string, so removing the key would make
+// PLAN_FEATURES['freemium'] undefined for every existing subscriber — their
+// entitlements come from the snapshot columns, but every lookup that resolves
+// live config (ads gating, renewal, plan-change validation) would fall through
+// to its unknown-plan branch. Keep the alias until those rows are migrated.
+//
+// Ads never serve on kids/teens content regardless of plan — see the category
+// rule in $lib/subscription/ads.ts. Non-skippable advertising to children
+// carries regulatory exposure (COPPA, the UK CAP code) that the inventory does
+// not justify.
+//
+// Family add-on ($5/month) is **deprecated** — its capabilities are folded into
+// premium. The familyAddons table remains for backwards compatibility.
 
 export const PLAN_PRICES_CENTS = {
-	freemium: 100,  // $1.00 / 2 months
-	basic: 400,     // $4.00/month
-	premium: 1000,  // $10.00/month — replaces basic+family-addon
-	creator: 1000   // $10.00/month — creator tier
+	basic: 0,       // free — no charge cycle, never touches Paystack
+	premium: 100,   // $1.00/month
+	creator: 200,   // $2.00/month
+	/** @deprecated Alias for `basic`. Kept so existing subscription rows resolve. */
+	freemium: 0
 } as const;
 
 export type PlanName = keyof typeof PLAN_PRICES_CENTS;
+
+/**
+ * Is `v` a real plan name?
+ *
+ * Use this instead of `!PLAN_PRICES_CENTS[plan]` for validation. Freemium costs
+ * 0, and 0 is falsy — a truthiness check silently rejects the free tier as an
+ * unknown plan. That is exactly the bug this replaced in
+ * /api/payment/initialize and /api/subscriptions/start-trial.
+ */
+export function isPlanName(v: unknown): v is PlanName {
+	return typeof v === 'string' && Object.prototype.hasOwnProperty.call(PLAN_PRICES_CENTS, v);
+}
+
+/**
+ * Does this plan involve money? Free plans must never reach Paystack: there is
+ * nothing to charge, no authorization to store, and no renewal to schedule.
+ */
+/**
+ * Resolve a stored plan name to the tier it means today.
+ *
+ * `freemium` was merged into `basic` on 2026-09-10. Rows written before that
+ * still say 'freemium', so anything comparing plan names — entitlement checks,
+ * upgrade paths, reporting — must canonicalise first or it will treat the same
+ * tier as two different ones.
+ */
+export function canonicalPlan(plan: string): PlanName {
+	return plan === 'freemium' ? 'basic' : (plan as PlanName);
+}
+
+export function isPaidPlan(plan: PlanName): boolean {
+	return PLAN_PRICES_CENTS[plan] > 0;
+}
 
 /**
  * Per-plan capabilities. Single source of truth for profile caps, kids access,
@@ -167,10 +218,11 @@ export const PLAN_FEATURES: Record<PlanName, {
 	hasAds: boolean;
 	renewalIntervalMonths: number;
 }> = {
-	freemium: { maxProfiles: 1, kidsAllowed: false, hasAds: true,  renewalIntervalMonths: 2 },
-	basic:    { maxProfiles: 2, kidsAllowed: false, hasAds: false, renewalIntervalMonths: 1 },
+	basic:    { maxProfiles: 2, kidsAllowed: true,  hasAds: true,  renewalIntervalMonths: 0 },
 	premium:  { maxProfiles: 8, kidsAllowed: true,  hasAds: false, renewalIntervalMonths: 1 },
-	creator:  { maxProfiles: 2, kidsAllowed: false, hasAds: false, renewalIntervalMonths: 1 }
+	creator:  { maxProfiles: 8, kidsAllowed: true,  hasAds: false, renewalIntervalMonths: 1 },
+	// Deprecated alias — identical to `basic` so legacy rows behave correctly.
+	freemium: { maxProfiles: 2, kidsAllowed: true,  hasAds: true,  renewalIntervalMonths: 0 }
 };
 
 /**

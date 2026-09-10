@@ -1,4 +1,4 @@
-import { Ht as attr } from "../../../../../chunks/ui-libs.js";
+import { Lt as attr } from "../../../../../chunks/ui-libs.js";
 import { t as Mail } from "../../../../../chunks/mail.js";
 import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 //#region src/routes/(creator)/creator/newsletter/+page.svelte

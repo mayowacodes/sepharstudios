@@ -1,4 +1,4 @@
-import { Et as derived, kt as head } from "../../../../../chunks/ui-libs.js";
+import { Ct as derived, Et as head } from "../../../../../chunks/ui-libs.js";
 import "../../../../../chunks/Icon.js";
 import "../../../../../chunks/camera.js";
 import { t as Circle_check } from "../../../../../chunks/circle-check.js";

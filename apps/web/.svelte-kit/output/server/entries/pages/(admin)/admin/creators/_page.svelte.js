@@ -1,5 +1,4 @@
-import { Ht as attr, Wt as escape_html, jt as spread_props } from "../../../../../chunks/ui-libs.js";
-import { t as Icon } from "../../../../../chunks/Icon.js";
+import { Lt as attr, zt as escape_html } from "../../../../../chunks/ui-libs.js";
 import { t as KpiCard } from "../../../../../chunks/KpiCard.js";
 import { t as Clock } from "../../../../../chunks/clock.js";
 import "../../../../../chunks/coins.js";
@@ -7,6 +6,7 @@ import "../../../../../chunks/credit-card.js";
 import { t as Dollar_sign } from "../../../../../chunks/dollar-sign.js";
 import { t as File_text } from "../../../../../chunks/file-text.js";
 import { t as Mail } from "../../../../../chunks/mail.js";
+import { t as Megaphone } from "../../../../../chunks/megaphone.js";
 import { t as Send } from "../../../../../chunks/send.js";
 import { t as User_plus } from "../../../../../chunks/user-plus.js";
 import { t as Users } from "../../../../../chunks/users.js";
@@ -19,20 +19,6 @@ import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { t as PortalButton } from "../../../../../chunks/PortalButton.js";
 import "../../../../../chunks/card.js";
 import "../../../../../chunks/label.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/megaphone.svelte
-function Megaphone($$renderer, $$props) {
-	let { $$slots, $$events, ...props } = $$props;
-	Icon($$renderer, spread_props([
-		{ name: "megaphone" },
-		props,
-		{ iconNode: [
-			["path", { "d": "M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" }],
-			["path", { "d": "M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" }],
-			["path", { "d": "M8 6v8" }]
-		] }
-	]));
-}
-//#endregion
 //#region src/routes/(admin)/admin/creators/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

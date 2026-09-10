@@ -1,4 +1,4 @@
-import { K as mediaLibrary, a as user, t as db } from "../../../../../../../chunks/drizzle.js";
+import { $ as mediaLibrary, a as user, t as db } from "../../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/admin/content/[id]/review/+server.ts

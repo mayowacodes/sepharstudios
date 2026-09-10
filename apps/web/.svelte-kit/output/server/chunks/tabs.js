@@ -1,4 +1,4 @@
-import { Tt as bind_props, c as Tabs_content$1, jt as spread_props, l as Tabs$1, o as Tabs_trigger$1, s as Tabs_list$1 } from "./ui-libs.js";
+import { Ot as spread_props, St as bind_props, c as Tabs_content$1, l as Tabs$1, o as Tabs_trigger$1, s as Tabs_list$1 } from "./ui-libs.js";
 import { t as cn } from "./utils2.js";
 //#region src/lib/types/admin.ts
 var ReviewType = /* @__PURE__ */ function(ReviewType) {

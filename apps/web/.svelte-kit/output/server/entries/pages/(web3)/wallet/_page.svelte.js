@@ -1,4 +1,4 @@
-import { kt as head } from "../../../../chunks/ui-libs.js";
+import { Et as head } from "../../../../chunks/ui-libs.js";
 import { t as Arrow_left } from "../../../../chunks/arrow-left.js";
 import { r as LazyWalletConnect } from "../../../../chunks/web3-lazy.js";
 //#region src/routes/(web3)/wallet/+page.svelte

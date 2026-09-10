@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../chunks/shared-server.js";
-import { c as uploadFile, o as listObjects, r as getDirectObjectUrl, s as uploadAndSaveFile, t as deleteFileById } from "../../../../chunks/minio2.js";
+import { c as uploadAndSaveFile, l as uploadFile, r as getDirectObjectUrl, s as listObjects, t as deleteFileById } from "../../../../chunks/minio.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/files/+server.ts
 var BUCKET_NAME = private_env.MINIO_BUCKET || "uploads";

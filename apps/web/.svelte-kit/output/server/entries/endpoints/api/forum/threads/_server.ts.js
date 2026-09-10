@@ -1,4 +1,4 @@
-import { L as forumThreads, a as user, t as db } from "../../../../../chunks/drizzle.js";
+import { W as forumThreads, a as user, t as db } from "../../../../../chunks/drizzle.js";
 import { a as take } from "../../../../../chunks/rate-limit.js";
 import { t as moderateComment } from "../../../../../chunks/ai-moderation.js";
 import { json } from "@sveltejs/kit";
@@ -12,7 +12,7 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 * so an admin can review before publishing.
 */
 var PAGE_SIZE = 20;
-var ALLOWED_CATEGORIES = new Set([
+var ALLOWED_CATEGORIES = /* @__PURE__ */ new Set([
 	"getting-started",
 	"technical",
 	"content-creation",

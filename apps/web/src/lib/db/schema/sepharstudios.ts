@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index, bigint, date, doublePrecision, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, integer, boolean, jsonb, index, uniqueIndex, bigint, date, doublePrecision, primaryKey } from 'drizzle-orm/pg-core';
 
 import { sql } from 'drizzle-orm';
 
@@ -1395,4 +1395,329 @@ export const comingSoonSubscriptions = pgTable('coming_soon_subscriptions', {
 	notifiedAt: timestamp('notified_at')
 }, (t) => ({
 	contentPendingIdx: index('css_content_pending_idx').on(t.contentId)
+}));
+
+// -----------------------------------------------------------------------------
+// ADVERTISING PLATFORM
+//
+// Backs the squeeze-back ad format: at a cue point the movie scales to 60% and
+// an ad renders in the L-shaped remainder. Ads <= 30s duck the movie audio and
+// let it play on; longer ads pause it and restore full size afterwards.
+//
+// Tables are named `ad_*` but served from `/api/promo/*` on the wire. EasyList
+// (uBlock Origin, AdBlock Plus, most mobile content blockers) blocks the
+// substring `/api/ads/` by default, which made the previous endpoint silently
+// unreachable for a large share of viewers.
+//
+// Ad revenue attribution to creators is deliberately OUT OF SCOPE. `contentId`
+// and `creatorId` are recorded on impressions as data, so if that decision
+// reverses it is a query rather than a backfill -- but there is no earnings
+// code, no revenue-share table and no payout path here.
+// -----------------------------------------------------------------------------
+
+/** Who is buying. `kind='house'` is Sephar's own promo inventory / backfill. */
+export const adAdvertisers = pgTable('ad_advertisers', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	name: varchar('name', { length: 200 }).notNull(),
+	slug: varchar('slug', { length: 120 }).notNull(),
+	kind: varchar('kind', { length: 20 }).notNull().default('external'), // 'external' | 'house'
+	contactEmail: varchar('contact_email', { length: 320 }),
+	isActive: boolean('is_active').notNull().default(true),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	slugUq: uniqueIndex('ad_advertisers_slug_uq').on(t.slug)
+}));
+
+/**
+ * A flight: what runs, when, to whom, and how hard.
+ *
+ * `priority` orders the auction (higher wins). `goalImpressions` plus
+ * `deliveredImpressions` drive both pacing and the automatic
+ * active -> completed transition in the rollup cron.
+ *
+ * Targeting is stored as arrays rather than a rules engine because every
+ * dimension here is a simple include/exclude set. An empty array means "no
+ * constraint on this dimension", NOT "matches nothing" -- the decision code
+ * must treat empty as a wildcard or every campaign silently stops serving.
+ */
+export const adCampaigns = pgTable('ad_campaigns', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	advertiserId: text('advertiser_id').notNull().references(() => adAdvertisers.id, { onDelete: 'cascade' }),
+	name: varchar('name', { length: 200 }).notNull(),
+	status: varchar('status', { length: 20 }).notNull().default('draft'), // draft|scheduled|active|paused|completed
+	priority: integer('priority').notNull().default(50), // 0-100, higher wins
+	startsAt: timestamp('starts_at').notNull(),
+	endsAt: timestamp('ends_at'),
+	goalImpressions: integer('goal_impressions'),
+	deliveredImpressions: integer('delivered_impressions').notNull().default(0),
+	// Frequency cap: at most N impressions per viewer per rolling window.
+	// Enforced in Redis, not here -- this row only stores the policy.
+	capPerViewer: integer('cap_per_viewer'),
+	capWindowHours: integer('cap_window_hours').notNull().default(24),
+	// Targeting. Empty array = unconstrained.
+	targetGenres: jsonb('target_genres').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	targetRegions: jsonb('target_regions').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	targetDeviceTypes: jsonb('target_device_types').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	excludeContentIds: jsonb('exclude_content_ids').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+	// Kids/teens titles are ad-free platform-wide, so this defaults false and
+	// exists only to make the intent explicit in the admin UI.
+	kidsSafe: boolean('kids_safe').notNull().default(false),
+	// 'server' fires third-party pixels from our backend (ad-blocker resilient,
+	// no viewer IP leak); 'client' fires them from the page, for demand partners
+	// whose contracts require it.
+	trackingMode: varchar('tracking_mode', { length: 10 }).notNull().default('server'),
+	vastCacheSeconds: integer('vast_cache_seconds').notNull().default(0),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	statusFlightIdx: index('ad_campaigns_status_flight_idx').on(t.status, t.startsAt, t.endsAt),
+	advertiserIdx: index('ad_campaigns_advertiser_idx').on(t.advertiserId)
+}));
+
+/**
+ * The creative itself.
+ *
+ * `durationSeconds` is load-bearing: the pause-vs-duck decision must be made at
+ * the instant the break opens, before the ad element exists. For `kind='vast'`
+ * it is filled from the parsed <Duration> at decision time. When duration is
+ * unknown the player defaults to pause -- never leave a movie running under an
+ * ad of unknown length.
+ */
+export const adCreatives = pgTable('ad_creatives', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	campaignId: text('campaign_id').notNull().references(() => adCampaigns.id, { onDelete: 'cascade' }),
+	kind: varchar('kind', { length: 10 }).notNull().default('video'), // 'video' | 'vast'
+	name: varchar('name', { length: 200 }).notNull(),
+	// kind='video'
+	videoObjectKey: text('video_object_key'),
+	posterObjectKey: text('poster_object_key'),
+	durationSeconds: integer('duration_seconds'),
+	bitrateKbps: integer('bitrate_kbps'),
+	width: integer('width'),
+	height: integer('height'),
+	// kind='vast'
+	vastTagUrl: text('vast_tag_url'),
+	// Click-through
+	clickUrl: text('click_url'),
+	ctaLabel: varchar('cta_label', { length: 60 }),
+	// Companion panel copy for the L's bottom leg.
+	headline: varchar('headline', { length: 140 }),
+	body: text('body'),
+	// 'takeover' pauses and fills the frame on phones; 'skip' opts the creative
+	// out of mobile entirely (no fill, the next campaign runs).
+	mobileBehavior: varchar('mobile_behavior', { length: 10 }).notNull().default('takeover'),
+	weight: integer('weight').notNull().default(1),
+	isActive: boolean('is_active').notNull().default(true),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	campaignIdx: index('ad_creatives_campaign_idx').on(t.campaignId, t.isActive)
+}));
+
+/**
+ * Cue points on a title. `positionSeconds = 0` is the pre-roll.
+ *
+ * Placement rules (enforced when created, and re-checked at decision time
+ * because breaks can be created by three different paths): at most 4 per title,
+ * at least 300s apart, and none after 90% of runtime -- the end screen appears
+ * at 90% and auto-advance fires at 95%, so a late break races both.
+ */
+export const adBreaks = pgTable('ad_breaks', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').notNull().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	positionSeconds: integer('position_seconds').notNull(),
+	kind: varchar('kind', { length: 12 }).notNull().default('midroll'), // 'preroll' | 'midroll'
+	// Overrides the 0.6 default squeeze scale for this break when set.
+	format: varchar('format', { length: 12 }),
+	isActive: boolean('is_active').notNull().default(true),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+}, (t) => ({
+	contentIdx: index('ad_breaks_content_idx').on(t.contentId, t.isActive),
+	positionUq: uniqueIndex('ad_breaks_position_uq').on(t.contentId, t.positionSeconds)
+}));
+
+/** Per-title opt-out, so a sensitive film can carry no advertising. */
+export const adContentSettings = pgTable('ad_content_settings', {
+	contentId: text('content_id').primaryKey().references(() => mediaLibrary.id, { onDelete: 'cascade' }),
+	adsEnabled: boolean('ads_enabled').notNull().default(true),
+	note: text('note'),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+/**
+ * One row per ad served, mutated in place as the viewer progresses.
+ *
+ * `status` advances monotonically (served -> started -> q1 -> q2 -> q3 ->
+ * complete) so a replayed beacon is a no-op rather than an inflated count. The
+ * pre-existing impression pattern in this codebase was an unauthenticated
+ * `col = col + 1` with no dedup, which is trivially inflatable.
+ *
+ * A BILLABLE impression is `status >= started AND watched_seconds >= 2`, not
+ * `served`. The gap between served and started is the ad-block measurement and
+ * the single most useful health metric for this feature.
+ */
+export const adImpressions = pgTable('ad_impressions', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	// HMAC-signed at decision time; the beacon endpoint verifies before writing.
+	decisionId: text('decision_id').notNull(),
+	campaignId: text('campaign_id').notNull().references(() => adCampaigns.id, { onDelete: 'cascade' }),
+	creativeId: text('creative_id').notNull().references(() => adCreatives.id, { onDelete: 'cascade' }),
+	breakId: text('break_id').references(() => adBreaks.id, { onDelete: 'set null' }),
+	contentId: text('content_id').references(() => mediaLibrary.id, { onDelete: 'set null' }),
+	// Recorded as data only -- see the out-of-scope note above.
+	creatorId: text('creator_id'),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	status: varchar('status', { length: 12 }).notNull().default('served'),
+	watchedSeconds: integer('watched_seconds').notNull().default(0),
+	skipped: boolean('skipped').notNull().default(false),
+	clicked: boolean('clicked').notNull().default(false),
+	// True when the player was muted -- an advertiser should not be credited
+	// with audible reach that never happened.
+	wasMuted: boolean('was_muted').notNull().default(false),
+	// Server-derived from headers (comparable to watchSessionMeta buckets).
+	deviceType: varchar('device_type', { length: 20 }),
+	country: varchar('country', { length: 2 }),
+	// Client-reported: which layout actually rendered. Disagreement with
+	// deviceType is expected, and worth reporting rather than hiding.
+	layout: varchar('layout', { length: 12 }),
+	behavior: varchar('behavior', { length: 10 }), // 'duck' | 'pause'
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	startedAt: timestamp('started_at'),
+	completedAt: timestamp('completed_at')
+}, (t) => ({
+	decisionUq: uniqueIndex('ad_impressions_decision_uq').on(t.decisionId),
+	campaignDayIdx: index('ad_impressions_campaign_day_idx').on(t.campaignId, t.createdAt),
+	contentIdx: index('ad_impressions_content_idx').on(t.contentId, t.createdAt)
+}));
+
+/** Daily rollup, mirroring mediaAnalyticsDaily's composite-PK shape. */
+export const adCampaignDaily = pgTable('ad_campaign_daily', {
+	campaignId: text('campaign_id').notNull().references(() => adCampaigns.id, { onDelete: 'cascade' }),
+	day: date('day').notNull(),
+	served: integer('served').notNull().default(0),
+	started: integer('started').notNull().default(0),
+	completed: integer('completed').notNull().default(0),
+	skipped: integer('skipped').notNull().default(0),
+	clicks: integer('clicks').notNull().default(0),
+	watchSeconds: bigint('watch_seconds', { mode: 'number' }).notNull().default(0)
+}, (t) => ({
+	pk: primaryKey({ columns: [t.campaignId, t.day] })
+}));
+
+// -----------------------------------------------------------------------------
+// AI COST LEDGER  (Xepho section 21, adapted)
+//
+// Roughly fifteen features on this platform call a paid model -- tagging,
+// moderation, the companion, creator insights, NFT metadata, token scoring and
+// more -- and before this table there was cost tracking in exactly ONE endpoint.
+// On a platform whose entry tier is free, unbounded variable AI spend with no
+// attribution is the precise risk the Xepho cost-governor section exists to
+// address.
+//
+// Discipline: estimate -> reserve -> execute -> record actual -> reconcile.
+// The reservation is what makes a budget ceiling meaningful; recording only the
+// actual cost after the fact tells you what you spent, not what you are about
+// to spend, and cannot refuse anything.
+// -----------------------------------------------------------------------------
+
+/**
+ * One row per paid model call, including refusals and failures.
+ *
+ * Failures are recorded deliberately: a provider that times out after consuming
+ * input tokens still costs money, and a retry storm that bills nothing visible
+ * is exactly how COGS drifts without anyone noticing.
+ */
+export const aiCostLedger = pgTable('ai_cost_ledger', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	// Attribution. All nullable because some calls are platform-level (cron
+	// sweeps, moderation of anonymous submissions) with no owning user.
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	creatorId: text('creator_id'),
+	contentId: text('content_id').references(() => mediaLibrary.id, { onDelete: 'set null' }),
+	// Ledger category, trimmed to what this platform actually spends on:
+	// planning (LLM), speech (TTS/subtitles), qc (moderation), compute
+	// (encode), delivery (egress).
+	category: varchar('category', { length: 20 }).notNull(),
+	operation: varchar('operation', { length: 80 }).notNull(),
+	provider: varchar('provider', { length: 40 }).notNull(),
+	model: varchar('model', { length: 120 }).notNull(),
+	inputUnits: integer('input_units').notNull().default(0),
+	outputUnits: integer('output_units').notNull().default(0),
+	// Micro-dollars (1e-6 USD). Integer arithmetic on purpose: per-call costs
+	// are fractions of a cent, and float accumulation across millions of rows
+	// drifts. Divide by 1e6 only at the presentation layer.
+	estimatedMicroUsd: bigint('estimated_micro_usd', { mode: 'number' }).notNull().default(0),
+	actualMicroUsd: bigint('actual_micro_usd', { mode: 'number' }),
+	status: varchar('status', { length: 16 }).notNull().default('reserved'), // reserved|settled|failed|refused
+	retryNumber: integer('retry_number').notNull().default(0),
+	errorMessage: text('error_message'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	settledAt: timestamp('settled_at')
+}, (t) => ({
+	userPeriodIdx: index('ai_cost_user_period_idx').on(t.userId, t.createdAt),
+	creatorPeriodIdx: index('ai_cost_creator_period_idx').on(t.creatorId, t.createdAt),
+	categoryIdx: index('ai_cost_category_idx').on(t.category, t.createdAt)
+}));
+
+/**
+ * Rolling spend per scope per period, so a budget check is one indexed read
+ * rather than an aggregate over the ledger.
+ *
+ * `scope` is 'user' | 'creator' | 'platform'; `scopeId` is the owning id, or
+ * the literal 'platform' for the global daily emergency cap.
+ */
+export const aiBudgetPeriods = pgTable('ai_budget_periods', {
+	scope: varchar('scope', { length: 12 }).notNull(),
+	scopeId: text('scope_id').notNull(),
+	periodStart: date('period_start').notNull(),
+	spentMicroUsd: bigint('spent_micro_usd', { mode: 'number' }).notNull().default(0),
+	// Null means "no ceiling" -- an explicit absence, not zero. Zero would mean
+	// "cannot spend anything", which is a very different policy.
+	limitMicroUsd: bigint('limit_micro_usd', { mode: 'number' }),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	pk: primaryKey({ columns: [t.scope, t.scopeId, t.periodStart] })
+}));
+
+// -----------------------------------------------------------------------------
+// PLAYBACK TELEMETRY  (Xepho section 29 / section 34)
+//
+// "Playback error rate and effective bitrate by geography and device" was the
+// one metric in the Xepho observability table with no equivalent here at all.
+// Views and watch-seconds say how much was watched; they say nothing about
+// whether it played WELL, so a region served badly by the CDN looks identical
+// to a region that simply watches less.
+//
+// One row per playback session, updated in place — not one row per event. A
+// two-hour film emits hundreds of quality switches, and storing each would
+// dwarf every other table on the platform to answer a question that only needs
+// the aggregate.
+// -----------------------------------------------------------------------------
+export const playbackTelemetry = pgTable('playback_telemetry', {
+	id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text('content_id').references(() => mediaLibrary.id, { onDelete: 'set null' }),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	// Server-derived from headers, so these buckets are directly comparable to
+	// watchSessionMeta's.
+	deviceType: varchar('device_type', { length: 20 }),
+	country: varchar('country', { length: 2 }),
+	// Mean of the bitrates hls.js actually selected, weighted by time at each
+	// level. This is the number that says whether a viewer got the quality the
+	// ladder was built to deliver.
+	effectiveBitrateKbps: integer('effective_bitrate_kbps'),
+	startupMs: integer('startup_ms'),
+	// A stall is a rebuffer after playback began. Counted separately from
+	// errors: stalls degrade the experience, errors end it.
+	stallCount: integer('stall_count').notNull().default(0),
+	stallSeconds: integer('stall_seconds').notNull().default(0),
+	errorCount: integer('error_count').notNull().default(0),
+	fatalError: text('fatal_error'),
+	// 'audio' when the viewer fell to the audio-only rung — the signal that the
+	// low-bandwidth lever is actually being used.
+	finalQuality: varchar('final_quality', { length: 20 }),
+	watchedSeconds: integer('watched_seconds').notNull().default(0),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, (t) => ({
+	contentDayIdx: index('playback_telemetry_content_day_idx').on(t.contentId, t.createdAt),
+	geoIdx: index('playback_telemetry_geo_idx').on(t.country, t.deviceType, t.createdAt)
 }));

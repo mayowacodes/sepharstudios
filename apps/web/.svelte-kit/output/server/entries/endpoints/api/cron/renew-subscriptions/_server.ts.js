@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { Z as paymentIntents, a as user, t as db, tt as paystackSubscriptions } from "../../../../../chunks/drizzle.js";
+import { a as user, ct as paystackSubscriptions, it as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
 import { t as notify } from "../../../../../chunks/notify.js";
 import { n as PLAN_PRICES_CENTS, r as chargeAuthorization, t as PLAN_FEATURES } from "../../../../../chunks/paystack.js";
 import { json } from "@sveltejs/kit";
@@ -56,10 +56,7 @@ var POST = async ({ request }) => {
 			continue;
 		}
 		const amountCents = PLAN_PRICES_CENTS[plan];
-		if (!amountCents) {
-			results.errors.push(`sub ${sub.id}: no price for plan "${plan}"`);
-			continue;
-		}
+		if (amountCents === 0) continue;
 		if (!sub.paystackAuthorizationCode) {
 			results.errors.push(`sub ${sub.id}: no authorization code`);
 			continue;

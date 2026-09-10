@@ -1,4 +1,4 @@
-import { K as mediaLibrary } from "./drizzle.js";
+import { $ as mediaLibrary } from "./drizzle.js";
 //#region src/lib/db/projections.ts
 /**
 * Card-shaped projection for `mediaLibrary` rows on list/feed endpoints

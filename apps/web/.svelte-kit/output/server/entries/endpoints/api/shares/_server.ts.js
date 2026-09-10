@@ -1,4 +1,4 @@
-import { b as contentShares, t as db } from "../../../../chunks/drizzle.js";
+import { D as contentShares, t as db } from "../../../../chunks/drizzle.js";
 import { t as track } from "../../../../chunks/analytics.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/shares/+server.ts
@@ -10,7 +10,7 @@ import { json } from "@sveltejs/kit";
 * Used by creator analytics to power `totalShares` and to identify which
 * channels drive virality.
 */
-var ALLOWED_CHANNELS = new Set([
+var ALLOWED_CHANNELS = /* @__PURE__ */ new Set([
 	"link",
 	"twitter",
 	"facebook",

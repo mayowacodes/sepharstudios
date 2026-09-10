@@ -4,7 +4,9 @@ import { paystackSubscriptions } from '$lib/db/schema/sepharstudios';
 import { eq, desc } from 'drizzle-orm';
 import { PLAN_PRICES_CENTS, PLAN_FEATURES, type PlanName } from '$lib/payment/paystack';
 
-const VALID_PLANS = new Set<PlanName>(['freemium', 'basic', 'premium', 'creator']);
+// 'freemium' is intentionally absent: it was merged into 'basic' and must not
+// be selectable going forward, even though existing rows still carry the name.
+const VALID_PLANS = new Set<PlanName>(['basic', 'premium', 'creator']);
 
 // POST /api/subscriptions/change-plan
 // Switches the current subscription to a different plan. The new plan applies

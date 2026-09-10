@@ -1,136 +1,167 @@
 {
 	"/(web3)": [
-		"src/routes/(web3)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(web3)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(protected)": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
-	],
-	"/(creator)": [
-		"src/routes/(creator)/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(auth)": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)": [
-		"src/routes/(app)/+page.server.ts",
-		"src/routes/+layout.server.ts",
-		"src/routes/+layout.server.ts"
-	],
-	"/(admin)": [
-		"src/routes/(admin)/+layout.server.ts"
+		"src/routes/(app)/+page.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/about": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/access-denied": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/achievements": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin": [
-		"src/routes/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts",
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/abuse": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/ai-runs": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/analytics": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/communications": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/content": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/creator-applications": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/creators": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/dashboard": [
-		"src/routes/(admin)/admin/dashboard/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/dashboard/+page.ts",
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/disputes": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/events": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/create": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/emergency": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/execution": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/proposals": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/reports": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/roles": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/treasury": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/payouts": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/policies": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/(admin)/admin/promo": [
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/refunds": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/review": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/review/[id]": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/settings": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/submissions": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/system-health": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/tax-forms": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/tokenomics": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/users": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/users/[id]": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/workflow": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/api/achievements": [
 		"src/routes/api/achievements/+server.ts"
@@ -152,6 +183,9 @@
 	],
 	"/api/admin/agents/[name]/fire": [
 		"src/routes/api/admin/agents/[name]/fire/+server.ts"
+	],
+	"/api/admin/ai-costs": [
+		"src/routes/api/admin/ai-costs/+server.ts"
 	],
 	"/api/admin/ai/config": [
 		"src/routes/api/admin/ai/config/+server.ts"
@@ -221,6 +255,9 @@
 	],
 	"/api/admin/creators/invite": [
 		"src/routes/api/admin/creators/invite/+server.ts"
+	],
+	"/api/admin/dashboard": [
+		"src/routes/api/admin/dashboard/+server.ts"
 	],
 	"/api/admin/disputes": [
 		"src/routes/api/admin/disputes/+server.ts"
@@ -294,6 +331,24 @@
 	"/api/admin/policies": [
 		"src/routes/api/admin/policies/+server.ts"
 	],
+	"/api/admin/promo/advertisers": [
+		"src/routes/api/admin/promo/advertisers/+server.ts"
+	],
+	"/api/admin/promo/breaks": [
+		"src/routes/api/admin/promo/breaks/+server.ts"
+	],
+	"/api/admin/promo/campaigns": [
+		"src/routes/api/admin/promo/campaigns/+server.ts"
+	],
+	"/api/admin/promo/creatives": [
+		"src/routes/api/admin/promo/creatives/+server.ts"
+	],
+	"/api/admin/promo/preview": [
+		"src/routes/api/admin/promo/preview/+server.ts"
+	],
+	"/api/admin/promo/reports": [
+		"src/routes/api/admin/promo/reports/+server.ts"
+	],
 	"/api/admin/refunds": [
 		"src/routes/api/admin/refunds/+server.ts"
 	],
@@ -363,9 +418,6 @@
 	"/api/admin/workflow/stats": [
 		"src/routes/api/admin/workflow/stats/+server.ts"
 	],
-	"/api/ads/vast-tag": [
-		"src/routes/api/ads/vast-tag/+server.ts"
-	],
 	"/api/ai/admin/classify-abuse": [
 		"src/routes/api/ai/admin/classify-abuse/+server.ts"
 	],
@@ -420,6 +472,21 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/catalog/audience/[category]": [
+		"src/routes/api/catalog/audience/[category]/+server.ts"
+	],
+	"/api/catalog/browse": [
+		"src/routes/api/catalog/browse/+server.ts"
+	],
+	"/api/catalog/coming-soon": [
+		"src/routes/api/catalog/coming-soon/+server.ts"
+	],
+	"/api/catalog/detail/[scope]/[slug]": [
+		"src/routes/api/catalog/detail/[scope]/[slug]/+server.ts"
+	],
+	"/api/catalog/[kind]": [
+		"src/routes/api/catalog/[kind]/+server.ts"
+	],
 	"/api/coming-soon": [
 		"src/routes/api/coming-soon/+server.ts"
 	],
@@ -446,6 +513,9 @@
 	],
 	"/api/creators/[id]/follow": [
 		"src/routes/api/creators/[id]/follow/+server.ts"
+	],
+	"/api/creators/[id]/page": [
+		"src/routes/api/creators/[id]/page/+server.ts"
 	],
 	"/api/creator/analytics": [
 		"src/routes/api/creator/analytics/+server.ts"
@@ -509,6 +579,9 @@
 	],
 	"/api/creator/encoder-stream": [
 		"src/routes/api/creator/encoder-stream/+server.ts"
+	],
+	"/api/creator/in-flight-encodes": [
+		"src/routes/api/creator/in-flight-encodes/+server.ts"
 	],
 	"/api/creator/live": [
 		"src/routes/api/creator/live/+server.ts"
@@ -605,6 +678,9 @@
 	],
 	"/api/cron/payout-reserve": [
 		"src/routes/api/cron/payout-reserve/+server.ts"
+	],
+	"/api/cron/promo-rollup": [
+		"src/routes/api/cron/promo-rollup/+server.ts"
 	],
 	"/api/cron/renew-subscriptions": [
 		"src/routes/api/cron/renew-subscriptions/+server.ts"
@@ -711,6 +787,9 @@
 	"/api/health": [
 		"src/routes/api/health/+server.ts"
 	],
+	"/api/home": [
+		"src/routes/api/home/+server.ts"
+	],
 	"/api/internal/refunds/sweep-pending": [
 		"src/routes/api/internal/refunds/sweep-pending/+server.ts"
 	],
@@ -762,6 +841,12 @@
 	"/api/platform-settings": [
 		"src/routes/api/platform-settings/+server.ts"
 	],
+	"/api/playback/live/[id]": [
+		"src/routes/api/playback/live/[id]/+server.ts"
+	],
+	"/api/playback/[id]": [
+		"src/routes/api/playback/[id]/+server.ts"
+	],
 	"/api/playlists": [
 		"src/routes/api/playlists/+server.ts"
 	],
@@ -783,11 +868,26 @@
 	"/api/profiles/current": [
 		"src/routes/api/profiles/current/+server.ts"
 	],
+	"/api/profiles/overview": [
+		"src/routes/api/profiles/overview/+server.ts"
+	],
 	"/api/profiles/[id]": [
 		"src/routes/api/profiles/[id]/+server.ts"
 	],
 	"/api/profiles/[id]/pin": [
 		"src/routes/api/profiles/[id]/pin/+server.ts"
+	],
+	"/api/promo/decision": [
+		"src/routes/api/promo/decision/+server.ts"
+	],
+	"/api/promo/e": [
+		"src/routes/api/promo/e/+server.ts"
+	],
+	"/api/promo/plan": [
+		"src/routes/api/promo/plan/+server.ts"
+	],
+	"/api/promo/vast-tag": [
+		"src/routes/api/promo/vast-tag/+server.ts"
 	],
 	"/api/push/subscribe": [
 		"src/routes/api/push/subscribe/+server.ts"
@@ -810,6 +910,9 @@
 	"/api/shares": [
 		"src/routes/api/shares/+server.ts"
 	],
+	"/api/sponsorships": [
+		"src/routes/api/sponsorships/+server.ts"
+	],
 	"/api/subscriptions/add-family": [
 		"src/routes/api/subscriptions/add-family/+server.ts"
 	],
@@ -821,6 +924,9 @@
 	],
 	"/api/subscriptions/send-otp": [
 		"src/routes/api/subscriptions/send-otp/+server.ts"
+	],
+	"/api/subscriptions/start-free": [
+		"src/routes/api/subscriptions/start-free/+server.ts"
 	],
 	"/api/subscriptions/start-trial": [
 		"src/routes/api/subscriptions/start-trial/+server.ts"
@@ -874,308 +980,335 @@
 		"src/routes/api/webhooks/stripe/+server.ts"
 	],
 	"/(app)/apply/creator": [
-		"src/routes/(app)/apply/creator/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/apply/creator/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(auth)/auth/forget-password": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(auth)/auth/forget-password/success": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(auth)/auth/login": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(auth)/auth/register": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(auth)/auth/reset-password": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/browse": [
-		"src/routes/(app)/browse/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/browse/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/careers": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/checkout": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/coming-soon": [
-		"src/routes/(app)/coming-soon/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/coming-soon/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/contact": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/creators/[id]": [
-		"src/routes/(app)/creators/[id]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/creators/[id]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator": [
-		"src/routes/(creator)/creator/+page.server.ts",
-		"src/routes/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+page.ts",
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts",
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/agreement": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/analytics-help": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/analytics": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/best-practices": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/content": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/content/[id]": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/content/[id]/episodes": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/copyright": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/earnings": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/earnings/tax-forms": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/events": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/forum": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/forum/new": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/forum/[id]": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/guidelines": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/inbox": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/live": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/moderation": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/newsletter": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/profile": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/success-stories": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/support": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/tech-support": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/test": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(creator)/creator/upload": [
-		"src/routes/+layout.server.ts"
+		"src/routes/(creator)/creator/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/dashboard": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/device-support": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/documentaries": [
-		"src/routes/(app)/documentaries/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/documentaries/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/documentaries/[slug]": [
-		"src/routes/(app)/documentaries/[slug]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/documentaries/[slug]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/documentation": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/exchange": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/faq": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/features": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/guidelines": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/help": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids": [
-		"src/routes/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies": [
-		"src/routes/kids/kiddies/+page.server.ts",
+		"src/routes/kids/kiddies/+page.ts",
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts",
+		"src/routes/+layout.ts",
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/bible-quiz": [
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/documentaries": [
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/movies": [
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/profile": [
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/shows": [
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/kiddies/[slug]": [
-		"src/routes/kids/kiddies/[slug]/+page.server.ts",
+		"src/routes/kids/kiddies/[slug]/+page.ts",
 		"src/routes/kids/kiddies/+layout.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/kids/teens": [
-		"src/routes/kids/teens/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/kids/teens/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/kids/teens/[slug]": [
-		"src/routes/kids/teens/[slug]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/kids/teens/[slug]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/liquidity": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/milestones": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/movies": [
-		"src/routes/(app)/movies/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/movies/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/movies/[slug]": [
-		"src/routes/(app)/movies/[slug]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/movies/[slug]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/my-studios": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/offline": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/parental-controls": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/plans": [
-		"src/routes/+layout.server.ts",
+		"src/routes/+layout.ts",
 		"src/routes/(app)/plans/+server.ts"
 	],
 	"/(app)/press": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(app)/privacy": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/profiles": [
-		"src/routes/(protected)/profiles/+page.server.ts",
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/profiles/+page.ts",
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/profile": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/search": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/settings": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/shows": [
-		"src/routes/(app)/shows/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/shows/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/shows/[slug]": [
-		"src/routes/(app)/shows/[slug]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/shows/[slug]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/sitemap.xml": [
 		"src/routes/sitemap.xml/+server.ts"
 	],
 	"/(app)/sponsorships": [
-		"src/routes/(app)/sponsorships/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(app)/sponsorships/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/staking": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(web3)/subscription": [
-		"src/routes/(web3)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(web3)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/terms": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(web3)/tokens": [
-		"src/routes/(web3)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(web3)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/token": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/users": [
-		"src/routes/(protected)/users/+page.server.ts",
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/users/+page.ts",
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(web3)/wallet": [
-		"src/routes/(web3)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(web3)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(protected)/watchlist": [
-		"src/routes/(protected)/+layout.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/(protected)/+layout.ts",
+		"src/routes/+layout.ts"
 	],
 	"/watch/live/[id]": [
-		"src/routes/watch/live/[id]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/watch/live/[id]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/watch/[id]": [
-		"src/routes/watch/[id]/+page.server.ts",
-		"src/routes/+layout.server.ts"
+		"src/routes/watch/[id]/+page.ts",
+		"src/routes/+layout.ts"
 	],
 	"/(app)/webinars": [
-		"src/routes/+layout.server.ts"
+		"src/routes/+layout.ts"
 	]
 }

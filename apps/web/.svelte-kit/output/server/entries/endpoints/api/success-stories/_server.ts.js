@@ -1,4 +1,4 @@
-import { gt as successStories, t as db } from "../../../../chunks/drizzle.js";
+import { Ct as successStories, t as db } from "../../../../chunks/drizzle.js";
 import { a as take } from "../../../../chunks/rate-limit.js";
 import { json } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";

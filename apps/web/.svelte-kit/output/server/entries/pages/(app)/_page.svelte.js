@@ -1,4 +1,4 @@
-import { Et as derived } from "../../../chunks/ui-libs.js";
+import { Ct as derived } from "../../../chunks/ui-libs.js";
 import { t as Constants } from "../../../chunks/constants.js";
 import "../../../chunks/Icon.js";
 import "../../../chunks/circle-play.js";

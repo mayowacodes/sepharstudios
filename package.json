@@ -14,7 +14,12 @@
 		"build": "turbo run build",
 		"build:web": "turbo run build --filter=web",
 		"dev:web": "turbo run dev --filter=web",
-		"dev:contracts": "turbo run dev --filter=contracts"
+		"dev:contracts": "turbo run dev --filter=contracts",
+		"build:spa": "cd apps/web && bun run build:static",
+		"build:android": "bun run build:spa && cd apps/mobile && bun run sync && bun run build:apk",
+		"build:android:debug": "bun run build:spa && cd apps/mobile && bun run sync && bun run build:apk:debug",
+		"build:desktop": "bun run build:spa && cd apps/desktop && bun run build",
+		"build:all": "bun run build && bun run build:android && bun run build:desktop"
 	},
 	"devDependencies": {
 		"turbo": "latest"

@@ -1,4 +1,4 @@
-import { lt as refunds, t as db } from "../../../../../../chunks/drizzle.js";
+import { gt as refunds, t as db } from "../../../../../../chunks/drizzle.js";
 import { t as isValidInternalRequest } from "../../../../../../chunks/internal-auth.js";
 import { json } from "@sveltejs/kit";
 import { and, eq, lt } from "drizzle-orm";
@@ -27,7 +27,7 @@ import { and, eq, lt } from "drizzle-orm";
 var STUCK_AFTER_MS = 600 * 1e3;
 var POST = async ({ request }) => {
 	if (!isValidInternalRequest(request)) return json({ error: "Forbidden" }, { status: 403 });
-	const cutoff = new Date(Date.now() - STUCK_AFTER_MS);
+	const cutoff = /* @__PURE__ */ new Date(Date.now() - STUCK_AFTER_MS);
 	const stuck = await db.update(refunds).set({
 		status: "failed",
 		paystackResponse: {

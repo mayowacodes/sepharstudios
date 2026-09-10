@@ -1,4 +1,4 @@
-import { l as adminMessages, t as db } from "../../../../../../../chunks/drizzle.js";
+import { g as adminMessages, t as db } from "../../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/creator/messages/[id]/archive/+server.ts

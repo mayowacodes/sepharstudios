@@ -1,14 +1,10 @@
 import { n as public_env } from "./shared-server.js";
-import { a as adminAc, c as PACKAGE_VERSION, i as ADMIN_ERROR_CODES, l as getBaseURL, n as roles, r as hasPermission, s as userAc, t as ac } from "./permissions.js";
-import { defu } from "defu";
-import { defineErrorCodes } from "@better-auth/core/utils/error-codes";
-import { createFetch } from "@better-fetch/fetch";
-import { atom, onMount } from "nanostores";
-import { capitalizeFirstLetter } from "@better-auth/core/utils/string";
-//#region ../../node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs
+import { S as defineErrorCodes, a as adminAc, c as PACKAGE_VERSION, f as defu, h as getBaseURL, i as ADMIN_ERROR_CODES, n as roles, p as isSafeUrlScheme, r as hasPermission, s as userAc, t as ac, u as createFetch } from "./permissions.js";
+import { n as toKebabCase, t as capitalizeFirstLetter } from "./string.js";
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs
 var MULTI_SESSION_ERROR_CODES = defineErrorCodes({ INVALID_SESSION_TOKEN: "Invalid session token" });
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/parser.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/parser.mjs
 var PROTO_POLLUTION_PATTERNS = {
 	proto: /"(?:_|\\u0{2}5[Ff]){2}(?:p|\\u0{2}70)(?:r|\\u0{2}72)(?:o|\\u0{2}6[Ff])(?:t|\\u0{2}74)(?:o|\\u0{2}6[Ff])(?:_|\\u0{2}5[Ff]){2}"\s*:/,
 	constructor: /"(?:c|\\u0063)(?:o|\\u006[Ff])(?:n|\\u006[Ee])(?:s|\\u0073)(?:t|\\u0074)(?:r|\\u0072)(?:u|\\u0075)(?:c|\\u0063)(?:t|\\u0074)(?:o|\\u006[Ff])(?:r|\\u0072)"\s*:/,
@@ -44,7 +40,6 @@ function betterJSONParse(value, options = {}) {
 	const { strict = false, warnings = false, reviver, parseDates = true } = options;
 	if (typeof value !== "string") return value;
 	const trimmed = value.trim();
-	if (trimmed.length > 0 && trimmed[0] === "\"" && trimmed.endsWith("\"") && !trimmed.slice(1, -1).includes("\"")) return trimmed.slice(1, -1);
 	const lowerValue = trimmed.toLowerCase();
 	if (lowerValue.length <= 9 && lowerValue in SPECIAL_VALUES) return SPECIAL_VALUES[lowerValue];
 	if (!JSON_SIGNATURE.test(trimmed)) {
@@ -78,12 +73,12 @@ function parseJSON(value, options = { strict: true }) {
 	return betterJSONParse(value, options);
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/fetch-plugins.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/fetch-plugins.mjs
 var redirectPlugin = {
 	id: "redirect",
 	name: "Redirect",
 	hooks: { onSuccess(context) {
-		if (context.data?.url && context.data?.redirect) {
+		if (context.data?.url && context.data?.redirect && isSafeUrlScheme(context.data.url)) {
 			if (typeof window !== "undefined" && window.location) {
 				if (window.location) try {
 					window.location.href = context.data.url;
@@ -93,101 +88,217 @@ var redirectPlugin = {
 	} }
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/query.mjs
-var isServer = () => typeof window === "undefined";
-var useAuthQuery = (initializedAtom, path, $fetch, options) => {
-	const value = atom({
-		data: null,
-		error: null,
-		isPending: true,
-		isRefetching: false,
-		refetch: (queryParams) => fn(queryParams)
-	});
-	const fn = async (queryParams) => {
-		return new Promise((resolve) => {
-			const opts = typeof options === "function" ? options({
-				data: value.get().data,
-				error: value.get().error,
-				isPending: value.get().isPending
-			}) : options;
-			$fetch(path, {
-				...opts,
-				query: {
-					...opts?.query,
-					...queryParams?.query
-				},
-				async onSuccess(context) {
-					value.set({
-						data: context.data,
-						error: null,
-						isPending: false,
-						isRefetching: false,
-						refetch: value.value.refetch
-					});
-					await opts?.onSuccess?.(context);
-				},
-				async onError(context) {
-					const { request } = context;
-					const retryAttempts = typeof request.retry === "number" ? request.retry : request.retry?.attempts;
-					const retryAttempt = request.retryAttempt || 0;
-					if (retryAttempts && retryAttempt < retryAttempts) return;
-					const isUnauthorized = context.error.status === 401;
-					value.set({
-						error: context.error,
-						data: isUnauthorized ? null : value.get().data,
-						isPending: false,
-						isRefetching: false,
-						refetch: value.value.refetch
-					});
-					await opts?.onError?.(context);
-				},
-				async onRequest(context) {
-					const currentValue = value.get();
-					value.set({
-						isPending: currentValue.data === null,
-						data: currentValue.data,
-						error: null,
-						isRefetching: true,
-						refetch: value.value.refetch
-					});
-					await opts?.onRequest?.(context);
-				}
-			}).catch((error) => {
-				value.set({
-					error,
-					data: value.get().data,
-					isPending: false,
-					isRefetching: false,
-					refetch: value.value.refetch
-				});
-			}).finally(() => {
-				resolve(void 0);
-			});
-		});
-	};
-	initializedAtom = Array.isArray(initializedAtom) ? initializedAtom : [initializedAtom];
-	let isInitialized = false;
-	for (const initAtom of initializedAtom) initAtom.subscribe(async () => {
-		if (isServer()) return;
-		if (isInitialized) await fn();
-		else onMount(value, () => {
-			const timeoutId = setTimeout(async () => {
-				if (!isInitialized) {
-					isInitialized = true;
-					await fn();
-				}
-			}, 0);
+//#region ../../node_modules/.bun/nanostores@1.4.0/node_modules/nanostores/clean-stores/index.js
+var clean = Symbol("clean");
+//#endregion
+//#region ../../node_modules/.bun/nanostores@1.4.0/node_modules/nanostores/atom/index.js
+var listenerQueue = [];
+var lqIndex = 0;
+var batchSeen = null;
+var QUEUE_ITEMS_PER_LISTENER = 4;
+var nanostoresGlobal = globalThis.nanostoresGlobal ||= { epoch: 0 };
+var drainQueue = () => {
+	for (lqIndex = 0; lqIndex < listenerQueue.length; lqIndex += QUEUE_ITEMS_PER_LISTENER) listenerQueue[lqIndex](listenerQueue[lqIndex + 1].value, listenerQueue[lqIndex + 2], listenerQueue[lqIndex + 3]);
+	listenerQueue.length = 0;
+};
+var atom = /* @__NO_SIDE_EFFECTS__ */ (initialValue) => {
+	let listeners = [];
+	let $atom = {
+		get() {
+			if (!$atom.lc) $atom.listen(() => {})();
+			return $atom.value;
+		},
+		init: initialValue,
+		lc: 0,
+		listen(listener) {
+			$atom.lc = listeners.push(listener);
 			return () => {
-				value.off();
-				initAtom.off();
-				clearTimeout(timeoutId);
+				for (let i = lqIndex + QUEUE_ITEMS_PER_LISTENER; i < listenerQueue.length;) if (listenerQueue[i] === listener) listenerQueue.splice(i, QUEUE_ITEMS_PER_LISTENER);
+				else i += QUEUE_ITEMS_PER_LISTENER;
+				let index = listeners.indexOf(listener);
+				if (~index) {
+					listeners.splice(index, 1);
+					if (!--$atom.lc) $atom.off();
+				}
 			};
-		});
-	});
-	return value;
+		},
+		notify(oldValue, changedKey) {
+			nanostoresGlobal.epoch++;
+			let runListenerQueue = !listenerQueue.length && !batchSeen;
+			for (let listener of listeners) {
+				if (batchSeen?.has(listener)) continue;
+				batchSeen?.add(listener);
+				listenerQueue.push(listener, $atom, oldValue, batchSeen ? void 0 : changedKey);
+			}
+			if (runListenerQueue) drainQueue();
+		},
+		off() {},
+		set(newValue) {
+			let oldValue = $atom.value;
+			if (oldValue !== newValue) {
+				$atom.value = newValue;
+				$atom.notify(oldValue);
+			}
+		},
+		subscribe(listener) {
+			let unbind = $atom.listen(listener);
+			listener($atom.value);
+			return unbind;
+		},
+		value: initialValue
+	};
+	if (process.env.NODE_ENV !== "production") $atom[clean] = () => {
+		listeners = [];
+		$atom.lc = 0;
+		$atom.off();
+	};
+	return $atom;
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/broadcast-channel.mjs
+//#region ../../node_modules/.bun/nanostores@1.4.0/node_modules/nanostores/lifecycle/index.js
+var SET = 2;
+var MOUNT = 5;
+var UNMOUNT = 6;
+var REVERT_MUTATION = 10;
+var on = (object, listener, eventKey, mutateStore) => {
+	object.events = object.events || {};
+	if (!object.events[eventKey + REVERT_MUTATION]) object.events[eventKey + REVERT_MUTATION] = mutateStore((eventProps) => {
+		object.events[eventKey].reduceRight((event, l) => (l(event), event), {
+			shared: {},
+			...eventProps
+		});
+	});
+	object.events[eventKey] = object.events[eventKey] || [];
+	object.events[eventKey].push(listener);
+	return () => {
+		let currentListeners = object.events[eventKey];
+		let index = currentListeners.indexOf(listener);
+		currentListeners.splice(index, 1);
+		if (!currentListeners.length) {
+			delete object.events[eventKey];
+			object.events[eventKey + REVERT_MUTATION]();
+			delete object.events[eventKey + REVERT_MUTATION];
+		}
+	};
+};
+var onSet = ($store, listener) => on($store, listener, SET, (runListeners) => {
+	let originSet = $store.set;
+	let originSetKey = $store.setKey;
+	if ($store.setKey) $store.setKey = (changed, changedValue) => {
+		let isAborted;
+		let abort = () => {
+			isAborted = true;
+		};
+		runListeners({
+			abort,
+			changed,
+			newValue: {
+				...$store.value,
+				[changed]: changedValue
+			}
+		});
+		if (!isAborted) return originSetKey(changed, changedValue);
+	};
+	$store.set = (newValue) => {
+		let isAborted;
+		let abort = () => {
+			isAborted = true;
+		};
+		runListeners({
+			abort,
+			newValue
+		});
+		if (!isAborted) return originSet(newValue);
+	};
+	return () => {
+		$store.set = originSet;
+		$store.setKey = originSetKey;
+	};
+});
+var STORE_UNMOUNT_DELAY = 1e3;
+var onMount = ($store, initialize) => {
+	let listener = (payload) => {
+		let destroy = initialize(payload);
+		if (destroy) $store.events[UNMOUNT].push(destroy);
+	};
+	return on($store, listener, MOUNT, (runListeners) => {
+		let originListen = $store.listen;
+		$store.listen = (...args) => {
+			if (!$store.lc && !$store.active) {
+				$store.active = true;
+				runListeners();
+			}
+			return originListen(...args);
+		};
+		let originOff = $store.off;
+		$store.events[UNMOUNT] = [];
+		$store.off = () => {
+			originOff();
+			setTimeout(() => {
+				if ($store.active && !$store.lc) {
+					$store.active = false;
+					for (let destroy of $store.events[UNMOUNT]) destroy();
+					$store.events[UNMOUNT] = [];
+				}
+			}, STORE_UNMOUNT_DELAY);
+		};
+		if (process.env.NODE_ENV !== "production") {
+			let originClean = $store[clean];
+			$store[clean] = () => {
+				for (let destroy of $store.events[UNMOUNT]) destroy();
+				$store.events[UNMOUNT] = [];
+				$store.active = false;
+				originClean();
+			};
+		}
+		return () => {
+			$store.listen = originListen;
+			$store.off = originOff;
+		};
+	});
+};
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/equality.mjs
+function isPlainObject(value) {
+	if (typeof value !== "object" || value === null) return false;
+	const prototype = Object.getPrototypeOf(value);
+	return prototype === Object.prototype || prototype === null;
+}
+/**
+* Deep structural equality for JSON-serializable values.
+* Handles: primitives, null, arrays, and plain objects.
+* Short-circuits on referential equality at every recursion level.
+*/
+function isJsonEqual(a, b) {
+	if (a === b) return true;
+	if (Array.isArray(a) && Array.isArray(b)) {
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) if (!isJsonEqual(a[i], b[i])) return false;
+		return true;
+	}
+	if (isPlainObject(a) && isPlainObject(b)) {
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		if (keysA.length !== keysB.length) return false;
+		for (const key of keysA) if (!(key in b) || !isJsonEqual(a[key], b[key])) return false;
+		return true;
+	}
+	return false;
+}
+/**
+* Attach an equality gate to a nanostores atom via `onSet`.
+* When `isEqual(currentValue, newValue)` returns true, the `set()` call
+* is aborted: no listeners fire, no framework re-renders occur.
+*
+* Returns the unsubscribe function from `onSet`.
+*/
+function withEquality(store, isEqual) {
+	return onSet(store, ({ newValue, abort }) => {
+		if (isEqual(store.value, newValue)) abort();
+	});
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/broadcast-channel.mjs
 var kBroadcastChannel = Symbol.for("better-auth:broadcast-channel");
 var now$1 = () => Math.floor(Date.now() / 1e3);
 var WindowBroadcastChannel = class {
@@ -230,7 +341,7 @@ function getGlobalBroadcastChannel(name = "better-auth.message") {
 	return globalThis[kBroadcastChannel];
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/focus-manager.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/focus-manager.mjs
 var kFocusManager = Symbol.for("better-auth:focus-manager");
 var WindowFocusManager = class {
 	listeners = /* @__PURE__ */ new Set();
@@ -259,7 +370,7 @@ function getGlobalFocusManager() {
 	return globalThis[kFocusManager];
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/online-manager.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/online-manager.mjs
 var kOnlineManager = Symbol.for("better-auth:online-manager");
 var WindowOnlineManager = class {
 	listeners = /* @__PURE__ */ new Set();
@@ -291,31 +402,20 @@ function getGlobalOnlineManager() {
 	return globalThis[kOnlineManager];
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/session-refresh.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/session-refresh.mjs
 var now = () => Math.floor(Date.now() / 1e3);
-/**
-* Normalize $fetch response: `throw: true` returns data directly, otherwise `{ data, error }`.
-*/
-function normalizeSessionResponse(res) {
-	if (typeof res === "object" && res !== null && "data" in res && "error" in res) return res;
-	return {
-		data: res,
-		error: null
-	};
-}
 /**
 * Rate limit: don't refetch on focus if a session request was made within this many seconds
 */
 var FOCUS_REFETCH_RATE_LIMIT_SECONDS = 5;
 function createSessionRefreshManager(opts) {
-	const { sessionAtom, sessionSignal, $fetch, options = {} } = opts;
+	const { fetchSession, shouldPollSession = () => true, sessionSignal, options = {} } = opts;
 	const refetchInterval = options.sessionOptions?.refetchInterval ?? 0;
 	const refetchOnWindowFocus = options.sessionOptions?.refetchOnWindowFocus ?? true;
 	const refetchWhenOffline = options.sessionOptions?.refetchWhenOffline ?? false;
 	const state = {
-		lastSync: 0,
-		lastSessionRequest: 0,
-		cachedSession: void 0
+		isInitialized: false,
+		lastSessionRequest: 0
 	};
 	const shouldRefetch = () => {
 		return refetchWhenOffline || getGlobalOnlineManager().isOnline;
@@ -323,45 +423,21 @@ function createSessionRefreshManager(opts) {
 	const triggerRefetch = (event) => {
 		if (!shouldRefetch()) return;
 		if (event?.event === "storage") {
-			state.lastSync = now();
-			sessionSignal.set(!sessionSignal.get());
+			fetchSession();
 			return;
 		}
-		const currentSession = sessionAtom.get();
-		const fetchSessionWithRefresh = () => {
-			state.lastSessionRequest = now();
-			$fetch("/get-session").then(async (res) => {
-				let { data, error } = normalizeSessionResponse(res);
-				if (data?.needsRefresh) try {
-					const refreshRes = await $fetch("/get-session", { method: "POST" });
-					({data, error} = normalizeSessionResponse(refreshRes));
-				} catch {}
-				const sessionData = data?.session && data?.user ? data : null;
-				sessionAtom.set({
-					...currentSession,
-					data: sessionData,
-					error
-				});
-				state.lastSync = now();
-				sessionSignal.set(!sessionSignal.get());
-			}).catch(() => {});
-		};
 		if (event?.event === "poll") {
-			fetchSessionWithRefresh();
+			state.lastSessionRequest = now();
+			fetchSession();
 			return;
 		}
 		if (event?.event === "visibilitychange") {
 			if (now() - state.lastSessionRequest < FOCUS_REFETCH_RATE_LIMIT_SECONDS) return;
 			state.lastSessionRequest = now();
-		}
-		if (event?.event === "visibilitychange") {
-			fetchSessionWithRefresh();
+			fetchSession();
 			return;
 		}
-		if (currentSession?.data === null || currentSession?.data === void 0) {
-			state.lastSync = now();
-			sessionSignal.set(!sessionSignal.get());
-		}
+		fetchSession();
 	};
 	const broadcastSessionUpdate = (trigger) => {
 		getGlobalBroadcastChannel().post({
@@ -372,7 +448,7 @@ function createSessionRefreshManager(opts) {
 	};
 	const setupPolling = () => {
 		if (refetchInterval && refetchInterval > 0) state.pollInterval = setInterval(() => {
-			if (sessionAtom.get()?.data) triggerRefetch({ event: "poll" });
+			if (shouldPollSession()) triggerRefetch({ event: "poll" });
 		}, refetchInterval * 1e3);
 	};
 	const setupBroadcast = () => {
@@ -391,16 +467,25 @@ function createSessionRefreshManager(opts) {
 			if (online) triggerRefetch({ event: "visibilitychange" });
 		});
 	};
+	const setupSignalSubscription = () => {
+		state.unsubscribeSignal = sessionSignal.listen(() => {
+			fetchSession();
+		});
+	};
 	const init = () => {
+		if (state.isInitialized) return;
+		state.isInitialized = true;
 		setupPolling();
 		setupBroadcast();
 		setupFocusRefetch();
 		setupOnlineRefetch();
-		getGlobalBroadcastChannel().setup();
-		getGlobalFocusManager().setup();
-		getGlobalOnlineManager().setup();
+		setupSignalSubscription();
+		state.cleanupBroadcastSetup = getGlobalBroadcastChannel().setup();
+		state.cleanupFocusSetup = getGlobalFocusManager().setup();
+		state.cleanupOnlineSetup = getGlobalOnlineManager().setup();
 	};
 	const cleanup = () => {
+		if (!state.isInitialized) return;
 		if (state.pollInterval) {
 			clearInterval(state.pollInterval);
 			state.pollInterval = void 0;
@@ -417,9 +502,24 @@ function createSessionRefreshManager(opts) {
 			state.unsubscribeOnline();
 			state.unsubscribeOnline = void 0;
 		}
-		state.lastSync = 0;
+		if (state.unsubscribeSignal) {
+			state.unsubscribeSignal();
+			state.unsubscribeSignal = void 0;
+		}
+		if (state.cleanupBroadcastSetup) {
+			state.cleanupBroadcastSetup();
+			state.cleanupBroadcastSetup = void 0;
+		}
+		if (state.cleanupFocusSetup) {
+			state.cleanupFocusSetup();
+			state.cleanupFocusSetup = void 0;
+		}
+		if (state.cleanupOnlineSetup) {
+			state.cleanupOnlineSetup();
+			state.cleanupOnlineSetup = void 0;
+		}
+		state.isInitialized = false;
 		state.lastSessionRequest = 0;
-		state.cachedSession = void 0;
 	};
 	return {
 		init,
@@ -429,21 +529,146 @@ function createSessionRefreshManager(opts) {
 	};
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/session-atom.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/session-atom.mjs
+var isServer = () => typeof window === "undefined";
+/**
+* Normalize $fetch response: `throw: true` returns data directly,
+* otherwise `{ data, error }`.
+*/
+function normalizeSessionResponse(res) {
+	if (typeof res === "object" && res !== null && "data" in res && "error" in res) return res;
+	return {
+		data: res,
+		error: null
+	};
+}
+function normalizeSessionData(data) {
+	if (!data) return null;
+	if (data.session === null && data.user === null) return null;
+	return data;
+}
+function isSessionAtomEqual(a, b) {
+	return isJsonEqual(a.data, b.data) && a.error === b.error && a.isPending === b.isPending && a.isRefetching === b.isRefetching && a.refetch === b.refetch;
+}
 function getSessionAtom($fetch, options) {
-	const $signal = atom(false);
-	const session = useAuthQuery($signal, "/get-session", $fetch, { method: "GET" });
+	const $signal = /* @__PURE__ */ atom(false);
+	let abortController;
+	const refetch = (queryParams) => fetchSession(queryParams);
+	const session = /* @__PURE__ */ atom({
+		data: null,
+		error: null,
+		isPending: true,
+		isRefetching: false,
+		refetch
+	});
+	withEquality(session, isSessionAtomEqual);
+	const settleAbortedFetch = (controller) => {
+		if (abortController !== controller) return;
+		const current = session.get();
+		abortController = void 0;
+		if (!current.isPending && !current.isRefetching) return;
+		session.set({
+			...current,
+			isPending: false,
+			isRefetching: false,
+			refetch
+		});
+	};
+	const fetchSession = async (queryParams) => {
+		abortController?.abort();
+		const controller = new AbortController();
+		abortController = controller;
+		const current = session.get();
+		session.set({
+			...current,
+			isPending: current.data === null,
+			isRefetching: true,
+			error: null,
+			refetch
+		});
+		try {
+			const res = await $fetch("/get-session", {
+				method: "GET",
+				query: queryParams?.query,
+				signal: controller.signal
+			});
+			if (controller.signal.aborted) {
+				settleAbortedFetch(controller);
+				return;
+			}
+			let { data, error } = normalizeSessionResponse(res);
+			if (data?.needsRefresh) try {
+				const refreshRes = await $fetch("/get-session", {
+					method: "POST",
+					signal: controller.signal
+				});
+				if (controller.signal.aborted) {
+					settleAbortedFetch(controller);
+					return;
+				}
+				({data, error} = normalizeSessionResponse(refreshRes));
+			} catch {
+				if (controller.signal.aborted) {
+					settleAbortedFetch(controller);
+					return;
+				}
+			}
+			if (error) {
+				const latest = session.get();
+				const isUnauthorized = error?.status === 401;
+				session.set({
+					data: isUnauthorized ? null : latest.data,
+					error,
+					isPending: false,
+					isRefetching: false,
+					refetch
+				});
+				return;
+			}
+			const sessionData = normalizeSessionData(data);
+			const current = session.get();
+			const stableData = current.data != null && sessionData != null && isJsonEqual(current.data, sessionData) ? current.data : sessionData;
+			session.set({
+				data: stableData,
+				error: null,
+				isPending: false,
+				isRefetching: false,
+				refetch
+			});
+		} catch (fetchError) {
+			if (controller.signal.aborted) {
+				settleAbortedFetch(controller);
+				return;
+			}
+			const latest = session.get();
+			session.set({
+				data: latest.data,
+				error: fetchError,
+				isPending: false,
+				isRefetching: false,
+				refetch
+			});
+		}
+	};
 	let broadcastSessionUpdate = () => {};
 	onMount(session, () => {
+		let timeoutId;
+		if (!isServer()) timeoutId = setTimeout(() => {
+			fetchSession();
+		}, 0);
 		const refreshManager = createSessionRefreshManager({
-			sessionAtom: session,
+			fetchSession,
+			shouldPollSession: () => session.get().data != null,
 			sessionSignal: $signal,
-			$fetch,
 			options
 		});
 		refreshManager.init();
 		broadcastSessionUpdate = refreshManager.broadcastSessionUpdate;
 		return () => {
+			if (timeoutId) clearTimeout(timeoutId);
+			const controller = abortController;
+			controller?.abort();
+			if (controller) settleAbortedFetch(controller);
 			refreshManager.cleanup();
 		};
 	});
@@ -454,7 +679,7 @@ function getSessionAtom($fetch, options) {
 	};
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/config.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/config.mjs
 var resolvePublicAuthUrl = (basePath) => {
 	if (typeof process === "undefined") return void 0;
 	const path = basePath ?? "/api/auth";
@@ -552,12 +777,12 @@ var getClientConfig = (options, loadEnv) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/is-atom.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/is-atom.mjs
 function isAtom(value) {
 	return typeof value === "object" && value !== null && "get" in value && typeof value.get === "function" && "lc" in value && typeof value.lc === "number";
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/proxy.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/proxy.mjs
 function getMethod(path, knownPathMethods, args) {
 	const method = knownPathMethods[path];
 	const { fetchOptions, query: _query, ...body } = args || {};
@@ -584,7 +809,7 @@ function createDynamicPathProxy(routes, client, knownPathMethods, atoms, atomLis
 				return createProxy(fullPath);
 			},
 			apply: async (_, __, args) => {
-				const routePath = "/" + path.map((segment) => segment.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)).join("/");
+				const routePath = "/" + path.map(toKebabCase).join("/");
 				const arg = args[0] || {};
 				const fetchOptions = args[1] || {};
 				const { query, fetchOptions: argFetchOptions, ...body } = arg;
@@ -632,7 +857,7 @@ function createDynamicPathProxy(routes, client, knownPathMethods, atoms, atomLis
 	return createProxy();
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/svelte/index.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/svelte/index.mjs
 function createAuthClient(options) {
 	const { pluginPathMethods, pluginsActions, pluginsAtoms, $fetch, atomListeners, $store } = getClientConfig(options);
 	const resolvedHooks = {};
@@ -645,7 +870,7 @@ function createAuthClient(options) {
 	}, $fetch, pluginPathMethods, pluginsAtoms, atomListeners);
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/additional-fields/client.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/additional-fields/client.mjs
 var inferAdditionalFields = (schema) => {
 	return {
 		id: "additional-fields-client",
@@ -654,7 +879,7 @@ var inferAdditionalFields = (schema) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/admin/client.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/admin/client.mjs
 var adminClient = (options) => {
 	const roles = {
 		admin: adminAc,
@@ -688,7 +913,7 @@ var adminClient = (options) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/client/plugins/infer-plugin.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs
 var InferServerPlugin = () => {
 	return {
 		id: "infer-server-plugin",
@@ -697,12 +922,12 @@ var InferServerPlugin = () => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/custom-session/client.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/custom-session/client.mjs
 var customSessionClient = () => {
 	return InferServerPlugin();
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/magic-link/client.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/magic-link/client.mjs
 var magicLinkClient = () => {
 	return {
 		id: "magic-link",
@@ -711,7 +936,7 @@ var magicLinkClient = () => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/multi-session/client.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/multi-session/client.mjs
 var multiSessionClient = () => {
 	return {
 		id: "multi-session",

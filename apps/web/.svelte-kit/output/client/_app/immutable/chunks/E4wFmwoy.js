@@ -1,0 +1,1 @@
+import{bt as e,xt as t}from"./BsVwIFTV.js";import{t as n}from"./HuCy9WZI.js";var r=new Set([`$$slots`,`$$events`,`$$legacy`]);function i(i,a){let o=e(a,r),s=[[`rect`,{width:`20`,height:`12`,x:`2`,y:`6`,rx:`2`}],[`circle`,{cx:`12`,cy:`12`,r:`2`}],[`path`,{d:`M6 12h.01M18 12h.01`}]];n(i,t({name:`banknote`},()=>o,{get iconNode(){return s}}))}export{i as t};

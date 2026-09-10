@@ -28,3 +28,14 @@ vite.config.ts.timestamp-*
 # Local secrets — never commit
 web3 keys.txt
 packages/contracts/.env
+
+# Native build targets
+apps/web/build-static/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/src/main/assets/public/
+apps/mobile/android/app/src/main/assets/capacitor.config.json
+apps/mobile/android/local.properties
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/

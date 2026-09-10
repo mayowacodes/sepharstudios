@@ -1,4 +1,4 @@
-import { h as aiActionLog, t as db, w as copilotMessages } from "../../../../../../chunks/drizzle.js";
+import { S as aiActionLog, j as copilotMessages, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 //#region src/routes/api/ai/copilot/approve/+server.ts

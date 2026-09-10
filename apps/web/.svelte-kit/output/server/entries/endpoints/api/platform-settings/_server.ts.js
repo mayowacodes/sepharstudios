@@ -1,4 +1,4 @@
-import { d as adminSettings, t as db } from "../../../../chunks/drizzle.js";
+import { t as db, v as adminSettings } from "../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/platform-settings/+server.ts
 /**

@@ -143,6 +143,7 @@
         previewVtt={content.previewThumbnailsVtt ?? undefined}
         previewSprites={content.previewSpriteUrls ?? []}
         enableAds={true}
+  enableBreakAds={true}
         onEnded={handleEnded}
       />
     {:else}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
+  import { api, ApiError } from '$lib/api/client';
   import { toast } from 'svelte-sonner';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
@@ -8,7 +8,11 @@
   import * as Command from '$lib/components/ui/command';
   import { ChevronDown, Upload, X } from '@lucide/svelte';
 
-  let { data, form } = $props();
+  let { data } = $props();
+
+  // Was the `form` prop from a server action. Actions can't exist in the
+  // static/SPA build, so the submit result is local state now.
+  let form = $state<{ success: boolean; message: string } | null>(null);
 
   let isSubmitting = $state(false);
   let scriptFile = $state<File | null>(null);
@@ -36,6 +40,36 @@
     if (form.success) toast.success(form.message);
     else if (form.message) toast.error(form.message);
   });
+
+  /**
+   * Submits the pitch to POST /api/sponsorships.
+   *
+   * Replaces `use:enhance` on a form action: actions post back to the page's
+   * own route, which does not exist in the static/native bundle. FormData is
+   * passed straight through so the file inputs keep working — deliberately no
+   * Content-Type header, so the browser sets the multipart boundary itself.
+   */
+  async function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    const el = e.currentTarget as HTMLFormElement;
+    isSubmitting = true;
+    try {
+      form = await api<{ success: boolean; message: string }>('/api/sponsorships', {
+        method: 'POST',
+        body: new FormData(el)
+      });
+      if (form.success) el.reset();
+    } catch (err) {
+      // The endpoint returns its validation and rate-limit messages with a 4xx,
+      // which ApiError carries through verbatim.
+      form = {
+        success: false,
+        message: err instanceof ApiError ? err.message : 'Submission failed. Please try again.'
+      };
+    } finally {
+      isSubmitting = false;
+    }
+  }
 
   function selectGenre(genre: string) {
     selectedGenre = genre;
@@ -67,19 +101,7 @@
       <p class="text-xl text-muted-foreground">Partner with Sephar Studios to bring your Christian movie project to life</p>
     </div>
 
-    <form
-      method="POST"
-      action="?/submit"
-      class="space-y-8"
-      enctype="multipart/form-data"
-      use:enhance={() => {
-        isSubmitting = true;
-        return async ({ update }) => {
-          isSubmitting = false;
-          await update();
-        };
-      }}
-    >
+    <form class="space-y-8" enctype="multipart/form-data" onsubmit={handleSubmit}>
       <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Contact Information</h2>
 

@@ -1,4 +1,4 @@
-import { I as forumReplies, L as forumThreads, a as user, o as abuseReports, t as db } from "../../../../../../chunks/drizzle.js";
+import { U as forumReplies, W as forumThreads, a as user, o as abuseReports, t as db } from "../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";

@@ -1,9 +1,9 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { a as getMainPresignedUploadUrl } from "../../../../../chunks/minio2.js";
+import { a as getMainPresignedUploadUrl } from "../../../../../chunks/minio.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/files/sign/+server.ts
 var DEFAULT_BUCKET = private_env.MINIO_BUCKET || "uploads";
-var ALLOWED_BUCKETS = new Set([
+var ALLOWED_BUCKETS = /* @__PURE__ */ new Set([
 	"thumbnails",
 	"avatars",
 	"uploads"

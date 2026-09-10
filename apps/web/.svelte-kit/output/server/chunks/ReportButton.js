@@ -1,4 +1,4 @@
-import { Ht as attr, Pt as stringify, St as attr_class, Wt as escape_html } from "./ui-libs.js";
+import { Lt as attr, jt as stringify, yt as attr_class, zt as escape_html } from "./ui-libs.js";
 import { t as Flag } from "./flag.js";
 //#region src/lib/components/ReportButton.svelte
 function ReportButton($$renderer, $$props) {

@@ -1,50 +1,3250 @@
-import { n as __reExport, t as __exportAll } from "./rolldown-runtime.js";
 import { t as private_env } from "./shared-server.js";
-import { n as account, r as schema$2, rt as playlists, t as db } from "./drizzle.js";
+import { n as account, r as schema$2, t as db, ut as playlists } from "./drizzle.js";
 import { r as Role } from "./constants.js";
 import { t as sendEmailAction } from "./server2.js";
-import { c as PACKAGE_VERSION, d as getOrigin, f as getProtocol, g as wildcardMatch, h as resolveBaseURL, i as ADMIN_ERROR_CODES, l as getBaseURL, m as isRequestLike, n as roles, o as defaultRoles, p as isDynamicBaseURLConfig, r as hasPermission, t as ac, u as getHost } from "./permissions.js";
+import { C as wildcardMatch, S as defineErrorCodes, _ as getOrigin, b as isRequestLike, c as PACKAGE_VERSION, d as createDefu, f as defu, g as getHost, h as getBaseURL, i as ADMIN_ERROR_CODES, l as betterFetch, m as normalizePathname, n as roles, o as defaultRoles, r as hasPermission, t as ac, v as getProtocol, x as resolveBaseURL, y as isDynamicBaseURLConfig } from "./permissions.js";
+import { a as ValidationError, c as env, d as isDevelopment, f as isProduction, i as BetterCallError, l as getBooleanEnvVar, n as BetterAuthError, o as kAPIErrorHeaderSymbol, p as isTest, r as APIError$1, s as ENV, t as APIError, u as getEnvVar } from "./error.js";
+import { _ as getAuthTables, a as withSpan, b as logger, c as ATTR_HTTP_ROUTE, d as runWithAdapter, f as runWithTransaction, g as safeJSONParse, h as getBetterAuthVersion, i as generateId$1, l as getCurrentAdapter, m as __getBetterAuthGlobal, n as initGetModelName, o as ATTR_DB_COLLECTION_NAME, p as getAsyncLocalStorage, r as initGetFieldName, s as ATTR_HTTP_RESPONSE_STATUS_CODE, t as createAdapterFactory, u as queueAfterTransactionHook, v as createRandomStringGenerator, x as shouldPublishLog, y as createLogger } from "./factory.js";
+import { n as getKyselyDatabaseType, t as createKyselyAdapter } from "./dist.js";
+import { n as sql$1 } from "./compiled-query.js";
 import { t as track } from "./analytics.js";
-import { eq } from "drizzle-orm";
+import { t as awardSignupToken } from "./stc-hours.js";
+import { and, asc, count, desc, eq, gt, gte, ilike, inArray, isNotNull, isNull, like, lt, lte, ne, notInArray, or, sql } from "drizzle-orm";
+import { randomBytes, scrypt } from "node:crypto";
 import * as z$1 from "zod";
-import { createLogger, env, isDevelopment, isProduction, isTest, logger, shouldPublishLog } from "@better-auth/core/env";
-import { APIError, APIError as APIError$1, BASE_ERROR_CODES, BetterAuthError } from "@better-auth/core/error";
-import { createRandomStringGenerator } from "@better-auth/utils/random";
-import { hkdf } from "@noble/hashes/hkdf.js";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { EncryptJWT, SignJWT, base64url, calculateJwkThumbprint, decodeProtectedHeader, jwtDecrypt, jwtVerify } from "jose";
-import { hashPassword, verifyPassword } from "@better-auth/utils/password";
-import "@better-auth/utils";
-import { createHash } from "@better-auth/utils/hash";
-import { xchacha20poly1305 } from "@noble/ciphers/chacha.js";
-import { bytesToHex, hexToBytes, managedNonce, utf8ToBytes } from "@noble/ciphers/utils.js";
-import { getAuthTables } from "@better-auth/core/db";
-import { filterOutputFields } from "@better-auth/core/utils/db";
-import { safeJSONParse } from "@better-auth/core/utils/json";
-import { base64Url } from "@better-auth/utils/base64";
-import { binary } from "@better-auth/utils/binary";
-import { createHMAC } from "@better-auth/utils/hmac";
-import { defineRequestState, getBetterAuthVersion, getCurrentAdapter, getCurrentAuthContext, hasRequestState, queueAfterTransactionHook, runWithAdapter, runWithEndpointContext, runWithRequestState, runWithTransaction } from "@better-auth/core/context";
-import { isAPIError } from "@better-auth/core/utils/is-api-error";
-import { createAuthEndpoint, createAuthMiddleware, createAuthMiddleware as createAuthMiddleware$1 } from "@better-auth/core/api";
-import { normalizePathname } from "@better-auth/core/utils/url";
-import { deprecate } from "@better-auth/core/utils/deprecate";
-import { createRateLimitKey, isValidIP, normalizeIP } from "@better-auth/core/utils/ip";
-import { ATTR_CONTEXT, ATTR_DB_COLLECTION_NAME, ATTR_HOOK_TYPE, ATTR_HTTP_RESPONSE_STATUS_CODE, ATTR_HTTP_ROUTE, ATTR_OPERATION_ID, withSpan } from "@better-auth/core/instrumentation";
-import { generateId } from "@better-auth/core/utils/id";
-import defu$1, { createDefu, defu } from "defu";
-import { isLoopbackHost } from "@better-auth/core/utils/host";
-import { SocialProviderListEnum, socialProviders } from "@better-auth/core/social-providers";
-import { JWTExpired } from "jose/errors";
-import { createRouter, kAPIErrorHeaderSymbol, toResponse } from "better-call";
-import { createKyselyAdapter, getKyselyDatabaseType } from "@better-auth/kysely-adapter";
-import { initGetFieldName, initGetModelName, whereOperators } from "@better-auth/core/db/adapter";
-import { sql as sql$1 } from "kysely";
-import { createTelemetry } from "@better-auth/telemetry";
-//#region ../../node_modules/better-auth/dist/crypto/random.mjs
+import { ZodObject, ZodOptional } from "zod";
+import fs from "node:fs";
+import fsPromises from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/error/codes.mjs
+var BASE_ERROR_CODES = defineErrorCodes({
+	USER_NOT_FOUND: "User not found",
+	FAILED_TO_CREATE_USER: "Failed to create user",
+	FAILED_TO_CREATE_SESSION: "Failed to create session",
+	FAILED_TO_UPDATE_USER: "Failed to update user",
+	FAILED_TO_GET_SESSION: "Failed to get session",
+	INVALID_PASSWORD: "Invalid password",
+	INVALID_EMAIL: "Invalid email",
+	INVALID_EMAIL_OR_PASSWORD: "Invalid email or password",
+	INVALID_USER: "Invalid user",
+	SOCIAL_ACCOUNT_ALREADY_LINKED: "Social account already linked",
+	PROVIDER_NOT_FOUND: "Provider not found",
+	INVALID_TOKEN: "Invalid token",
+	TOKEN_EXPIRED: "Token expired",
+	ID_TOKEN_NOT_SUPPORTED: "id_token not supported",
+	FAILED_TO_GET_USER_INFO: "Failed to get user info",
+	USER_EMAIL_NOT_FOUND: "User email not found",
+	EMAIL_NOT_VERIFIED: "Email not verified",
+	PASSWORD_TOO_SHORT: "Password too short",
+	PASSWORD_TOO_LONG: "Password too long",
+	USER_ALREADY_EXISTS: "User already exists.",
+	USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "User already exists. Use another email.",
+	EMAIL_CAN_NOT_BE_UPDATED: "Email can not be updated",
+	CHANGE_EMAIL_DISABLED: "Change email is disabled",
+	CREDENTIAL_ACCOUNT_NOT_FOUND: "Credential account not found",
+	SESSION_EXPIRED: "Session expired. Re-authenticate to perform this action.",
+	FAILED_TO_UNLINK_LAST_ACCOUNT: "You can't unlink your last account",
+	ACCOUNT_NOT_FOUND: "Account not found",
+	USER_ALREADY_HAS_PASSWORD: "User already has a password. Provide that to delete the account.",
+	CROSS_SITE_NAVIGATION_LOGIN_BLOCKED: "Cross-site navigation login blocked. This request appears to be a CSRF attack.",
+	VERIFICATION_EMAIL_NOT_ENABLED: "Verification email isn't enabled",
+	EMAIL_ALREADY_VERIFIED: "Email is already verified",
+	EMAIL_MISMATCH: "Email mismatch",
+	SESSION_NOT_FRESH: "Session is not fresh",
+	LINKED_ACCOUNT_ALREADY_EXISTS: "Linked account already exists",
+	INVALID_ORIGIN: "Invalid origin",
+	INVALID_CALLBACK_URL: "Invalid callbackURL",
+	INVALID_REDIRECT_URL: "Invalid redirectURL",
+	INVALID_ERROR_CALLBACK_URL: "Invalid errorCallbackURL",
+	INVALID_NEW_USER_CALLBACK_URL: "Invalid newUserCallbackURL",
+	MISSING_OR_NULL_ORIGIN: "Missing or null Origin",
+	CALLBACK_URL_REQUIRED: "callbackURL is required",
+	FAILED_TO_CREATE_VERIFICATION: "Unable to create verification",
+	FIELD_NOT_ALLOWED: "Field not allowed to be set",
+	ASYNC_VALIDATION_NOT_SUPPORTED: "Async validation is not supported",
+	VALIDATION_ERROR: "Validation Error",
+	MISSING_FIELD: "Field is required",
+	METHOD_NOT_ALLOWED_DEFER_SESSION_REQUIRED: "POST method requires deferSessionRefresh to be enabled in session config",
+	BODY_MUST_BE_AN_OBJECT: "Body must be an object",
+	PASSWORD_ALREADY_SET: "User already has a password set"
+});
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/crypto/random.mjs
 var generateRandomString = createRandomStringGenerator("a-z", "0-9", "A-Z", "-_");
 //#endregion
-//#region ../../node_modules/better-auth/dist/crypto/jwt.mjs
+//#region ../../node_modules/.bun/@noble+hashes@2.2.0/node_modules/@noble/hashes/utils.js
+/**
+* Checks if something is Uint8Array. Be careful: nodejs Buffer will return true.
+* @param a - value to test
+* @returns `true` when the value is a Uint8Array-compatible view.
+* @example
+* Check whether a value is a Uint8Array-compatible view.
+* ```ts
+* isBytes(new Uint8Array([1, 2, 3]));
+* ```
+*/
+function isBytes$1(a) {
+	return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array" && "BYTES_PER_ELEMENT" in a && a.BYTES_PER_ELEMENT === 1;
+}
+/**
+* Asserts something is a non-negative integer.
+* @param n - number to validate
+* @param title - label included in thrown errors
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @example
+* Validate a non-negative integer option.
+* ```ts
+* anumber(32, 'length');
+* ```
+*/
+function anumber$1(n, title = "") {
+	if (typeof n !== "number") {
+		const prefix = title && `"${title}" `;
+		throw new TypeError(`${prefix}expected number, got ${typeof n}`);
+	}
+	if (!Number.isSafeInteger(n) || n < 0) {
+		const prefix = title && `"${title}" `;
+		throw new RangeError(`${prefix}expected integer >= 0, got ${n}`);
+	}
+}
+/**
+* Asserts something is Uint8Array.
+* @param value - value to validate
+* @param length - optional exact length constraint
+* @param title - label included in thrown errors
+* @returns The validated byte array.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @example
+* Validate that a value is a byte array.
+* ```ts
+* abytes(new Uint8Array([1, 2, 3]));
+* ```
+*/
+function abytes$1(value, length, title = "") {
+	const bytes = isBytes$1(value);
+	const len = value?.length;
+	const needsLen = length !== void 0;
+	if (!bytes || needsLen && len !== length) {
+		const prefix = title && `"${title}" `;
+		const ofLen = needsLen ? ` of length ${length}` : "";
+		const got = bytes ? `length=${len}` : `type=${typeof value}`;
+		const message = prefix + "expected Uint8Array" + ofLen + ", got " + got;
+		if (!bytes) throw new TypeError(message);
+		throw new RangeError(message);
+	}
+	return value;
+}
+/**
+* Asserts something is a wrapped hash constructor.
+* @param h - hash constructor to validate
+* @throws On wrong argument types or invalid hash wrapper shape. {@link TypeError}
+* @throws On invalid hash metadata ranges or values. {@link RangeError}
+* @throws If the hash metadata allows empty outputs or block sizes. {@link Error}
+* @example
+* Validate a callable hash wrapper.
+* ```ts
+* import { ahash } from '@noble/hashes/utils.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* ahash(sha256);
+* ```
+*/
+function ahash(h) {
+	if (typeof h !== "function" || typeof h.create !== "function") throw new TypeError("Hash must wrapped by utils.createHasher");
+	anumber$1(h.outputLen);
+	anumber$1(h.blockLen);
+	if (h.outputLen < 1) throw new Error("\"outputLen\" must be >= 1");
+	if (h.blockLen < 1) throw new Error("\"blockLen\" must be >= 1");
+}
+/**
+* Asserts a hash instance has not been destroyed or finished.
+* @param instance - hash instance to validate
+* @param checkFinished - whether to reject finalized instances
+* @throws If the hash instance has already been destroyed or finalized. {@link Error}
+* @example
+* Validate that a hash instance is still usable.
+* ```ts
+* import { aexists } from '@noble/hashes/utils.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* const hash = sha256.create();
+* aexists(hash);
+* ```
+*/
+function aexists$1(instance, checkFinished = true) {
+	if (instance.destroyed) throw new Error("Hash instance has been destroyed");
+	if (checkFinished && instance.finished) throw new Error("Hash#digest() has already been called");
+}
+/**
+* Asserts output is a sufficiently-sized byte array.
+* @param out - destination buffer
+* @param instance - hash instance providing output length
+* Oversized buffers are allowed; downstream code only promises to fill the first `outputLen` bytes.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @example
+* Validate a caller-provided digest buffer.
+* ```ts
+* import { aoutput } from '@noble/hashes/utils.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* const hash = sha256.create();
+* aoutput(new Uint8Array(hash.outputLen), hash);
+* ```
+*/
+function aoutput$1(out, instance) {
+	abytes$1(out, void 0, "digestInto() output");
+	const min = instance.outputLen;
+	if (out.length < min) throw new RangeError("\"digestInto() output\" expected to be of length >=" + min);
+}
+/**
+* Zeroizes typed arrays in place. Warning: JS provides no guarantees.
+* @param arrays - arrays to overwrite with zeros
+* @example
+* Zeroize sensitive buffers in place.
+* ```ts
+* clean(new Uint8Array([1, 2, 3]));
+* ```
+*/
+function clean$1(...arrays) {
+	for (let i = 0; i < arrays.length; i++) arrays[i].fill(0);
+}
+/**
+* Creates a DataView for byte-level manipulation.
+* @param arr - source typed array
+* @returns DataView over the same buffer region.
+* @example
+* Create a DataView over an existing buffer.
+* ```ts
+* createView(new Uint8Array(4));
+* ```
+*/
+function createView$1(arr) {
+	return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+}
+/**
+* Rotate-right operation for uint32 values.
+* @param word - source word
+* @param shift - shift amount in bits
+* @returns Rotated word.
+* @example
+* Rotate a 32-bit word to the right.
+* ```ts
+* rotr(0x12345678, 8);
+* ```
+*/
+function rotr(word, shift) {
+	return word << 32 - shift | word >>> shift;
+}
+/**
+* Creates a callable hash function from a stateful class constructor.
+* @param hashCons - hash constructor or factory
+* @param info - optional metadata such as DER OID
+* @returns Frozen callable hash wrapper with `.create()`.
+*   Wrapper construction eagerly calls `hashCons(undefined)` once to read
+*   `outputLen` / `blockLen`, so constructor side effects happen at module
+*   init time.
+* @example
+* Wrap a stateful hash constructor into a callable helper.
+* ```ts
+* import { createHasher } from '@noble/hashes/utils.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* const wrapped = createHasher(sha256.create, { oid: sha256.oid });
+* wrapped(new Uint8Array([1]));
+* ```
+*/
+function createHasher(hashCons, info = {}) {
+	const hashC = (msg, opts) => hashCons(opts).update(msg).digest();
+	const tmp = hashCons(void 0);
+	hashC.outputLen = tmp.outputLen;
+	hashC.blockLen = tmp.blockLen;
+	hashC.canXOF = tmp.canXOF;
+	hashC.create = (opts) => hashCons(opts);
+	Object.assign(hashC, info);
+	return Object.freeze(hashC);
+}
+/**
+* Creates OID metadata for NIST hashes with prefix `06 09 60 86 48 01 65 03 04 02`.
+* @param suffix - final OID byte for the selected hash.
+*   The helper accepts any byte even though only the documented NIST hash
+*   suffixes are meaningful downstream.
+* @returns Object containing the DER-encoded OID.
+* @example
+* Build OID metadata for a NIST hash.
+* ```ts
+* oidNist(0x01);
+* ```
+*/
+var oidNist = (suffix) => ({ oid: Uint8Array.from([
+	6,
+	9,
+	96,
+	134,
+	72,
+	1,
+	101,
+	3,
+	4,
+	2,
+	suffix
+]) });
+//#endregion
+//#region ../../node_modules/.bun/@noble+hashes@2.2.0/node_modules/@noble/hashes/hmac.js
+/**
+* HMAC: RFC2104 message authentication code.
+* @module
+*/
+/**
+* Internal class for HMAC.
+* Accepts any byte key, although RFC 2104 §3 recommends keys at least
+* `HashLen` bytes long.
+*/
+var _HMAC = class {
+	oHash;
+	iHash;
+	blockLen;
+	outputLen;
+	canXOF = false;
+	finished = false;
+	destroyed = false;
+	constructor(hash, key) {
+		ahash(hash);
+		abytes$1(key, void 0, "key");
+		this.iHash = hash.create();
+		if (typeof this.iHash.update !== "function") throw new Error("Expected instance of class which extends utils.Hash");
+		this.blockLen = this.iHash.blockLen;
+		this.outputLen = this.iHash.outputLen;
+		const blockLen = this.blockLen;
+		const pad = new Uint8Array(blockLen);
+		pad.set(key.length > blockLen ? hash.create().update(key).digest() : key);
+		for (let i = 0; i < pad.length; i++) pad[i] ^= 54;
+		this.iHash.update(pad);
+		this.oHash = hash.create();
+		for (let i = 0; i < pad.length; i++) pad[i] ^= 106;
+		this.oHash.update(pad);
+		clean$1(pad);
+	}
+	update(buf) {
+		aexists$1(this);
+		this.iHash.update(buf);
+		return this;
+	}
+	digestInto(out) {
+		aexists$1(this);
+		aoutput$1(out, this);
+		this.finished = true;
+		const buf = out.subarray(0, this.outputLen);
+		this.iHash.digestInto(buf);
+		this.oHash.update(buf);
+		this.oHash.digestInto(buf);
+		this.destroy();
+	}
+	digest() {
+		const out = new Uint8Array(this.oHash.outputLen);
+		this.digestInto(out);
+		return out;
+	}
+	_cloneInto(to) {
+		to ||= Object.create(Object.getPrototypeOf(this), {});
+		const { oHash, iHash, finished, destroyed, blockLen, outputLen } = this;
+		to = to;
+		to.finished = finished;
+		to.destroyed = destroyed;
+		to.blockLen = blockLen;
+		to.outputLen = outputLen;
+		to.oHash = oHash._cloneInto(to.oHash);
+		to.iHash = iHash._cloneInto(to.iHash);
+		return to;
+	}
+	clone() {
+		return this._cloneInto();
+	}
+	destroy() {
+		this.destroyed = true;
+		this.oHash.destroy();
+		this.iHash.destroy();
+	}
+};
+var hmac = /* @__PURE__ */ (() => {
+	const hmac_ = ((hash, key, message) => new _HMAC(hash, key).update(message).digest());
+	hmac_.create = (hash, key) => new _HMAC(hash, key);
+	return hmac_;
+})();
+//#endregion
+//#region ../../node_modules/.bun/@noble+hashes@2.2.0/node_modules/@noble/hashes/hkdf.js
+/**
+* HKDF (RFC 5869): extract + expand in one step.
+* See {@link https://soatok.blog/2021/11/17/understanding-hkdf/}.
+* @module
+*/
+/**
+* HKDF-extract from spec. Less important part. `HKDF-Extract(IKM, salt) -> PRK`
+* Arguments position differs from spec (IKM is first one, since it is not optional)
+* Local validation only checks `hash`; `ikm` / `salt` byte validation is delegated to `hmac()`.
+* @param hash - hash function that would be used (e.g. sha256)
+* @param ikm - input keying material, the initial key
+* @param salt - optional salt value (a non-secret random value)
+* @returns Pseudorandom key derived from input keying material.
+* @example
+* Run the HKDF extract step.
+* ```ts
+* import { extract } from '@noble/hashes/hkdf.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* extract(sha256, new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6]));
+* ```
+*/
+function extract(hash, ikm, salt) {
+	ahash(hash);
+	if (salt === void 0) salt = new Uint8Array(hash.outputLen);
+	return hmac(hash, salt, ikm);
+}
+var HKDF_COUNTER = /* @__PURE__ */ Uint8Array.of(0);
+var EMPTY_BUFFER = /* @__PURE__ */ Uint8Array.of();
+/**
+* HKDF-expand from the spec. The most important part. `HKDF-Expand(PRK, info, L) -> OKM`
+* @param hash - hash function that would be used (e.g. sha256)
+* @param prk - a pseudorandom key of at least HashLen octets
+*   (usually, the output from the extract step)
+* @param info - optional context and application specific information (can be a zero-length string)
+* @param length - length of output keying material in bytes.
+*   RFC 5869 §2.3 allows `0..255*HashLen`, so `0` returns an empty OKM.
+* @returns Output keying material with the requested length.
+* @throws If the requested output length exceeds the HKDF limit
+*   for the selected hash. {@link Error}
+* @example
+* Run the HKDF expand step.
+* ```ts
+* import { expand } from '@noble/hashes/hkdf.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* expand(sha256, new Uint8Array(32), new Uint8Array([1, 2, 3]), 16);
+* ```
+*/
+function expand(hash, prk, info, length = 32) {
+	ahash(hash);
+	anumber$1(length, "length");
+	abytes$1(prk, void 0, "prk");
+	const olen = hash.outputLen;
+	if (prk.length < olen) throw new Error("\"prk\" must be at least HashLen octets");
+	if (length > 255 * olen) throw new Error("Length must be <= 255*HashLen");
+	const blocks = Math.ceil(length / olen);
+	if (info === void 0) info = EMPTY_BUFFER;
+	else abytes$1(info, void 0, "info");
+	const okm = new Uint8Array(blocks * olen);
+	const HMAC = hmac.create(hash, prk);
+	const HMACTmp = HMAC._cloneInto();
+	const T = new Uint8Array(HMAC.outputLen);
+	for (let counter = 0; counter < blocks; counter++) {
+		HKDF_COUNTER[0] = counter + 1;
+		HMACTmp.update(counter === 0 ? EMPTY_BUFFER : T).update(info).update(HKDF_COUNTER).digestInto(T);
+		okm.set(T, olen * counter);
+		HMAC._cloneInto(HMACTmp);
+	}
+	HMAC.destroy();
+	HMACTmp.destroy();
+	clean$1(T, HKDF_COUNTER);
+	return okm.slice(0, length);
+}
+/**
+* HKDF (RFC 5869): derive keys from an initial input.
+* Combines hkdf_extract + hkdf_expand in one step
+* @param hash - hash function that would be used (e.g. sha256)
+* @param ikm - input keying material, the initial key
+* @param salt - optional salt value (a non-secret random value)
+* @param info - optional context and application specific information bytes
+* @param length - length of output keying material in bytes.
+*   RFC 5869 §2.3 allows `0..255*HashLen`, so `0` returns an empty OKM.
+* @returns Output keying material derived from the input key.
+* @throws If the requested output length exceeds the HKDF limit
+*   for the selected hash. {@link Error}
+* @example
+* HKDF (RFC 5869): derive keys from an initial input.
+* ```ts
+* import { hkdf } from '@noble/hashes/hkdf.js';
+* import { sha256 } from '@noble/hashes/sha2.js';
+* import { randomBytes, utf8ToBytes } from '@noble/hashes/utils.js';
+* const inputKey = randomBytes(32);
+* const salt = randomBytes(32);
+* const info = utf8ToBytes('application-key');
+* const okm = hkdf(sha256, inputKey, salt, info, 32);
+* ```
+*/
+var hkdf = (hash, ikm, salt, info, length) => expand(hash, extract(hash, ikm, salt), info, length);
+//#endregion
+//#region ../../node_modules/.bun/@noble+hashes@2.2.0/node_modules/@noble/hashes/_md.js
+/**
+* Internal Merkle-Damgard hash utils.
+* @module
+*/
+/**
+* Shared 32-bit conditional boolean primitive reused by SHA-256, SHA-1, and MD5 `F`.
+* Returns bits from `b` when `a` is set, otherwise from `c`.
+* The XOR form is equivalent to MD5's `F(X,Y,Z) = XY v not(X)Z` because the masked terms never
+* set the same bit.
+* @param a - selector word
+* @param b - word chosen when selector bit is set
+* @param c - word chosen when selector bit is clear
+* @returns Mixed 32-bit word.
+* @example
+* Combine three words with the shared 32-bit choice primitive.
+* ```ts
+* Chi(0xffffffff, 0x12345678, 0x87654321);
+* ```
+*/
+function Chi(a, b, c) {
+	return a & b ^ ~a & c;
+}
+/**
+* Shared 32-bit majority primitive reused by SHA-256 and SHA-1.
+* Returns bits shared by at least two inputs.
+* @param a - first input word
+* @param b - second input word
+* @param c - third input word
+* @returns Mixed 32-bit word.
+* @example
+* Combine three words with the shared 32-bit majority primitive.
+* ```ts
+* Maj(0xffffffff, 0x12345678, 0x87654321);
+* ```
+*/
+function Maj(a, b, c) {
+	return a & b ^ a & c ^ b & c;
+}
+/**
+* Merkle-Damgard hash construction base class.
+* Could be used to create MD5, RIPEMD, SHA1, SHA2.
+* Accepts only byte-aligned `Uint8Array` input, even when the underlying spec describes bit
+* strings with partial-byte tails.
+* @param blockLen - internal block size in bytes
+* @param outputLen - digest size in bytes
+* @param padOffset - trailing length field size in bytes
+* @param isLE - whether length and state words are encoded in little-endian
+* @example
+* Use a concrete subclass to get the shared Merkle-Damgard update/digest flow.
+* ```ts
+* import { _SHA1 } from '@noble/hashes/legacy.js';
+* const hash = new _SHA1();
+* hash.update(new Uint8Array([97, 98, 99]));
+* hash.digest();
+* ```
+*/
+var HashMD = class {
+	blockLen;
+	outputLen;
+	canXOF = false;
+	padOffset;
+	isLE;
+	buffer;
+	view;
+	finished = false;
+	length = 0;
+	pos = 0;
+	destroyed = false;
+	constructor(blockLen, outputLen, padOffset, isLE) {
+		this.blockLen = blockLen;
+		this.outputLen = outputLen;
+		this.padOffset = padOffset;
+		this.isLE = isLE;
+		this.buffer = new Uint8Array(blockLen);
+		this.view = createView$1(this.buffer);
+	}
+	update(data) {
+		aexists$1(this);
+		abytes$1(data);
+		const { view, buffer, blockLen } = this;
+		const len = data.length;
+		for (let pos = 0; pos < len;) {
+			const take = Math.min(blockLen - this.pos, len - pos);
+			if (take === blockLen) {
+				const dataView = createView$1(data);
+				for (; blockLen <= len - pos; pos += blockLen) this.process(dataView, pos);
+				continue;
+			}
+			buffer.set(data.subarray(pos, pos + take), this.pos);
+			this.pos += take;
+			pos += take;
+			if (this.pos === blockLen) {
+				this.process(view, 0);
+				this.pos = 0;
+			}
+		}
+		this.length += data.length;
+		this.roundClean();
+		return this;
+	}
+	digestInto(out) {
+		aexists$1(this);
+		aoutput$1(out, this);
+		this.finished = true;
+		const { buffer, view, blockLen, isLE } = this;
+		let { pos } = this;
+		buffer[pos++] = 128;
+		clean$1(this.buffer.subarray(pos));
+		if (this.padOffset > blockLen - pos) {
+			this.process(view, 0);
+			pos = 0;
+		}
+		for (let i = pos; i < blockLen; i++) buffer[i] = 0;
+		view.setBigUint64(blockLen - 8, BigInt(this.length * 8), isLE);
+		this.process(view, 0);
+		const oview = createView$1(out);
+		const len = this.outputLen;
+		if (len % 4) throw new Error("_sha2: outputLen must be aligned to 32bit");
+		const outLen = len / 4;
+		const state = this.get();
+		if (outLen > state.length) throw new Error("_sha2: outputLen bigger than state");
+		for (let i = 0; i < outLen; i++) oview.setUint32(4 * i, state[i], isLE);
+	}
+	digest() {
+		const { buffer, outputLen } = this;
+		this.digestInto(buffer);
+		const res = buffer.slice(0, outputLen);
+		this.destroy();
+		return res;
+	}
+	_cloneInto(to) {
+		to ||= new this.constructor();
+		to.set(...this.get());
+		const { blockLen, buffer, length, finished, destroyed, pos } = this;
+		to.destroyed = destroyed;
+		to.finished = finished;
+		to.length = length;
+		to.pos = pos;
+		if (length % blockLen) to.buffer.set(buffer);
+		return to;
+	}
+	clone() {
+		return this._cloneInto();
+	}
+};
+/**
+* Initial SHA-2 state: fractional parts of square roots of first 16 primes 2..53.
+* Check out `test/misc/sha2-gen-iv.js` for recomputation guide.
+*/
+/** Initial SHA256 state from RFC 6234 §6.1: the first 32 bits of the fractional parts of the
+* square roots of the first eight prime numbers. Exported as a shared table; callers must treat
+* it as read-only because constructors copy words from it by index. */
+var SHA256_IV = /* @__PURE__ */ Uint32Array.from([
+	1779033703,
+	3144134277,
+	1013904242,
+	2773480762,
+	1359893119,
+	2600822924,
+	528734635,
+	1541459225
+]);
+//#endregion
+//#region ../../node_modules/.bun/@noble+hashes@2.2.0/node_modules/@noble/hashes/sha2.js
+/**
+* SHA2 hash function. A.k.a. sha256, sha384, sha512, sha512_224, sha512_256.
+* SHA256 is the fastest hash implementable in JS, even faster than Blake3.
+* Check out {@link https://www.rfc-editor.org/rfc/rfc4634 | RFC 4634} and
+* {@link https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf | FIPS 180-4}.
+* @module
+*/
+/**
+* SHA-224 / SHA-256 round constants from RFC 6234 §5.1: the first 32 bits
+* of the cube roots of the first 64 primes (2..311).
+*/
+var SHA256_K = /* @__PURE__ */ Uint32Array.from([
+	1116352408,
+	1899447441,
+	3049323471,
+	3921009573,
+	961987163,
+	1508970993,
+	2453635748,
+	2870763221,
+	3624381080,
+	310598401,
+	607225278,
+	1426881987,
+	1925078388,
+	2162078206,
+	2614888103,
+	3248222580,
+	3835390401,
+	4022224774,
+	264347078,
+	604807628,
+	770255983,
+	1249150122,
+	1555081692,
+	1996064986,
+	2554220882,
+	2821834349,
+	2952996808,
+	3210313671,
+	3336571891,
+	3584528711,
+	113926993,
+	338241895,
+	666307205,
+	773529912,
+	1294757372,
+	1396182291,
+	1695183700,
+	1986661051,
+	2177026350,
+	2456956037,
+	2730485921,
+	2820302411,
+	3259730800,
+	3345764771,
+	3516065817,
+	3600352804,
+	4094571909,
+	275423344,
+	430227734,
+	506948616,
+	659060556,
+	883997877,
+	958139571,
+	1322822218,
+	1537002063,
+	1747873779,
+	1955562222,
+	2024104815,
+	2227730452,
+	2361852424,
+	2428436474,
+	2756734187,
+	3204031479,
+	3329325298
+]);
+/** Reusable SHA-224 / SHA-256 message schedule buffer `W_t` from RFC 6234 §6.2 step 1. */
+var SHA256_W = /* @__PURE__ */ new Uint32Array(64);
+/** Internal SHA-224 / SHA-256 compression engine from RFC 6234 §6.2. */
+var SHA2_32B = class extends HashMD {
+	constructor(outputLen) {
+		super(64, outputLen, 8, false);
+	}
+	get() {
+		const { A, B, C, D, E, F, G, H } = this;
+		return [
+			A,
+			B,
+			C,
+			D,
+			E,
+			F,
+			G,
+			H
+		];
+	}
+	set(A, B, C, D, E, F, G, H) {
+		this.A = A | 0;
+		this.B = B | 0;
+		this.C = C | 0;
+		this.D = D | 0;
+		this.E = E | 0;
+		this.F = F | 0;
+		this.G = G | 0;
+		this.H = H | 0;
+	}
+	process(view, offset) {
+		for (let i = 0; i < 16; i++, offset += 4) SHA256_W[i] = view.getUint32(offset, false);
+		for (let i = 16; i < 64; i++) {
+			const W15 = SHA256_W[i - 15];
+			const W2 = SHA256_W[i - 2];
+			const s0 = rotr(W15, 7) ^ rotr(W15, 18) ^ W15 >>> 3;
+			SHA256_W[i] = (rotr(W2, 17) ^ rotr(W2, 19) ^ W2 >>> 10) + SHA256_W[i - 7] + s0 + SHA256_W[i - 16] | 0;
+		}
+		let { A, B, C, D, E, F, G, H } = this;
+		for (let i = 0; i < 64; i++) {
+			const sigma1 = rotr(E, 6) ^ rotr(E, 11) ^ rotr(E, 25);
+			const T1 = H + sigma1 + Chi(E, F, G) + SHA256_K[i] + SHA256_W[i] | 0;
+			const T2 = (rotr(A, 2) ^ rotr(A, 13) ^ rotr(A, 22)) + Maj(A, B, C) | 0;
+			H = G;
+			G = F;
+			F = E;
+			E = D + T1 | 0;
+			D = C;
+			C = B;
+			B = A;
+			A = T1 + T2 | 0;
+		}
+		A = A + this.A | 0;
+		B = B + this.B | 0;
+		C = C + this.C | 0;
+		D = D + this.D | 0;
+		E = E + this.E | 0;
+		F = F + this.F | 0;
+		G = G + this.G | 0;
+		H = H + this.H | 0;
+		this.set(A, B, C, D, E, F, G, H);
+	}
+	roundClean() {
+		clean$1(SHA256_W);
+	}
+	destroy() {
+		this.destroyed = true;
+		this.set(0, 0, 0, 0, 0, 0, 0, 0);
+		clean$1(this.buffer);
+	}
+};
+/** Internal SHA-256 hash class grounded in RFC 6234 §6.2. */
+var _SHA256 = class extends SHA2_32B {
+	A = SHA256_IV[0] | 0;
+	B = SHA256_IV[1] | 0;
+	C = SHA256_IV[2] | 0;
+	D = SHA256_IV[3] | 0;
+	E = SHA256_IV[4] | 0;
+	F = SHA256_IV[5] | 0;
+	G = SHA256_IV[6] | 0;
+	H = SHA256_IV[7] | 0;
+	constructor() {
+		super(32);
+	}
+};
+/**
+* SHA2-256 hash function from RFC 4634. In JS it's the fastest: even faster than Blake3. Some info:
+*
+* - Trying 2^128 hashes would get 50% chance of collision, using birthday attack.
+* - BTC network is doing 2^70 hashes/sec (2^95 hashes/year) as per 2025.
+* - Each sha256 hash is executing 2^18 bit operations.
+* - Good 2024 ASICs can do 200Th/sec with 3500 watts of power, corresponding to 2^36 hashes/joule.
+* @param msg - message bytes to hash
+* @returns Digest bytes.
+* @example
+* Hash a message with SHA2-256.
+* ```ts
+* sha256(new Uint8Array([97, 98, 99]));
+* ```
+*/
+var sha256 = /* @__PURE__ */ createHasher(() => new _SHA256(), /* @__PURE__ */ oidNist(1));
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/buffer_utils.js
+var encoder = new TextEncoder();
+var decoder = new TextDecoder();
+var MAX_INT32 = 2 ** 32;
+function concat(...buffers) {
+	const size = buffers.reduce((acc, { length }) => acc + length, 0);
+	const buf = new Uint8Array(size);
+	let i = 0;
+	for (const buffer of buffers) {
+		buf.set(buffer, i);
+		i += buffer.length;
+	}
+	return buf;
+}
+function writeUInt32BE(buf, value, offset) {
+	if (value < 0 || value >= MAX_INT32) throw new RangeError(`value must be >= 0 and <= ${MAX_INT32 - 1}. Received ${value}`);
+	buf.set([
+		value >>> 24,
+		value >>> 16,
+		value >>> 8,
+		value & 255
+	], offset);
+}
+function uint64be(value) {
+	const high = Math.floor(value / MAX_INT32);
+	const low = value % MAX_INT32;
+	const buf = /* @__PURE__ */ new Uint8Array(8);
+	writeUInt32BE(buf, high, 0);
+	writeUInt32BE(buf, low, 4);
+	return buf;
+}
+function uint32be(value) {
+	const buf = /* @__PURE__ */ new Uint8Array(4);
+	writeUInt32BE(buf, value);
+	return buf;
+}
+function encode$1(string) {
+	const bytes = new Uint8Array(string.length);
+	for (let i = 0; i < string.length; i++) {
+		const code = string.charCodeAt(i);
+		if (code > 127) throw new TypeError("non-ASCII string encountered in encode()");
+		bytes[i] = code;
+	}
+	return bytes;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/base64.js
+function encodeBase64(input) {
+	if (Uint8Array.prototype.toBase64) return input.toBase64();
+	const CHUNK_SIZE = 32768;
+	const arr = [];
+	for (let i = 0; i < input.length; i += CHUNK_SIZE) arr.push(String.fromCharCode.apply(null, input.subarray(i, i + CHUNK_SIZE)));
+	return btoa(arr.join(""));
+}
+function decodeBase64(encoded) {
+	if (Uint8Array.fromBase64) return Uint8Array.fromBase64(encoded);
+	const binary = atob(encoded);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+	return bytes;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/util/base64url.js
+function decode(input) {
+	if (Uint8Array.fromBase64) return Uint8Array.fromBase64(typeof input === "string" ? input : decoder.decode(input), { alphabet: "base64url" });
+	let encoded = input;
+	if (encoded instanceof Uint8Array) encoded = decoder.decode(encoded);
+	encoded = encoded.replace(/-/g, "+").replace(/_/g, "/");
+	try {
+		return decodeBase64(encoded);
+	} catch {
+		throw new TypeError("The input to be decoded is not correctly encoded.");
+	}
+}
+function encode(input) {
+	let unencoded = input;
+	if (typeof unencoded === "string") unencoded = encoder.encode(unencoded);
+	if (Uint8Array.prototype.toBase64) return unencoded.toBase64({
+		alphabet: "base64url",
+		omitPadding: true
+	});
+	return encodeBase64(unencoded).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/crypto_key.js
+var unusable = (name, prop = "algorithm.name") => /* @__PURE__ */ new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name}`);
+var isAlgorithm = (algorithm, name) => algorithm.name === name;
+function getHashLength(hash) {
+	return parseInt(hash.name.slice(4), 10);
+}
+function checkHashLength(algorithm, expected) {
+	if (getHashLength(algorithm.hash) !== expected) throw unusable(`SHA-${expected}`, "algorithm.hash");
+}
+function getNamedCurve(alg) {
+	switch (alg) {
+		case "ES256": return "P-256";
+		case "ES384": return "P-384";
+		case "ES512": return "P-521";
+		default: throw new Error("unreachable");
+	}
+}
+function checkUsage(key, usage) {
+	if (usage && !key.usages.includes(usage)) throw new TypeError(`CryptoKey does not support this operation, its usages must include ${usage}.`);
+}
+function checkSigCryptoKey(key, alg, usage) {
+	switch (alg) {
+		case "HS256":
+		case "HS384":
+		case "HS512":
+			if (!isAlgorithm(key.algorithm, "HMAC")) throw unusable("HMAC");
+			checkHashLength(key.algorithm, parseInt(alg.slice(2), 10));
+			break;
+		case "RS256":
+		case "RS384":
+		case "RS512":
+			if (!isAlgorithm(key.algorithm, "RSASSA-PKCS1-v1_5")) throw unusable("RSASSA-PKCS1-v1_5");
+			checkHashLength(key.algorithm, parseInt(alg.slice(2), 10));
+			break;
+		case "PS256":
+		case "PS384":
+		case "PS512":
+			if (!isAlgorithm(key.algorithm, "RSA-PSS")) throw unusable("RSA-PSS");
+			checkHashLength(key.algorithm, parseInt(alg.slice(2), 10));
+			break;
+		case "Ed25519":
+		case "EdDSA":
+			if (!isAlgorithm(key.algorithm, "Ed25519")) throw unusable("Ed25519");
+			break;
+		case "ML-DSA-44":
+		case "ML-DSA-65":
+		case "ML-DSA-87":
+			if (!isAlgorithm(key.algorithm, alg)) throw unusable(alg);
+			break;
+		case "ES256":
+		case "ES384":
+		case "ES512": {
+			if (!isAlgorithm(key.algorithm, "ECDSA")) throw unusable("ECDSA");
+			const expected = getNamedCurve(alg);
+			if (key.algorithm.namedCurve !== expected) throw unusable(expected, "algorithm.namedCurve");
+			break;
+		}
+		default: throw new TypeError("CryptoKey does not support this operation");
+	}
+	checkUsage(key, usage);
+}
+function checkEncCryptoKey(key, alg, usage) {
+	switch (alg) {
+		case "A128GCM":
+		case "A192GCM":
+		case "A256GCM": {
+			if (!isAlgorithm(key.algorithm, "AES-GCM")) throw unusable("AES-GCM");
+			const expected = parseInt(alg.slice(1, 4), 10);
+			if (key.algorithm.length !== expected) throw unusable(expected, "algorithm.length");
+			break;
+		}
+		case "A128KW":
+		case "A192KW":
+		case "A256KW": {
+			if (!isAlgorithm(key.algorithm, "AES-KW")) throw unusable("AES-KW");
+			const expected = parseInt(alg.slice(1, 4), 10);
+			if (key.algorithm.length !== expected) throw unusable(expected, "algorithm.length");
+			break;
+		}
+		case "ECDH":
+			switch (key.algorithm.name) {
+				case "ECDH":
+				case "X25519": break;
+				default: throw unusable("ECDH or X25519");
+			}
+			break;
+		case "PBES2-HS256+A128KW":
+		case "PBES2-HS384+A192KW":
+		case "PBES2-HS512+A256KW":
+			if (!isAlgorithm(key.algorithm, "PBKDF2")) throw unusable("PBKDF2");
+			break;
+		case "RSA-OAEP":
+		case "RSA-OAEP-256":
+		case "RSA-OAEP-384":
+		case "RSA-OAEP-512":
+			if (!isAlgorithm(key.algorithm, "RSA-OAEP")) throw unusable("RSA-OAEP");
+			checkHashLength(key.algorithm, parseInt(alg.slice(9), 10) || 1);
+			break;
+		default: throw new TypeError("CryptoKey does not support this operation");
+	}
+	checkUsage(key, usage);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/invalid_key_input.js
+function message(msg, actual, ...types) {
+	types = types.filter(Boolean);
+	if (types.length > 2) {
+		const last = types.pop();
+		msg += `one of type ${types.join(", ")}, or ${last}.`;
+	} else if (types.length === 2) msg += `one of type ${types[0]} or ${types[1]}.`;
+	else msg += `of type ${types[0]}.`;
+	if (actual == null) msg += ` Received ${actual}`;
+	else if (typeof actual === "function" && actual.name) msg += ` Received function ${actual.name}`;
+	else if (typeof actual === "object" && actual != null) {
+		if (actual.constructor?.name) msg += ` Received an instance of ${actual.constructor.name}`;
+	}
+	return msg;
+}
+var invalidKeyInput = (actual, ...types) => message("Key must be ", actual, ...types);
+var withAlg = (alg, actual, ...types) => message(`Key for the ${alg} algorithm must be `, actual, ...types);
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/util/errors.js
+var JOSEError = class extends Error {
+	static code = "ERR_JOSE_GENERIC";
+	code = "ERR_JOSE_GENERIC";
+	constructor(message, options) {
+		super(message, options);
+		this.name = this.constructor.name;
+		Error.captureStackTrace?.(this, this.constructor);
+	}
+};
+var JWTClaimValidationFailed = class extends JOSEError {
+	static code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+	code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+	claim;
+	reason;
+	payload;
+	constructor(message, payload, claim = "unspecified", reason = "unspecified") {
+		super(message, { cause: {
+			claim,
+			reason,
+			payload
+		} });
+		this.claim = claim;
+		this.reason = reason;
+		this.payload = payload;
+	}
+};
+var JWTExpired = class extends JOSEError {
+	static code = "ERR_JWT_EXPIRED";
+	code = "ERR_JWT_EXPIRED";
+	claim;
+	reason;
+	payload;
+	constructor(message, payload, claim = "unspecified", reason = "unspecified") {
+		super(message, { cause: {
+			claim,
+			reason,
+			payload
+		} });
+		this.claim = claim;
+		this.reason = reason;
+		this.payload = payload;
+	}
+};
+var JOSEAlgNotAllowed = class extends JOSEError {
+	static code = "ERR_JOSE_ALG_NOT_ALLOWED";
+	code = "ERR_JOSE_ALG_NOT_ALLOWED";
+};
+var JOSENotSupported = class extends JOSEError {
+	static code = "ERR_JOSE_NOT_SUPPORTED";
+	code = "ERR_JOSE_NOT_SUPPORTED";
+};
+var JWEDecryptionFailed = class extends JOSEError {
+	static code = "ERR_JWE_DECRYPTION_FAILED";
+	code = "ERR_JWE_DECRYPTION_FAILED";
+	constructor(message = "decryption operation failed", options) {
+		super(message, options);
+	}
+};
+var JWEInvalid = class extends JOSEError {
+	static code = "ERR_JWE_INVALID";
+	code = "ERR_JWE_INVALID";
+};
+var JWSInvalid = class extends JOSEError {
+	static code = "ERR_JWS_INVALID";
+	code = "ERR_JWS_INVALID";
+};
+var JWTInvalid = class extends JOSEError {
+	static code = "ERR_JWT_INVALID";
+	code = "ERR_JWT_INVALID";
+};
+var JWKInvalid = class extends JOSEError {
+	static code = "ERR_JWK_INVALID";
+	code = "ERR_JWK_INVALID";
+};
+var JWKSInvalid = class extends JOSEError {
+	static code = "ERR_JWKS_INVALID";
+	code = "ERR_JWKS_INVALID";
+};
+var JWKSNoMatchingKey = class extends JOSEError {
+	static code = "ERR_JWKS_NO_MATCHING_KEY";
+	code = "ERR_JWKS_NO_MATCHING_KEY";
+	constructor(message = "no applicable key found in the JSON Web Key Set", options) {
+		super(message, options);
+	}
+};
+var JWKSMultipleMatchingKeys = class extends JOSEError {
+	[Symbol.asyncIterator];
+	static code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
+	code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
+	constructor(message = "multiple matching keys found in the JSON Web Key Set", options) {
+		super(message, options);
+	}
+};
+var JWKSTimeout = class extends JOSEError {
+	static code = "ERR_JWKS_TIMEOUT";
+	code = "ERR_JWKS_TIMEOUT";
+	constructor(message = "request timed out", options) {
+		super(message, options);
+	}
+};
+var JWSSignatureVerificationFailed = class extends JOSEError {
+	static code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+	code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+	constructor(message = "signature verification failed", options) {
+		super(message, options);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/is_key_like.js
+function assertCryptoKey(key) {
+	if (!isCryptoKey(key)) throw new Error("CryptoKey instance expected");
+}
+var isCryptoKey = (key) => {
+	if (key?.[Symbol.toStringTag] === "CryptoKey") return true;
+	try {
+		return key instanceof CryptoKey;
+	} catch {
+		return false;
+	}
+};
+var isKeyObject = (key) => key?.[Symbol.toStringTag] === "KeyObject";
+var isKeyLike = (key) => isCryptoKey(key) || isKeyObject(key);
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/content_encryption.js
+function cekLength(alg) {
+	switch (alg) {
+		case "A128GCM": return 128;
+		case "A192GCM": return 192;
+		case "A256GCM":
+		case "A128CBC-HS256": return 256;
+		case "A192CBC-HS384": return 384;
+		case "A256CBC-HS512": return 512;
+		default: throw new JOSENotSupported(`Unsupported JWE Algorithm: ${alg}`);
+	}
+}
+var generateCek = (alg) => crypto.getRandomValues(new Uint8Array(cekLength(alg) >> 3));
+function checkCekLength(cek, expected) {
+	const actual = cek.byteLength << 3;
+	if (actual !== expected) throw new JWEInvalid(`Invalid Content Encryption Key length. Expected ${expected} bits, got ${actual} bits`);
+}
+function ivBitLength(alg) {
+	switch (alg) {
+		case "A128GCM":
+		case "A128GCMKW":
+		case "A192GCM":
+		case "A192GCMKW":
+		case "A256GCM":
+		case "A256GCMKW": return 96;
+		case "A128CBC-HS256":
+		case "A192CBC-HS384":
+		case "A256CBC-HS512": return 128;
+		default: throw new JOSENotSupported(`Unsupported JWE Algorithm: ${alg}`);
+	}
+}
+var generateIv = (alg) => crypto.getRandomValues(new Uint8Array(ivBitLength(alg) >> 3));
+function checkIvLength(enc, iv) {
+	if (iv.length << 3 !== ivBitLength(enc)) throw new JWEInvalid("Invalid Initialization Vector length");
+}
+async function cbcKeySetup(enc, cek, usage) {
+	if (!(cek instanceof Uint8Array)) throw new TypeError(invalidKeyInput(cek, "Uint8Array"));
+	const keySize = parseInt(enc.slice(1, 4), 10);
+	return {
+		encKey: await crypto.subtle.importKey("raw", cek.subarray(keySize >> 3), "AES-CBC", false, [usage]),
+		macKey: await crypto.subtle.importKey("raw", cek.subarray(0, keySize >> 3), {
+			hash: `SHA-${keySize << 1}`,
+			name: "HMAC"
+		}, false, ["sign"]),
+		keySize
+	};
+}
+async function cbcHmacTag(macKey, macData, keySize) {
+	return new Uint8Array((await crypto.subtle.sign("HMAC", macKey, macData)).slice(0, keySize >> 3));
+}
+async function cbcEncrypt(enc, plaintext, cek, iv, aad) {
+	const { encKey, macKey, keySize } = await cbcKeySetup(enc, cek, "encrypt");
+	const ciphertext = new Uint8Array(await crypto.subtle.encrypt({
+		iv,
+		name: "AES-CBC"
+	}, encKey, plaintext));
+	return {
+		ciphertext,
+		tag: await cbcHmacTag(macKey, concat(aad, iv, ciphertext, uint64be(aad.length << 3)), keySize),
+		iv
+	};
+}
+async function timingSafeEqual$1(a, b) {
+	if (!(a instanceof Uint8Array)) throw new TypeError("First argument must be a buffer");
+	if (!(b instanceof Uint8Array)) throw new TypeError("Second argument must be a buffer");
+	const algorithm = {
+		name: "HMAC",
+		hash: "SHA-256"
+	};
+	const key = await crypto.subtle.generateKey(algorithm, false, ["sign"]);
+	const aHmac = new Uint8Array(await crypto.subtle.sign(algorithm, key, a));
+	const bHmac = new Uint8Array(await crypto.subtle.sign(algorithm, key, b));
+	let out = 0;
+	let i = -1;
+	while (++i < 32) out |= aHmac[i] ^ bHmac[i];
+	return out === 0;
+}
+async function cbcDecrypt(enc, cek, ciphertext, iv, tag, aad) {
+	const { encKey, macKey, keySize } = await cbcKeySetup(enc, cek, "decrypt");
+	const expectedTag = await cbcHmacTag(macKey, concat(aad, iv, ciphertext, uint64be(aad.length << 3)), keySize);
+	let macCheckPassed;
+	try {
+		macCheckPassed = await timingSafeEqual$1(tag, expectedTag);
+	} catch {}
+	if (!macCheckPassed) throw new JWEDecryptionFailed();
+	let plaintext;
+	try {
+		plaintext = new Uint8Array(await crypto.subtle.decrypt({
+			iv,
+			name: "AES-CBC"
+		}, encKey, ciphertext));
+	} catch {}
+	if (!plaintext) throw new JWEDecryptionFailed();
+	return plaintext;
+}
+async function gcmEncrypt(enc, plaintext, cek, iv, aad) {
+	let encKey;
+	if (cek instanceof Uint8Array) encKey = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+	else {
+		checkEncCryptoKey(cek, enc, "encrypt");
+		encKey = cek;
+	}
+	const encrypted = new Uint8Array(await crypto.subtle.encrypt({
+		additionalData: aad,
+		iv,
+		name: "AES-GCM",
+		tagLength: 128
+	}, encKey, plaintext));
+	const tag = encrypted.slice(-16);
+	return {
+		ciphertext: encrypted.slice(0, -16),
+		tag,
+		iv
+	};
+}
+async function gcmDecrypt(enc, cek, ciphertext, iv, tag, aad) {
+	let encKey;
+	if (cek instanceof Uint8Array) encKey = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["decrypt"]);
+	else {
+		checkEncCryptoKey(cek, enc, "decrypt");
+		encKey = cek;
+	}
+	try {
+		return new Uint8Array(await crypto.subtle.decrypt({
+			additionalData: aad,
+			iv,
+			name: "AES-GCM",
+			tagLength: 128
+		}, encKey, concat(ciphertext, tag)));
+	} catch {
+		throw new JWEDecryptionFailed();
+	}
+}
+var unsupportedEnc = "Unsupported JWE Content Encryption Algorithm";
+async function encrypt$1(enc, plaintext, cek, iv, aad) {
+	if (!isCryptoKey(cek) && !(cek instanceof Uint8Array)) throw new TypeError(invalidKeyInput(cek, "CryptoKey", "KeyObject", "Uint8Array", "JSON Web Key"));
+	if (iv) checkIvLength(enc, iv);
+	else iv = generateIv(enc);
+	switch (enc) {
+		case "A128CBC-HS256":
+		case "A192CBC-HS384":
+		case "A256CBC-HS512":
+			if (cek instanceof Uint8Array) checkCekLength(cek, parseInt(enc.slice(-3), 10));
+			return cbcEncrypt(enc, plaintext, cek, iv, aad);
+		case "A128GCM":
+		case "A192GCM":
+		case "A256GCM":
+			if (cek instanceof Uint8Array) checkCekLength(cek, parseInt(enc.slice(1, 4), 10));
+			return gcmEncrypt(enc, plaintext, cek, iv, aad);
+		default: throw new JOSENotSupported(unsupportedEnc);
+	}
+}
+async function decrypt$1(enc, cek, ciphertext, iv, tag, aad) {
+	if (!isCryptoKey(cek) && !(cek instanceof Uint8Array)) throw new TypeError(invalidKeyInput(cek, "CryptoKey", "KeyObject", "Uint8Array", "JSON Web Key"));
+	if (!iv) throw new JWEInvalid("JWE Initialization Vector missing");
+	if (!tag) throw new JWEInvalid("JWE Authentication Tag missing");
+	checkIvLength(enc, iv);
+	switch (enc) {
+		case "A128CBC-HS256":
+		case "A192CBC-HS384":
+		case "A256CBC-HS512":
+			if (cek instanceof Uint8Array) checkCekLength(cek, parseInt(enc.slice(-3), 10));
+			return cbcDecrypt(enc, cek, ciphertext, iv, tag, aad);
+		case "A128GCM":
+		case "A192GCM":
+		case "A256GCM":
+			if (cek instanceof Uint8Array) checkCekLength(cek, parseInt(enc.slice(1, 4), 10));
+			return gcmDecrypt(enc, cek, ciphertext, iv, tag, aad);
+		default: throw new JOSENotSupported(unsupportedEnc);
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/helpers.js
+var unprotected = Symbol();
+function assertNotSet(value, name) {
+	if (value) throw new TypeError(`${name} can only be called once`);
+}
+function decodeBase64url(value, label, ErrorClass) {
+	try {
+		return decode(value);
+	} catch {
+		throw new ErrorClass(`Failed to base64url decode the ${label}`);
+	}
+}
+async function digest(algorithm, data) {
+	const subtleDigest = `SHA-${algorithm.slice(-3)}`;
+	return new Uint8Array(await crypto.subtle.digest(subtleDigest, data));
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/type_checks.js
+var isObjectLike = (value) => typeof value === "object" && value !== null;
+function isObject(input) {
+	if (!isObjectLike(input) || Object.prototype.toString.call(input) !== "[object Object]") return false;
+	if (Object.getPrototypeOf(input) === null) return true;
+	let proto = input;
+	while (Object.getPrototypeOf(proto) !== null) proto = Object.getPrototypeOf(proto);
+	return Object.getPrototypeOf(input) === proto;
+}
+function isDisjoint(...headers) {
+	const sources = headers.filter(Boolean);
+	if (sources.length === 0 || sources.length === 1) return true;
+	let acc;
+	for (const header of sources) {
+		const parameters = Object.keys(header);
+		if (!acc || acc.size === 0) {
+			acc = new Set(parameters);
+			continue;
+		}
+		for (const parameter of parameters) {
+			if (acc.has(parameter)) return false;
+			acc.add(parameter);
+		}
+	}
+	return true;
+}
+var isJWK = (key) => isObject(key) && typeof key.kty === "string";
+var isPrivateJWK = (key) => key.kty !== "oct" && (key.kty === "AKP" && typeof key.priv === "string" || typeof key.d === "string");
+var isPublicJWK = (key) => key.kty !== "oct" && key.d === void 0 && key.priv === void 0;
+var isSecretJWK = (key) => key.kty === "oct" && typeof key.k === "string";
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/aeskw.js
+function checkKeySize(key, alg) {
+	if (key.algorithm.length !== parseInt(alg.slice(1, 4), 10)) throw new TypeError(`Invalid key size for alg: ${alg}`);
+}
+function getCryptoKey$2(key, alg, usage) {
+	if (key instanceof Uint8Array) return crypto.subtle.importKey("raw", key, "AES-KW", true, [usage]);
+	checkEncCryptoKey(key, alg, usage);
+	return key;
+}
+async function wrap$2(alg, key, cek) {
+	const cryptoKey = await getCryptoKey$2(key, alg, "wrapKey");
+	checkKeySize(cryptoKey, alg);
+	const cryptoKeyCek = await crypto.subtle.importKey("raw", cek, {
+		hash: "SHA-256",
+		name: "HMAC"
+	}, true, ["sign"]);
+	return new Uint8Array(await crypto.subtle.wrapKey("raw", cryptoKeyCek, cryptoKey, "AES-KW"));
+}
+async function unwrap$2(alg, key, encryptedKey) {
+	const cryptoKey = await getCryptoKey$2(key, alg, "unwrapKey");
+	checkKeySize(cryptoKey, alg);
+	const cryptoKeyCek = await crypto.subtle.unwrapKey("raw", encryptedKey, cryptoKey, "AES-KW", {
+		hash: "SHA-256",
+		name: "HMAC"
+	}, true, ["sign"]);
+	return new Uint8Array(await crypto.subtle.exportKey("raw", cryptoKeyCek));
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/ecdhes.js
+function lengthAndInput(input) {
+	return concat(uint32be(input.length), input);
+}
+async function concatKdf(Z, L, OtherInfo) {
+	const dkLen = L >> 3;
+	const hashLen = 32;
+	const reps = Math.ceil(dkLen / hashLen);
+	const dk = new Uint8Array(reps * hashLen);
+	for (let i = 1; i <= reps; i++) {
+		const hashInput = new Uint8Array(4 + Z.length + OtherInfo.length);
+		hashInput.set(uint32be(i), 0);
+		hashInput.set(Z, 4);
+		hashInput.set(OtherInfo, 4 + Z.length);
+		const hashResult = await digest("sha256", hashInput);
+		dk.set(hashResult, (i - 1) * hashLen);
+	}
+	return dk.slice(0, dkLen);
+}
+async function deriveKey$1(publicKey, privateKey, algorithm, keyLength, apu = /* @__PURE__ */ new Uint8Array(), apv = /* @__PURE__ */ new Uint8Array()) {
+	checkEncCryptoKey(publicKey, "ECDH");
+	checkEncCryptoKey(privateKey, "ECDH", "deriveBits");
+	const otherInfo = concat(lengthAndInput(encode$1(algorithm)), lengthAndInput(apu), lengthAndInput(apv), uint32be(keyLength), /* @__PURE__ */ new Uint8Array());
+	return concatKdf(new Uint8Array(await crypto.subtle.deriveBits({
+		name: publicKey.algorithm.name,
+		public: publicKey
+	}, privateKey, getEcdhBitLength(publicKey))), keyLength, otherInfo);
+}
+function getEcdhBitLength(publicKey) {
+	if (publicKey.algorithm.name === "X25519") return 256;
+	return Math.ceil(parseInt(publicKey.algorithm.namedCurve.slice(-3), 10) / 8) << 3;
+}
+function allowed(key) {
+	switch (key.algorithm.namedCurve) {
+		case "P-256":
+		case "P-384":
+		case "P-521": return true;
+		default: return key.algorithm.name === "X25519";
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/pbes2kw.js
+function getCryptoKey$1(key, alg) {
+	if (key instanceof Uint8Array) return crypto.subtle.importKey("raw", key, "PBKDF2", false, ["deriveBits"]);
+	checkEncCryptoKey(key, alg, "deriveBits");
+	return key;
+}
+var concatSalt = (alg, p2sInput) => concat(encode$1(alg), Uint8Array.of(0), p2sInput);
+async function deriveKey(p2s, alg, p2c, key) {
+	if (!(p2s instanceof Uint8Array) || p2s.length < 8) throw new JWEInvalid("PBES2 Salt Input must be 8 or more octets");
+	if (!Number.isSafeInteger(p2c) || Math.sign(p2c) !== 1) throw new JWEInvalid("PBES2 Count Input must be a positive integer");
+	const salt = concatSalt(alg, p2s);
+	const keylen = parseInt(alg.slice(13, 16), 10);
+	const subtleAlg = {
+		hash: `SHA-${alg.slice(8, 11)}`,
+		iterations: p2c,
+		name: "PBKDF2",
+		salt
+	};
+	const cryptoKey = await getCryptoKey$1(key, alg);
+	return new Uint8Array(await crypto.subtle.deriveBits(subtleAlg, cryptoKey, keylen));
+}
+async function wrap$1(alg, key, cek, p2c = 2048, p2s = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(16))) {
+	const derived = await deriveKey(p2s, alg, p2c, key);
+	return {
+		encryptedKey: await wrap$2(alg.slice(-6), derived, cek),
+		p2c,
+		p2s: encode(p2s)
+	};
+}
+async function unwrap$1(alg, key, encryptedKey, p2c, p2s) {
+	const derived = await deriveKey(p2s, alg, p2c, key);
+	return unwrap$2(alg.slice(-6), derived, encryptedKey);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/signing.js
+function checkKeyLength(alg, key) {
+	if (alg.startsWith("RS") || alg.startsWith("PS")) {
+		const { modulusLength } = key.algorithm;
+		if (typeof modulusLength !== "number" || modulusLength < 2048) throw new TypeError(`${alg} requires key modulusLength to be 2048 bits or larger`);
+	}
+}
+function subtleAlgorithm$1(alg, algorithm) {
+	const hash = `SHA-${alg.slice(-3)}`;
+	switch (alg) {
+		case "HS256":
+		case "HS384":
+		case "HS512": return {
+			hash,
+			name: "HMAC"
+		};
+		case "PS256":
+		case "PS384":
+		case "PS512": return {
+			hash,
+			name: "RSA-PSS",
+			saltLength: parseInt(alg.slice(-3), 10) >> 3
+		};
+		case "RS256":
+		case "RS384":
+		case "RS512": return {
+			hash,
+			name: "RSASSA-PKCS1-v1_5"
+		};
+		case "ES256":
+		case "ES384":
+		case "ES512": return {
+			hash,
+			name: "ECDSA",
+			namedCurve: algorithm.namedCurve
+		};
+		case "Ed25519":
+		case "EdDSA": return { name: "Ed25519" };
+		case "ML-DSA-44":
+		case "ML-DSA-65":
+		case "ML-DSA-87": return { name: alg };
+		default: throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+	}
+}
+async function getSigKey(alg, key, usage) {
+	if (key instanceof Uint8Array) {
+		if (!alg.startsWith("HS")) throw new TypeError(invalidKeyInput(key, "CryptoKey", "KeyObject", "JSON Web Key"));
+		return crypto.subtle.importKey("raw", key, {
+			hash: `SHA-${alg.slice(-3)}`,
+			name: "HMAC"
+		}, false, [usage]);
+	}
+	checkSigCryptoKey(key, alg, usage);
+	return key;
+}
+async function sign(alg, key, data) {
+	const cryptoKey = await getSigKey(alg, key, "sign");
+	checkKeyLength(alg, cryptoKey);
+	const signature = await crypto.subtle.sign(subtleAlgorithm$1(alg, cryptoKey.algorithm), cryptoKey, data);
+	return new Uint8Array(signature);
+}
+async function verify(alg, key, signature, data) {
+	const cryptoKey = await getSigKey(alg, key, "verify");
+	checkKeyLength(alg, cryptoKey);
+	const algorithm = subtleAlgorithm$1(alg, cryptoKey.algorithm);
+	try {
+		return await crypto.subtle.verify(algorithm, cryptoKey, signature, data);
+	} catch {
+		return false;
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/rsaes.js
+var subtleAlgorithm = (alg) => {
+	switch (alg) {
+		case "RSA-OAEP":
+		case "RSA-OAEP-256":
+		case "RSA-OAEP-384":
+		case "RSA-OAEP-512": return "RSA-OAEP";
+		default: throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+	}
+};
+async function encrypt(alg, key, cek) {
+	checkEncCryptoKey(key, alg, "encrypt");
+	checkKeyLength(alg, key);
+	return new Uint8Array(await crypto.subtle.encrypt(subtleAlgorithm(alg), key, cek));
+}
+async function decrypt(alg, key, encryptedKey) {
+	checkEncCryptoKey(key, alg, "decrypt");
+	checkKeyLength(alg, key);
+	return new Uint8Array(await crypto.subtle.decrypt(subtleAlgorithm(alg), key, encryptedKey));
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/jwk_to_key.js
+var unsupportedAlg = "Invalid or unsupported JWK \"alg\" (Algorithm) Parameter value";
+function subtleMapping(jwk) {
+	let algorithm;
+	let keyUsages;
+	switch (jwk.kty) {
+		case "AKP":
+			switch (jwk.alg) {
+				case "ML-DSA-44":
+				case "ML-DSA-65":
+				case "ML-DSA-87":
+					algorithm = { name: jwk.alg };
+					keyUsages = jwk.priv ? ["sign"] : ["verify"];
+					break;
+				default: throw new JOSENotSupported(unsupportedAlg);
+			}
+			break;
+		case "RSA":
+			switch (jwk.alg) {
+				case "PS256":
+				case "PS384":
+				case "PS512":
+					algorithm = {
+						name: "RSA-PSS",
+						hash: `SHA-${jwk.alg.slice(-3)}`
+					};
+					keyUsages = jwk.d ? ["sign"] : ["verify"];
+					break;
+				case "RS256":
+				case "RS384":
+				case "RS512":
+					algorithm = {
+						name: "RSASSA-PKCS1-v1_5",
+						hash: `SHA-${jwk.alg.slice(-3)}`
+					};
+					keyUsages = jwk.d ? ["sign"] : ["verify"];
+					break;
+				case "RSA-OAEP":
+				case "RSA-OAEP-256":
+				case "RSA-OAEP-384":
+				case "RSA-OAEP-512":
+					algorithm = {
+						name: "RSA-OAEP",
+						hash: `SHA-${parseInt(jwk.alg.slice(-3), 10) || 1}`
+					};
+					keyUsages = jwk.d ? ["decrypt", "unwrapKey"] : ["encrypt", "wrapKey"];
+					break;
+				default: throw new JOSENotSupported(unsupportedAlg);
+			}
+			break;
+		case "EC":
+			switch (jwk.alg) {
+				case "ES256":
+				case "ES384":
+				case "ES512":
+					algorithm = {
+						name: "ECDSA",
+						namedCurve: {
+							ES256: "P-256",
+							ES384: "P-384",
+							ES512: "P-521"
+						}[jwk.alg]
+					};
+					keyUsages = jwk.d ? ["sign"] : ["verify"];
+					break;
+				case "ECDH-ES":
+				case "ECDH-ES+A128KW":
+				case "ECDH-ES+A192KW":
+				case "ECDH-ES+A256KW":
+					algorithm = {
+						name: "ECDH",
+						namedCurve: jwk.crv
+					};
+					keyUsages = jwk.d ? ["deriveBits"] : [];
+					break;
+				default: throw new JOSENotSupported(unsupportedAlg);
+			}
+			break;
+		case "OKP":
+			switch (jwk.alg) {
+				case "Ed25519":
+				case "EdDSA":
+					algorithm = { name: "Ed25519" };
+					keyUsages = jwk.d ? ["sign"] : ["verify"];
+					break;
+				case "ECDH-ES":
+				case "ECDH-ES+A128KW":
+				case "ECDH-ES+A192KW":
+				case "ECDH-ES+A256KW":
+					algorithm = { name: jwk.crv };
+					keyUsages = jwk.d ? ["deriveBits"] : [];
+					break;
+				default: throw new JOSENotSupported(unsupportedAlg);
+			}
+			break;
+		default: throw new JOSENotSupported("Invalid or unsupported JWK \"kty\" (Key Type) Parameter value");
+	}
+	return {
+		algorithm,
+		keyUsages
+	};
+}
+async function jwkToKey(jwk) {
+	if (!jwk.alg) throw new TypeError("\"alg\" argument is required when \"jwk.alg\" is not present");
+	const { algorithm, keyUsages } = subtleMapping(jwk);
+	const keyData = { ...jwk };
+	if (keyData.kty !== "AKP") delete keyData.alg;
+	delete keyData.use;
+	return crypto.subtle.importKey("jwk", keyData, algorithm, jwk.ext ?? (jwk.d || jwk.priv ? false : true), jwk.key_ops ?? keyUsages);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/normalize_key.js
+var unusableForAlg = "given KeyObject instance cannot be used for this algorithm";
+var cache$1;
+var handleJWK = async (key, jwk, alg, freeze = false) => {
+	cache$1 ||= /* @__PURE__ */ new WeakMap();
+	let cached = cache$1.get(key);
+	if (cached?.[alg]) return cached[alg];
+	const cryptoKey = await jwkToKey({
+		...jwk,
+		alg
+	});
+	if (freeze) Object.freeze(key);
+	if (!cached) cache$1.set(key, { [alg]: cryptoKey });
+	else cached[alg] = cryptoKey;
+	return cryptoKey;
+};
+var handleKeyObject = (keyObject, alg) => {
+	cache$1 ||= /* @__PURE__ */ new WeakMap();
+	let cached = cache$1.get(keyObject);
+	if (cached?.[alg]) return cached[alg];
+	const isPublic = keyObject.type === "public";
+	const extractable = isPublic ? true : false;
+	let cryptoKey;
+	if (keyObject.asymmetricKeyType === "x25519") {
+		switch (alg) {
+			case "ECDH-ES":
+			case "ECDH-ES+A128KW":
+			case "ECDH-ES+A192KW":
+			case "ECDH-ES+A256KW": break;
+			default: throw new TypeError(unusableForAlg);
+		}
+		cryptoKey = keyObject.toCryptoKey(keyObject.asymmetricKeyType, extractable, isPublic ? [] : ["deriveBits"]);
+	}
+	if (keyObject.asymmetricKeyType === "ed25519") {
+		if (alg !== "EdDSA" && alg !== "Ed25519") throw new TypeError(unusableForAlg);
+		cryptoKey = keyObject.toCryptoKey(keyObject.asymmetricKeyType, extractable, [isPublic ? "verify" : "sign"]);
+	}
+	switch (keyObject.asymmetricKeyType) {
+		case "ml-dsa-44":
+		case "ml-dsa-65":
+		case "ml-dsa-87":
+			if (alg !== keyObject.asymmetricKeyType.toUpperCase()) throw new TypeError(unusableForAlg);
+			cryptoKey = keyObject.toCryptoKey(keyObject.asymmetricKeyType, extractable, [isPublic ? "verify" : "sign"]);
+	}
+	if (keyObject.asymmetricKeyType === "rsa") {
+		let hash;
+		switch (alg) {
+			case "RSA-OAEP":
+				hash = "SHA-1";
+				break;
+			case "RS256":
+			case "PS256":
+			case "RSA-OAEP-256":
+				hash = "SHA-256";
+				break;
+			case "RS384":
+			case "PS384":
+			case "RSA-OAEP-384":
+				hash = "SHA-384";
+				break;
+			case "RS512":
+			case "PS512":
+			case "RSA-OAEP-512":
+				hash = "SHA-512";
+				break;
+			default: throw new TypeError(unusableForAlg);
+		}
+		if (alg.startsWith("RSA-OAEP")) return keyObject.toCryptoKey({
+			name: "RSA-OAEP",
+			hash
+		}, extractable, isPublic ? ["encrypt"] : ["decrypt"]);
+		cryptoKey = keyObject.toCryptoKey({
+			name: alg.startsWith("PS") ? "RSA-PSS" : "RSASSA-PKCS1-v1_5",
+			hash
+		}, extractable, [isPublic ? "verify" : "sign"]);
+	}
+	if (keyObject.asymmetricKeyType === "ec") {
+		const namedCurve = (/* @__PURE__ */ new Map([
+			["prime256v1", "P-256"],
+			["secp384r1", "P-384"],
+			["secp521r1", "P-521"]
+		])).get(keyObject.asymmetricKeyDetails?.namedCurve);
+		if (!namedCurve) throw new TypeError(unusableForAlg);
+		const expectedCurve = {
+			ES256: "P-256",
+			ES384: "P-384",
+			ES512: "P-521"
+		};
+		if (expectedCurve[alg] && namedCurve === expectedCurve[alg]) cryptoKey = keyObject.toCryptoKey({
+			name: "ECDSA",
+			namedCurve
+		}, extractable, [isPublic ? "verify" : "sign"]);
+		if (alg.startsWith("ECDH-ES")) cryptoKey = keyObject.toCryptoKey({
+			name: "ECDH",
+			namedCurve
+		}, extractable, isPublic ? [] : ["deriveBits"]);
+	}
+	if (!cryptoKey) throw new TypeError(unusableForAlg);
+	if (!cached) cache$1.set(keyObject, { [alg]: cryptoKey });
+	else cached[alg] = cryptoKey;
+	return cryptoKey;
+};
+async function normalizeKey(key, alg) {
+	if (key instanceof Uint8Array) return key;
+	if (isCryptoKey(key)) return key;
+	if (isKeyObject(key)) {
+		if (key.type === "secret") return key.export();
+		if ("toCryptoKey" in key && typeof key.toCryptoKey === "function") try {
+			return handleKeyObject(key, alg);
+		} catch (err) {
+			if (err instanceof TypeError) throw err;
+		}
+		return handleJWK(key, key.export({ format: "jwk" }), alg);
+	}
+	if (isJWK(key)) {
+		if (key.k) return decode(key.k);
+		return handleJWK(key, key, alg, true);
+	}
+	throw new Error("unreachable");
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/key/import.js
+async function importJWK(jwk, alg, options) {
+	if (!isObject(jwk)) throw new TypeError("JWK must be an object");
+	let ext;
+	alg ??= jwk.alg;
+	ext ??= options?.extractable ?? jwk.ext;
+	switch (jwk.kty) {
+		case "oct":
+			if (typeof jwk.k !== "string" || !jwk.k) throw new TypeError("missing \"k\" (Key Value) Parameter value");
+			return decode(jwk.k);
+		case "RSA":
+			if ("oth" in jwk && jwk.oth !== void 0) throw new JOSENotSupported("RSA JWK \"oth\" (Other Primes Info) Parameter value is not supported");
+			return jwkToKey({
+				...jwk,
+				alg,
+				ext
+			});
+		case "AKP":
+			if (typeof jwk.alg !== "string" || !jwk.alg) throw new TypeError("missing \"alg\" (Algorithm) Parameter value");
+			if (alg !== void 0 && alg !== jwk.alg) throw new TypeError("JWK alg and alg option value mismatch");
+			return jwkToKey({
+				...jwk,
+				ext
+			});
+		case "EC":
+		case "OKP": return jwkToKey({
+			...jwk,
+			alg,
+			ext
+		});
+		default: throw new JOSENotSupported("Unsupported \"kty\" (Key Type) Parameter value");
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/key_to_jwk.js
+async function keyToJWK(key) {
+	if (isKeyObject(key)) if (key.type === "secret") key = key.export();
+	else return key.export({ format: "jwk" });
+	if (key instanceof Uint8Array) return {
+		kty: "oct",
+		k: encode(key)
+	};
+	if (!isCryptoKey(key)) throw new TypeError(invalidKeyInput(key, "CryptoKey", "KeyObject", "Uint8Array"));
+	if (!key.extractable) throw new TypeError("non-extractable CryptoKey cannot be exported as a JWK");
+	const { ext, key_ops, alg, use, ...jwk } = await crypto.subtle.exportKey("jwk", key);
+	if (jwk.kty === "AKP") jwk.alg = alg;
+	return jwk;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/key/export.js
+async function exportJWK(key) {
+	return keyToJWK(key);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/aesgcmkw.js
+async function wrap(alg, key, cek, iv) {
+	const wrapped = await encrypt$1(alg.slice(0, 7), cek, key, iv, /* @__PURE__ */ new Uint8Array());
+	return {
+		encryptedKey: wrapped.ciphertext,
+		iv: encode(wrapped.iv),
+		tag: encode(wrapped.tag)
+	};
+}
+async function unwrap(alg, key, encryptedKey, iv, tag) {
+	return decrypt$1(alg.slice(0, 7), key, encryptedKey, iv, tag, /* @__PURE__ */ new Uint8Array());
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/key_management.js
+var unsupportedAlgHeader = "Invalid or unsupported \"alg\" (JWE Algorithm) header value";
+function assertEncryptedKey(encryptedKey) {
+	if (encryptedKey === void 0) throw new JWEInvalid("JWE Encrypted Key missing");
+}
+async function decryptKeyManagement(alg, key, encryptedKey, joseHeader, options) {
+	switch (alg) {
+		case "dir":
+			if (encryptedKey !== void 0) throw new JWEInvalid("Encountered unexpected JWE Encrypted Key");
+			return key;
+		case "ECDH-ES": if (encryptedKey !== void 0) throw new JWEInvalid("Encountered unexpected JWE Encrypted Key");
+		case "ECDH-ES+A128KW":
+		case "ECDH-ES+A192KW":
+		case "ECDH-ES+A256KW": {
+			if (!isObject(joseHeader.epk)) throw new JWEInvalid(`JOSE Header "epk" (Ephemeral Public Key) missing or invalid`);
+			assertCryptoKey(key);
+			if (!allowed(key)) throw new JOSENotSupported("ECDH with the provided key is not allowed or not supported by your javascript runtime");
+			const epk = await importJWK(joseHeader.epk, alg);
+			assertCryptoKey(epk);
+			let partyUInfo;
+			let partyVInfo;
+			if (joseHeader.apu !== void 0) {
+				if (typeof joseHeader.apu !== "string") throw new JWEInvalid(`JOSE Header "apu" (Agreement PartyUInfo) invalid`);
+				partyUInfo = decodeBase64url(joseHeader.apu, "apu", JWEInvalid);
+			}
+			if (joseHeader.apv !== void 0) {
+				if (typeof joseHeader.apv !== "string") throw new JWEInvalid(`JOSE Header "apv" (Agreement PartyVInfo) invalid`);
+				partyVInfo = decodeBase64url(joseHeader.apv, "apv", JWEInvalid);
+			}
+			const sharedSecret = await deriveKey$1(epk, key, alg === "ECDH-ES" ? joseHeader.enc : alg, alg === "ECDH-ES" ? cekLength(joseHeader.enc) : parseInt(alg.slice(-5, -2), 10), partyUInfo, partyVInfo);
+			if (alg === "ECDH-ES") return sharedSecret;
+			assertEncryptedKey(encryptedKey);
+			return unwrap$2(alg.slice(-6), sharedSecret, encryptedKey);
+		}
+		case "RSA-OAEP":
+		case "RSA-OAEP-256":
+		case "RSA-OAEP-384":
+		case "RSA-OAEP-512":
+			assertEncryptedKey(encryptedKey);
+			assertCryptoKey(key);
+			return decrypt(alg, key, encryptedKey);
+		case "PBES2-HS256+A128KW":
+		case "PBES2-HS384+A192KW":
+		case "PBES2-HS512+A256KW": {
+			assertEncryptedKey(encryptedKey);
+			if (typeof joseHeader.p2c !== "number") throw new JWEInvalid(`JOSE Header "p2c" (PBES2 Count) missing or invalid`);
+			const p2cLimit = options?.maxPBES2Count || 1e4;
+			if (joseHeader.p2c > p2cLimit) throw new JWEInvalid(`JOSE Header "p2c" (PBES2 Count) out is of acceptable bounds`);
+			if (typeof joseHeader.p2s !== "string") throw new JWEInvalid(`JOSE Header "p2s" (PBES2 Salt) missing or invalid`);
+			let p2s;
+			p2s = decodeBase64url(joseHeader.p2s, "p2s", JWEInvalid);
+			return unwrap$1(alg, key, encryptedKey, joseHeader.p2c, p2s);
+		}
+		case "A128KW":
+		case "A192KW":
+		case "A256KW":
+			assertEncryptedKey(encryptedKey);
+			return unwrap$2(alg, key, encryptedKey);
+		case "A128GCMKW":
+		case "A192GCMKW":
+		case "A256GCMKW": {
+			assertEncryptedKey(encryptedKey);
+			if (typeof joseHeader.iv !== "string") throw new JWEInvalid(`JOSE Header "iv" (Initialization Vector) missing or invalid`);
+			if (typeof joseHeader.tag !== "string") throw new JWEInvalid(`JOSE Header "tag" (Authentication Tag) missing or invalid`);
+			let iv;
+			iv = decodeBase64url(joseHeader.iv, "iv", JWEInvalid);
+			let tag;
+			tag = decodeBase64url(joseHeader.tag, "tag", JWEInvalid);
+			return unwrap(alg, key, encryptedKey, iv, tag);
+		}
+		default: throw new JOSENotSupported(unsupportedAlgHeader);
+	}
+}
+async function encryptKeyManagement(alg, enc, key, providedCek, providedParameters = {}) {
+	let encryptedKey;
+	let parameters;
+	let cek;
+	switch (alg) {
+		case "dir":
+			cek = key;
+			break;
+		case "ECDH-ES":
+		case "ECDH-ES+A128KW":
+		case "ECDH-ES+A192KW":
+		case "ECDH-ES+A256KW": {
+			assertCryptoKey(key);
+			if (!allowed(key)) throw new JOSENotSupported("ECDH with the provided key is not allowed or not supported by your javascript runtime");
+			const { apu, apv } = providedParameters;
+			let ephemeralKey;
+			if (providedParameters.epk) ephemeralKey = await normalizeKey(providedParameters.epk, alg);
+			else ephemeralKey = (await crypto.subtle.generateKey(key.algorithm, true, ["deriveBits"])).privateKey;
+			const { x, y, crv, kty } = await exportJWK(ephemeralKey);
+			const sharedSecret = await deriveKey$1(key, ephemeralKey, alg === "ECDH-ES" ? enc : alg, alg === "ECDH-ES" ? cekLength(enc) : parseInt(alg.slice(-5, -2), 10), apu, apv);
+			parameters = { epk: {
+				x,
+				crv,
+				kty
+			} };
+			if (kty === "EC") parameters.epk.y = y;
+			if (apu) parameters.apu = encode(apu);
+			if (apv) parameters.apv = encode(apv);
+			if (alg === "ECDH-ES") {
+				cek = sharedSecret;
+				break;
+			}
+			cek = providedCek || generateCek(enc);
+			encryptedKey = await wrap$2(alg.slice(-6), sharedSecret, cek);
+			break;
+		}
+		case "RSA-OAEP":
+		case "RSA-OAEP-256":
+		case "RSA-OAEP-384":
+		case "RSA-OAEP-512":
+			cek = providedCek || generateCek(enc);
+			assertCryptoKey(key);
+			encryptedKey = await encrypt(alg, key, cek);
+			break;
+		case "PBES2-HS256+A128KW":
+		case "PBES2-HS384+A192KW":
+		case "PBES2-HS512+A256KW": {
+			cek = providedCek || generateCek(enc);
+			const { p2c, p2s } = providedParameters;
+			({encryptedKey, ...parameters} = await wrap$1(alg, key, cek, p2c, p2s));
+			break;
+		}
+		case "A128KW":
+		case "A192KW":
+		case "A256KW":
+			cek = providedCek || generateCek(enc);
+			encryptedKey = await wrap$2(alg, key, cek);
+			break;
+		case "A128GCMKW":
+		case "A192GCMKW":
+		case "A256GCMKW": {
+			cek = providedCek || generateCek(enc);
+			const { iv } = providedParameters;
+			({encryptedKey, ...parameters} = await wrap(alg, key, cek, iv));
+			break;
+		}
+		default: throw new JOSENotSupported(unsupportedAlgHeader);
+	}
+	return {
+		cek,
+		encryptedKey,
+		parameters
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/validate_crit.js
+function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
+	if (joseHeader.crit !== void 0 && protectedHeader?.crit === void 0) throw new Err("\"crit\" (Critical) Header Parameter MUST be integrity protected");
+	if (!protectedHeader || protectedHeader.crit === void 0) return /* @__PURE__ */ new Set();
+	if (!Array.isArray(protectedHeader.crit) || protectedHeader.crit.length === 0 || protectedHeader.crit.some((input) => typeof input !== "string" || input.length === 0)) throw new Err("\"crit\" (Critical) Header Parameter MUST be an array of non-empty strings when present");
+	let recognized;
+	if (recognizedOption !== void 0) recognized = new Map([...Object.entries(recognizedOption), ...recognizedDefault.entries()]);
+	else recognized = recognizedDefault;
+	for (const parameter of protectedHeader.crit) {
+		if (!recognized.has(parameter)) throw new JOSENotSupported(`Extension Header Parameter "${parameter}" is not recognized`);
+		if (joseHeader[parameter] === void 0) throw new Err(`Extension Header Parameter "${parameter}" is missing`);
+		if (recognized.get(parameter) && protectedHeader[parameter] === void 0) throw new Err(`Extension Header Parameter "${parameter}" MUST be integrity protected`);
+	}
+	return new Set(protectedHeader.crit);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/validate_algorithms.js
+function validateAlgorithms(option, algorithms) {
+	if (algorithms !== void 0 && (!Array.isArray(algorithms) || algorithms.some((s) => typeof s !== "string"))) throw new TypeError(`"${option}" option must be an array of strings`);
+	if (!algorithms) return;
+	return new Set(algorithms);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/check_key_type.js
+var tag = (key) => key?.[Symbol.toStringTag];
+var jwkMatchesOp = (alg, key, usage) => {
+	if (key.use !== void 0) {
+		let expected;
+		switch (usage) {
+			case "sign":
+			case "verify":
+				expected = "sig";
+				break;
+			case "encrypt":
+			case "decrypt":
+				expected = "enc";
+				break;
+		}
+		if (key.use !== expected) throw new TypeError(`Invalid key for this operation, its "use" must be "${expected}" when present`);
+	}
+	if (key.alg !== void 0 && key.alg !== alg) throw new TypeError(`Invalid key for this operation, its "alg" must be "${alg}" when present`);
+	if (Array.isArray(key.key_ops)) {
+		let expectedKeyOp;
+		switch (true) {
+			case usage === "sign" || usage === "verify":
+			case alg === "dir":
+			case alg.includes("CBC-HS"):
+				expectedKeyOp = usage;
+				break;
+			case alg.startsWith("PBES2"):
+				expectedKeyOp = "deriveBits";
+				break;
+			case /^A\d{3}(?:GCM)?(?:KW)?$/.test(alg):
+				if (!alg.includes("GCM") && alg.endsWith("KW")) expectedKeyOp = usage === "encrypt" ? "wrapKey" : "unwrapKey";
+				else expectedKeyOp = usage;
+				break;
+			case usage === "encrypt" && alg.startsWith("RSA"):
+				expectedKeyOp = "wrapKey";
+				break;
+			case usage === "decrypt":
+				expectedKeyOp = alg.startsWith("RSA") ? "unwrapKey" : "deriveBits";
+				break;
+		}
+		if (expectedKeyOp && key.key_ops?.includes?.(expectedKeyOp) === false) throw new TypeError(`Invalid key for this operation, its "key_ops" must include "${expectedKeyOp}" when present`);
+	}
+	return true;
+};
+var symmetricTypeCheck = (alg, key, usage) => {
+	if (key instanceof Uint8Array) return;
+	if (isJWK(key)) {
+		if (isSecretJWK(key) && jwkMatchesOp(alg, key, usage)) return;
+		throw new TypeError(`JSON Web Key for symmetric algorithms must have JWK "kty" (Key Type) equal to "oct" and the JWK "k" (Key Value) present`);
+	}
+	if (!isKeyLike(key)) throw new TypeError(withAlg(alg, key, "CryptoKey", "KeyObject", "JSON Web Key", "Uint8Array"));
+	if (key.type !== "secret") throw new TypeError(`${tag(key)} instances for symmetric algorithms must be of type "secret"`);
+};
+var asymmetricTypeCheck = (alg, key, usage) => {
+	if (isJWK(key)) switch (usage) {
+		case "decrypt":
+		case "sign":
+			if (isPrivateJWK(key) && jwkMatchesOp(alg, key, usage)) return;
+			throw new TypeError(`JSON Web Key for this operation must be a private JWK`);
+		case "encrypt":
+		case "verify":
+			if (isPublicJWK(key) && jwkMatchesOp(alg, key, usage)) return;
+			throw new TypeError(`JSON Web Key for this operation must be a public JWK`);
+	}
+	if (!isKeyLike(key)) throw new TypeError(withAlg(alg, key, "CryptoKey", "KeyObject", "JSON Web Key"));
+	if (key.type === "secret") throw new TypeError(`${tag(key)} instances for asymmetric algorithms must not be of type "secret"`);
+	if (key.type === "public") switch (usage) {
+		case "sign": throw new TypeError(`${tag(key)} instances for asymmetric algorithm signing must be of type "private"`);
+		case "decrypt": throw new TypeError(`${tag(key)} instances for asymmetric algorithm decryption must be of type "private"`);
+	}
+	if (key.type === "private") switch (usage) {
+		case "verify": throw new TypeError(`${tag(key)} instances for asymmetric algorithm verifying must be of type "public"`);
+		case "encrypt": throw new TypeError(`${tag(key)} instances for asymmetric algorithm encryption must be of type "public"`);
+	}
+};
+function checkKeyType(alg, key, usage) {
+	switch (alg.substring(0, 2)) {
+		case "A1":
+		case "A2":
+		case "di":
+		case "HS":
+		case "PB":
+			symmetricTypeCheck(alg, key, usage);
+			break;
+		default: asymmetricTypeCheck(alg, key, usage);
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/deflate.js
+function supported(name) {
+	if (typeof globalThis[name] === "undefined") throw new JOSENotSupported(`JWE "zip" (Compression Algorithm) Header Parameter requires the ${name} API.`);
+}
+async function compress(input) {
+	supported("CompressionStream");
+	const cs = new CompressionStream("deflate-raw");
+	const writer = cs.writable.getWriter();
+	writer.write(input).catch(() => {});
+	writer.close().catch(() => {});
+	const chunks = [];
+	const reader = cs.readable.getReader();
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		chunks.push(value);
+	}
+	return concat(...chunks);
+}
+async function decompress(input, maxLength) {
+	supported("DecompressionStream");
+	const ds = new DecompressionStream("deflate-raw");
+	const writer = ds.writable.getWriter();
+	writer.write(input).catch(() => {});
+	writer.close().catch(() => {});
+	const chunks = [];
+	let length = 0;
+	const reader = ds.readable.getReader();
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		chunks.push(value);
+		length += value.byteLength;
+		if (maxLength !== Infinity && length > maxLength) throw new JWEInvalid("Decompressed plaintext exceeded the configured limit");
+	}
+	return concat(...chunks);
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwe/flattened/decrypt.js
+async function flattenedDecrypt(jwe, key, options) {
+	if (!isObject(jwe)) throw new JWEInvalid("Flattened JWE must be an object");
+	if (jwe.protected === void 0 && jwe.header === void 0 && jwe.unprotected === void 0) throw new JWEInvalid("JOSE Header missing");
+	if (jwe.iv !== void 0 && typeof jwe.iv !== "string") throw new JWEInvalid("JWE Initialization Vector incorrect type");
+	if (typeof jwe.ciphertext !== "string") throw new JWEInvalid("JWE Ciphertext missing or incorrect type");
+	if (jwe.tag !== void 0 && typeof jwe.tag !== "string") throw new JWEInvalid("JWE Authentication Tag incorrect type");
+	if (jwe.protected !== void 0 && typeof jwe.protected !== "string") throw new JWEInvalid("JWE Protected Header incorrect type");
+	if (jwe.encrypted_key !== void 0 && typeof jwe.encrypted_key !== "string") throw new JWEInvalid("JWE Encrypted Key incorrect type");
+	if (jwe.aad !== void 0 && typeof jwe.aad !== "string") throw new JWEInvalid("JWE AAD incorrect type");
+	if (jwe.header !== void 0 && !isObject(jwe.header)) throw new JWEInvalid("JWE Shared Unprotected Header incorrect type");
+	if (jwe.unprotected !== void 0 && !isObject(jwe.unprotected)) throw new JWEInvalid("JWE Per-Recipient Unprotected Header incorrect type");
+	let parsedProt;
+	if (jwe.protected) try {
+		const protectedHeader = decode(jwe.protected);
+		parsedProt = JSON.parse(decoder.decode(protectedHeader));
+	} catch {
+		throw new JWEInvalid("JWE Protected Header is invalid");
+	}
+	if (!isDisjoint(parsedProt, jwe.header, jwe.unprotected)) throw new JWEInvalid("JWE Protected, JWE Unprotected Header, and JWE Per-Recipient Unprotected Header Parameter names must be disjoint");
+	const joseHeader = {
+		...parsedProt,
+		...jwe.header,
+		...jwe.unprotected
+	};
+	validateCrit(JWEInvalid, /* @__PURE__ */ new Map(), options?.crit, parsedProt, joseHeader);
+	if (joseHeader.zip !== void 0 && joseHeader.zip !== "DEF") throw new JOSENotSupported("Unsupported JWE \"zip\" (Compression Algorithm) Header Parameter value.");
+	if (joseHeader.zip !== void 0 && !parsedProt?.zip) throw new JWEInvalid("JWE \"zip\" (Compression Algorithm) Header Parameter MUST be in a protected header.");
+	const { alg, enc } = joseHeader;
+	if (typeof alg !== "string" || !alg) throw new JWEInvalid("missing JWE Algorithm (alg) in JWE Header");
+	if (typeof enc !== "string" || !enc) throw new JWEInvalid("missing JWE Encryption Algorithm (enc) in JWE Header");
+	const keyManagementAlgorithms = options && validateAlgorithms("keyManagementAlgorithms", options.keyManagementAlgorithms);
+	const contentEncryptionAlgorithms = options && validateAlgorithms("contentEncryptionAlgorithms", options.contentEncryptionAlgorithms);
+	if (keyManagementAlgorithms && !keyManagementAlgorithms.has(alg) || !keyManagementAlgorithms && alg.startsWith("PBES2")) throw new JOSEAlgNotAllowed("\"alg\" (Algorithm) Header Parameter value not allowed");
+	if (contentEncryptionAlgorithms && !contentEncryptionAlgorithms.has(enc)) throw new JOSEAlgNotAllowed("\"enc\" (Encryption Algorithm) Header Parameter value not allowed");
+	let encryptedKey;
+	if (jwe.encrypted_key !== void 0) encryptedKey = decodeBase64url(jwe.encrypted_key, "encrypted_key", JWEInvalid);
+	let resolvedKey = false;
+	if (typeof key === "function") {
+		key = await key(parsedProt, jwe);
+		resolvedKey = true;
+	}
+	checkKeyType(alg === "dir" ? enc : alg, key, "decrypt");
+	const k = await normalizeKey(key, alg);
+	let cek;
+	try {
+		cek = await decryptKeyManagement(alg, k, encryptedKey, joseHeader, options);
+	} catch (err) {
+		if (err instanceof TypeError || err instanceof JWEInvalid || err instanceof JOSENotSupported) throw err;
+		cek = generateCek(enc);
+	}
+	let iv;
+	let tag;
+	if (jwe.iv !== void 0) iv = decodeBase64url(jwe.iv, "iv", JWEInvalid);
+	if (jwe.tag !== void 0) tag = decodeBase64url(jwe.tag, "tag", JWEInvalid);
+	const protectedHeader = jwe.protected !== void 0 ? encode$1(jwe.protected) : /* @__PURE__ */ new Uint8Array();
+	let additionalData;
+	if (jwe.aad !== void 0) additionalData = concat(protectedHeader, encode$1("."), encode$1(jwe.aad));
+	else additionalData = protectedHeader;
+	const ciphertext = decodeBase64url(jwe.ciphertext, "ciphertext", JWEInvalid);
+	const plaintext = await decrypt$1(enc, cek, ciphertext, iv, tag, additionalData);
+	const result = { plaintext };
+	if (joseHeader.zip === "DEF") {
+		const maxDecompressedLength = options?.maxDecompressedLength ?? 25e4;
+		if (maxDecompressedLength === 0) throw new JOSENotSupported("JWE \"zip\" (Compression Algorithm) Header Parameter is not supported.");
+		if (maxDecompressedLength !== Infinity && (!Number.isSafeInteger(maxDecompressedLength) || maxDecompressedLength < 1)) throw new TypeError("maxDecompressedLength must be 0, a positive safe integer, or Infinity");
+		result.plaintext = await decompress(plaintext, maxDecompressedLength).catch((cause) => {
+			if (cause instanceof JWEInvalid) throw cause;
+			throw new JWEInvalid("Failed to decompress plaintext", { cause });
+		});
+	}
+	if (jwe.protected !== void 0) result.protectedHeader = parsedProt;
+	if (jwe.aad !== void 0) result.additionalAuthenticatedData = decodeBase64url(jwe.aad, "aad", JWEInvalid);
+	if (jwe.unprotected !== void 0) result.sharedUnprotectedHeader = jwe.unprotected;
+	if (jwe.header !== void 0) result.unprotectedHeader = jwe.header;
+	if (resolvedKey) return {
+		...result,
+		key: k
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwe/compact/decrypt.js
+async function compactDecrypt(jwe, key, options) {
+	if (jwe instanceof Uint8Array) jwe = decoder.decode(jwe);
+	if (typeof jwe !== "string") throw new JWEInvalid("Compact JWE must be a string or Uint8Array");
+	const { 0: protectedHeader, 1: encryptedKey, 2: iv, 3: ciphertext, 4: tag, length } = jwe.split(".");
+	if (length !== 5) throw new JWEInvalid("Invalid Compact JWE");
+	const decrypted = await flattenedDecrypt({
+		ciphertext,
+		iv: iv || void 0,
+		protected: protectedHeader,
+		tag: tag || void 0,
+		encrypted_key: encryptedKey || void 0
+	}, key, options);
+	const result = {
+		plaintext: decrypted.plaintext,
+		protectedHeader: decrypted.protectedHeader
+	};
+	if (typeof key === "function") return {
+		...result,
+		key: decrypted.key
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwe/flattened/encrypt.js
+var FlattenedEncrypt = class {
+	#plaintext;
+	#protectedHeader;
+	#sharedUnprotectedHeader;
+	#unprotectedHeader;
+	#aad;
+	#cek;
+	#iv;
+	#keyManagementParameters;
+	constructor(plaintext) {
+		if (!(plaintext instanceof Uint8Array)) throw new TypeError("plaintext must be an instance of Uint8Array");
+		this.#plaintext = plaintext;
+	}
+	setKeyManagementParameters(parameters) {
+		assertNotSet(this.#keyManagementParameters, "setKeyManagementParameters");
+		this.#keyManagementParameters = parameters;
+		return this;
+	}
+	setProtectedHeader(protectedHeader) {
+		assertNotSet(this.#protectedHeader, "setProtectedHeader");
+		this.#protectedHeader = protectedHeader;
+		return this;
+	}
+	setSharedUnprotectedHeader(sharedUnprotectedHeader) {
+		assertNotSet(this.#sharedUnprotectedHeader, "setSharedUnprotectedHeader");
+		this.#sharedUnprotectedHeader = sharedUnprotectedHeader;
+		return this;
+	}
+	setUnprotectedHeader(unprotectedHeader) {
+		assertNotSet(this.#unprotectedHeader, "setUnprotectedHeader");
+		this.#unprotectedHeader = unprotectedHeader;
+		return this;
+	}
+	setAdditionalAuthenticatedData(aad) {
+		this.#aad = aad;
+		return this;
+	}
+	setContentEncryptionKey(cek) {
+		assertNotSet(this.#cek, "setContentEncryptionKey");
+		this.#cek = cek;
+		return this;
+	}
+	setInitializationVector(iv) {
+		assertNotSet(this.#iv, "setInitializationVector");
+		this.#iv = iv;
+		return this;
+	}
+	async encrypt(key, options) {
+		if (!this.#protectedHeader && !this.#unprotectedHeader && !this.#sharedUnprotectedHeader) throw new JWEInvalid("either setProtectedHeader, setUnprotectedHeader, or sharedUnprotectedHeader must be called before #encrypt()");
+		if (!isDisjoint(this.#protectedHeader, this.#unprotectedHeader, this.#sharedUnprotectedHeader)) throw new JWEInvalid("JWE Protected, JWE Shared Unprotected and JWE Per-Recipient Header Parameter names must be disjoint");
+		const joseHeader = {
+			...this.#protectedHeader,
+			...this.#unprotectedHeader,
+			...this.#sharedUnprotectedHeader
+		};
+		validateCrit(JWEInvalid, /* @__PURE__ */ new Map(), options?.crit, this.#protectedHeader, joseHeader);
+		if (joseHeader.zip !== void 0 && joseHeader.zip !== "DEF") throw new JOSENotSupported("Unsupported JWE \"zip\" (Compression Algorithm) Header Parameter value.");
+		if (joseHeader.zip !== void 0 && !this.#protectedHeader?.zip) throw new JWEInvalid("JWE \"zip\" (Compression Algorithm) Header Parameter MUST be in a protected header.");
+		const { alg, enc } = joseHeader;
+		if (typeof alg !== "string" || !alg) throw new JWEInvalid("JWE \"alg\" (Algorithm) Header Parameter missing or invalid");
+		if (typeof enc !== "string" || !enc) throw new JWEInvalid("JWE \"enc\" (Encryption Algorithm) Header Parameter missing or invalid");
+		let encryptedKey;
+		if (this.#cek && (alg === "dir" || alg === "ECDH-ES")) throw new TypeError(`setContentEncryptionKey cannot be called with JWE "alg" (Algorithm) Header ${alg}`);
+		checkKeyType(alg === "dir" ? enc : alg, key, "encrypt");
+		let cek;
+		{
+			let parameters;
+			const k = await normalizeKey(key, alg);
+			({cek, encryptedKey, parameters} = await encryptKeyManagement(alg, enc, k, this.#cek, this.#keyManagementParameters));
+			if (parameters) if (options && unprotected in options) if (!this.#unprotectedHeader) this.setUnprotectedHeader(parameters);
+			else this.#unprotectedHeader = {
+				...this.#unprotectedHeader,
+				...parameters
+			};
+			else if (!this.#protectedHeader) this.setProtectedHeader(parameters);
+			else this.#protectedHeader = {
+				...this.#protectedHeader,
+				...parameters
+			};
+		}
+		let additionalData;
+		let protectedHeaderS;
+		let protectedHeaderB;
+		let aadMember;
+		if (this.#protectedHeader) {
+			protectedHeaderS = encode(JSON.stringify(this.#protectedHeader));
+			protectedHeaderB = encode$1(protectedHeaderS);
+		} else {
+			protectedHeaderS = "";
+			protectedHeaderB = /* @__PURE__ */ new Uint8Array();
+		}
+		if (this.#aad) {
+			aadMember = encode(this.#aad);
+			const aadMemberBytes = encode$1(aadMember);
+			additionalData = concat(protectedHeaderB, encode$1("."), aadMemberBytes);
+		} else additionalData = protectedHeaderB;
+		let plaintext = this.#plaintext;
+		if (joseHeader.zip === "DEF") plaintext = await compress(plaintext).catch((cause) => {
+			throw new JWEInvalid("Failed to compress plaintext", { cause });
+		});
+		const { ciphertext, tag, iv } = await encrypt$1(enc, plaintext, cek, this.#iv, additionalData);
+		const jwe = { ciphertext: encode(ciphertext) };
+		if (iv) jwe.iv = encode(iv);
+		if (tag) jwe.tag = encode(tag);
+		if (encryptedKey) jwe.encrypted_key = encode(encryptedKey);
+		if (aadMember) jwe.aad = aadMember;
+		if (this.#protectedHeader) jwe.protected = protectedHeaderS;
+		if (this.#sharedUnprotectedHeader) jwe.unprotected = this.#sharedUnprotectedHeader;
+		if (this.#unprotectedHeader) jwe.header = this.#unprotectedHeader;
+		return jwe;
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jws/flattened/verify.js
+async function flattenedVerify(jws, key, options) {
+	if (!isObject(jws)) throw new JWSInvalid("Flattened JWS must be an object");
+	if (jws.protected === void 0 && jws.header === void 0) throw new JWSInvalid("Flattened JWS must have either of the \"protected\" or \"header\" members");
+	if (jws.protected !== void 0 && typeof jws.protected !== "string") throw new JWSInvalid("JWS Protected Header incorrect type");
+	if (jws.payload === void 0) throw new JWSInvalid("JWS Payload missing");
+	if (typeof jws.signature !== "string") throw new JWSInvalid("JWS Signature missing or incorrect type");
+	if (jws.header !== void 0 && !isObject(jws.header)) throw new JWSInvalid("JWS Unprotected Header incorrect type");
+	let parsedProt = {};
+	if (jws.protected) try {
+		const protectedHeader = decode(jws.protected);
+		parsedProt = JSON.parse(decoder.decode(protectedHeader));
+	} catch {
+		throw new JWSInvalid("JWS Protected Header is invalid");
+	}
+	if (!isDisjoint(parsedProt, jws.header)) throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
+	const joseHeader = {
+		...parsedProt,
+		...jws.header
+	};
+	const extensions = validateCrit(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options?.crit, parsedProt, joseHeader);
+	let b64 = true;
+	if (extensions.has("b64")) {
+		b64 = parsedProt.b64;
+		if (typeof b64 !== "boolean") throw new JWSInvalid("The \"b64\" (base64url-encode payload) Header Parameter must be a boolean");
+	}
+	const { alg } = joseHeader;
+	if (typeof alg !== "string" || !alg) throw new JWSInvalid("JWS \"alg\" (Algorithm) Header Parameter missing or invalid");
+	const algorithms = options && validateAlgorithms("algorithms", options.algorithms);
+	if (algorithms && !algorithms.has(alg)) throw new JOSEAlgNotAllowed("\"alg\" (Algorithm) Header Parameter value not allowed");
+	if (b64) {
+		if (typeof jws.payload !== "string") throw new JWSInvalid("JWS Payload must be a string");
+	} else if (typeof jws.payload !== "string" && !(jws.payload instanceof Uint8Array)) throw new JWSInvalid("JWS Payload must be a string or an Uint8Array instance");
+	let resolvedKey = false;
+	if (typeof key === "function") {
+		key = await key(parsedProt, jws);
+		resolvedKey = true;
+	}
+	checkKeyType(alg, key, "verify");
+	const data = concat(jws.protected !== void 0 ? encode$1(jws.protected) : /* @__PURE__ */ new Uint8Array(), encode$1("."), typeof jws.payload === "string" ? b64 ? encode$1(jws.payload) : encoder.encode(jws.payload) : jws.payload);
+	const signature = decodeBase64url(jws.signature, "signature", JWSInvalid);
+	const k = await normalizeKey(key, alg);
+	if (!await verify(alg, k, signature, data)) throw new JWSSignatureVerificationFailed();
+	let payload;
+	if (b64) payload = decodeBase64url(jws.payload, "payload", JWSInvalid);
+	else if (typeof jws.payload === "string") payload = encoder.encode(jws.payload);
+	else payload = jws.payload;
+	const result = { payload };
+	if (jws.protected !== void 0) result.protectedHeader = parsedProt;
+	if (jws.header !== void 0) result.unprotectedHeader = jws.header;
+	if (resolvedKey) return {
+		...result,
+		key: k
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jws/compact/verify.js
+async function compactVerify(jws, key, options) {
+	if (jws instanceof Uint8Array) jws = decoder.decode(jws);
+	if (typeof jws !== "string") throw new JWSInvalid("Compact JWS must be a string or Uint8Array");
+	const { 0: protectedHeader, 1: payload, 2: signature, length } = jws.split(".");
+	if (length !== 3) throw new JWSInvalid("Invalid Compact JWS");
+	const verified = await flattenedVerify({
+		payload,
+		protected: protectedHeader,
+		signature
+	}, key, options);
+	const result = {
+		payload: verified.payload,
+		protectedHeader: verified.protectedHeader
+	};
+	if (typeof key === "function") return {
+		...result,
+		key: verified.key
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/lib/jwt_claims_set.js
+var epoch = (date) => Math.floor(date.getTime() / 1e3);
+var minute = 60;
+var hour = minute * 60;
+var day = hour * 24;
+var week = day * 7;
+var year = day * 365.25;
+var REGEX$1 = /^(\+|\-)? ?(\d+|\d+\.\d+) ?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)(?: (ago|from now))?$/i;
+function secs(str) {
+	const matched = REGEX$1.exec(str);
+	if (!matched || matched[4] && matched[1]) throw new TypeError("Invalid time period format");
+	const value = parseFloat(matched[2]);
+	const unit = matched[3].toLowerCase();
+	let numericDate;
+	switch (unit) {
+		case "sec":
+		case "secs":
+		case "second":
+		case "seconds":
+		case "s":
+			numericDate = Math.round(value);
+			break;
+		case "minute":
+		case "minutes":
+		case "min":
+		case "mins":
+		case "m":
+			numericDate = Math.round(value * minute);
+			break;
+		case "hour":
+		case "hours":
+		case "hr":
+		case "hrs":
+		case "h":
+			numericDate = Math.round(value * hour);
+			break;
+		case "day":
+		case "days":
+		case "d":
+			numericDate = Math.round(value * day);
+			break;
+		case "week":
+		case "weeks":
+		case "w":
+			numericDate = Math.round(value * week);
+			break;
+		default:
+			numericDate = Math.round(value * year);
+			break;
+	}
+	if (matched[1] === "-" || matched[4] === "ago") return -numericDate;
+	return numericDate;
+}
+function validateInput(label, input) {
+	if (!Number.isFinite(input)) throw new TypeError(`Invalid ${label} input`);
+	return input;
+}
+var normalizeTyp = (value) => {
+	if (value.includes("/")) return value.toLowerCase();
+	return `application/${value.toLowerCase()}`;
+};
+var checkAudiencePresence = (audPayload, audOption) => {
+	if (typeof audPayload === "string") return audOption.includes(audPayload);
+	if (Array.isArray(audPayload)) return audOption.some(Set.prototype.has.bind(new Set(audPayload)));
+	return false;
+};
+function validateClaimsSet(protectedHeader, encodedPayload, options = {}) {
+	let payload;
+	try {
+		payload = JSON.parse(decoder.decode(encodedPayload));
+	} catch {}
+	if (!isObject(payload)) throw new JWTInvalid("JWT Claims Set must be a top-level JSON object");
+	const { typ } = options;
+	if (typ && (typeof protectedHeader.typ !== "string" || normalizeTyp(protectedHeader.typ) !== normalizeTyp(typ))) throw new JWTClaimValidationFailed("unexpected \"typ\" JWT header value", payload, "typ", "check_failed");
+	const { requiredClaims = [], issuer, subject, audience, maxTokenAge } = options;
+	const presenceCheck = [...requiredClaims];
+	if (maxTokenAge !== void 0) presenceCheck.push("iat");
+	if (audience !== void 0) presenceCheck.push("aud");
+	if (subject !== void 0) presenceCheck.push("sub");
+	if (issuer !== void 0) presenceCheck.push("iss");
+	for (const claim of new Set(presenceCheck.reverse())) if (!(claim in payload)) throw new JWTClaimValidationFailed(`missing required "${claim}" claim`, payload, claim, "missing");
+	if (issuer && !(Array.isArray(issuer) ? issuer : [issuer]).includes(payload.iss)) throw new JWTClaimValidationFailed("unexpected \"iss\" claim value", payload, "iss", "check_failed");
+	if (subject && payload.sub !== subject) throw new JWTClaimValidationFailed("unexpected \"sub\" claim value", payload, "sub", "check_failed");
+	if (audience && !checkAudiencePresence(payload.aud, typeof audience === "string" ? [audience] : audience)) throw new JWTClaimValidationFailed("unexpected \"aud\" claim value", payload, "aud", "check_failed");
+	let tolerance;
+	switch (typeof options.clockTolerance) {
+		case "string":
+			tolerance = secs(options.clockTolerance);
+			break;
+		case "number":
+			tolerance = options.clockTolerance;
+			break;
+		case "undefined":
+			tolerance = 0;
+			break;
+		default: throw new TypeError("Invalid clockTolerance option type");
+	}
+	const { currentDate } = options;
+	const now = epoch(currentDate || /* @__PURE__ */ new Date());
+	if ((payload.iat !== void 0 || maxTokenAge) && typeof payload.iat !== "number") throw new JWTClaimValidationFailed("\"iat\" claim must be a number", payload, "iat", "invalid");
+	if (payload.nbf !== void 0) {
+		if (typeof payload.nbf !== "number") throw new JWTClaimValidationFailed("\"nbf\" claim must be a number", payload, "nbf", "invalid");
+		if (payload.nbf > now + tolerance) throw new JWTClaimValidationFailed("\"nbf\" claim timestamp check failed", payload, "nbf", "check_failed");
+	}
+	if (payload.exp !== void 0) {
+		if (typeof payload.exp !== "number") throw new JWTClaimValidationFailed("\"exp\" claim must be a number", payload, "exp", "invalid");
+		if (payload.exp <= now - tolerance) throw new JWTExpired("\"exp\" claim timestamp check failed", payload, "exp", "check_failed");
+	}
+	if (maxTokenAge) {
+		const age = now - payload.iat;
+		const max = typeof maxTokenAge === "number" ? maxTokenAge : secs(maxTokenAge);
+		if (age - tolerance > max) throw new JWTExpired("\"iat\" claim timestamp check failed (too far in the past)", payload, "iat", "check_failed");
+		if (age < 0 - tolerance) throw new JWTClaimValidationFailed("\"iat\" claim timestamp check failed (it should be in the past)", payload, "iat", "check_failed");
+	}
+	return payload;
+}
+var JWTClaimsBuilder = class {
+	#payload;
+	constructor(payload) {
+		if (!isObject(payload)) throw new TypeError("JWT Claims Set MUST be an object");
+		this.#payload = structuredClone(payload);
+	}
+	data() {
+		return encoder.encode(JSON.stringify(this.#payload));
+	}
+	get iss() {
+		return this.#payload.iss;
+	}
+	set iss(value) {
+		this.#payload.iss = value;
+	}
+	get sub() {
+		return this.#payload.sub;
+	}
+	set sub(value) {
+		this.#payload.sub = value;
+	}
+	get aud() {
+		return this.#payload.aud;
+	}
+	set aud(value) {
+		this.#payload.aud = value;
+	}
+	set jti(value) {
+		this.#payload.jti = value;
+	}
+	set nbf(value) {
+		if (typeof value === "number") this.#payload.nbf = validateInput("setNotBefore", value);
+		else if (value instanceof Date) this.#payload.nbf = validateInput("setNotBefore", epoch(value));
+		else this.#payload.nbf = epoch(/* @__PURE__ */ new Date()) + secs(value);
+	}
+	set exp(value) {
+		if (typeof value === "number") this.#payload.exp = validateInput("setExpirationTime", value);
+		else if (value instanceof Date) this.#payload.exp = validateInput("setExpirationTime", epoch(value));
+		else this.#payload.exp = epoch(/* @__PURE__ */ new Date()) + secs(value);
+	}
+	set iat(value) {
+		if (value === void 0) this.#payload.iat = epoch(/* @__PURE__ */ new Date());
+		else if (value instanceof Date) this.#payload.iat = validateInput("setIssuedAt", epoch(value));
+		else if (typeof value === "string") this.#payload.iat = validateInput("setIssuedAt", epoch(/* @__PURE__ */ new Date()) + secs(value));
+		else this.#payload.iat = validateInput("setIssuedAt", value);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwt/verify.js
+async function jwtVerify(jwt, key, options) {
+	const verified = await compactVerify(jwt, key, options);
+	if (verified.protectedHeader.crit?.includes("b64") && verified.protectedHeader.b64 === false) throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
+	const result = {
+		payload: validateClaimsSet(verified.protectedHeader, verified.payload, options),
+		protectedHeader: verified.protectedHeader
+	};
+	if (typeof key === "function") return {
+		...result,
+		key: verified.key
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwt/decrypt.js
+async function jwtDecrypt(jwt, key, options) {
+	const decrypted = await compactDecrypt(jwt, key, options);
+	const payload = validateClaimsSet(decrypted.protectedHeader, decrypted.plaintext, options);
+	const { protectedHeader } = decrypted;
+	if (protectedHeader.iss !== void 0 && protectedHeader.iss !== payload.iss) throw new JWTClaimValidationFailed("replicated \"iss\" claim header parameter mismatch", payload, "iss", "mismatch");
+	if (protectedHeader.sub !== void 0 && protectedHeader.sub !== payload.sub) throw new JWTClaimValidationFailed("replicated \"sub\" claim header parameter mismatch", payload, "sub", "mismatch");
+	if (protectedHeader.aud !== void 0 && JSON.stringify(protectedHeader.aud) !== JSON.stringify(payload.aud)) throw new JWTClaimValidationFailed("replicated \"aud\" claim header parameter mismatch", payload, "aud", "mismatch");
+	const result = {
+		payload,
+		protectedHeader
+	};
+	if (typeof key === "function") return {
+		...result,
+		key: decrypted.key
+	};
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwe/compact/encrypt.js
+var CompactEncrypt = class {
+	#flattened;
+	constructor(plaintext) {
+		this.#flattened = new FlattenedEncrypt(plaintext);
+	}
+	setContentEncryptionKey(cek) {
+		this.#flattened.setContentEncryptionKey(cek);
+		return this;
+	}
+	setInitializationVector(iv) {
+		this.#flattened.setInitializationVector(iv);
+		return this;
+	}
+	setProtectedHeader(protectedHeader) {
+		this.#flattened.setProtectedHeader(protectedHeader);
+		return this;
+	}
+	setKeyManagementParameters(parameters) {
+		this.#flattened.setKeyManagementParameters(parameters);
+		return this;
+	}
+	async encrypt(key, options) {
+		const jwe = await this.#flattened.encrypt(key, options);
+		return [
+			jwe.protected,
+			jwe.encrypted_key,
+			jwe.iv,
+			jwe.ciphertext,
+			jwe.tag
+		].join(".");
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jws/flattened/sign.js
+var FlattenedSign = class {
+	#payload;
+	#protectedHeader;
+	#unprotectedHeader;
+	constructor(payload) {
+		if (!(payload instanceof Uint8Array)) throw new TypeError("payload must be an instance of Uint8Array");
+		this.#payload = payload;
+	}
+	setProtectedHeader(protectedHeader) {
+		assertNotSet(this.#protectedHeader, "setProtectedHeader");
+		this.#protectedHeader = protectedHeader;
+		return this;
+	}
+	setUnprotectedHeader(unprotectedHeader) {
+		assertNotSet(this.#unprotectedHeader, "setUnprotectedHeader");
+		this.#unprotectedHeader = unprotectedHeader;
+		return this;
+	}
+	async sign(key, options) {
+		if (!this.#protectedHeader && !this.#unprotectedHeader) throw new JWSInvalid("either setProtectedHeader or setUnprotectedHeader must be called before #sign()");
+		if (!isDisjoint(this.#protectedHeader, this.#unprotectedHeader)) throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
+		const joseHeader = {
+			...this.#protectedHeader,
+			...this.#unprotectedHeader
+		};
+		const extensions = validateCrit(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options?.crit, this.#protectedHeader, joseHeader);
+		let b64 = true;
+		if (extensions.has("b64")) {
+			b64 = this.#protectedHeader.b64;
+			if (typeof b64 !== "boolean") throw new JWSInvalid("The \"b64\" (base64url-encode payload) Header Parameter must be a boolean");
+		}
+		const { alg } = joseHeader;
+		if (typeof alg !== "string" || !alg) throw new JWSInvalid("JWS \"alg\" (Algorithm) Header Parameter missing or invalid");
+		checkKeyType(alg, key, "sign");
+		let payloadS;
+		let payloadB;
+		if (b64) {
+			payloadS = encode(this.#payload);
+			payloadB = encode$1(payloadS);
+		} else {
+			payloadB = this.#payload;
+			payloadS = "";
+		}
+		let protectedHeaderString;
+		let protectedHeaderBytes;
+		if (this.#protectedHeader) {
+			protectedHeaderString = encode(JSON.stringify(this.#protectedHeader));
+			protectedHeaderBytes = encode$1(protectedHeaderString);
+		} else {
+			protectedHeaderString = "";
+			protectedHeaderBytes = /* @__PURE__ */ new Uint8Array();
+		}
+		const data = concat(protectedHeaderBytes, encode$1("."), payloadB);
+		const jws = {
+			signature: encode(await sign(alg, await normalizeKey(key, alg), data)),
+			payload: payloadS
+		};
+		if (this.#unprotectedHeader) jws.header = this.#unprotectedHeader;
+		if (this.#protectedHeader) jws.protected = protectedHeaderString;
+		return jws;
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jws/compact/sign.js
+var CompactSign = class {
+	#flattened;
+	constructor(payload) {
+		this.#flattened = new FlattenedSign(payload);
+	}
+	setProtectedHeader(protectedHeader) {
+		this.#flattened.setProtectedHeader(protectedHeader);
+		return this;
+	}
+	async sign(key, options) {
+		const jws = await this.#flattened.sign(key, options);
+		if (jws.payload === void 0) throw new TypeError("use the flattened module for creating JWS with b64: false");
+		return `${jws.protected}.${jws.payload}.${jws.signature}`;
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwt/sign.js
+var SignJWT = class {
+	#protectedHeader;
+	#jwt;
+	constructor(payload = {}) {
+		this.#jwt = new JWTClaimsBuilder(payload);
+	}
+	setIssuer(issuer) {
+		this.#jwt.iss = issuer;
+		return this;
+	}
+	setSubject(subject) {
+		this.#jwt.sub = subject;
+		return this;
+	}
+	setAudience(audience) {
+		this.#jwt.aud = audience;
+		return this;
+	}
+	setJti(jwtId) {
+		this.#jwt.jti = jwtId;
+		return this;
+	}
+	setNotBefore(input) {
+		this.#jwt.nbf = input;
+		return this;
+	}
+	setExpirationTime(input) {
+		this.#jwt.exp = input;
+		return this;
+	}
+	setIssuedAt(input) {
+		this.#jwt.iat = input;
+		return this;
+	}
+	setProtectedHeader(protectedHeader) {
+		this.#protectedHeader = protectedHeader;
+		return this;
+	}
+	async sign(key, options) {
+		const sig = new CompactSign(this.#jwt.data());
+		sig.setProtectedHeader(this.#protectedHeader);
+		if (Array.isArray(this.#protectedHeader?.crit) && this.#protectedHeader.crit.includes("b64") && this.#protectedHeader.b64 === false) throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
+		return sig.sign(key, options);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwt/encrypt.js
+var EncryptJWT = class {
+	#cek;
+	#iv;
+	#keyManagementParameters;
+	#protectedHeader;
+	#replicateIssuerAsHeader;
+	#replicateSubjectAsHeader;
+	#replicateAudienceAsHeader;
+	#jwt;
+	constructor(payload = {}) {
+		this.#jwt = new JWTClaimsBuilder(payload);
+	}
+	setIssuer(issuer) {
+		this.#jwt.iss = issuer;
+		return this;
+	}
+	setSubject(subject) {
+		this.#jwt.sub = subject;
+		return this;
+	}
+	setAudience(audience) {
+		this.#jwt.aud = audience;
+		return this;
+	}
+	setJti(jwtId) {
+		this.#jwt.jti = jwtId;
+		return this;
+	}
+	setNotBefore(input) {
+		this.#jwt.nbf = input;
+		return this;
+	}
+	setExpirationTime(input) {
+		this.#jwt.exp = input;
+		return this;
+	}
+	setIssuedAt(input) {
+		this.#jwt.iat = input;
+		return this;
+	}
+	setProtectedHeader(protectedHeader) {
+		assertNotSet(this.#protectedHeader, "setProtectedHeader");
+		this.#protectedHeader = protectedHeader;
+		return this;
+	}
+	setKeyManagementParameters(parameters) {
+		assertNotSet(this.#keyManagementParameters, "setKeyManagementParameters");
+		this.#keyManagementParameters = parameters;
+		return this;
+	}
+	setContentEncryptionKey(cek) {
+		assertNotSet(this.#cek, "setContentEncryptionKey");
+		this.#cek = cek;
+		return this;
+	}
+	setInitializationVector(iv) {
+		assertNotSet(this.#iv, "setInitializationVector");
+		this.#iv = iv;
+		return this;
+	}
+	replicateIssuerAsHeader() {
+		this.#replicateIssuerAsHeader = true;
+		return this;
+	}
+	replicateSubjectAsHeader() {
+		this.#replicateSubjectAsHeader = true;
+		return this;
+	}
+	replicateAudienceAsHeader() {
+		this.#replicateAudienceAsHeader = true;
+		return this;
+	}
+	async encrypt(key, options) {
+		const enc = new CompactEncrypt(this.#jwt.data());
+		if (this.#protectedHeader && (this.#replicateIssuerAsHeader || this.#replicateSubjectAsHeader || this.#replicateAudienceAsHeader)) this.#protectedHeader = {
+			...this.#protectedHeader,
+			iss: this.#replicateIssuerAsHeader ? this.#jwt.iss : void 0,
+			sub: this.#replicateSubjectAsHeader ? this.#jwt.sub : void 0,
+			aud: this.#replicateAudienceAsHeader ? this.#jwt.aud : void 0
+		};
+		enc.setProtectedHeader(this.#protectedHeader);
+		if (this.#iv) enc.setInitializationVector(this.#iv);
+		if (this.#cek) enc.setContentEncryptionKey(this.#cek);
+		if (this.#keyManagementParameters) enc.setKeyManagementParameters(this.#keyManagementParameters);
+		return enc.encrypt(key, options);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwk/thumbprint.js
+var check = (value, description) => {
+	if (typeof value !== "string" || !value) throw new JWKInvalid(`${description} missing or invalid`);
+};
+async function calculateJwkThumbprint(key, digestAlgorithm) {
+	let jwk;
+	if (isJWK(key)) jwk = key;
+	else if (isKeyLike(key)) jwk = await exportJWK(key);
+	else throw new TypeError(invalidKeyInput(key, "CryptoKey", "KeyObject", "JSON Web Key"));
+	digestAlgorithm ??= "sha256";
+	if (digestAlgorithm !== "sha256" && digestAlgorithm !== "sha384" && digestAlgorithm !== "sha512") throw new TypeError("digestAlgorithm must one of \"sha256\", \"sha384\", or \"sha512\"");
+	let components;
+	switch (jwk.kty) {
+		case "AKP":
+			check(jwk.alg, "\"alg\" (Algorithm) Parameter");
+			check(jwk.pub, "\"pub\" (Public key) Parameter");
+			components = {
+				alg: jwk.alg,
+				kty: jwk.kty,
+				pub: jwk.pub
+			};
+			break;
+		case "EC":
+			check(jwk.crv, "\"crv\" (Curve) Parameter");
+			check(jwk.x, "\"x\" (X Coordinate) Parameter");
+			check(jwk.y, "\"y\" (Y Coordinate) Parameter");
+			components = {
+				crv: jwk.crv,
+				kty: jwk.kty,
+				x: jwk.x,
+				y: jwk.y
+			};
+			break;
+		case "OKP":
+			check(jwk.crv, "\"crv\" (Subtype of Key Pair) Parameter");
+			check(jwk.x, "\"x\" (Public Key) Parameter");
+			components = {
+				crv: jwk.crv,
+				kty: jwk.kty,
+				x: jwk.x
+			};
+			break;
+		case "RSA":
+			check(jwk.e, "\"e\" (Exponent) Parameter");
+			check(jwk.n, "\"n\" (Modulus) Parameter");
+			components = {
+				e: jwk.e,
+				kty: jwk.kty,
+				n: jwk.n
+			};
+			break;
+		case "oct":
+			check(jwk.k, "\"k\" (Key Value) Parameter");
+			components = {
+				k: jwk.k,
+				kty: jwk.kty
+			};
+			break;
+		default: throw new JOSENotSupported("\"kty\" (Key Type) Parameter missing or unsupported");
+	}
+	const data = encode$1(JSON.stringify(components));
+	return encode(await digest(digestAlgorithm, data));
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwks/local.js
+function getKtyFromAlg(alg) {
+	switch (typeof alg === "string" && alg.slice(0, 2)) {
+		case "RS":
+		case "PS": return "RSA";
+		case "ES": return "EC";
+		case "Ed": return "OKP";
+		case "ML": return "AKP";
+		default: throw new JOSENotSupported("Unsupported \"alg\" value for a JSON Web Key Set");
+	}
+}
+function isJWKSLike(jwks) {
+	return jwks && typeof jwks === "object" && Array.isArray(jwks.keys) && jwks.keys.every(isJWKLike);
+}
+function isJWKLike(key) {
+	return isObject(key);
+}
+var LocalJWKSet = class {
+	#jwks;
+	#cached = /* @__PURE__ */ new WeakMap();
+	constructor(jwks) {
+		if (!isJWKSLike(jwks)) throw new JWKSInvalid("JSON Web Key Set malformed");
+		this.#jwks = structuredClone(jwks);
+	}
+	jwks() {
+		return this.#jwks;
+	}
+	async getKey(protectedHeader, token) {
+		const { alg, kid } = {
+			...protectedHeader,
+			...token?.header
+		};
+		const kty = getKtyFromAlg(alg);
+		const candidates = this.#jwks.keys.filter((jwk) => {
+			let candidate = kty === jwk.kty;
+			if (candidate && typeof kid === "string") candidate = kid === jwk.kid;
+			if (candidate && (typeof jwk.alg === "string" || kty === "AKP")) candidate = alg === jwk.alg;
+			if (candidate && typeof jwk.use === "string") candidate = jwk.use === "sig";
+			if (candidate && Array.isArray(jwk.key_ops)) candidate = jwk.key_ops.includes("verify");
+			if (candidate) switch (alg) {
+				case "ES256":
+					candidate = jwk.crv === "P-256";
+					break;
+				case "ES384":
+					candidate = jwk.crv === "P-384";
+					break;
+				case "ES512":
+					candidate = jwk.crv === "P-521";
+					break;
+				case "Ed25519":
+				case "EdDSA":
+					candidate = jwk.crv === "Ed25519";
+					break;
+			}
+			return candidate;
+		});
+		const { 0: jwk, length } = candidates;
+		if (length === 0) throw new JWKSNoMatchingKey();
+		if (length !== 1) {
+			const error = new JWKSMultipleMatchingKeys();
+			const _cached = this.#cached;
+			error[Symbol.asyncIterator] = async function* () {
+				for (const jwk of candidates) try {
+					yield await importWithAlgCache(_cached, jwk, alg);
+				} catch {}
+			};
+			throw error;
+		}
+		return importWithAlgCache(this.#cached, jwk, alg);
+	}
+};
+async function importWithAlgCache(cache, jwk, alg) {
+	const cached = cache.get(jwk) || cache.set(jwk, {}).get(jwk);
+	if (cached[alg] === void 0) {
+		const key = await importJWK({
+			...jwk,
+			ext: true
+		}, alg);
+		if (key instanceof Uint8Array || key.type !== "public") throw new JWKSInvalid("JSON Web Key Set members must be public keys");
+		cached[alg] = key;
+	}
+	return cached[alg];
+}
+function createLocalJWKSet(jwks) {
+	const set = new LocalJWKSet(jwks);
+	const localJWKSet = async (protectedHeader, token) => set.getKey(protectedHeader, token);
+	Object.defineProperties(localJWKSet, { jwks: {
+		value: () => structuredClone(set.jwks()),
+		enumerable: false,
+		configurable: false,
+		writable: false
+	} });
+	return localJWKSet;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/jwks/remote.js
+function isCloudflareWorkers() {
+	return typeof WebSocketPair !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers" || typeof EdgeRuntime !== "undefined" && EdgeRuntime === "vercel";
+}
+var USER_AGENT;
+if (typeof navigator === "undefined" || !navigator.userAgent?.startsWith?.("Mozilla/5.0 ")) USER_AGENT = `jose/v6.2.3`;
+var customFetch = Symbol();
+async function fetchJwks(url, headers, signal, fetchImpl = fetch) {
+	const response = await fetchImpl(url, {
+		method: "GET",
+		signal,
+		redirect: "manual",
+		headers
+	}).catch((err) => {
+		if (err.name === "TimeoutError") throw new JWKSTimeout();
+		throw err;
+	});
+	if (response.status !== 200) throw new JOSEError("Expected 200 OK from the JSON Web Key Set HTTP response");
+	try {
+		return await response.json();
+	} catch {
+		throw new JOSEError("Failed to parse the JSON Web Key Set HTTP response as JSON");
+	}
+}
+var jwksCache = Symbol();
+function isFreshJwksCache(input, cacheMaxAge) {
+	if (typeof input !== "object" || input === null) return false;
+	if (!("uat" in input) || typeof input.uat !== "number" || Date.now() - input.uat >= cacheMaxAge) return false;
+	if (!("jwks" in input) || !isObject(input.jwks) || !Array.isArray(input.jwks.keys) || !Array.prototype.every.call(input.jwks.keys, isObject)) return false;
+	return true;
+}
+var RemoteJWKSet = class {
+	#url;
+	#timeoutDuration;
+	#cooldownDuration;
+	#cacheMaxAge;
+	#jwksTimestamp;
+	#pendingFetch;
+	#headers;
+	#customFetch;
+	#local;
+	#cache;
+	constructor(url, options) {
+		if (!(url instanceof URL)) throw new TypeError("url must be an instance of URL");
+		this.#url = new URL(url.href);
+		this.#timeoutDuration = typeof options?.timeoutDuration === "number" ? options?.timeoutDuration : 5e3;
+		this.#cooldownDuration = typeof options?.cooldownDuration === "number" ? options?.cooldownDuration : 3e4;
+		this.#cacheMaxAge = typeof options?.cacheMaxAge === "number" ? options?.cacheMaxAge : 6e5;
+		this.#headers = new Headers(options?.headers);
+		if (USER_AGENT && !this.#headers.has("User-Agent")) this.#headers.set("User-Agent", USER_AGENT);
+		if (!this.#headers.has("accept")) {
+			this.#headers.set("accept", "application/json");
+			this.#headers.append("accept", "application/jwk-set+json");
+		}
+		this.#customFetch = options?.[customFetch];
+		if (options?.[jwksCache] !== void 0) {
+			this.#cache = options?.[jwksCache];
+			if (isFreshJwksCache(options?.[jwksCache], this.#cacheMaxAge)) {
+				this.#jwksTimestamp = this.#cache.uat;
+				this.#local = createLocalJWKSet(this.#cache.jwks);
+			}
+		}
+	}
+	pendingFetch() {
+		return !!this.#pendingFetch;
+	}
+	coolingDown() {
+		return typeof this.#jwksTimestamp === "number" ? Date.now() < this.#jwksTimestamp + this.#cooldownDuration : false;
+	}
+	fresh() {
+		return typeof this.#jwksTimestamp === "number" ? Date.now() < this.#jwksTimestamp + this.#cacheMaxAge : false;
+	}
+	jwks() {
+		return this.#local?.jwks();
+	}
+	async getKey(protectedHeader, token) {
+		if (!this.#local || !this.fresh()) await this.reload();
+		try {
+			return await this.#local(protectedHeader, token);
+		} catch (err) {
+			if (err instanceof JWKSNoMatchingKey) {
+				if (this.coolingDown() === false) {
+					await this.reload();
+					return this.#local(protectedHeader, token);
+				}
+			}
+			throw err;
+		}
+	}
+	async reload() {
+		if (this.#pendingFetch && isCloudflareWorkers()) this.#pendingFetch = void 0;
+		this.#pendingFetch ||= fetchJwks(this.#url.href, this.#headers, AbortSignal.timeout(this.#timeoutDuration), this.#customFetch).then((json) => {
+			this.#local = createLocalJWKSet(json);
+			if (this.#cache) {
+				this.#cache.uat = Date.now();
+				this.#cache.jwks = json;
+			}
+			this.#jwksTimestamp = Date.now();
+			this.#pendingFetch = void 0;
+		}).catch((err) => {
+			this.#pendingFetch = void 0;
+			throw err;
+		});
+		await this.#pendingFetch;
+	}
+};
+function createRemoteJWKSet(url, options) {
+	const set = new RemoteJWKSet(url, options);
+	const remoteJWKSet = async (protectedHeader, token) => set.getKey(protectedHeader, token);
+	Object.defineProperties(remoteJWKSet, {
+		coolingDown: {
+			get: () => set.coolingDown(),
+			enumerable: true,
+			configurable: false
+		},
+		fresh: {
+			get: () => set.fresh(),
+			enumerable: true,
+			configurable: false
+		},
+		reload: {
+			value: () => set.reload(),
+			enumerable: true,
+			configurable: false,
+			writable: false
+		},
+		reloading: {
+			get: () => set.pendingFetch(),
+			enumerable: true,
+			configurable: false
+		},
+		jwks: {
+			value: () => set.jwks(),
+			enumerable: true,
+			configurable: false,
+			writable: false
+		}
+	});
+	return remoteJWKSet;
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/util/decode_protected_header.js
+function decodeProtectedHeader(token) {
+	let protectedB64u;
+	if (typeof token === "string") {
+		const parts = token.split(".");
+		if (parts.length === 3 || parts.length === 5) [protectedB64u] = parts;
+	} else if (typeof token === "object" && token) if ("protected" in token) protectedB64u = token.protected;
+	else throw new TypeError("Token does not contain a Protected Header");
+	try {
+		if (typeof protectedB64u !== "string" || !protectedB64u) throw new Error();
+		const result = JSON.parse(decoder.decode(decode(protectedB64u)));
+		if (!isObject(result)) throw new Error();
+		return result;
+	} catch {
+		throw new TypeError("Invalid Token or Protected Header formatting");
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/jose@6.2.3/node_modules/jose/dist/webapi/util/decode_jwt.js
+function decodeJwt(jwt) {
+	if (typeof jwt !== "string") throw new JWTInvalid("JWTs must use Compact JWS serialization, JWT must be a string");
+	const { 1: payload, length } = jwt.split(".");
+	if (length === 5) throw new JWTInvalid("Only JWTs using Compact JWS serialization can be decoded");
+	if (length !== 3) throw new JWTInvalid("Invalid JWT");
+	if (!payload) throw new JWTInvalid("JWTs must contain a payload");
+	let decoded;
+	try {
+		decoded = decode(payload);
+	} catch {
+		throw new JWTInvalid("Failed to base64url decode the payload");
+	}
+	let result;
+	try {
+		result = JSON.parse(decoder.decode(decoded));
+	} catch {
+		throw new JWTInvalid("Failed to parse the decoded payload as JSON");
+	}
+	if (!isObject(result)) throw new JWTInvalid("Invalid JWT Claims Set");
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/crypto/jwt.mjs
 async function signJWT(payload, secret, expiresIn = 3600) {
 	return await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(Math.floor(Date.now() / 1e3) + expiresIn).sign(new TextEncoder().encode(secret));
 }
@@ -127,7 +3327,7 @@ async function symmetricEncodeJWT(payload, secret, salt, expiresIn = 3600) {
 	const encryptionSecret = deriveEncryptionSecret(getCurrentSecret(secret), salt);
 	const thumbprint = await calculateJwkThumbprint({
 		kty: "oct",
-		k: base64url.encode(encryptionSecret)
+		k: encode(encryptionSecret)
 	}, "sha256");
 	return await new EncryptJWT(payload).setProtectedHeader({
 		alg,
@@ -157,7 +3357,7 @@ async function symmetricDecodeJWT(token, secret, salt) {
 					const encryptionSecret = deriveEncryptionSecret(s.value, salt);
 					if (kid === await calculateJwkThumbprint({
 						kty: "oct",
-						k: base64url.encode(encryptionSecret)
+						k: encode(encryptionSecret)
 					}, "sha256")) return encryptionSecret;
 				}
 				throw new Error("no matching decryption secret");
@@ -181,7 +3381,37 @@ async function symmetricDecodeJWT(token, secret, salt) {
 	}
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/crypto/password.mjs
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/password.node.mjs
+var config = {
+	N: 16384,
+	r: 16,
+	p: 1,
+	dkLen: 64
+};
+function generateKey(password, salt) {
+	return new Promise((resolve, reject) => {
+		scrypt(password.normalize("NFKC"), salt, config.dkLen, {
+			N: config.N,
+			r: config.r,
+			p: config.p,
+			maxmem: 128 * config.N * config.r * 2
+		}, (err, key) => {
+			if (err) reject(err);
+			else resolve(key);
+		});
+	});
+}
+async function hashPassword(password) {
+	const salt = randomBytes(16).toString("hex");
+	return `${salt}:${(await generateKey(password, salt)).toString("hex")}`;
+}
+async function verifyPassword$2(hash, password) {
+	const [salt, key] = hash.split(":");
+	if (!salt || !key) throw new Error("Invalid password hash");
+	return (await generateKey(password, salt)).toString("hex") === key;
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/crypto/password.mjs
 /**
 * `@better-auth/utils/password` uses the "node" export condition in package.json
 * to automatically pick the right implementation:
@@ -189,11 +3419,1501 @@ async function symmetricDecodeJWT(token, secret, salt) {
 *   - Unsupported runtimes → `@noble/hashes scrypt` (pure JS fallback)
 */
 var hashPassword$1 = hashPassword;
-var verifyPassword$1$1 = async ({ hash, password }) => {
-	return verifyPassword(hash, password);
+var verifyPassword$1 = async ({ hash, password }) => {
+	return verifyPassword$2(hash, password);
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/crypto/index.mjs
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/index.mjs
+function getWebcryptoSubtle() {
+	const cr = typeof globalThis !== "undefined" && globalThis.crypto;
+	if (cr && typeof cr.subtle === "object" && cr.subtle != null) return cr.subtle;
+	throw new Error("crypto.subtle must be defined");
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/base64.mjs
+function getAlphabet(urlSafe) {
+	return urlSafe ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+}
+function base64Encode(data, alphabet, padding) {
+	let result = "";
+	let buffer = 0;
+	let shift = 0;
+	for (const byte of data) {
+		buffer = buffer << 8 | byte;
+		shift += 8;
+		while (shift >= 6) {
+			shift -= 6;
+			result += alphabet[buffer >> shift & 63];
+		}
+	}
+	if (shift > 0) result += alphabet[buffer << 6 - shift & 63];
+	if (padding) {
+		const padCount = (4 - result.length % 4) % 4;
+		result += "=".repeat(padCount);
+	}
+	return result;
+}
+function base64Decode(data, alphabet) {
+	const decodeMap = /* @__PURE__ */ new Map();
+	for (let i = 0; i < alphabet.length; i++) decodeMap.set(alphabet[i], i);
+	const result = [];
+	let buffer = 0;
+	let bitsCollected = 0;
+	for (const char of data) {
+		if (char === "=") break;
+		const value = decodeMap.get(char);
+		if (value === void 0) throw new Error(`Invalid Base64 character: ${char}`);
+		buffer = buffer << 6 | value;
+		bitsCollected += 6;
+		if (bitsCollected >= 8) {
+			bitsCollected -= 8;
+			result.push(buffer >> bitsCollected & 255);
+		}
+	}
+	return Uint8Array.from(result);
+}
+var base64 = {
+	encode(data, options = {}) {
+		const alphabet = getAlphabet(false);
+		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
+	},
+	decode(data) {
+		if (typeof data !== "string") data = new TextDecoder().decode(data);
+		const alphabet = getAlphabet(data.includes("-") || data.includes("_"));
+		return base64Decode(data, alphabet);
+	}
+};
+var base64Url = {
+	encode(data, options = {}) {
+		const alphabet = getAlphabet(true);
+		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
+	},
+	decode(data) {
+		return base64Decode(data, getAlphabet(data.includes("-") || data.includes("_")));
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/hash.mjs
+function createHash(algorithm, encoding) {
+	return { digest: async (input) => {
+		const encoder = new TextEncoder();
+		const data = typeof input === "string" ? encoder.encode(input) : input;
+		const hashBuffer = await getWebcryptoSubtle().digest(algorithm, data);
+		if (encoding === "hex") return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+		if (encoding === "base64" || encoding === "base64url" || encoding === "base64urlnopad") {
+			if (encoding.includes("url")) return base64Url.encode(hashBuffer, { padding: encoding !== "base64urlnopad" });
+			return base64.encode(hashBuffer);
+		}
+		return hashBuffer;
+	} };
+}
+//#endregion
+//#region ../../node_modules/.bun/@noble+ciphers@2.2.0/node_modules/@noble/ciphers/utils.js
+/**
+* Utilities for hex, bytes, CSPRNG.
+* @module
+*/
+/*! noble-ciphers - MIT License (c) 2023 Paul Miller (paulmillr.com) */
+/**
+* Checks if something is Uint8Array. Be careful: nodejs Buffer will return true.
+* @param a - Value to inspect.
+* @returns `true` when the value is a Uint8Array view, including Node's `Buffer`.
+* @example
+* Guards a value before treating it as raw key material.
+*
+* ```ts
+* isBytes(new Uint8Array());
+* ```
+*/
+function isBytes(a) {
+	return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array" && "BYTES_PER_ELEMENT" in a && a.BYTES_PER_ELEMENT === 1;
+}
+/**
+* Asserts something is boolean.
+* @param b - Value to validate.
+* @throws On wrong argument types. {@link TypeError}
+* @example
+* Validates a boolean option before branching on it.
+*
+* ```ts
+* abool(true);
+* ```
+*/
+function abool(b) {
+	if (typeof b !== "boolean") throw new TypeError(`boolean expected, not ${b}`);
+}
+/**
+* Asserts something is a non-negative safe integer.
+* @param n - Value to validate.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @example
+* Validates a non-negative length or counter.
+*
+* ```ts
+* anumber(1);
+* ```
+*/
+function anumber(n) {
+	if (typeof n !== "number") throw new TypeError("number expected, got " + typeof n);
+	if (!Number.isSafeInteger(n) || n < 0) throw new RangeError("positive integer expected, got " + n);
+}
+/**
+* Asserts something is Uint8Array.
+* @param value - Value to validate.
+* @param length - Expected byte length.
+* @param title - Optional label used in error messages.
+* @returns The validated byte array.
+* On Node, `Buffer` is accepted too because it is a Uint8Array view.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument lengths. {@link RangeError}
+* @example
+* Validates a fixed-length nonce or key buffer.
+*
+* ```ts
+* abytes(new Uint8Array([1, 2]), 2);
+* ```
+*/
+function abytes(value, length, title = "") {
+	const bytes = isBytes(value);
+	const len = value?.length;
+	const needsLen = length !== void 0;
+	if (!bytes || needsLen && len !== length) {
+		const prefix = title && `"${title}" `;
+		const ofLen = needsLen ? ` of length ${length}` : "";
+		const got = bytes ? `length=${len}` : `type=${typeof value}`;
+		const message = prefix + "expected Uint8Array" + ofLen + ", got " + got;
+		if (!bytes) throw new TypeError(message);
+		throw new RangeError(message);
+	}
+	return value;
+}
+/**
+* Asserts a hash- or MAC-like instance has not been destroyed or finished.
+* @param instance - Stateful instance to validate.
+* @param checkFinished - Whether to reject finished instances.
+* When `false`, only `destroyed` is checked.
+* @throws If the hash instance has already been destroyed or finalized. {@link Error}
+* @example
+* Guards against calling `update()` or `digest()` on a finished hash.
+*
+* ```ts
+* aexists({ destroyed: false, finished: false });
+* ```
+*/
+function aexists(instance, checkFinished = true) {
+	if (instance.destroyed) throw new Error("Hash instance has been destroyed");
+	if (checkFinished && instance.finished) throw new Error("Hash#digest() has already been called");
+}
+/**
+* Asserts output is a properly-sized byte array.
+* @param out - Output buffer to validate.
+* @param instance - Hash-like instance providing `outputLen`.
+* This is the relaxed `digestInto()`-style contract: output must be at least `outputLen`,
+* unlike one-shot cipher helpers elsewhere in the repo that often require exact lengths.
+* @throws On wrong argument types. {@link TypeError}
+* @param onlyAligned - Whether `out` must be 4-byte aligned for zero-allocation word views.
+* @throws On wrong output buffer lengths. {@link RangeError}
+* @throws On wrong output buffer alignment. {@link Error}
+* @example
+* Verifies that a caller-provided output buffer is large enough.
+*
+* ```ts
+* aoutput(new Uint8Array(16), { outputLen: 16 });
+* ```
+*/
+function aoutput(out, instance, onlyAligned = false) {
+	abytes(out, void 0, "output");
+	const min = instance.outputLen;
+	if (out.length < min) throw new RangeError("digestInto() expects output buffer of length at least " + min);
+	if (onlyAligned && !isAligned32(out)) throw new Error("invalid output, must be aligned");
+}
+/**
+* Casts a typed-array view to Uint32Array.
+* @param arr - Typed-array view to reinterpret.
+* @returns Uint32Array view over the same bytes. Callers are expected to provide a
+* 4-byte-aligned offset; trailing `1..3` bytes are silently dropped.
+* @example
+* Views a byte buffer as 32-bit words for block processing.
+*
+* ```ts
+* u32(new Uint8Array(4));
+* ```
+*/
+function u32(arr) {
+	return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+}
+/**
+* Zeroizes typed arrays in place.
+* Warning: JS provides no guarantees.
+* @param arrays - Arrays to wipe.
+* @example
+* Wipes a temporary key buffer after use.
+*
+* ```ts
+* const bytes = new Uint8Array([1]);
+* clean(bytes);
+* ```
+*/
+function clean(...arrays) {
+	for (let i = 0; i < arrays.length; i++) arrays[i].fill(0);
+}
+/**
+* Creates a DataView for byte-level manipulation.
+* @param arr - Typed-array view to wrap.
+* @returns DataView over the same bytes.
+* @example
+* Creates an endian-aware view for length encoding.
+*
+* ```ts
+* createView(new Uint8Array(4));
+* ```
+*/
+function createView(arr) {
+	return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+}
+/**
+* Whether the current platform is little-endian.
+* Most are; some IBM systems are not.
+*/
+var isLE = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
+/**
+* Reverses byte order of one 32-bit word.
+* @param word - Unsigned 32-bit word to swap.
+* @returns The same word with bytes reversed.
+* @example
+* Swaps a big-endian word into little-endian byte order.
+*
+* ```ts
+* byteSwap(0x11223344);
+* ```
+*/
+var byteSwap = (word) => word << 24 & 4278190080 | word << 8 & 16711680 | word >>> 8 & 65280 | word >>> 24 & 255;
+/**
+* Normalizes one 32-bit word to the little-endian representation expected by cipher cores.
+* @param n - Unsigned 32-bit word to normalize.
+* @returns Little-endian normalized word on big-endian hosts, else the input word unchanged.
+* @example
+* Normalizes a host-endian word before passing it into an ARX/AES core.
+*
+* ```ts
+* swap8IfBE(0x11223344);
+* ```
+*/
+var swap8IfBE = isLE ? (n) => n : (n) => byteSwap(n) >>> 0;
+/**
+* Byte-swaps every word of a Uint32Array in place.
+* @param arr - Uint32Array whose words should be swapped.
+* @returns The same array after in-place byte swapping.
+* @example
+* Swaps every 32-bit word in a word-view buffer.
+*
+* ```ts
+* byteSwap32(new Uint32Array([0x11223344]));
+* ```
+*/
+var byteSwap32 = (arr) => {
+	for (let i = 0; i < arr.length; i++) arr[i] = byteSwap(arr[i]);
+	return arr;
+};
+/**
+* Normalizes a Uint32Array view to the little-endian representation expected by cipher cores.
+* @param u - Word view to normalize in place.
+* @returns Little-endian normalized word view.
+* @example
+* Normalizes a word-view buffer before block processing.
+*
+* ```ts
+* swap32IfBE(new Uint32Array([0x11223344]));
+* ```
+*/
+var swap32IfBE = isLE ? (u) => u : byteSwap32;
+var hasHexBuiltin = /* @__PURE__ */ (() => typeof Uint8Array.from([]).toHex === "function" && typeof Uint8Array.fromHex === "function")();
+var hexes = /* @__PURE__ */ Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
+/**
+* Convert byte array to hex string. Uses built-in function, when available.
+* @param bytes - Bytes to encode.
+* @returns Lowercase hexadecimal string.
+* @throws On wrong argument types. {@link TypeError}
+* @example
+* Formats ciphertext bytes for logs or test vectors.
+*
+* ```ts
+* bytesToHex(Uint8Array.from([0xca, 0xfe, 0x01, 0x23])); // 'cafe0123'
+* ```
+*/
+function bytesToHex(bytes) {
+	abytes(bytes);
+	if (hasHexBuiltin) return bytes.toHex();
+	let hex = "";
+	for (let i = 0; i < bytes.length; i++) hex += hexes[bytes[i]];
+	return hex;
+}
+var asciis = {
+	_0: 48,
+	_9: 57,
+	A: 65,
+	F: 70,
+	a: 97,
+	f: 102
+};
+function asciiToBase16(ch) {
+	if (ch >= asciis._0 && ch <= asciis._9) return ch - asciis._0;
+	if (ch >= asciis.A && ch <= asciis.F) return ch - (asciis.A - 10);
+	if (ch >= asciis.a && ch <= asciis.f) return ch - (asciis.a - 10);
+}
+/**
+* Convert hex string to byte array. Uses built-in function, when available.
+* @param hex - Hexadecimal string to decode.
+* @returns Decoded bytes.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On malformed hexadecimal input. {@link RangeError}
+* @example
+* Parses a hex test vector into bytes.
+*
+* ```ts
+* hexToBytes('cafe0123'); // Uint8Array.from([0xca, 0xfe, 0x01, 0x23])
+* ```
+*/
+function hexToBytes(hex) {
+	if (typeof hex !== "string") throw new TypeError("hex string expected, got " + typeof hex);
+	if (hasHexBuiltin) try {
+		return Uint8Array.fromHex(hex);
+	} catch (error) {
+		if (error instanceof SyntaxError) throw new RangeError(error.message);
+		throw error;
+	}
+	const hl = hex.length;
+	const al = hl / 2;
+	if (hl % 2) throw new RangeError("hex string expected, got unpadded hex of length " + hl);
+	const array = new Uint8Array(al);
+	for (let ai = 0, hi = 0; ai < al; ai++, hi += 2) {
+		const n1 = asciiToBase16(hex.charCodeAt(hi));
+		const n2 = asciiToBase16(hex.charCodeAt(hi + 1));
+		if (n1 === void 0 || n2 === void 0) {
+			const char = hex[hi] + hex[hi + 1];
+			throw new RangeError("hex string expected, got non-hex character \"" + char + "\" at index " + hi);
+		}
+		array[ai] = n1 * 16 + n2;
+	}
+	return array;
+}
+/**
+* Converts string to bytes using UTF8 encoding.
+* @param str - String to encode.
+* @returns UTF-8 bytes in a detached fresh Uint8Array copy.
+* @throws On wrong argument types. {@link TypeError}
+* @example
+* Encodes application text before encryption or MACing.
+*
+* ```ts
+* utf8ToBytes('abc'); // new Uint8Array([97, 98, 99])
+* ```
+*/
+function utf8ToBytes(str) {
+	if (typeof str !== "string") throw new TypeError("string expected");
+	return new Uint8Array(new TextEncoder().encode(str));
+}
+/**
+* Checks if two U8A use same underlying buffer and overlaps.
+* This is invalid and can corrupt data.
+* @param a - First byte view.
+* @param b - Second byte view.
+* @returns `true` when the views overlap in memory.
+* @example
+* Detects whether two slices alias the same backing buffer.
+*
+* ```ts
+* overlapBytes(new Uint8Array(4), new Uint8Array(4));
+* ```
+*/
+function overlapBytes(a, b) {
+	if (!a.byteLength || !b.byteLength) return false;
+	return a.buffer === b.buffer && a.byteOffset < b.byteOffset + b.byteLength && b.byteOffset < a.byteOffset + a.byteLength;
+}
+/**
+* Copies several Uint8Arrays into one.
+* @param arrays - Byte arrays to concatenate.
+* @returns Combined byte array.
+* @throws On wrong argument types inside the byte-array list. {@link TypeError}
+* @example
+* Builds a `nonce || ciphertext` style buffer.
+*
+* ```ts
+* concatBytes(new Uint8Array([1]), new Uint8Array([2]));
+* ```
+*/
+function concatBytes(...arrays) {
+	let sum = 0;
+	for (let i = 0; i < arrays.length; i++) {
+		const a = arrays[i];
+		abytes(a);
+		sum += a.length;
+	}
+	const res = new Uint8Array(sum);
+	for (let i = 0, pad = 0; i < arrays.length; i++) {
+		const a = arrays[i];
+		res.set(a, pad);
+		pad += a.length;
+	}
+	return res;
+}
+/**
+* Merges user options into defaults.
+* @param defaults - Default option values.
+* @param opts - User-provided overrides.
+* @returns Combined options object.
+* The merge mutates `defaults` in place and returns the same object.
+* @throws If options are missing or not an object. {@link Error}
+* @example
+* Applies user overrides to the default cipher options.
+*
+* ```ts
+* checkOpts({ rounds: 20 }, { rounds: 8 });
+* ```
+*/
+function checkOpts(defaults, opts) {
+	if (opts == null || typeof opts !== "object") throw new Error("options must be defined");
+	return Object.assign(defaults, opts);
+}
+/**
+* Compares two byte arrays in kinda constant time once lengths already match.
+* @param a - First byte array.
+* @param b - Second byte array.
+* @returns `true` when the arrays contain the same bytes. Different lengths still return early.
+* @example
+* Compares an expected authentication tag with the received one.
+*
+* ```ts
+* equalBytes(new Uint8Array([1]), new Uint8Array([1]));
+* ```
+*/
+function equalBytes(a, b) {
+	if (a.length !== b.length) return false;
+	let diff = 0;
+	for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+	return diff === 0;
+}
+/**
+* Wraps a keyed MAC constructor into a one-shot helper with `.create()`.
+* @param keyLen - Valid probe-key length used to read static metadata once.
+* The probe key is only used for `outputLen` / `blockLen`, so callers with several valid key sizes
+* can pass any representative size as long as those values stay fixed.
+* @param macCons - Keyed MAC constructor or factory.
+* @param fromMsg - Optional adapter that derives extra constructor args from the one-shot message.
+* @returns Callable MAC helper with `.create()`.
+*/
+function wrapMacConstructor(keyLen, macCons, fromMsg) {
+	const mac = macCons;
+	const getArgs = fromMsg || (() => []);
+	const macC = (msg, key) => mac(key, ...getArgs(msg)).update(msg).digest();
+	const tmp = mac(new Uint8Array(keyLen), ...getArgs(/* @__PURE__ */ new Uint8Array(0)));
+	macC.outputLen = tmp.outputLen;
+	macC.blockLen = tmp.blockLen;
+	macC.create = (key, ...args) => mac(key, ...args);
+	return macC;
+}
+/**
+* Wraps a cipher: validates args, ensures encrypt() can only be called once.
+* Used internally by the exported cipher constructors.
+* Output-buffer support is inferred from the wrapped `encrypt` / `decrypt`
+* arity (`fn.length === 2`), and tag-bearing constructors are expected to use
+* `args[1]` for optional AAD.
+* @__NO_SIDE_EFFECTS__
+* @param params - Static cipher metadata. See {@link CipherParams}.
+* @param constructor - Cipher constructor.
+* @returns Wrapped constructor with validation.
+*/
+var wrapCipher = (params, constructor) => {
+	function wrappedCipher(key, ...args) {
+		abytes(key, void 0, "key");
+		if (params.nonceLength !== void 0) {
+			const nonce = args[0];
+			abytes(nonce, params.varSizeNonce ? void 0 : params.nonceLength, "nonce");
+		}
+		const tagl = params.tagLength;
+		if (tagl && args[1] !== void 0) abytes(args[1], void 0, "AAD");
+		const cipher = constructor(key, ...args);
+		const checkOutput = (fnLength, output) => {
+			if (output !== void 0) {
+				if (fnLength !== 2) throw new Error("cipher output not supported");
+				abytes(output, void 0, "output");
+			}
+		};
+		let called = false;
+		return {
+			encrypt(data, output) {
+				if (called) throw new Error("cannot encrypt() twice with same key + nonce");
+				called = true;
+				abytes(data);
+				checkOutput(cipher.encrypt.length, output);
+				return cipher.encrypt(data, output);
+			},
+			decrypt(data, output) {
+				abytes(data);
+				if (tagl && data.length < tagl) throw new Error("\"ciphertext\" expected length bigger than tagLength=" + tagl);
+				checkOutput(cipher.decrypt.length, output);
+				return cipher.decrypt(data, output);
+			}
+		};
+	}
+	Object.assign(wrappedCipher, params);
+	return wrappedCipher;
+};
+/**
+* By default, returns u8a of length.
+* When out is available, it checks it for validity and uses it.
+* @param expectedLength - Required output length.
+* @param out - Optional destination buffer.
+* @param onlyAligned - Whether `out` must be 4-byte aligned.
+* @returns Output buffer ready for writing.
+* @throws On wrong argument types. {@link TypeError}
+* @throws If the provided output buffer has the wrong size or alignment. {@link Error}
+* @example
+* Reuses a caller-provided output buffer when lengths match.
+*
+* ```ts
+* getOutput(16, new Uint8Array(16));
+* ```
+*/
+function getOutput(expectedLength, out, onlyAligned = true) {
+	if (out === void 0) return new Uint8Array(expectedLength);
+	abytes(out, void 0, "output");
+	if (out.length !== expectedLength) throw new Error("\"output\" expected Uint8Array of length " + expectedLength + ", got: " + out.length);
+	if (onlyAligned && !isAligned32(out)) throw new Error("invalid output, must be aligned");
+	return out;
+}
+/**
+* Encodes data and AAD bit lengths into a 16-byte buffer.
+* @param dataLength - Data length in bits.
+* @param aadLength - AAD length in bits.
+* The serialized block is still `aadLength || dataLength`, matching GCM/Poly1305
+* conventions even though the helper parameter order is `(dataLength, aadLength)`.
+* @param isLE - Whether to encode lengths as little-endian.
+* @returns 16-byte length block.
+* @throws On wrong argument types passed to the endian validator. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @example
+* Builds the length block appended by GCM and Poly1305.
+*
+* ```ts
+* u64Lengths(16, 8, true);
+* ```
+*/
+function u64Lengths(dataLength, aadLength, isLE) {
+	anumber(dataLength);
+	anumber(aadLength);
+	abool(isLE);
+	const num = /* @__PURE__ */ new Uint8Array(16);
+	const view = createView(num);
+	view.setBigUint64(0, BigInt(aadLength), isLE);
+	view.setBigUint64(8, BigInt(dataLength), isLE);
+	return num;
+}
+/**
+* Checks whether a byte array is aligned to a 4-byte offset.
+* @param bytes - Byte array to inspect.
+* @returns `true` when the view is 4-byte aligned.
+* @example
+* Checks whether a buffer can be safely viewed as Uint32Array.
+*
+* ```ts
+* isAligned32(new Uint8Array(4));
+* ```
+*/
+function isAligned32(bytes) {
+	return bytes.byteOffset % 4 === 0;
+}
+/**
+* Copies bytes into a new Uint8Array.
+* @param bytes - Bytes to copy.
+* @returns Copied byte array.
+* @throws On wrong argument types. {@link TypeError}
+* @example
+* Copies input into an aligned Uint8Array before block processing.
+*
+* ```ts
+* copyBytes(new Uint8Array([1, 2]));
+* ```
+*/
+function copyBytes(bytes) {
+	return Uint8Array.from(abytes(bytes));
+}
+/**
+* Cryptographically secure PRNG.
+* Uses internal OS-level `crypto.getRandomValues`.
+* @param bytesLength - Number of bytes to produce.
+* Validation is delegated to `Uint8Array(bytesLength)` and `getRandomValues`, so
+* non-integers, negative lengths, and oversize requests surface backend/runtime errors.
+* @returns Random byte array.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On wrong argument ranges or values. {@link RangeError}
+* @throws If the runtime does not expose `crypto.getRandomValues`. {@link Error}
+* @example
+* Generates a fresh nonce or key.
+*
+* ```ts
+* randomBytes(16);
+* ```
+*/
+function randomBytes$1(bytesLength = 32) {
+	anumber(bytesLength);
+	const cr = typeof globalThis === "object" ? globalThis.crypto : null;
+	if (typeof cr?.getRandomValues !== "function") throw new Error("crypto.getRandomValues must be defined");
+	return cr.getRandomValues(new Uint8Array(bytesLength));
+}
+/**
+* Uses CSPRNG for nonce, nonce injected in ciphertext.
+* For `encrypt`, a `nonceBytes`-length buffer is fetched from CSPRNG and
+* prepended to encrypted ciphertext. For `decrypt`, first `nonceBytes` of ciphertext
+* are treated as nonce. The wrapper always allocates a fresh `nonce || ciphertext`
+* buffer on encrypt and intentionally does not support caller-provided destination buffers.
+* Too-short decrypt inputs are split into short/empty nonce views and then delegated
+* to the wrapped cipher instead of being rejected here first.
+*
+* NOTE: Under the same key, using random nonces (e.g. `managedNonce`) with AES-GCM and ChaCha
+* should be limited to `2**23` (8M) messages to get a collision chance of
+* `2**-50`. Stretching to `2**32` (4B) messages would raise that chance to
+* `2**-33`, still negligible but creeping up.
+* @param fn - Cipher constructor that expects a nonce.
+* @param randomBytes_ - Random-byte source used for nonce generation.
+* @returns Cipher constructor that prepends the nonce to ciphertext.
+* @throws On wrong argument types. {@link TypeError}
+* @throws On invalid nonce lengths observed at wrapper construction or use. {@link RangeError}
+* @example
+* Prepends a fresh random nonce to every ciphertext.
+*
+* ```ts
+* import { gcm } from '@noble/ciphers/aes.js';
+* import { managedNonce, randomBytes } from '@noble/ciphers/utils.js';
+* const wrapped = managedNonce(gcm);
+* const key = randomBytes(16);
+* const ciphertext = wrapped(key).encrypt(new Uint8Array([1, 2, 3]));
+* wrapped(key).decrypt(ciphertext);
+* ```
+*/
+function managedNonce(fn, randomBytes_ = randomBytes$1) {
+	const { nonceLength } = fn;
+	anumber(nonceLength);
+	const addNonce = (nonce, ciphertext, plaintext) => {
+		const out = concatBytes(nonce, ciphertext);
+		if (!overlapBytes(plaintext, ciphertext)) ciphertext.fill(0);
+		return out;
+	};
+	const res = ((key, ...args) => ({
+		encrypt(plaintext) {
+			abytes(plaintext);
+			const nonce = randomBytes_(nonceLength);
+			const encrypted = fn(key, nonce, ...args).encrypt(plaintext);
+			if (encrypted instanceof Promise) return encrypted.then((ct) => addNonce(nonce, ct, plaintext));
+			return addNonce(nonce, encrypted, plaintext);
+		},
+		decrypt(ciphertext) {
+			abytes(ciphertext);
+			const nonce = ciphertext.subarray(0, nonceLength);
+			const decrypted = ciphertext.subarray(nonceLength);
+			return fn(key, nonce, ...args).decrypt(decrypted);
+		}
+	}));
+	if ("blockSize" in fn) res.blockSize = fn.blockSize;
+	if ("tagLength" in fn) res.tagLength = fn.tagLength;
+	return res;
+}
+//#endregion
+//#region ../../node_modules/.bun/@noble+ciphers@2.2.0/node_modules/@noble/ciphers/_arx.js
+/**
+* Basic utils for ARX (add-rotate-xor) salsa and chacha ciphers.
+
+RFC8439 requires multi-step cipher stream, where
+authKey starts with counter: 0, actual msg with counter: 1.
+
+For this, we need a way to re-use nonce / counter:
+
+const counter = new Uint8Array(4);
+chacha(..., counter, ...); // counter is now 1
+chacha(..., counter, ...); // counter is now 2
+
+This is complicated:
+
+- 32-bit counters are enough, no need for 64-bit: max ArrayBuffer size in JS is 4GB
+- Original papers don't allow mutating counters
+- Counter overflow is undefined [^1]
+- Idea A: allow providing (nonce | counter) instead of just nonce, re-use it
+- Caveat: Cannot be re-used through all cases:
+- * chacha has (counter | nonce)
+- * xchacha has (nonce16 | counter | nonce16)
+- Idea B: separate nonce / counter and provide separate API for counter re-use
+- Caveat: there are different counter sizes depending on an algorithm.
+- salsa & chacha also differ in structures of key & sigma:
+salsa20:      s[0] | k(4) | s[1] | nonce(2) | cnt(2) | s[2] | k(4) | s[3]
+chacha:       s(4) | k(8) | cnt(1) | nonce(3)
+chacha20orig: s(4) | k(8) | cnt(2) | nonce(2)
+- Idea C: helper method such as `setSalsaState(key, nonce, sigma, data)`
+- Caveat: we can't re-use counter array
+
+xchacha uses the subkey and remaining 8 byte nonce with ChaCha20 as normal
+(prefixed by 4 NUL bytes, since RFC8439 specifies a 12-byte nonce).
+Counter overflow is undefined; see {@link https://mailarchive.ietf.org/arch/msg/cfrg/gsOnTJzcbgG6OqD8Sc0GO5aR_tU/ | the CFRG thread}.
+Current noble policy is strict non-wrap for the shared 32-bit counter path:
+exported ARX ciphers reject initial `0xffffffff` and stop before any implicit
+wrap back to zero.
+See {@link https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha#appendix-A.2 | the XChaCha appendix} for the extended-nonce construction.
+
+* @module
+*/
+var encodeStr = (str) => Uint8Array.from(str.split(""), (c) => c.charCodeAt(0));
+var sigma16_32 = /* @__PURE__ */ (() => swap32IfBE(u32(encodeStr("expand 16-byte k"))))();
+var sigma32_32 = /* @__PURE__ */ (() => swap32IfBE(u32(encodeStr("expand 32-byte k"))))();
+/**
+* Rotates a 32-bit word left.
+* @param a - Input word.
+* @param b - Rotation count in bits.
+* @returns Rotated 32-bit word.
+* @example
+* Moves the top byte of `0x12345678` into the low byte position.
+* ```ts
+* rotl(0x12345678, 8);
+* ```
+*/
+function rotl(a, b) {
+	return a << b | a >>> 32 - b;
+}
+var BLOCK_LEN = 64;
+var BLOCK_LEN32 = 16;
+var MAX_COUNTER = /* @__PURE__ */ (() => 2 ** 32 - 1)();
+var U32_EMPTY = /* @__PURE__ */ Uint32Array.of();
+function runCipher(core, sigma, key, nonce, data, output, counter, rounds) {
+	const len = data.length;
+	const block = new Uint8Array(BLOCK_LEN);
+	const b32 = u32(block);
+	const isAligned = isLE && isAligned32(data) && isAligned32(output);
+	const d32 = isAligned ? u32(data) : U32_EMPTY;
+	const o32 = isAligned ? u32(output) : U32_EMPTY;
+	if (!isLE) {
+		for (let pos = 0; pos < len; counter++) {
+			core(sigma, key, nonce, b32, counter, rounds);
+			swap32IfBE(b32);
+			if (counter >= MAX_COUNTER) throw new Error("arx: counter overflow");
+			const take = Math.min(BLOCK_LEN, len - pos);
+			for (let j = 0, posj; j < take; j++) {
+				posj = pos + j;
+				output[posj] = data[posj] ^ block[j];
+			}
+			pos += take;
+		}
+		return;
+	}
+	for (let pos = 0; pos < len; counter++) {
+		core(sigma, key, nonce, b32, counter, rounds);
+		if (counter >= MAX_COUNTER) throw new Error("arx: counter overflow");
+		const take = Math.min(BLOCK_LEN, len - pos);
+		if (isAligned && take === BLOCK_LEN) {
+			const pos32 = pos / 4;
+			if (pos % 4 !== 0) throw new Error("arx: invalid block position");
+			for (let j = 0, posj; j < BLOCK_LEN32; j++) {
+				posj = pos32 + j;
+				o32[posj] = d32[posj] ^ b32[j];
+			}
+			pos += BLOCK_LEN;
+			continue;
+		}
+		for (let j = 0, posj; j < take; j++) {
+			posj = pos + j;
+			output[posj] = data[posj] ^ block[j];
+		}
+		pos += take;
+	}
+}
+/**
+* Creates an ARX stream cipher from a 32-bit core permutation.
+* Used internally to build the exported Salsa and ChaCha stream ciphers.
+* @param core - Core function that fills one keystream block.
+* @param opts - Cipher layout and nonce-extension options. See {@link CipherOpts}.
+* @returns Stream cipher function over byte arrays.
+* @throws If the core callback, key size, counter, or output sizing is invalid. {@link Error}
+*/
+function createCipher(core, opts) {
+	const { allowShortKeys, extendNonceFn, counterLength, counterRight, rounds } = checkOpts({
+		allowShortKeys: false,
+		counterLength: 8,
+		counterRight: false,
+		rounds: 20
+	}, opts);
+	if (typeof core !== "function") throw new Error("core must be a function");
+	anumber(counterLength);
+	anumber(rounds);
+	abool(counterRight);
+	abool(allowShortKeys);
+	return (key, nonce, data, output, counter = 0) => {
+		abytes(key, void 0, "key");
+		abytes(nonce, void 0, "nonce");
+		abytes(data, void 0, "data");
+		const len = data.length;
+		output = getOutput(len, output, false);
+		anumber(counter);
+		if (counter < 0 || counter >= MAX_COUNTER) throw new Error("arx: counter overflow");
+		const toClean = [];
+		let l = key.length;
+		let k;
+		let sigma;
+		if (l === 32) {
+			toClean.push(k = copyBytes(key));
+			sigma = sigma32_32;
+		} else if (l === 16 && allowShortKeys) {
+			k = /* @__PURE__ */ new Uint8Array(32);
+			k.set(key);
+			k.set(key, 16);
+			sigma = sigma16_32;
+			toClean.push(k);
+		} else {
+			abytes(key, 32, "arx key");
+			throw new Error("invalid key size");
+		}
+		if (!isLE || !isAligned32(nonce)) toClean.push(nonce = copyBytes(nonce));
+		let k32 = u32(k);
+		if (extendNonceFn) {
+			if (nonce.length !== 24) throw new Error(`arx: extended nonce must be 24 bytes`);
+			const n16 = nonce.subarray(0, 16);
+			if (isLE) extendNonceFn(sigma, k32, u32(n16), k32);
+			else {
+				const sigmaRaw = swap32IfBE(Uint32Array.from(sigma));
+				extendNonceFn(sigmaRaw, k32, u32(n16), k32);
+				clean(sigmaRaw);
+				swap32IfBE(k32);
+			}
+			nonce = nonce.subarray(16);
+		} else if (!isLE) swap32IfBE(k32);
+		const nonceNcLen = 16 - counterLength;
+		if (nonceNcLen !== nonce.length) throw new Error(`arx: nonce must be ${nonceNcLen} or 16 bytes`);
+		if (nonceNcLen !== 12) {
+			const nc = /* @__PURE__ */ new Uint8Array(12);
+			nc.set(nonce, counterRight ? 0 : 12 - nonce.length);
+			nonce = nc;
+			toClean.push(nonce);
+		}
+		const n32 = swap32IfBE(u32(nonce));
+		try {
+			runCipher(core, sigma, k32, n32, data, output, counter, rounds);
+			return output;
+		} finally {
+			clean(...toClean);
+		}
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/@noble+ciphers@2.2.0/node_modules/@noble/ciphers/_poly1305.js
+/**
+* Poly1305 ({@link https://cr.yp.to/mac/poly1305-20050329.pdf | PDF},
+* {@link https://en.wikipedia.org/wiki/Poly1305 | wiki})
+* is a fast and parallel secret-key message-authentication code suitable for
+* a wide variety of applications. It was standardized in
+* {@link https://www.rfc-editor.org/rfc/rfc8439 | RFC 8439} and is now used in TLS 1.3.
+*
+* Polynomial MACs are not perfect for every situation:
+* they lack Random Key Robustness: the MAC can be forged, and can't be used in PAKE schemes.
+* See {@link https://keymaterial.net/2020/09/07/invisible-salamanders-in-aes-gcm-siv/ | the invisible salamanders attack writeup}.
+* To combat invisible salamanders, `hash(key)` can be included in ciphertext,
+* however, this would violate ciphertext indistinguishability:
+* an attacker would know which key was used - so `HKDF(key, i)`
+* could be used instead.
+*
+* Check out the {@link https://cr.yp.to/mac.html | original website}.
+* Based on public-domain {@link https://github.com/floodyberry/poly1305-donna | poly1305-donna}.
+* @module
+*/
+function u8to16(a, i) {
+	return a[i++] & 255 | (a[i++] & 255) << 8;
+}
+/**
+* Incremental Poly1305 MAC state.
+* Prefer `poly1305()` for one-shot use.
+* @param key - 32-byte Poly1305 one-time key.
+* @example
+* Feeds one chunk into an incremental Poly1305 state with a fresh one-time key.
+*
+* ```ts
+* import { Poly1305 } from '@noble/ciphers/_poly1305.js';
+* import { randomBytes } from '@noble/ciphers/utils.js';
+* const key = randomBytes(32);
+* const mac = new Poly1305(key);
+* mac.update(new Uint8Array([1, 2, 3]));
+* mac.digest();
+* ```
+*/
+var Poly1305 = class {
+	blockLen = 16;
+	outputLen = 16;
+	buffer = /* @__PURE__ */ new Uint8Array(16);
+	r = /* @__PURE__ */ new Uint16Array(10);
+	h = /* @__PURE__ */ new Uint16Array(10);
+	pad = /* @__PURE__ */ new Uint16Array(8);
+	pos = 0;
+	finished = false;
+	destroyed = false;
+	constructor(key) {
+		key = copyBytes(abytes(key, 32, "key"));
+		const t0 = u8to16(key, 0);
+		const t1 = u8to16(key, 2);
+		const t2 = u8to16(key, 4);
+		const t3 = u8to16(key, 6);
+		const t4 = u8to16(key, 8);
+		const t5 = u8to16(key, 10);
+		const t6 = u8to16(key, 12);
+		const t7 = u8to16(key, 14);
+		this.r[0] = t0 & 8191;
+		this.r[1] = (t0 >>> 13 | t1 << 3) & 8191;
+		this.r[2] = (t1 >>> 10 | t2 << 6) & 7939;
+		this.r[3] = (t2 >>> 7 | t3 << 9) & 8191;
+		this.r[4] = (t3 >>> 4 | t4 << 12) & 255;
+		this.r[5] = t4 >>> 1 & 8190;
+		this.r[6] = (t4 >>> 14 | t5 << 2) & 8191;
+		this.r[7] = (t5 >>> 11 | t6 << 5) & 8065;
+		this.r[8] = (t6 >>> 8 | t7 << 8) & 8191;
+		this.r[9] = t7 >>> 5 & 127;
+		for (let i = 0; i < 8; i++) this.pad[i] = u8to16(key, 16 + 2 * i);
+	}
+	process(data, offset, isLast = false) {
+		const hibit = isLast ? 0 : 2048;
+		const { h, r } = this;
+		const r0 = r[0];
+		const r1 = r[1];
+		const r2 = r[2];
+		const r3 = r[3];
+		const r4 = r[4];
+		const r5 = r[5];
+		const r6 = r[6];
+		const r7 = r[7];
+		const r8 = r[8];
+		const r9 = r[9];
+		const t0 = u8to16(data, offset + 0);
+		const t1 = u8to16(data, offset + 2);
+		const t2 = u8to16(data, offset + 4);
+		const t3 = u8to16(data, offset + 6);
+		const t4 = u8to16(data, offset + 8);
+		const t5 = u8to16(data, offset + 10);
+		const t6 = u8to16(data, offset + 12);
+		const t7 = u8to16(data, offset + 14);
+		let h0 = h[0] + (t0 & 8191);
+		let h1 = h[1] + ((t0 >>> 13 | t1 << 3) & 8191);
+		let h2 = h[2] + ((t1 >>> 10 | t2 << 6) & 8191);
+		let h3 = h[3] + ((t2 >>> 7 | t3 << 9) & 8191);
+		let h4 = h[4] + ((t3 >>> 4 | t4 << 12) & 8191);
+		let h5 = h[5] + (t4 >>> 1 & 8191);
+		let h6 = h[6] + ((t4 >>> 14 | t5 << 2) & 8191);
+		let h7 = h[7] + ((t5 >>> 11 | t6 << 5) & 8191);
+		let h8 = h[8] + ((t6 >>> 8 | t7 << 8) & 8191);
+		let h9 = h[9] + (t7 >>> 5 | hibit);
+		let c = 0;
+		let d0 = c + h0 * r0 + h1 * (5 * r9) + h2 * (5 * r8) + h3 * (5 * r7) + h4 * (5 * r6);
+		c = d0 >>> 13;
+		d0 &= 8191;
+		d0 += h5 * (5 * r5) + h6 * (5 * r4) + h7 * (5 * r3) + h8 * (5 * r2) + h9 * (5 * r1);
+		c += d0 >>> 13;
+		d0 &= 8191;
+		let d1 = c + h0 * r1 + h1 * r0 + h2 * (5 * r9) + h3 * (5 * r8) + h4 * (5 * r7);
+		c = d1 >>> 13;
+		d1 &= 8191;
+		d1 += h5 * (5 * r6) + h6 * (5 * r5) + h7 * (5 * r4) + h8 * (5 * r3) + h9 * (5 * r2);
+		c += d1 >>> 13;
+		d1 &= 8191;
+		let d2 = c + h0 * r2 + h1 * r1 + h2 * r0 + h3 * (5 * r9) + h4 * (5 * r8);
+		c = d2 >>> 13;
+		d2 &= 8191;
+		d2 += h5 * (5 * r7) + h6 * (5 * r6) + h7 * (5 * r5) + h8 * (5 * r4) + h9 * (5 * r3);
+		c += d2 >>> 13;
+		d2 &= 8191;
+		let d3 = c + h0 * r3 + h1 * r2 + h2 * r1 + h3 * r0 + h4 * (5 * r9);
+		c = d3 >>> 13;
+		d3 &= 8191;
+		d3 += h5 * (5 * r8) + h6 * (5 * r7) + h7 * (5 * r6) + h8 * (5 * r5) + h9 * (5 * r4);
+		c += d3 >>> 13;
+		d3 &= 8191;
+		let d4 = c + h0 * r4 + h1 * r3 + h2 * r2 + h3 * r1 + h4 * r0;
+		c = d4 >>> 13;
+		d4 &= 8191;
+		d4 += h5 * (5 * r9) + h6 * (5 * r8) + h7 * (5 * r7) + h8 * (5 * r6) + h9 * (5 * r5);
+		c += d4 >>> 13;
+		d4 &= 8191;
+		let d5 = c + h0 * r5 + h1 * r4 + h2 * r3 + h3 * r2 + h4 * r1;
+		c = d5 >>> 13;
+		d5 &= 8191;
+		d5 += h5 * r0 + h6 * (5 * r9) + h7 * (5 * r8) + h8 * (5 * r7) + h9 * (5 * r6);
+		c += d5 >>> 13;
+		d5 &= 8191;
+		let d6 = c + h0 * r6 + h1 * r5 + h2 * r4 + h3 * r3 + h4 * r2;
+		c = d6 >>> 13;
+		d6 &= 8191;
+		d6 += h5 * r1 + h6 * r0 + h7 * (5 * r9) + h8 * (5 * r8) + h9 * (5 * r7);
+		c += d6 >>> 13;
+		d6 &= 8191;
+		let d7 = c + h0 * r7 + h1 * r6 + h2 * r5 + h3 * r4 + h4 * r3;
+		c = d7 >>> 13;
+		d7 &= 8191;
+		d7 += h5 * r2 + h6 * r1 + h7 * r0 + h8 * (5 * r9) + h9 * (5 * r8);
+		c += d7 >>> 13;
+		d7 &= 8191;
+		let d8 = c + h0 * r8 + h1 * r7 + h2 * r6 + h3 * r5 + h4 * r4;
+		c = d8 >>> 13;
+		d8 &= 8191;
+		d8 += h5 * r3 + h6 * r2 + h7 * r1 + h8 * r0 + h9 * (5 * r9);
+		c += d8 >>> 13;
+		d8 &= 8191;
+		let d9 = c + h0 * r9 + h1 * r8 + h2 * r7 + h3 * r6 + h4 * r5;
+		c = d9 >>> 13;
+		d9 &= 8191;
+		d9 += h5 * r4 + h6 * r3 + h7 * r2 + h8 * r1 + h9 * r0;
+		c += d9 >>> 13;
+		d9 &= 8191;
+		c = (c << 2) + c | 0;
+		c = c + d0 | 0;
+		d0 = c & 8191;
+		c = c >>> 13;
+		d1 += c;
+		h[0] = d0;
+		h[1] = d1;
+		h[2] = d2;
+		h[3] = d3;
+		h[4] = d4;
+		h[5] = d5;
+		h[6] = d6;
+		h[7] = d7;
+		h[8] = d8;
+		h[9] = d9;
+	}
+	finalize() {
+		const { h, pad } = this;
+		const g = /* @__PURE__ */ new Uint16Array(10);
+		let c = h[1] >>> 13;
+		h[1] &= 8191;
+		for (let i = 2; i < 10; i++) {
+			h[i] += c;
+			c = h[i] >>> 13;
+			h[i] &= 8191;
+		}
+		h[0] += c * 5;
+		c = h[0] >>> 13;
+		h[0] &= 8191;
+		h[1] += c;
+		c = h[1] >>> 13;
+		h[1] &= 8191;
+		h[2] += c;
+		g[0] = h[0] + 5;
+		c = g[0] >>> 13;
+		g[0] &= 8191;
+		for (let i = 1; i < 10; i++) {
+			g[i] = h[i] + c;
+			c = g[i] >>> 13;
+			g[i] &= 8191;
+		}
+		g[9] -= 8192;
+		let mask = (c ^ 1) - 1;
+		for (let i = 0; i < 10; i++) g[i] &= mask;
+		mask = ~mask;
+		for (let i = 0; i < 10; i++) h[i] = h[i] & mask | g[i];
+		h[0] = (h[0] | h[1] << 13) & 65535;
+		h[1] = (h[1] >>> 3 | h[2] << 10) & 65535;
+		h[2] = (h[2] >>> 6 | h[3] << 7) & 65535;
+		h[3] = (h[3] >>> 9 | h[4] << 4) & 65535;
+		h[4] = (h[4] >>> 12 | h[5] << 1 | h[6] << 14) & 65535;
+		h[5] = (h[6] >>> 2 | h[7] << 11) & 65535;
+		h[6] = (h[7] >>> 5 | h[8] << 8) & 65535;
+		h[7] = (h[8] >>> 8 | h[9] << 5) & 65535;
+		let f = h[0] + pad[0];
+		h[0] = f & 65535;
+		for (let i = 1; i < 8; i++) {
+			f = (h[i] + pad[i] | 0) + (f >>> 16) | 0;
+			h[i] = f & 65535;
+		}
+		clean(g);
+	}
+	update(data) {
+		aexists(this);
+		abytes(data);
+		data = copyBytes(data);
+		const { buffer, blockLen } = this;
+		const len = data.length;
+		for (let pos = 0; pos < len;) {
+			const take = Math.min(blockLen - this.pos, len - pos);
+			if (take === blockLen) {
+				for (; blockLen <= len - pos; pos += blockLen) this.process(data, pos);
+				continue;
+			}
+			buffer.set(data.subarray(pos, pos + take), this.pos);
+			this.pos += take;
+			pos += take;
+			if (this.pos === blockLen) {
+				this.process(buffer, 0, false);
+				this.pos = 0;
+			}
+		}
+		return this;
+	}
+	destroy() {
+		this.destroyed = true;
+		clean(this.h, this.r, this.buffer, this.pad);
+	}
+	digestInto(out) {
+		aexists(this);
+		aoutput(out, this);
+		this.finished = true;
+		const { buffer, h } = this;
+		let { pos } = this;
+		if (pos) {
+			buffer[pos++] = 1;
+			for (; pos < 16; pos++) buffer[pos] = 0;
+			this.process(buffer, 0, true);
+		}
+		this.finalize();
+		let opos = 0;
+		for (let i = 0; i < 8; i++) {
+			out[opos++] = h[i] >>> 0;
+			out[opos++] = h[i] >>> 8;
+		}
+	}
+	digest() {
+		const { buffer, outputLen } = this;
+		this.digestInto(buffer);
+		const res = buffer.slice(0, outputLen);
+		this.destroy();
+		return res;
+	}
+};
+/**
+* Poly1305 MAC from RFC 8439.
+* @param msg - Message bytes to authenticate.
+* @param key - 32-byte Poly1305 one-time key.
+* @returns 16-byte authentication tag.
+* @example
+* Authenticates one message with a one-shot Poly1305 call and a fresh key.
+*
+* ```ts
+* import { poly1305 } from '@noble/ciphers/_poly1305.js';
+* import { randomBytes } from '@noble/ciphers/utils.js';
+* const key = randomBytes(32);
+* poly1305(new Uint8Array(), key);
+* ```
+*/
+var poly1305 = /* @__PURE__ */ wrapMacConstructor(32, (key) => new Poly1305(key));
+//#endregion
+//#region ../../node_modules/.bun/@noble+ciphers@2.2.0/node_modules/@noble/ciphers/chacha.js
+/**
+* ChaCha stream cipher, released
+* in 2008. Developed after Salsa20, ChaCha aims to increase diffusion per round.
+* It was standardized in
+* {@link https://www.rfc-editor.org/rfc/rfc8439 | RFC 8439} and
+* is now used in TLS 1.3.
+*
+* {@link https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha | XChaCha20}
+* extended-nonce variant is also provided. Similar to XSalsa, it's safe to use with
+* randomly-generated nonces.
+*
+* Check out
+* {@link http://cr.yp.to/chacha/chacha-20080128.pdf | PDF},
+* {@link https://en.wikipedia.org/wiki/Salsa20 | wiki}, and
+* {@link https://cr.yp.to/chacha.html | website}.
+*
+* @module
+*/
+/** RFC 8439 §2.3 block core for `state = constants | key | counter | nonce`. */
+function chachaCore(s, k, n, out, cnt, rounds = 20) {
+	let y00 = s[0], y01 = s[1], y02 = s[2], y03 = s[3], y04 = k[0], y05 = k[1], y06 = k[2], y07 = k[3], y08 = k[4], y09 = k[5], y10 = k[6], y11 = k[7], y12 = cnt, y13 = n[0], y14 = n[1], y15 = n[2];
+	let x00 = y00, x01 = y01, x02 = y02, x03 = y03, x04 = y04, x05 = y05, x06 = y06, x07 = y07, x08 = y08, x09 = y09, x10 = y10, x11 = y11, x12 = y12, x13 = y13, x14 = y14, x15 = y15;
+	for (let r = 0; r < rounds; r += 2) {
+		x00 = x00 + x04 | 0;
+		x12 = rotl(x12 ^ x00, 16);
+		x08 = x08 + x12 | 0;
+		x04 = rotl(x04 ^ x08, 12);
+		x00 = x00 + x04 | 0;
+		x12 = rotl(x12 ^ x00, 8);
+		x08 = x08 + x12 | 0;
+		x04 = rotl(x04 ^ x08, 7);
+		x01 = x01 + x05 | 0;
+		x13 = rotl(x13 ^ x01, 16);
+		x09 = x09 + x13 | 0;
+		x05 = rotl(x05 ^ x09, 12);
+		x01 = x01 + x05 | 0;
+		x13 = rotl(x13 ^ x01, 8);
+		x09 = x09 + x13 | 0;
+		x05 = rotl(x05 ^ x09, 7);
+		x02 = x02 + x06 | 0;
+		x14 = rotl(x14 ^ x02, 16);
+		x10 = x10 + x14 | 0;
+		x06 = rotl(x06 ^ x10, 12);
+		x02 = x02 + x06 | 0;
+		x14 = rotl(x14 ^ x02, 8);
+		x10 = x10 + x14 | 0;
+		x06 = rotl(x06 ^ x10, 7);
+		x03 = x03 + x07 | 0;
+		x15 = rotl(x15 ^ x03, 16);
+		x11 = x11 + x15 | 0;
+		x07 = rotl(x07 ^ x11, 12);
+		x03 = x03 + x07 | 0;
+		x15 = rotl(x15 ^ x03, 8);
+		x11 = x11 + x15 | 0;
+		x07 = rotl(x07 ^ x11, 7);
+		x00 = x00 + x05 | 0;
+		x15 = rotl(x15 ^ x00, 16);
+		x10 = x10 + x15 | 0;
+		x05 = rotl(x05 ^ x10, 12);
+		x00 = x00 + x05 | 0;
+		x15 = rotl(x15 ^ x00, 8);
+		x10 = x10 + x15 | 0;
+		x05 = rotl(x05 ^ x10, 7);
+		x01 = x01 + x06 | 0;
+		x12 = rotl(x12 ^ x01, 16);
+		x11 = x11 + x12 | 0;
+		x06 = rotl(x06 ^ x11, 12);
+		x01 = x01 + x06 | 0;
+		x12 = rotl(x12 ^ x01, 8);
+		x11 = x11 + x12 | 0;
+		x06 = rotl(x06 ^ x11, 7);
+		x02 = x02 + x07 | 0;
+		x13 = rotl(x13 ^ x02, 16);
+		x08 = x08 + x13 | 0;
+		x07 = rotl(x07 ^ x08, 12);
+		x02 = x02 + x07 | 0;
+		x13 = rotl(x13 ^ x02, 8);
+		x08 = x08 + x13 | 0;
+		x07 = rotl(x07 ^ x08, 7);
+		x03 = x03 + x04 | 0;
+		x14 = rotl(x14 ^ x03, 16);
+		x09 = x09 + x14 | 0;
+		x04 = rotl(x04 ^ x09, 12);
+		x03 = x03 + x04 | 0;
+		x14 = rotl(x14 ^ x03, 8);
+		x09 = x09 + x14 | 0;
+		x04 = rotl(x04 ^ x09, 7);
+	}
+	let oi = 0;
+	out[oi++] = y00 + x00 | 0;
+	out[oi++] = y01 + x01 | 0;
+	out[oi++] = y02 + x02 | 0;
+	out[oi++] = y03 + x03 | 0;
+	out[oi++] = y04 + x04 | 0;
+	out[oi++] = y05 + x05 | 0;
+	out[oi++] = y06 + x06 | 0;
+	out[oi++] = y07 + x07 | 0;
+	out[oi++] = y08 + x08 | 0;
+	out[oi++] = y09 + x09 | 0;
+	out[oi++] = y10 + x10 | 0;
+	out[oi++] = y11 + x11 | 0;
+	out[oi++] = y12 + x12 | 0;
+	out[oi++] = y13 + x13 | 0;
+	out[oi++] = y14 + x14 | 0;
+	out[oi++] = y15 + x15 | 0;
+}
+/**
+* hchacha hashes key and nonce into key' and nonce' for xchacha20.
+* Algorithmically identical to `hchacha_small`, but this exported path
+* normalizes word order on big-endian hosts.
+* Need to find a way to merge it with `chachaCore` without 25% performance hit.
+* @param s - Sigma constants as 32-bit words.
+* @param k - Key words.
+* @param i - Nonce-prefix words.
+* @param out - Output buffer for the derived subkey.
+* @example
+* Derives the XChaCha subkey from sigma, key, and nonce-prefix words.
+*
+* ```ts
+* const sigma = new Uint32Array(4);
+* const key = new Uint32Array(8);
+* const nonce = new Uint32Array(4);
+* const out = new Uint32Array(8);
+* hchacha(sigma, key, nonce, out);
+* ```
+*/
+function hchacha(s, k, i, out) {
+	let x00 = swap8IfBE(s[0]), x01 = swap8IfBE(s[1]), x02 = swap8IfBE(s[2]), x03 = swap8IfBE(s[3]), x04 = swap8IfBE(k[0]), x05 = swap8IfBE(k[1]), x06 = swap8IfBE(k[2]), x07 = swap8IfBE(k[3]), x08 = swap8IfBE(k[4]), x09 = swap8IfBE(k[5]), x10 = swap8IfBE(k[6]), x11 = swap8IfBE(k[7]), x12 = swap8IfBE(i[0]), x13 = swap8IfBE(i[1]), x14 = swap8IfBE(i[2]), x15 = swap8IfBE(i[3]);
+	for (let r = 0; r < 20; r += 2) {
+		x00 = x00 + x04 | 0;
+		x12 = rotl(x12 ^ x00, 16);
+		x08 = x08 + x12 | 0;
+		x04 = rotl(x04 ^ x08, 12);
+		x00 = x00 + x04 | 0;
+		x12 = rotl(x12 ^ x00, 8);
+		x08 = x08 + x12 | 0;
+		x04 = rotl(x04 ^ x08, 7);
+		x01 = x01 + x05 | 0;
+		x13 = rotl(x13 ^ x01, 16);
+		x09 = x09 + x13 | 0;
+		x05 = rotl(x05 ^ x09, 12);
+		x01 = x01 + x05 | 0;
+		x13 = rotl(x13 ^ x01, 8);
+		x09 = x09 + x13 | 0;
+		x05 = rotl(x05 ^ x09, 7);
+		x02 = x02 + x06 | 0;
+		x14 = rotl(x14 ^ x02, 16);
+		x10 = x10 + x14 | 0;
+		x06 = rotl(x06 ^ x10, 12);
+		x02 = x02 + x06 | 0;
+		x14 = rotl(x14 ^ x02, 8);
+		x10 = x10 + x14 | 0;
+		x06 = rotl(x06 ^ x10, 7);
+		x03 = x03 + x07 | 0;
+		x15 = rotl(x15 ^ x03, 16);
+		x11 = x11 + x15 | 0;
+		x07 = rotl(x07 ^ x11, 12);
+		x03 = x03 + x07 | 0;
+		x15 = rotl(x15 ^ x03, 8);
+		x11 = x11 + x15 | 0;
+		x07 = rotl(x07 ^ x11, 7);
+		x00 = x00 + x05 | 0;
+		x15 = rotl(x15 ^ x00, 16);
+		x10 = x10 + x15 | 0;
+		x05 = rotl(x05 ^ x10, 12);
+		x00 = x00 + x05 | 0;
+		x15 = rotl(x15 ^ x00, 8);
+		x10 = x10 + x15 | 0;
+		x05 = rotl(x05 ^ x10, 7);
+		x01 = x01 + x06 | 0;
+		x12 = rotl(x12 ^ x01, 16);
+		x11 = x11 + x12 | 0;
+		x06 = rotl(x06 ^ x11, 12);
+		x01 = x01 + x06 | 0;
+		x12 = rotl(x12 ^ x01, 8);
+		x11 = x11 + x12 | 0;
+		x06 = rotl(x06 ^ x11, 7);
+		x02 = x02 + x07 | 0;
+		x13 = rotl(x13 ^ x02, 16);
+		x08 = x08 + x13 | 0;
+		x07 = rotl(x07 ^ x08, 12);
+		x02 = x02 + x07 | 0;
+		x13 = rotl(x13 ^ x02, 8);
+		x08 = x08 + x13 | 0;
+		x07 = rotl(x07 ^ x08, 7);
+		x03 = x03 + x04 | 0;
+		x14 = rotl(x14 ^ x03, 16);
+		x09 = x09 + x14 | 0;
+		x04 = rotl(x04 ^ x09, 12);
+		x03 = x03 + x04 | 0;
+		x14 = rotl(x14 ^ x03, 8);
+		x09 = x09 + x14 | 0;
+		x04 = rotl(x04 ^ x09, 7);
+	}
+	let oi = 0;
+	out[oi++] = x00;
+	out[oi++] = x01;
+	out[oi++] = x02;
+	out[oi++] = x03;
+	out[oi++] = x12;
+	out[oi++] = x13;
+	out[oi++] = x14;
+	out[oi++] = x15;
+	swap32IfBE(out);
+}
+/**
+* XChaCha eXtended-nonce ChaCha. With 24-byte nonce, it's safe to make it random (CSPRNG).
+* See {@link https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha | the IRTF draft}.
+* The nonce/counter layout still reserves 8 counter bytes internally, but the shared public
+* `counter` argument follows noble's strict non-wrapping 32-bit policy. See `src/_arx.ts`
+* near `MAX_COUNTER` for the full counter-policy rationale.
+* @param key - 32-byte key.
+* @param nonce - 24-byte extended nonce.
+* @param data - Input bytes to xor with the keystream.
+* @param output - Optional destination buffer.
+* @param counter - Initial block counter.
+* @returns Encrypted or decrypted bytes.
+* @example
+* Encrypts bytes with XChaCha20 using a fresh key and random 24-byte nonce.
+*
+* ```ts
+* import { xchacha20 } from '@noble/ciphers/chacha.js';
+* import { randomBytes } from '@noble/ciphers/utils.js';
+* const key = randomBytes(32);
+* const nonce = randomBytes(24);
+* xchacha20(key, nonce, new Uint8Array(4));
+* ```
+*/
+var xchacha20 = /* @__PURE__ */ createCipher(chachaCore, {
+	counterRight: false,
+	counterLength: 8,
+	extendNonceFn: hchacha,
+	allowShortKeys: false
+});
+var ZEROS16 = /* @__PURE__ */ new Uint8Array(16);
+var updatePadded = (h, msg) => {
+	h.update(msg);
+	const leftover = msg.length % 16;
+	if (leftover) h.update(ZEROS16.subarray(leftover));
+};
+var ZEROS32 = /* @__PURE__ */ new Uint8Array(32);
+function computeTag(fn, key, nonce, ciphertext, AAD) {
+	if (AAD !== void 0) abytes(AAD, void 0, "AAD");
+	const authKey = fn(key, nonce, ZEROS32);
+	const lengths = u64Lengths(ciphertext.length, AAD ? AAD.length : 0, true);
+	const h = poly1305.create(authKey);
+	if (AAD) updatePadded(h, AAD);
+	updatePadded(h, ciphertext);
+	h.update(lengths);
+	const res = h.digest();
+	clean(authKey, lengths);
+	return res;
+}
+/**
+* AEAD algorithm from RFC 8439.
+* Salsa20 and chacha (RFC 8439) use poly1305 differently.
+* We could have composed them, but it's hard because of authKey:
+* In salsa20, authKey changes position in salsa stream.
+* In chacha, authKey can't be computed inside computeTag, it modifies the counter.
+*/
+var _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
+	const tagLength = 16;
+	return {
+		encrypt(plaintext, output) {
+			const plength = plaintext.length;
+			output = getOutput(plength + tagLength, output, false);
+			output.set(plaintext);
+			const oPlain = output.subarray(0, -16);
+			xorStream(key, nonce, oPlain, oPlain, 1);
+			const tag = computeTag(xorStream, key, nonce, oPlain, AAD);
+			output.set(tag, plength);
+			clean(tag);
+			return output;
+		},
+		decrypt(ciphertext, output) {
+			output = getOutput(ciphertext.length - tagLength, output, false);
+			const data = ciphertext.subarray(0, -16);
+			const passedTag = ciphertext.subarray(-16);
+			const tag = computeTag(xorStream, key, nonce, data, AAD);
+			if (!equalBytes(passedTag, tag)) {
+				clean(tag);
+				throw new Error("invalid tag");
+			}
+			output.set(ciphertext.subarray(0, -16));
+			xorStream(key, nonce, output, output, 1);
+			clean(tag);
+			return output;
+		}
+	};
+};
+/**
+* XChaCha20-Poly1305 extended-nonce chacha.
+*
+* Can be safely used with random nonces (CSPRNG).
+* See {@link https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha | the IRTF draft}.
+* @param key - 32-byte key.
+* @param nonce - 24-byte nonce.
+* @param AAD - Additional authenticated data.
+* @returns AEAD cipher instance.
+* @example
+* Encrypts and authenticates plaintext with a fresh key and random 24-byte nonce.
+*
+* ```ts
+* import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
+* import { randomBytes } from '@noble/ciphers/utils.js';
+* const key = randomBytes(32);
+* const nonce = randomBytes(24);
+* const cipher = xchacha20poly1305(key, nonce);
+* cipher.encrypt(new Uint8Array([1, 2, 3]));
+* ```
+*/
+var xchacha20poly1305 = /* @__PURE__ */ wrapCipher({
+	blockSize: 64,
+	nonceLength: 24,
+	tagLength: 16
+}, /* @__PURE__ */ _poly1305_aead(xchacha20));
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/crypto/index.mjs
 var ENVELOPE_PREFIX = "$ba$";
 function parseEnvelope(data) {
 	if (!data.startsWith(ENVELOPE_PREFIX)) return null;
@@ -240,7 +4960,32 @@ var symmetricDecrypt = async ({ key, data }) => {
 	throw new Error("Cannot decrypt legacy bare-hex payload: no legacy secret available. Set BETTER_AUTH_SECRET for backwards compatibility.");
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/schema.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/context/store-capabilities.mjs
+function hasServerSessionStore(options) {
+	return !!options.database || !!options.secondaryStorage;
+}
+function hasServerAccountStore(options) {
+	return !!options.database;
+}
+function shouldBindAccountCookieToSessionUser(options) {
+	return hasServerAccountStore(options);
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/utils/db.mjs
+/**
+* Filters output data by removing fields with the `returned: false` attribute.
+* This ensures sensitive fields are not exposed in API responses.
+*/
+function filterOutputFields(data, additionalFields) {
+	if (!data || !additionalFields) return data;
+	const returnFiltered = Object.entries(additionalFields).filter(([, { returned }]) => returned === false).map(([key]) => key);
+	return Object.entries(structuredClone(data)).filter(([key]) => !returnFiltered.includes(key)).reduce((acc, [key, value]) => ({
+		...acc,
+		[key]: value
+	}), {});
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/schema.mjs
 var cache = /* @__PURE__ */ new WeakMap();
 function getFields(options, modelName, mode) {
 	const cacheKey = `${modelName}:${mode}`;
@@ -262,6 +5007,31 @@ function getFields(options, modelName, mode) {
 }
 function parseUserOutput(options, user) {
 	return filterOutputFields(user, getFields(options, "user", "output"));
+}
+/**
+* Builds a synthetic user object that matches the shape of a real user
+* returned from the database. This ensures enumeration protection works
+* correctly by making synthetic and real user responses indistinguishable.
+*
+* The function iterates over the user output schema and:
+* - Includes all fields that should be returned (returned !== false)
+* - Uses provided values when available
+* - Sets optional fields to null when no value is provided
+* - Applies default values where defined
+* - Always includes the 'id' field (not part of schema but always present)
+*/
+function buildSyntheticUserOutput(options, data) {
+	const schema = getFields(options, "user", "output");
+	const result = {};
+	for (const key in schema) {
+		const fieldAttr = schema[key];
+		if (fieldAttr.returned === false) continue;
+		if (key in data && data[key] !== void 0) result[key] = data[key];
+		else if (fieldAttr.defaultValue !== void 0) result[key] = typeof fieldAttr.defaultValue === "function" ? fieldAttr.defaultValue() : fieldAttr.defaultValue;
+		else if (!fieldAttr.required) result[key] = null;
+	}
+	if ("id" in data) result.id = data.id;
+	return result;
 }
 function parseSessionOutput(options, session) {
 	return filterOutputFields(session, getFields(options, "session", "output"));
@@ -327,6 +5097,18 @@ function parseUserInput(options, user = {}, action) {
 		action
 	});
 }
+function parseAdditionalUserInputFromProviderProfile(options, profile = {}, action) {
+	const schema = getFields(options, "user", "input");
+	const allowedProfileFields = Object.create(null);
+	for (const key of Object.keys(profile)) {
+		if (schema[key]?.input === false) continue;
+		allowedProfileFields[key] = profile[key];
+	}
+	return parseInputData(allowedProfileFields, {
+		fields: schema,
+		action
+	});
+}
 function parseSessionInput(options, session, action) {
 	return parseInputData(session, {
 		fields: getFields(options, "session", "input"),
@@ -353,17 +5135,17 @@ function mergeSchema(schema, newSchema) {
 	return schema;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/date.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/date.mjs
 var getDate = (span, unit = "ms") => {
 	return new Date(Date.now() + (unit === "sec" ? span * 1e3 : span));
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/is-promise.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/is-promise.mjs
 function isPromise(obj) {
 	return !!obj && (typeof obj === "object" || typeof obj === "function") && typeof obj.then === "function";
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/time.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/time.mjs
 var SEC = 1e3;
 var MIN = SEC * 60;
 var HOUR = MIN * 60;
@@ -444,8 +5226,9 @@ function sec(value) {
 	return Math.round(parse(value) / 1e3);
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/cookies/cookie-utils.mjs
-function tryDecode(str) {
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/cookies/cookie-utils.mjs
+function tryDecode$2(str) {
+	if (str.indexOf("%") === -1) return str;
 	try {
 		return decodeURIComponent(str);
 	} catch {
@@ -486,9 +5269,9 @@ function parseSetCookieHeader(setCookie) {
 	splitSetCookieHeader(setCookie).forEach((cookieString) => {
 		const [nameValue, ...attributes] = cookieString.split(";").map((part) => part.trim());
 		const [name, ...valueParts] = (nameValue || "").split("=");
-		const value = valueParts.join("=");
-		if (!name || value === void 0) return;
-		const attrObj = { value: value.includes("%") ? tryDecode(value) : value };
+		const value = unquoteCookieValue(valueParts.join("="));
+		if (!name) return;
+		const attrObj = { value: tryDecode$2(value) };
 		attributes.forEach((attribute) => {
 			const [attrName, ...attrValueParts] = attribute.split("=");
 			const attrValue = attrValueParts.join("=");
@@ -539,65 +5322,1238 @@ function toCookieOptions(attributes) {
 		partitioned: attributes.partitioned
 	};
 }
-//#endregion
-//#region ../../node_modules/better-auth/dist/cookies/session-store.mjs
-var ALLOWED_COOKIE_SIZE = 4096;
-var ESTIMATED_EMPTY_COOKIE_SIZE = 200;
-var CHUNK_SIZE = ALLOWED_COOKIE_SIZE - ESTIMATED_EMPTY_COOKIE_SIZE;
 /**
-* Parse cookies from the request headers
+* Cookie-name token char set per RFC 7230 §3.2.6.
+*
+* @see https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
 */
-function parseCookiesFromContext(ctx) {
-	const cookieHeader = ctx.headers?.get("cookie");
-	if (!cookieHeader) return {};
-	const cookies = {};
-	const pairs = cookieHeader.split("; ");
-	for (const pair of pairs) {
-		const [name, ...valueParts] = pair.split("=");
-		if (name && valueParts.length > 0) cookies[name] = valueParts.join("=");
+var cookieNameRegex = /^[\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E\x5F\x60\x61-\x7A\x7C\x7E]+$/;
+/**
+* Cookie-value char set per RFC 6265 §4.1.1, plus space and comma.
+*
+* @see https://datatracker.ietf.org/doc/html/rfc6265#section-4.1.1
+* @see https://github.com/golang/go/issues/7243
+*/
+var cookieValueRegex = /^[\x20\x21\x23-\x3A\x3C-\x5B\x5D-\x7E]*$/;
+/**
+* Strip surrounding double-quotes per RFC 6265 §4.1.1 quoted-string form.
+*
+* @see https://datatracker.ietf.org/doc/html/rfc6265#section-4.1.1
+*/
+function unquoteCookieValue(value) {
+	if (value.length < 2 || !value.startsWith("\"") || !value.endsWith("\"")) return value;
+	return value.slice(1, -1);
+}
+/**
+* Trim leading/trailing OWS (space / horizontal tab) per RFC 7230 §3.2.3.
+* Narrower than `String.prototype.trim()`, which strips CR/LF and other
+* whitespace and would let CTLs escape `cookieValueRegex`.
+*
+* @see https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.3
+*/
+function trimOWS(s) {
+	let start = 0;
+	let end = s.length;
+	while (start < end) {
+		const c = s.charCodeAt(start);
+		if (c !== 32 && c !== 9) break;
+		start++;
+	}
+	while (end > start) {
+		const c = s.charCodeAt(end - 1);
+		if (c !== 32 && c !== 9) break;
+		end--;
+	}
+	return start === 0 && end === s.length ? s : s.slice(start, end);
+}
+/**
+* Tolerates `;` separators without the SP that RFC 6265 §4.2.1 mandates,
+* since proxies and runtimes commonly strip it. Silently drops entries
+* whose name violates RFC 7230 token or whose value violates RFC 6265
+* cookie-octet (plus space and comma). Strips optional surrounding
+* double-quotes per RFC 6265 §4.1.1.
+*/
+function parseCookies$1(cookie) {
+	const cookieMap = /* @__PURE__ */ new Map();
+	if (cookie.length < 2) return cookieMap;
+	for (const chunk of cookie.split(";")) {
+		const eq = chunk.indexOf("=");
+		if (eq === -1) continue;
+		const key = trimOWS(chunk.slice(0, eq));
+		const val = unquoteCookieValue(trimOWS(chunk.slice(eq + 1)));
+		if (cookieNameRegex.test(key) && cookieValueRegex.test(val)) cookieMap.set(key, tryDecode$2(val));
+	}
+	return cookieMap;
+}
+/**
+* Add or replace a cookie in the request `Cookie` header.
+*
+* Cookie pairs are joined with `; `, but `headers.append("cookie", ...)`
+* joins with `, ` in some runtimes (e.g. Deno, Cloudflare Workers) and
+* breaks downstream cookie parsing. This builds the header value via
+* parse-mutate-serialize.
+*/
+function setRequestCookie(headers, name, value) {
+	const cookieMap = parseCookies$1(headers.get("cookie") || "");
+	if (cookieNameRegex.test(name)) cookieMap.set(name, value);
+	headers.set("cookie", Array.from(cookieMap, ([k, v]) => `${k}=${encodeURIComponent(v)}`).join("; "));
+}
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/utils.mjs
+var jsonContentTypeRegex = /^application\/([a-z0-9.+-]*\+)?json/i;
+async function getBody(request, allowedMediaTypes) {
+	const contentType = request.headers.get("content-type") || "";
+	const normalizedContentType = contentType.toLowerCase();
+	if (!request.body) return;
+	if (allowedMediaTypes && allowedMediaTypes.length > 0) {
+		if (!allowedMediaTypes.some((allowed) => {
+			const normalizedContentTypeBase = normalizedContentType.split(";")[0].trim();
+			const normalizedAllowed = allowed.toLowerCase().trim();
+			return normalizedContentTypeBase === normalizedAllowed || normalizedContentTypeBase.includes(normalizedAllowed);
+		})) {
+			if (!normalizedContentType) throw new APIError$1(415, {
+				message: `Content-Type is required. Allowed types: ${allowedMediaTypes.join(", ")}`,
+				code: "UNSUPPORTED_MEDIA_TYPE"
+			});
+			throw new APIError$1(415, {
+				message: `Content-Type "${contentType}" is not allowed. Allowed types: ${allowedMediaTypes.join(", ")}`,
+				code: "UNSUPPORTED_MEDIA_TYPE"
+			});
+		}
+	}
+	if (jsonContentTypeRegex.test(normalizedContentType)) try {
+		return await request.json();
+	} catch (e) {
+		if (e instanceof SyntaxError) throw new APIError$1(400, {
+			message: "Invalid JSON in request body",
+			code: "BAD_REQUEST"
+		});
+		throw e;
+	}
+	if (normalizedContentType.includes("application/x-www-form-urlencoded")) {
+		const formData = await request.formData();
+		const result = {};
+		formData.forEach((value, key) => {
+			result[key] = value.toString();
+		});
+		return result;
+	}
+	if (normalizedContentType.includes("multipart/form-data")) {
+		const formData = await request.formData();
+		const result = {};
+		formData.forEach((value, key) => {
+			result[key] = value;
+		});
+		return result;
+	}
+	if (normalizedContentType.includes("text/plain")) return await request.text();
+	if (normalizedContentType.includes("application/octet-stream")) return await request.arrayBuffer();
+	if (normalizedContentType.includes("application/pdf") || normalizedContentType.includes("image/") || normalizedContentType.includes("video/")) return await request.blob();
+	if (normalizedContentType.includes("application/stream") || request.body instanceof ReadableStream) return request.body;
+	return await request.text();
+}
+function isAPIError$1(error) {
+	return error instanceof APIError$1 || error?.name === "APIError";
+}
+function tryDecode$1(str) {
+	try {
+		return str.includes("%") ? decodeURIComponent(str) : str;
+	} catch {
+		return str;
+	}
+}
+async function tryCatch(promise) {
+	try {
+		return {
+			data: await promise,
+			error: null
+		};
+	} catch (error) {
+		return {
+			data: null,
+			error
+		};
+	}
+}
+/**
+* Check if an object is a `Request`
+* - `instanceof`: works for native Request instances
+* - `toString`: handles where instanceof check fails but the object is still a valid Request
+*/
+function isRequest(obj) {
+	return obj instanceof Request || Object.prototype.toString.call(obj) === "[object Request]";
+}
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/to-response.mjs
+function isJSONSerializable(value) {
+	if (value === void 0) return false;
+	const t = typeof value;
+	if (t === "string" || t === "number" || t === "boolean" || t === null) return true;
+	if (t !== "object") return false;
+	if (Array.isArray(value)) return true;
+	if (value.buffer) return false;
+	return value.constructor && value.constructor.name === "Object" || typeof value.toJSON === "function";
+}
+function safeStringify(obj) {
+	const parents = /* @__PURE__ */ new WeakMap();
+	const ids = /* @__PURE__ */ new WeakMap();
+	let id = 0;
+	const isAncestor = (value, holder) => {
+		let curr = holder;
+		while (curr) {
+			if (curr === value) return true;
+			curr = parents.get(curr);
+		}
+		return false;
+	};
+	return JSON.stringify(obj, function(_key, value) {
+		if (typeof value === "bigint") return value.toString();
+		if (typeof value === "object" && value !== null) {
+			if (isAncestor(value, this)) return `[Circular ref-${ids.get(value)}]`;
+			parents.set(value, this);
+			if (!ids.has(value)) ids.set(value, id++);
+		}
+		return value;
+	});
+}
+function isJSONResponse(value) {
+	if (!value || typeof value !== "object") return false;
+	return "_flag" in value && value._flag === "json";
+}
+/**
+* Headers that MUST be stripped when building an HTTP response from
+* arbitrary header input. These are request-only, hop-by-hop, or
+* transport-managed headers that cause protocol violations when present
+* on responses (e.g. Content-Length mismatch → net::ERR_CONTENT_LENGTH_MISMATCH).
+*
+* Sources:
+*   - RFC 9110 §10.1   (Request Context Fields)
+*   - RFC 9110 §7.6.1  (Connection / hop-by-hop)
+*   - RFC 9110 §11.6-7 (Authentication credentials)
+*   - RFC 9110 §12.5   (Content negotiation)
+*   - RFC 9110 §13.1   (Conditional request headers)
+*   - RFC 9110 §14.2   (Range requests)
+*   - RFC 6265 §5.4    (Cookie)
+*   - RFC 6454         (Origin)
+*/
+var REQUEST_ONLY_HEADERS = /* @__PURE__ */ new Set([
+	"host",
+	"user-agent",
+	"referer",
+	"from",
+	"expect",
+	"authorization",
+	"proxy-authorization",
+	"cookie",
+	"origin",
+	"accept-charset",
+	"accept-encoding",
+	"accept-language",
+	"if-match",
+	"if-none-match",
+	"if-modified-since",
+	"if-unmodified-since",
+	"if-range",
+	"range",
+	"max-forwards",
+	"connection",
+	"keep-alive",
+	"transfer-encoding",
+	"te",
+	"upgrade",
+	"trailer",
+	"proxy-connection",
+	"content-length"
+]);
+function stripRequestOnlyHeaders(headers) {
+	for (const name of REQUEST_ONLY_HEADERS) headers.delete(name);
+}
+/**
+* Copy headers from `source` into `target`. `Set-Cookie` is appended (one
+* header per cookie) because RFC 9110 §5.3 notes it cannot be combined
+* into a single comma-separated value; other headers are set (replace).
+*/
+function copyHeaders(target, source) {
+	if (!source) return;
+	for (const [key, value] of new Headers(source).entries()) if (key.toLowerCase() === "set-cookie") target.append(key, value);
+	else target.set(key, value);
+}
+function toResponse(data, init) {
+	if (data instanceof Response) {
+		if (init?.headers) {
+			const safeHeaders = new Headers(init.headers);
+			stripRequestOnlyHeaders(safeHeaders);
+			copyHeaders(data.headers, safeHeaders);
+		}
+		return data;
+	}
+	if (isJSONResponse(data)) {
+		const body = data.body;
+		const routerResponse = data.routerResponse;
+		if (routerResponse instanceof Response) return routerResponse;
+		const headers = new Headers();
+		copyHeaders(headers, routerResponse?.headers);
+		copyHeaders(headers, data.headers);
+		if (init?.headers) {
+			const safeHeaders = new Headers(init.headers);
+			stripRequestOnlyHeaders(safeHeaders);
+			copyHeaders(headers, safeHeaders);
+		}
+		headers.set("Content-Type", "application/json");
+		return new Response(JSON.stringify(body), {
+			...routerResponse,
+			headers,
+			status: data.status ?? init?.status ?? routerResponse?.status,
+			statusText: init?.statusText ?? routerResponse?.statusText
+		});
+	}
+	if (isAPIError$1(data)) return toResponse(data.body, {
+		status: init?.status ?? data.statusCode,
+		statusText: data.status.toString(),
+		headers: init?.headers || data.headers
+	});
+	let body = data;
+	const headers = new Headers(init?.headers);
+	stripRequestOnlyHeaders(headers);
+	if (!data) {
+		if (data === null) body = JSON.stringify(null);
+		headers.set("content-type", "application/json");
+	} else if (typeof data === "string") {
+		body = data;
+		headers.set("Content-Type", "text/plain");
+	} else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+		body = data;
+		headers.set("Content-Type", "application/octet-stream");
+	} else if (data instanceof Blob) {
+		body = data;
+		headers.set("Content-Type", data.type || "application/octet-stream");
+	} else if (data instanceof FormData) body = data;
+	else if (data instanceof URLSearchParams) {
+		body = data;
+		headers.set("Content-Type", "application/x-www-form-urlencoded");
+	} else if (data instanceof ReadableStream) {
+		body = data;
+		headers.set("Content-Type", "application/octet-stream");
+	} else if (isJSONSerializable(data)) {
+		body = safeStringify(data);
+		headers.set("Content-Type", "application/json");
+	}
+	return new Response(body, {
+		...init,
+		headers
+	});
+}
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/crypto.mjs
+var algorithm = {
+	name: "HMAC",
+	hash: "SHA-256"
+};
+var getCryptoKey = async (secret) => {
+	const secretBuf = typeof secret === "string" ? new TextEncoder().encode(secret) : secret;
+	return await getWebcryptoSubtle().importKey("raw", secretBuf, algorithm, false, ["sign", "verify"]);
+};
+var verifySignature = async (base64Signature, value, secret) => {
+	try {
+		const signatureBinStr = atob(base64Signature);
+		const signature = new Uint8Array(signatureBinStr.length);
+		for (let i = 0, len = signatureBinStr.length; i < len; i++) signature[i] = signatureBinStr.charCodeAt(i);
+		return await getWebcryptoSubtle().verify(algorithm, secret, signature, new TextEncoder().encode(value));
+	} catch (e) {
+		return false;
+	}
+};
+var makeSignature = async (value, secret) => {
+	const key = await getCryptoKey(secret);
+	const signature = await getWebcryptoSubtle().sign(algorithm.name, key, new TextEncoder().encode(value));
+	return btoa(String.fromCharCode(...new Uint8Array(signature)));
+};
+var signCookieValue = async (value, secret) => {
+	const signature = await makeSignature(value, secret);
+	value = `${value}.${signature}`;
+	value = encodeURIComponent(value);
+	return value;
+};
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/cookies.mjs
+var getCookieKey = (key, prefix) => {
+	let finalKey = key;
+	if (prefix) if (prefix === "secure") finalKey = "__Secure-" + key;
+	else if (prefix === "host") finalKey = "__Host-" + key;
+	else return;
+	return finalKey;
+};
+/**
+* Parse an HTTP Cookie header string and returning an object of all cookie
+* name-value pairs.
+*
+* Inspired by https://github.com/unjs/cookie-es/blob/main/src/cookie/parse.ts
+*
+* @param str the string representing a `Cookie` header value
+*/
+function parseCookies(str) {
+	if (typeof str !== "string") throw new TypeError("argument str must be a string");
+	const cookies = /* @__PURE__ */ new Map();
+	let index = 0;
+	while (index < str.length) {
+		const eqIdx = str.indexOf("=", index);
+		if (eqIdx === -1) break;
+		let endIdx = str.indexOf(";", index);
+		if (endIdx === -1) endIdx = str.length;
+		else if (endIdx < eqIdx) {
+			index = str.lastIndexOf(";", eqIdx - 1) + 1;
+			continue;
+		}
+		const key = str.slice(index, eqIdx).trim();
+		if (!cookies.has(key)) {
+			let val = str.slice(eqIdx + 1, endIdx).trim();
+			if (val.codePointAt(0) === 34) val = val.slice(1, -1);
+			cookies.set(key, tryDecode$1(val));
+		}
+		index = endIdx + 1;
 	}
 	return cookies;
 }
+var _serialize = (key, value, opt = {}) => {
+	let cookie;
+	if (opt?.prefix === "secure") cookie = `${`__Secure-${key}`}=${value}`;
+	else if (opt?.prefix === "host") cookie = `${`__Host-${key}`}=${value}`;
+	else cookie = `${key}=${value}`;
+	if (key.startsWith("__Secure-") && !opt.secure) opt.secure = true;
+	if (key.startsWith("__Host-")) {
+		if (!opt.secure) opt.secure = true;
+		if (opt.path !== "/") opt.path = "/";
+		if (opt.domain) opt.domain = void 0;
+	}
+	if (opt && typeof opt.maxAge === "number" && opt.maxAge >= 0) {
+		if (opt.maxAge > 3456e4) throw new Error("Cookies Max-Age SHOULD NOT be greater than 400 days (34560000 seconds) in duration.");
+		cookie += `; Max-Age=${Math.floor(opt.maxAge)}`;
+	}
+	if (opt.domain && opt.prefix !== "host") cookie += `; Domain=${opt.domain}`;
+	if (opt.path) cookie += `; Path=${opt.path}`;
+	if (opt.expires) {
+		if (opt.expires.getTime() - Date.now() > 3456e7) throw new Error("Cookies Expires SHOULD NOT be greater than 400 days (34560000 seconds) in the future.");
+		cookie += `; Expires=${opt.expires.toUTCString()}`;
+	}
+	if (opt.httpOnly) cookie += "; HttpOnly";
+	if (opt.secure) cookie += "; Secure";
+	if (opt.sameSite) cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
+	if (opt.partitioned) {
+		if (!opt.secure) opt.secure = true;
+		cookie += "; Partitioned";
+	}
+	return cookie;
+};
+var serializeCookie = (key, value, opt) => {
+	value = encodeURIComponent(value);
+	return _serialize(key, value, opt);
+};
+var serializeSignedCookie = async (key, value, secret, opt) => {
+	value = await signCookieValue(value, secret);
+	return _serialize(key, value, opt);
+};
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/validator.mjs
 /**
-* Extract the chunk index from a cookie name
+* Runs validation on body and query
+* @returns error and data object
 */
-function getChunkIndex(cookieName) {
-	const parts = cookieName.split(".");
-	const lastPart = parts[parts.length - 1];
-	const index = parseInt(lastPart || "0", 10);
-	return isNaN(index) ? 0 : index;
+async function runValidation(options, context = {}) {
+	let request = {
+		body: context.body,
+		query: context.query
+	};
+	if (options.body) {
+		const result = await options.body["~standard"].validate(context.body);
+		if (result.issues) return {
+			data: null,
+			error: fromError(result.issues, "body")
+		};
+		request.body = result.value;
+	}
+	if (options.query) {
+		const result = await options.query["~standard"].validate(context.query);
+		if (result.issues) return {
+			data: null,
+			error: fromError(result.issues, "query")
+		};
+		request.query = result.value;
+	}
+	if (options.requireHeaders && !context.headers) return {
+		data: null,
+		error: {
+			message: "Headers is required",
+			issues: []
+		}
+	};
+	if (options.requireRequest && !context.request) return {
+		data: null,
+		error: {
+			message: "Request is required",
+			issues: []
+		}
+	};
+	return {
+		data: request,
+		error: null
+	};
+}
+function fromError(error, validating) {
+	return {
+		message: error.map((e) => {
+			return `[${e.path?.length ? `${validating}.` + e.path.map((x) => typeof x === "object" ? x.key : x).join(".") : validating}] ${e.message}`;
+		}).join("; "),
+		issues: error
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/context.mjs
+var createInternalContext = async (context, { options, path }) => {
+	const headers = new Headers();
+	let responseStatus = void 0;
+	const { data, error } = await runValidation(options, context);
+	if (error) throw new ValidationError(error.message, error.issues);
+	const requestHeaders = "headers" in context ? context.headers instanceof Headers ? context.headers : new Headers(context.headers) : "request" in context && isRequest(context.request) ? context.request.headers : null;
+	const requestCookies = requestHeaders?.get("cookie");
+	const parsedCookies = requestCookies ? parseCookies(requestCookies) : void 0;
+	const internalContext = {
+		...context,
+		body: data.body,
+		query: data.query,
+		path: context.path || path || "virtual:",
+		context: "context" in context && context.context ? context.context : {},
+		returned: void 0,
+		headers: context?.headers,
+		request: context?.request,
+		params: "params" in context ? context.params : void 0,
+		method: context.method ?? (Array.isArray(options.method) ? options.method[0] : options.method === "*" ? "GET" : options.method),
+		setHeader: (key, value) => {
+			headers.set(key, value);
+		},
+		getHeader: (key) => {
+			if (!requestHeaders) return null;
+			return requestHeaders.get(key);
+		},
+		getCookie: (key, prefix) => {
+			const finalKey = getCookieKey(key, prefix);
+			if (!finalKey) return null;
+			return parsedCookies?.get(finalKey) || null;
+		},
+		getSignedCookie: async (key, secret, prefix) => {
+			const finalKey = getCookieKey(key, prefix);
+			if (!finalKey) return null;
+			const value = parsedCookies?.get(finalKey);
+			if (!value) return null;
+			const signatureStartPos = value.lastIndexOf(".");
+			if (signatureStartPos < 1) return null;
+			const signedValue = value.substring(0, signatureStartPos);
+			const signature = value.substring(signatureStartPos + 1);
+			if (signature.length !== 44 || !signature.endsWith("=")) return null;
+			return await verifySignature(signature, signedValue, await getCryptoKey(secret)) ? signedValue : false;
+		},
+		setCookie: (key, value, options) => {
+			const cookie = serializeCookie(key, value, options);
+			headers.append("set-cookie", cookie);
+			return cookie;
+		},
+		setSignedCookie: async (key, value, secret, options) => {
+			const cookie = await serializeSignedCookie(key, value, secret, options);
+			headers.append("set-cookie", cookie);
+			return cookie;
+		},
+		redirect: (url) => {
+			headers.set("location", url);
+			return new APIError$1("FOUND", void 0, headers);
+		},
+		error: (status, body, headers) => {
+			return new APIError$1(status, body, headers);
+		},
+		setStatus: (status) => {
+			responseStatus = status;
+		},
+		json: (json, routerResponse) => {
+			if (!context.asResponse) return json;
+			return {
+				body: routerResponse?.body || json,
+				routerResponse,
+				_flag: "json"
+			};
+		},
+		responseHeaders: headers,
+		get responseStatus() {
+			return responseStatus;
+		}
+	};
+	for (const middleware of options.use || []) {
+		const response = await middleware({
+			...internalContext,
+			returnHeaders: true,
+			asResponse: false
+		});
+		if (response.response) Object.assign(internalContext.context, response.response);
+		/**
+		* Apply headers from the middleware to the endpoint headers
+		*/
+		if (response.headers) response.headers.forEach((value, key) => {
+			internalContext.responseHeaders.set(key, value);
+		});
+	}
+	return internalContext;
+};
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/endpoint.mjs
+function createEndpoint(pathOrOptions, handlerOrOptions, handlerOrNever) {
+	const path = typeof pathOrOptions === "string" ? pathOrOptions : void 0;
+	const options = typeof handlerOrOptions === "object" ? handlerOrOptions : pathOrOptions;
+	const handler = typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrNever;
+	if ((options.method === "GET" || options.method === "HEAD") && options.body) throw new BetterCallError("Body is not allowed with GET or HEAD methods");
+	if (path && /\/{2,}/.test(path)) throw new BetterCallError("Path cannot contain consecutive slashes");
+	const internalHandler = async (...inputCtx) => {
+		const context = inputCtx[0] || {};
+		const { data: internalContext, error: validationError } = await tryCatch(createInternalContext(context, {
+			options,
+			path
+		}));
+		if (validationError) {
+			if (!(validationError instanceof ValidationError)) throw validationError;
+			if (options.onValidationError) await options.onValidationError({
+				message: validationError.message,
+				issues: validationError.issues
+			});
+			throw new APIError$1(400, {
+				message: validationError.message,
+				code: "VALIDATION_ERROR"
+			});
+		}
+		const response = await handler(internalContext).catch(async (e) => {
+			if (isAPIError$1(e)) {
+				const onAPIError = options.onAPIError;
+				if (onAPIError) await onAPIError(e);
+				if (context.asResponse) return e;
+			}
+			throw e;
+		});
+		const headers = internalContext.responseHeaders;
+		const status = internalContext.responseStatus;
+		return context.asResponse ? toResponse(response, {
+			headers,
+			status
+		}) : context.returnHeaders ? context.returnStatus ? {
+			headers,
+			response,
+			status
+		} : {
+			headers,
+			response
+		} : context.returnStatus ? {
+			response,
+			status
+		} : response;
+	};
+	internalHandler.options = options;
+	internalHandler.path = path;
+	return internalHandler;
+}
+createEndpoint.create = (opts) => {
+	return (path, options, handler) => {
+		return createEndpoint(path, {
+			...options,
+			use: [...options?.use || [], ...opts?.use || []]
+		}, handler);
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/middleware.mjs
+function createMiddleware(optionsOrHandler, handler) {
+	const internalHandler = async (inputCtx) => {
+		const context = inputCtx;
+		const _handler = typeof optionsOrHandler === "function" ? optionsOrHandler : handler;
+		const internalContext = await createInternalContext(context, {
+			options: typeof optionsOrHandler === "function" ? {} : optionsOrHandler,
+			path: "/"
+		});
+		if (!_handler) throw new Error("handler must be defined");
+		try {
+			const response = await _handler(internalContext);
+			const headers = internalContext.responseHeaders;
+			return context.returnHeaders ? {
+				headers,
+				response
+			} : response;
+		} catch (e) {
+			if (isAPIError$1(e)) Object.defineProperty(e, kAPIErrorHeaderSymbol, {
+				enumerable: false,
+				configurable: true,
+				get() {
+					return internalContext.responseHeaders;
+				}
+			});
+			throw e;
+		}
+	};
+	internalHandler.options = typeof optionsOrHandler === "function" ? {} : optionsOrHandler;
+	return internalHandler;
+}
+createMiddleware.create = (opts) => {
+	function fn(optionsOrHandler, handler) {
+		if (typeof optionsOrHandler === "function") return createMiddleware({ use: opts?.use }, optionsOrHandler);
+		if (!handler) throw new Error("Middleware handler is required");
+		return createMiddleware({
+			...optionsOrHandler,
+			method: "*",
+			use: [...opts?.use || [], ...optionsOrHandler.use || []]
+		}, handler);
+	}
+	return fn;
+};
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/openapi.mjs
+var paths = {};
+function getTypeFromZodType(zodType) {
+	switch (zodType.constructor.name) {
+		case "ZodString": return "string";
+		case "ZodNumber": return "number";
+		case "ZodBoolean": return "boolean";
+		case "ZodObject": return "object";
+		case "ZodArray": return "array";
+		default: return "string";
+	}
+}
+function getParameters(options) {
+	const parameters = [];
+	if (options.metadata?.openapi?.parameters) {
+		parameters.push(...options.metadata.openapi.parameters);
+		return parameters;
+	}
+	if (options.query instanceof ZodObject) Object.entries(options.query.shape).forEach(([key, value]) => {
+		if (value instanceof ZodObject) parameters.push({
+			name: key,
+			in: "query",
+			schema: {
+				type: getTypeFromZodType(value),
+				..."minLength" in value && value.minLength ? { minLength: value.minLength } : {},
+				description: value.description
+			}
+		});
+	});
+	return parameters;
+}
+function getRequestBody(options) {
+	if (options.metadata?.openapi?.requestBody) return options.metadata.openapi.requestBody;
+	if (!options.body) return void 0;
+	if (options.body instanceof ZodObject || options.body instanceof ZodOptional) {
+		const shape = options.body.shape;
+		if (!shape) return void 0;
+		const properties = {};
+		const required = [];
+		Object.entries(shape).forEach(([key, value]) => {
+			if (value instanceof ZodObject) {
+				properties[key] = {
+					type: getTypeFromZodType(value),
+					description: value.description
+				};
+				if (!(value instanceof ZodOptional)) required.push(key);
+			}
+		});
+		return {
+			required: options.body instanceof ZodOptional ? false : options.body ? true : false,
+			content: { "application/json": { schema: {
+				type: "object",
+				properties,
+				required
+			} } }
+		};
+	}
+}
+function getResponse(responses) {
+	return {
+		"400": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } },
+				required: ["message"]
+			} } },
+			description: "Bad Request. Usually due to missing parameters, or invalid parameters."
+		},
+		"401": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } },
+				required: ["message"]
+			} } },
+			description: "Unauthorized. Due to missing or invalid authentication."
+		},
+		"403": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } }
+			} } },
+			description: "Forbidden. You do not have permission to access this resource or to perform this action."
+		},
+		"404": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } }
+			} } },
+			description: "Not Found. The requested resource was not found."
+		},
+		"429": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } }
+			} } },
+			description: "Too Many Requests. You have exceeded the rate limit. Try again later."
+		},
+		"500": {
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: { message: { type: "string" } }
+			} } },
+			description: "Internal Server Error. This is a problem with the server that you cannot fix."
+		},
+		...responses
+	};
+}
+async function generator(endpoints, config) {
+	const components = { schemas: {} };
+	Object.entries(endpoints).forEach(([_, value]) => {
+		const options = value.options;
+		if (!value.path || options.metadata?.SERVER_ONLY) return;
+		if (options.method === "GET") paths[value.path] = { get: {
+			tags: ["Default", ...options.metadata?.openapi?.tags || []],
+			description: options.metadata?.openapi?.description,
+			operationId: options.metadata?.openapi?.operationId,
+			security: [{ bearerAuth: [] }],
+			parameters: getParameters(options),
+			responses: getResponse(options.metadata?.openapi?.responses)
+		} };
+		if (options.method === "POST") {
+			const body = getRequestBody(options);
+			paths[value.path] = { post: {
+				tags: ["Default", ...options.metadata?.openapi?.tags || []],
+				description: options.metadata?.openapi?.description,
+				operationId: options.metadata?.openapi?.operationId,
+				security: [{ bearerAuth: [] }],
+				parameters: getParameters(options),
+				...body ? { requestBody: body } : { requestBody: { content: { "application/json": { schema: {
+					type: "object",
+					properties: {}
+				} } } } },
+				responses: getResponse(options.metadata?.openapi?.responses)
+			} };
+		}
+	});
+	return {
+		openapi: "3.1.1",
+		info: {
+			title: "Better Auth",
+			description: "API Reference for your Better Auth Instance",
+			version: "1.1.0"
+		},
+		components,
+		security: [{ apiKeyCookie: [] }],
+		servers: [{ url: config?.url }],
+		tags: [{
+			name: "Default",
+			description: "Default endpoints that are included with Better Auth by default. These endpoints are not part of any plugin."
+		}],
+		paths
+	};
+}
+var getHTML = (apiReference, config) => `<!doctype html>
+<html>
+  <head>
+    <title>Scalar API Reference</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script
+      id="api-reference"
+      type="application/json">
+    ${JSON.stringify(apiReference)}
+    <\/script>
+	 <script>
+      var configuration = {
+	  	favicon: ${config?.logo ? `data:image/svg+xml;utf8,${encodeURIComponent(config.logo)}` : void 0} ,
+	   	theme: ${config?.theme || "saturn"},
+        metaData: {
+			title: ${config?.title || "Open API Reference"},
+			description: ${config?.description || "Better Call Open API"},
+		}
+      }
+      document.getElementById('api-reference').dataset.configuration =
+        JSON.stringify(configuration)
+    <\/script>
+	  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"><\/script>
+  </body>
+</html>`;
+//#endregion
+//#region ../../node_modules/.bun/rou3@0.7.12/node_modules/rou3/dist/index.mjs
+var NullProtoObj = /* @__PURE__ */ (() => {
+	const e = function() {};
+	return e.prototype = Object.create(null), Object.freeze(e.prototype), e;
+})();
+/**
+* Create a new router context.
+*/
+function createRouter() {
+	return {
+		root: { key: "" },
+		static: new NullProtoObj()
+	};
+}
+function splitPath(path) {
+	const [_, ...s] = path.split("/");
+	return s[s.length - 1] === "" ? s.slice(0, -1) : s;
+}
+function getMatchParams(segments, paramsMap) {
+	const params = new NullProtoObj();
+	for (const [index, name] of paramsMap) {
+		const segment = index < 0 ? segments.slice(-(index + 1)).join("/") : segments[index];
+		if (typeof name === "string") params[name] = segment;
+		else {
+			const match = segment.match(name);
+			if (match) for (const key in match.groups) params[key] = match.groups[key];
+		}
+	}
+	return params;
+}
+/**
+* Add a route to the router context.
+*/
+function addRoute(ctx, method = "", path, data) {
+	method = method.toUpperCase();
+	if (path.charCodeAt(0) !== 47) path = `/${path}`;
+	path = path.replace(/\\:/g, "%3A");
+	const segments = splitPath(path);
+	let node = ctx.root;
+	let _unnamedParamIndex = 0;
+	const paramsMap = [];
+	const paramsRegexp = [];
+	for (let i = 0; i < segments.length; i++) {
+		let segment = segments[i];
+		if (segment.startsWith("**")) {
+			if (!node.wildcard) node.wildcard = { key: "**" };
+			node = node.wildcard;
+			paramsMap.push([
+				-(i + 1),
+				segment.split(":")[1] || "_",
+				segment.length === 2
+			]);
+			break;
+		}
+		if (segment === "*" || segment.includes(":")) {
+			if (!node.param) node.param = { key: "*" };
+			node = node.param;
+			if (segment === "*") paramsMap.push([
+				i,
+				`_${_unnamedParamIndex++}`,
+				true
+			]);
+			else if (segment.includes(":", 1)) {
+				const regexp = getParamRegexp(segment);
+				paramsRegexp[i] = regexp;
+				node.hasRegexParam = true;
+				paramsMap.push([
+					i,
+					regexp,
+					false
+				]);
+			} else paramsMap.push([
+				i,
+				segment.slice(1),
+				false
+			]);
+			continue;
+		}
+		if (segment === "\\*") segment = segments[i] = "*";
+		else if (segment === "\\*\\*") segment = segments[i] = "**";
+		const child = node.static?.[segment];
+		if (child) node = child;
+		else {
+			const staticNode = { key: segment };
+			if (!node.static) node.static = new NullProtoObj();
+			node.static[segment] = staticNode;
+			node = staticNode;
+		}
+	}
+	const hasParams = paramsMap.length > 0;
+	if (!node.methods) node.methods = new NullProtoObj();
+	node.methods[method] ??= [];
+	node.methods[method].push({
+		data: data || null,
+		paramsRegexp,
+		paramsMap: hasParams ? paramsMap : void 0
+	});
+	if (!hasParams) ctx.static["/" + segments.join("/")] = node;
+}
+function getParamRegexp(segment) {
+	const regex = segment.replace(/:(\w+)/g, (_, id) => `(?<${id}>[^/]+)`).replace(/\./g, "\\.");
+	return /* @__PURE__ */ new RegExp(`^${regex}$`);
+}
+/**
+* Find a route by path.
+*/
+function findRoute(ctx, method = "", path, opts) {
+	if (path.charCodeAt(path.length - 1) === 47) path = path.slice(0, -1);
+	const staticNode = ctx.static[path];
+	if (staticNode && staticNode.methods) {
+		const staticMatch = staticNode.methods[method] || staticNode.methods[""];
+		if (staticMatch !== void 0) return staticMatch[0];
+	}
+	const segments = splitPath(path);
+	const match = _lookupTree(ctx, ctx.root, method, segments, 0)?.[0];
+	if (match === void 0) return;
+	if (opts?.params === false) return match;
+	return {
+		data: match.data,
+		params: match.paramsMap ? getMatchParams(segments, match.paramsMap) : void 0
+	};
+}
+function _lookupTree(ctx, node, method, segments, index) {
+	if (index === segments.length) {
+		if (node.methods) {
+			const match = node.methods[method] || node.methods[""];
+			if (match) return match;
+		}
+		if (node.param && node.param.methods) {
+			const match = node.param.methods[method] || node.param.methods[""];
+			if (match) {
+				const pMap = match[0].paramsMap;
+				if (pMap?.[pMap?.length - 1]?.[2]) return match;
+			}
+		}
+		if (node.wildcard && node.wildcard.methods) {
+			const match = node.wildcard.methods[method] || node.wildcard.methods[""];
+			if (match) {
+				const pMap = match[0].paramsMap;
+				if (pMap?.[pMap?.length - 1]?.[2]) return match;
+			}
+		}
+		return;
+	}
+	const segment = segments[index];
+	if (node.static) {
+		const staticChild = node.static[segment];
+		if (staticChild) {
+			const match = _lookupTree(ctx, staticChild, method, segments, index + 1);
+			if (match) return match;
+		}
+	}
+	if (node.param) {
+		const match = _lookupTree(ctx, node.param, method, segments, index + 1);
+		if (match) {
+			if (node.param.hasRegexParam) {
+				const exactMatch = match.find((m) => m.paramsRegexp[index]?.test(segment)) || match.find((m) => !m.paramsRegexp[index]);
+				return exactMatch ? [exactMatch] : void 0;
+			}
+			return match;
+		}
+	}
+	if (node.wildcard && node.wildcard.methods) return node.wildcard.methods[method] || node.wildcard.methods[""];
+}
+/**
+* Find all route patterns that match the given path.
+*/
+function findAllRoutes(ctx, method = "", path, opts) {
+	if (path.charCodeAt(path.length - 1) === 47) path = path.slice(0, -1);
+	const segments = splitPath(path);
+	const matches = _findAll(ctx, ctx.root, method, segments, 0);
+	if (opts?.params === false) return matches;
+	return matches.map((m) => {
+		return {
+			data: m.data,
+			params: m.paramsMap ? getMatchParams(segments, m.paramsMap) : void 0
+		};
+	});
+}
+function _findAll(ctx, node, method, segments, index, matches = []) {
+	const segment = segments[index];
+	if (node.wildcard && node.wildcard.methods) {
+		const match = node.wildcard.methods[method] || node.wildcard.methods[""];
+		if (match) matches.push(...match);
+	}
+	if (node.param) {
+		_findAll(ctx, node.param, method, segments, index + 1, matches);
+		if (index === segments.length && node.param.methods) {
+			const match = node.param.methods[method] || node.param.methods[""];
+			if (match) {
+				const pMap = match[0].paramsMap;
+				if (pMap?.[pMap?.length - 1]?.[2]) matches.push(...match);
+			}
+		}
+	}
+	const staticChild = node.static?.[segment];
+	if (staticChild) _findAll(ctx, staticChild, method, segments, index + 1, matches);
+	if (index === segments.length && node.methods) {
+		const match = node.methods[method] || node.methods[""];
+		if (match) matches.push(...match);
+	}
+	return matches;
+}
+//#endregion
+//#region ../../node_modules/.bun/better-call@1.3.7+68a1e3a0c4588df3/node_modules/better-call/dist/router.mjs
+var createRouter$1 = (endpoints, config) => {
+	if (!config?.openapi?.disabled) {
+		const openapi = {
+			path: "/api/reference",
+			...config?.openapi
+		};
+		endpoints["openapi"] = createEndpoint(openapi.path, { method: "GET" }, async (c) => {
+			const schema = await generator(endpoints);
+			return new Response(getHTML(schema, openapi.scalar), { headers: { "Content-Type": "text/html" } });
+		});
+	}
+	const router = createRouter();
+	const middlewareRouter = createRouter();
+	for (const endpoint of Object.values(endpoints)) {
+		if (!endpoint.options || !endpoint.path) continue;
+		if (endpoint.options?.metadata?.SERVER_ONLY) continue;
+		const methods = Array.isArray(endpoint.options?.method) ? endpoint.options.method : [endpoint.options?.method];
+		for (const method of methods) addRoute(router, method, endpoint.path, endpoint);
+	}
+	if (config?.routerMiddleware?.length) for (const { path, middleware } of config.routerMiddleware) addRoute(middlewareRouter, "*", path, middleware);
+	const basePath = config?.basePath && config.basePath !== "/" ? config.basePath.replace(/\/+$/, "") : "";
+	const processRequest = async (request) => {
+		const url = new URL(request.url);
+		const pathname = url.pathname;
+		let path;
+		if (basePath) {
+			if (!pathname.startsWith(`${basePath}/`)) return new Response(null, {
+				status: 404,
+				statusText: "Not Found"
+			});
+			path = pathname.slice(basePath.length);
+		} else path = pathname;
+		if (path.length === 0 || /\/{2,}/.test(path)) return new Response(null, {
+			status: 404,
+			statusText: "Not Found"
+		});
+		const route = findRoute(router, request.method, path);
+		if (path.endsWith("/") !== route?.data?.path?.endsWith("/") && !config?.skipTrailingSlashes) return new Response(null, {
+			status: 404,
+			statusText: "Not Found"
+		});
+		if (!route?.data) return new Response(null, {
+			status: 404,
+			statusText: "Not Found"
+		});
+		const query = {};
+		url.searchParams.forEach((value, key) => {
+			if (key in query) if (Array.isArray(query[key])) query[key].push(value);
+			else query[key] = [query[key], value];
+			else query[key] = value;
+		});
+		const handler = route.data;
+		try {
+			const allowedMediaTypes = handler.options.metadata?.allowedMediaTypes || config?.allowedMediaTypes;
+			const context = {
+				path,
+				method: request.method,
+				headers: request.headers,
+				params: route.params ? JSON.parse(JSON.stringify(route.params)) : {},
+				request,
+				body: handler.options.disableBody ? void 0 : await getBody(handler.options.cloneRequest ? request.clone() : request, allowedMediaTypes),
+				query,
+				_flag: "router",
+				asResponse: true,
+				context: config?.routerContext
+			};
+			const middlewareRoutes = findAllRoutes(middlewareRouter, "*", path);
+			if (middlewareRoutes?.length) for (const { data: middleware, params } of middlewareRoutes) {
+				const res = await middleware({
+					...context,
+					params,
+					asResponse: false
+				});
+				if (res instanceof Response) return res;
+			}
+			return await handler(context);
+		} catch (error) {
+			if (config?.onError) try {
+				const errorResponse = await config.onError(error, request);
+				if (errorResponse instanceof Response) return toResponse(errorResponse);
+			} catch (error) {
+				if (isAPIError$1(error)) return toResponse(error);
+				throw error;
+			}
+			if (config?.throwError) throw error;
+			if (isAPIError$1(error)) return toResponse(error);
+			console.error(`# SERVER_ERROR: `, error);
+			return new Response(null, {
+				status: 500,
+				statusText: "Internal Server Error"
+			});
+		}
+	};
+	return {
+		handler: async (request) => {
+			const onReq = await config?.onRequest?.(request);
+			if (onReq instanceof Response) return onReq;
+			const req = isRequest(onReq) ? onReq : request;
+			const res = await processRequest(req);
+			const onRes = await config?.onResponse?.(res, req);
+			if (onRes instanceof Response) return onRes;
+			return res;
+		},
+		endpoints
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/cookies/session-store.mjs
+/**
+* Per-cookie byte ceiling.
+* Safari's ~4093 floor is the lowest among browsers.
+* Kept a little under it for attributes added after sizing.
+*
+* @see https://datatracker.ietf.org/doc/html/rfc6265#section-6.1
+* @see https://github.com/dotnet/aspnetcore/blob/aa5493528640932601bb82ef3295e4d8ca7e11c5/src/Shared/ChunkingCookieManager/ChunkingCookieManager.cs#L40
+*/
+var MAX_COOKIE_SIZE = 4050;
+/**
+* Max chunks per cookie.
+* A larger value does not belong in a cookie.
+*/
+var MAX_COOKIE_CHUNKS = 100;
+/**
+* Largest value that keeps the serialized cookie within {@link MAX_COOKIE_SIZE},
+* measured with the real `serializeCookie` writer so it stays in sync with the
+* wire. Non-positive when the name and attributes alone overflow.
+*/
+function getMaxCookieValueSize(name, options) {
+	return MAX_COOKIE_SIZE - serializeCookie(name, "", { ...options }).length;
 }
 /**
 * Read all existing chunks from cookies
 */
 function readExistingChunks(cookieName, ctx) {
 	const chunks = {};
-	const cookies = parseCookiesFromContext(ctx);
-	for (const [name, value] of Object.entries(cookies)) if (name.startsWith(cookieName)) chunks[name] = value;
+	const cookies = parseCookies$1(ctx.headers?.get("cookie") || "");
+	for (const [name, value] of cookies) if (name.startsWith(cookieName)) chunks[name] = value;
 	return chunks;
-}
-/**
-* Get the full session data by joining all chunks
-*/
-function joinChunks(chunks) {
-	return Object.keys(chunks).sort((a, b) => {
-		return getChunkIndex(a) - getChunkIndex(b);
-	}).map((key) => chunks[key]).join("");
 }
 /**
 * Split a cookie value into chunks if needed
 */
 function chunkCookie(storeName, cookie, chunks, logger) {
-	const chunkCount = Math.ceil(cookie.value.length / CHUNK_SIZE);
-	if (chunkCount === 1) {
+	const chunkSize = getMaxCookieValueSize(`${cookie.name}.${MAX_COOKIE_CHUNKS - 1}`, cookie.attributes);
+	const chunkCount = chunkSize > 0 ? Math.ceil(cookie.value.length / chunkSize) : Infinity;
+	if (chunkCount <= 1) {
 		chunks[cookie.name] = cookie.value;
 		return [cookie];
+	}
+	if (chunkCount > MAX_COOKIE_CHUNKS) {
+		logger.warn(`${storeName} cookie is too large to store even after chunking, so the cache was skipped. Reduce the cached data or use a database session.`);
+		return [];
 	}
 	const cookies = [];
 	for (let i = 0; i < chunkCount; i++) {
 		const name = `${cookie.name}.${i}`;
-		const start = i * CHUNK_SIZE;
-		const value = cookie.value.substring(start, start + CHUNK_SIZE);
+		const start = i * chunkSize;
+		const value = cookie.value.substring(start, start + chunkSize);
 		cookies.push({
 			...cookie,
 			name,
@@ -606,11 +6562,10 @@ function chunkCookie(storeName, cookie, chunks, logger) {
 		chunks[name] = value;
 	}
 	logger.debug(`CHUNKING_${storeName.toUpperCase()}_COOKIE`, {
-		message: `${storeName} cookie exceeds allowed ${ALLOWED_COOKIE_SIZE} bytes.`,
-		emptyCookieSize: ESTIMATED_EMPTY_COOKIE_SIZE,
+		message: `${storeName} cookie exceeds the ${MAX_COOKIE_SIZE} byte limit and was split into ${chunkCount} chunks.`,
 		valueSize: cookie.value.length,
 		chunkCount,
-		chunks: cookies.map((c) => c.value.length + ESTIMATED_EMPTY_COOKIE_SIZE)
+		chunkSizes: cookies.map((c) => c.value.length)
 	});
 	return cookies;
 }
@@ -630,26 +6585,22 @@ function getCleanCookies(chunks, cookieOptions) {
 	return cleanedChunks;
 }
 /**
-* Create a session store for handling cookie chunking.
-* When session data exceeds 4KB, it automatically splits it into multiple cookies.
+* Store that splits a cookie into numbered chunks when its serialized form
+* would exceed the per-cookie byte limit, expiring stale chunks as needed.
 *
-* Based on next-auth's SessionStore implementation.
 * @see https://github.com/nextauthjs/next-auth/blob/27b2519b84b8eb9cf053775dea29d577d2aa0098/packages/next-auth/src/core/lib/cookie.ts
 */
 var storeFactory = (storeName) => (cookieName, cookieOptions, ctx) => {
 	const chunks = readExistingChunks(cookieName, ctx);
 	const logger = ctx.context.logger;
+	const expireExistingChunks = () => {
+		const expired = getCleanCookies(chunks, cookieOptions);
+		for (const name in chunks) delete chunks[name];
+		return expired;
+	};
 	return {
-		getValue() {
-			return joinChunks(chunks);
-		},
-		hasChunks() {
-			return Object.keys(chunks).length > 0;
-		},
 		chunk(value, options) {
-			const cleanedChunks = getCleanCookies(chunks, cookieOptions);
-			for (const name in chunks) delete chunks[name];
-			const cookies = cleanedChunks;
+			const cookies = expireExistingChunks();
 			const chunked = chunkCookie(storeName, {
 				name: cookieName,
 				value,
@@ -662,9 +6613,7 @@ var storeFactory = (storeName) => (cookieName, cookieOptions, ctx) => {
 			return Object.values(cookies);
 		},
 		clean() {
-			const cleanedChunks = getCleanCookies(chunks, cookieOptions);
-			for (const name in chunks) delete chunks[name];
-			return Object.values(cleanedChunks);
+			return Object.values(expireExistingChunks());
 		},
 		setCookies(cookies) {
 			for (const cookie of cookies) ctx.setCookie(cookie.name, cookie.value, cookie.attributes);
@@ -679,13 +6628,7 @@ function getChunkedCookie(ctx, cookieName) {
 	const chunks = [];
 	const cookieHeader = ctx.headers?.get("cookie");
 	if (!cookieHeader) return null;
-	const cookies = {};
-	const pairs = cookieHeader.split("; ");
-	for (const pair of pairs) {
-		const [name, ...valueParts] = pair.split("=");
-		if (name && valueParts.length > 0) cookies[name] = valueParts.join("=");
-	}
-	for (const [name, val] of Object.entries(cookies)) if (name.startsWith(cookieName + ".")) {
+	for (const [name, val] of parseCookies$1(cookieHeader)) if (name.startsWith(cookieName + ".")) {
 		const indexStr = name.split(".").at(-1);
 		const index = parseInt(indexStr || "0", 10);
 		if (!isNaN(index)) chunks.push({
@@ -706,18 +6649,8 @@ async function setAccountCookie(c, accountData) {
 		...accountDataCookie.attributes
 	};
 	const data = await symmetricEncodeJWT(accountData, c.context.secretConfig, "better-auth-account", options.maxAge);
-	if (data.length > ALLOWED_COOKIE_SIZE) {
-		const accountStore = createAccountStore(accountDataCookie.name, options, c);
-		const cookies = accountStore.chunk(data, options);
-		accountStore.setCookies(cookies);
-	} else {
-		const accountStore = createAccountStore(accountDataCookie.name, options, c);
-		if (accountStore.hasChunks()) {
-			const cleanCookies = accountStore.clean();
-			accountStore.setCookies(cleanCookies);
-		}
-		c.setCookie(accountDataCookie.name, data, options);
-	}
+	const accountStore = createAccountStore(accountDataCookie.name, options, c);
+	accountStore.setCookies(accountStore.chunk(data, options));
 }
 async function getAccountCookie(c) {
 	const accountCookie = getChunkedCookie(c, c.context.authCookies.accountData.name);
@@ -732,7 +6665,67 @@ var getSessionQuerySchema = z$1.optional(z$1.object({
 	disableRefresh: z$1.coerce.boolean().meta({ description: "Disable session refresh. Useful for checking session status, without updating the session" }).optional()
 }));
 //#endregion
-//#region ../../node_modules/better-auth/dist/cookies/index.mjs
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/binary.mjs
+var decoders = /* @__PURE__ */ new Map();
+var binary = {
+	decode: (data, encoding = "utf-8") => {
+		if (!decoders.has(encoding)) decoders.set(encoding, new TextDecoder(encoding));
+		return decoders.get(encoding).decode(data);
+	},
+	encode: new TextEncoder().encode
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/hex.mjs
+var hexadecimal = "0123456789abcdef";
+var hex = {
+	encode: (data) => {
+		if (typeof data === "string") data = new TextEncoder().encode(data);
+		if (data.byteLength === 0) return "";
+		const buffer = new Uint8Array(data);
+		let result = "";
+		for (const byte of buffer) result += byte.toString(16).padStart(2, "0");
+		return result;
+	},
+	decode: (data) => {
+		if (!data) return "";
+		if (typeof data === "string") {
+			if (data.length % 2 !== 0) throw new Error("Invalid hexadecimal string");
+			if (!new RegExp(`^[${hexadecimal}]+$`).test(data)) throw new Error("Invalid hexadecimal string");
+			const result = new Uint8Array(data.length / 2);
+			for (let i = 0; i < data.length; i += 2) result[i / 2] = parseInt(data.slice(i, i + 2), 16);
+			return new TextDecoder().decode(result);
+		}
+		return new TextDecoder().decode(data);
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/dist/hmac.mjs
+var createHMAC = (algorithm = "SHA-256", encoding = "none") => {
+	const hmac = {
+		importKey: async (key, keyUsage) => {
+			return getWebcryptoSubtle().importKey("raw", typeof key === "string" ? new TextEncoder().encode(key) : key, {
+				name: "HMAC",
+				hash: { name: algorithm }
+			}, false, [keyUsage]);
+		},
+		sign: async (hmacKey, data) => {
+			if (typeof hmacKey === "string") hmacKey = await hmac.importKey(hmacKey, "sign");
+			const signature = await getWebcryptoSubtle().sign("HMAC", hmacKey, typeof data === "string" ? new TextEncoder().encode(data) : data);
+			if (encoding === "hex") return hex.encode(signature);
+			if (encoding === "base64" || encoding === "base64url" || encoding === "base64urlnopad") return base64Url.encode(signature, { padding: encoding !== "base64urlnopad" });
+			return signature;
+		},
+		verify: async (hmacKey, data, signature) => {
+			if (typeof hmacKey === "string") hmacKey = await hmac.importKey(hmacKey, "verify");
+			if (encoding === "hex") signature = hex.decode(signature);
+			if (encoding === "base64" || encoding === "base64url" || encoding === "base64urlnopad") signature = await base64.decode(signature);
+			return getWebcryptoSubtle().verify("HMAC", hmacKey, typeof signature === "string" ? new TextEncoder().encode(signature) : signature, typeof data === "string" ? new TextEncoder().encode(data) : data);
+		}
+	};
+	return hmac;
+};
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/cookies/index.mjs
 function createCookieGetter(options) {
 	const baseURLString = typeof options.baseURL === "string" ? options.baseURL : void 0;
 	const dynamicProtocol = typeof options.baseURL === "object" && options.baseURL !== null ? options.baseURL.protocol : void 0;
@@ -821,21 +6814,16 @@ async function setCookieCache(ctx, session, dontRememberMe) {
 			expiresAt: expiresAtDate
 		}))
 	}), { padding: false });
-	if (data.length > 4093) {
-		const sessionStore = createSessionStore(ctx.context.authCookies.sessionData.name, options, ctx);
-		const cookies = sessionStore.chunk(data, options);
-		sessionStore.setCookies(cookies);
-	} else {
-		const sessionStore = createSessionStore(ctx.context.authCookies.sessionData.name, options, ctx);
-		if (sessionStore.hasChunks()) {
-			const cleanCookies = sessionStore.clean();
-			sessionStore.setCookies(cleanCookies);
-		}
-		ctx.setCookie(ctx.context.authCookies.sessionData.name, data, options);
-	}
-	if (ctx.context.options.account?.storeAccountCookie) {
+	const sessionStore = createSessionStore(ctx.context.authCookies.sessionData.name, options, ctx);
+	sessionStore.setCookies(sessionStore.chunk(data, options));
+	if (ctx.context.options.account?.storeAccountCookie && !hasPendingSetCookie(ctx, ctx.context.authCookies.accountData.name)) {
 		const accountData = await getAccountCookie(ctx);
-		if (accountData) await setAccountCookie(ctx, accountData);
+		if (accountData) if (!shouldBindAccountCookieToSessionUser(ctx.context.options) || accountData.userId === session.user.id) await setAccountCookie(ctx, accountData);
+		else {
+			expireCookie(ctx, ctx.context.authCookies.accountData);
+			const accountStore = createAccountStore(ctx.context.authCookies.accountData.name, ctx.context.authCookies.accountData.attributes, ctx);
+			accountStore.setCookies(accountStore.clean());
+		}
 	}
 }
 async function setSessionCookie(ctx, session, dontRememberMe, overrides) {
@@ -853,9 +6841,60 @@ async function setSessionCookie(ctx, session, dontRememberMe, overrides) {
 	ctx.context.setNewSession(session);
 }
 /**
+* Remove any prior `Set-Cookie` entries on the current response whose cookie
+* name matches `cookieName` or any chunked variant (`${cookieName}.0`, etc.).
+*
+* Prevents a valid cookie value from leaking on the wire when the same cookie
+* is set and then expired within a single request (e.g. `/sign-in/email`
+* writes credential session cookies and the 2FA after-hook expires them).
+* Browsers honor the expiring entry, but anything reading the raw response
+* headers — proxy/LB logs, server-side SDK consumers, observability tools —
+* sees the earlier valid value and could replay it (bypassing the 2FA gate
+* when the cookie cache is enabled).
+*
+* Scrubs both the local middleware scope's `responseHeaders` and the outer
+* endpoint scope's `ctx.context.responseHeaders`, because plugin after-hooks
+* run in a fresh local scope while accumulated response headers live on the
+* outer one. `scoped.context` is required by {@link GenericEndpointContext}
+* but unit-test mocks pass a minimal object via `as any`, so we use optional
+* chaining defensively. The `Set` collapses the case where both scopes
+* reference the same `Headers`.
+*/
+function removeSetCookieEntries(ctx, cookieName) {
+	const scoped = ctx;
+	const targets = /* @__PURE__ */ new Set();
+	if (scoped.responseHeaders) targets.add(scoped.responseHeaders);
+	if (scoped.context?.responseHeaders) targets.add(scoped.context.responseHeaders);
+	const exact = `${cookieName}=`;
+	const chunk = `${cookieName}.`;
+	for (const headers of targets) {
+		const existing = typeof headers.getSetCookie === "function" ? headers.getSetCookie() : splitSetCookieHeader(headers.get("set-cookie") || "");
+		if (!existing.length) continue;
+		const survivors = existing.filter((entry) => !entry.startsWith(exact) && !entry.startsWith(chunk));
+		if (survivors.length === existing.length) continue;
+		headers.delete("set-cookie");
+		for (const entry of survivors) headers.append("set-cookie", entry);
+	}
+}
+/**
+* Whether the response already has a pending `Set-Cookie` for `cookieName`
+* or a chunked variant.
+*/
+function hasPendingSetCookie(ctx, cookieName) {
+	const scoped = ctx;
+	const targets = /* @__PURE__ */ new Set();
+	if (scoped.responseHeaders) targets.add(scoped.responseHeaders);
+	if (scoped.context?.responseHeaders) targets.add(scoped.context.responseHeaders);
+	const exact = `${cookieName}=`;
+	const chunk = `${cookieName}.`;
+	for (const headers of targets) if ((typeof headers.getSetCookie === "function" ? headers.getSetCookie() : splitSetCookieHeader(headers.get("set-cookie") || "")).some((entry) => entry.startsWith(exact) || entry.startsWith(chunk))) return true;
+	return false;
+}
+/**
 * Expires a cookie by setting `maxAge: 0` while preserving its attributes
 */
 function expireCookie(ctx, cookie) {
+	removeSetCookieEntries(ctx, cookie.name);
 	ctx.setCookie(cookie.name, "", {
 		...cookie.attributes,
 		maxAge: 0
@@ -877,7 +6916,7 @@ function deleteSessionCookie(ctx, skipDontRememberMe) {
 	if (!skipDontRememberMe) expireCookie(ctx, ctx.context.authCookies.dontRememberToken);
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/state.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/state.mjs
 var stateDataSchema = z$1.looseObject({
 	callbackURL: z$1.string(),
 	codeVerifier: z$1.string(),
@@ -891,13 +6930,23 @@ var stateDataSchema = z$1.looseObject({
 	}).optional(),
 	requestSignUp: z$1.boolean().optional()
 });
+new Set(Object.keys(stateDataSchema.shape));
 var StateError = class extends BetterAuthError {
 	code;
 	details;
+	/**
+	* The per-flow `errorCallbackURL` recovered from the parsed state, when the
+	* failure happened after the state was successfully parsed (for example a
+	* nonce or state-cookie mismatch). It was origin-validated at sign-in, so
+	* the callback can safely redirect there instead of the default error page.
+	* Absent when the state could not be parsed at all.
+	*/
+	errorURL;
 	constructor(message, options) {
 		super(message, options);
 		this.code = options.code;
 		this.details = options.details;
+		this.errorURL = options.errorURL;
 	}
 };
 async function generateGenericState(c, stateData, settings) {
@@ -936,6 +6985,7 @@ async function generateGenericState(c, stateData, settings) {
 	};
 }
 async function parseGenericState(c, state, settings) {
+	if (!state) throw new StateError("State not found in OAuth callback", { code: "state_not_found" });
 	const storeStateStrategy = c.context.oauthConfig.storeStateStrategy;
 	let parsedData;
 	if (storeStateStrategy === "cookie") {
@@ -960,7 +7010,8 @@ async function parseGenericState(c, state, settings) {
 		}
 		if (!parsedData.oauthState || parsedData.oauthState !== state) throw new StateError("State mismatch: OAuth state parameter does not match stored state", {
 			code: "state_security_mismatch",
-			details: { state }
+			details: { state },
+			errorURL: parsedData.errorURL
 		});
 		expireCookie(c, stateCookie);
 	} else {
@@ -972,28 +7023,116 @@ async function parseGenericState(c, state, settings) {
 		parsedData = stateDataSchema.parse(JSON.parse(data.value));
 		if (parsedData.oauthState !== void 0 && parsedData.oauthState !== state) throw new StateError("State mismatch: OAuth state parameter does not match stored state", {
 			code: "state_security_mismatch",
-			details: { state }
+			details: { state },
+			errorURL: parsedData.errorURL
 		});
 		const stateCookie = c.context.createAuthCookie(settings?.cookieName ?? "state");
 		const stateCookieValue = await c.getSignedCookie(stateCookie.name, c.context.secret);
 		if (!(settings?.skipStateCookieCheck ?? c.context.oauthConfig.skipStateCookieCheck) && (!stateCookieValue || stateCookieValue !== state)) throw new StateError("State mismatch: State not persisted correctly", {
 			code: "state_security_mismatch",
-			details: { state }
+			details: { state },
+			errorURL: parsedData.errorURL
 		});
 		expireCookie(c, stateCookie);
 		await c.context.internalAdapter.deleteVerificationByIdentifier(state);
 	}
 	if (parsedData.expiresAt < Date.now()) throw new StateError("Invalid state: request expired", {
 		code: "state_mismatch",
-		details: { expiresAt: parsedData.expiresAt }
+		details: { expiresAt: parsedData.expiresAt },
+		errorURL: parsedData.errorURL
 	});
 	return parsedData;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/state/oauth.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/oauth2/errors.mjs
+var HANDLING_DOCS_URL = "https://www.better-auth.com/docs/concepts/oauth#handling-providers-without-email";
+/**
+* Redirect the user to the OAuth error page with a machine-readable `error`
+* code (and optional `error_description`).
+*
+* Every OAuth callback path routes its failures through this helper so the
+* query parameter name, the `?`/`&` separator, and URL encoding are decided in
+* one place. The error page reads the `error` query parameter, so callers must
+* never hand-build the redirect with a different parameter name.
+*/
+function redirectOnError(ctx, errorURL, error, description) {
+	const params = new URLSearchParams({ error });
+	if (description) params.set("error_description", description);
+	const sep = errorURL.includes("?") ? "&" : "?";
+	throw ctx.redirect(`${errorURL}${sep}${params.toString()}`);
+}
+/**
+* Build the logger message shown when an OAuth provider does not return an
+* email address. Kept in one place so every rejection site points users at
+* the same workaround docs.
+*/
+function missingEmailLogMessage(providerId, options) {
+	return `${options?.source === "generic" ? `Generic OAuth provider "${providerId}"` : `Provider "${providerId}"`} did not return an email${options?.source === "id_token" ? " in the id token" : ""}. Either request the provider's email scope, or synthesize one via \`mapProfileToUser\`. See ${HANDLING_DOCS_URL}`;
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/context/endpoint-context.mjs
+var ensureAsyncStorage$1 = async () => {
+	const betterAuthGlobal = __getBetterAuthGlobal();
+	if (!betterAuthGlobal.context.endpointContextAsyncStorage) {
+		const AsyncLocalStorage = await getAsyncLocalStorage();
+		betterAuthGlobal.context.endpointContextAsyncStorage = new AsyncLocalStorage();
+	}
+	return betterAuthGlobal.context.endpointContextAsyncStorage;
+};
+async function getCurrentAuthContext() {
+	const context = (await ensureAsyncStorage$1()).getStore();
+	if (!context) throw new Error("No auth context found. Please make sure you are calling this function within a `runWithEndpointContext` callback.");
+	return context;
+}
+async function runWithEndpointContext(context, fn) {
+	return (await ensureAsyncStorage$1()).run(context, fn);
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/context/request-state.mjs
+var ensureAsyncStorage = async () => {
+	const betterAuthGlobal = __getBetterAuthGlobal();
+	if (!betterAuthGlobal.context.requestStateAsyncStorage) {
+		const AsyncLocalStorage = await getAsyncLocalStorage();
+		betterAuthGlobal.context.requestStateAsyncStorage = new AsyncLocalStorage();
+	}
+	return betterAuthGlobal.context.requestStateAsyncStorage;
+};
+async function hasRequestState() {
+	return (await ensureAsyncStorage()).getStore() !== void 0;
+}
+async function getCurrentRequestState() {
+	const store = (await ensureAsyncStorage()).getStore();
+	if (!store) throw new Error("No request state found. Please make sure you are calling this function within a `runWithRequestState` callback.");
+	return store;
+}
+async function runWithRequestState(store, fn) {
+	return (await ensureAsyncStorage()).run(store, fn);
+}
+function defineRequestState(initFn) {
+	const ref = Object.freeze({});
+	return {
+		get ref() {
+			return ref;
+		},
+		async get() {
+			const store = await getCurrentRequestState();
+			if (!store.has(ref)) {
+				const initialValue = await initFn();
+				store.set(ref, initialValue);
+				return initialValue;
+			}
+			return store.get(ref);
+		},
+		async set(value) {
+			(await getCurrentRequestState()).set(ref, value);
+		}
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/state/oauth.mjs
 var { get: getOAuthState, set: setOAuthState } = defineRequestState(() => null);
 //#endregion
-//#region ../../node_modules/better-auth/dist/oauth2/state.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/oauth2/state.mjs
 async function generateState(c, link, additionalData) {
 	const callbackURL = c.body?.callbackURL || c.context.options.baseURL;
 	if (!callbackURL) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.CALLBACK_URL_REQUIRED);
@@ -1027,18 +7166,116 @@ async function parseState(c) {
 		parsedData = await parseGenericState(c, state);
 	} catch (error) {
 		c.context.logger.error("Failed to parse state", error);
-		if (error instanceof StateError && error.code === "state_security_mismatch") throw c.redirect(`${errorURL}?error=state_mismatch`);
-		throw c.redirect(`${errorURL}?error=please_restart_the_process`);
+		let code = "internal_server_error";
+		let redirectErrorURL = errorURL;
+		if (error instanceof StateError) {
+			code = error.code === "state_security_mismatch" ? "state_mismatch" : error.code;
+			redirectErrorURL = error.errorURL ?? errorURL;
+		}
+		redirectOnError(c, redirectErrorURL, code);
 	}
 	if (!parsedData.errorURL) parsedData.errorURL = errorURL;
 	if (parsedData) await setOAuthState(parsedData);
 	return parsedData;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/hide-metadata.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/hide-metadata.mjs
 var HIDE_METADATA = { scope: "server" };
 //#endregion
-//#region ../../node_modules/better-auth/dist/auth/trusted-origins.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/utils/is-api-error.mjs
+function isAPIError(error) {
+	return error instanceof APIError$1 || error instanceof APIError || error?.name === "APIError";
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/api/index.mjs
+/**
+* Better-call's createEndpoint re-throws APIError without exposing the headers
+* accumulated on ctx.responseHeaders (e.g. Set-Cookie from deleteSessionCookie
+* before throw). Attach them to the error via kAPIErrorHeaderSymbol — matching
+* better-call's createMiddleware contract so the outer pipeline can merge them
+* into the response.
+*/
+function attachResponseHeadersToAPIError(responseHeaders, e) {
+	if (!isAPIError(e) || !responseHeaders) return;
+	Object.defineProperty(e, kAPIErrorHeaderSymbol, {
+		enumerable: false,
+		configurable: true,
+		value: responseHeaders,
+		writable: false
+	});
+}
+var optionsMiddleware = createMiddleware(async () => {
+	/**
+	* This will be passed on the instance of
+	* the context. Used to infer the type
+	* here.
+	*/
+	return {};
+});
+var createAuthMiddleware = createMiddleware.create({ use: [optionsMiddleware, createMiddleware(async () => {
+	return {};
+})] });
+var use = [optionsMiddleware];
+function createAuthEndpoint(pathOrOptions, handlerOrOptions, handlerOrNever) {
+	const path = typeof pathOrOptions === "string" ? pathOrOptions : void 0;
+	const options = typeof handlerOrOptions === "object" ? handlerOrOptions : pathOrOptions;
+	const handler = typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrNever;
+	const wrapped = async (ctx) => {
+		const runtimeCtx = ctx;
+		try {
+			return await runWithEndpointContext(ctx, () => handler(ctx));
+		} catch (e) {
+			attachResponseHeadersToAPIError(runtimeCtx.responseHeaders, e);
+			throw e;
+		}
+	};
+	if (path) return createEndpoint(path, {
+		...options,
+		use: [...options?.use || [], ...use]
+	}, wrapped);
+	return createEndpoint({
+		...options,
+		use: [...options?.use || [], ...use]
+	}, wrapped);
+}
+/**
+* Set `metadata.SERVER_ONLY` while preserving any existing metadata
+* (`$Infer`, `openapi`, ...).
+*/
+function withServerOnly(options) {
+	return {
+		...options,
+		metadata: {
+			...options.metadata,
+			SERVER_ONLY: true
+		}
+	};
+}
+/**
+* Declare a **server-only** endpoint.
+*
+* The endpoint is callable through `auth.api.*` from trusted server code but is
+* never registered on the HTTP router and never emitted into the OpenAPI
+* schema. It takes no path because it has no URL to be reached at.
+*
+* Prefer this over the path-less `createAuthEndpoint({ ... }, handler)` form.
+* Setting `metadata.SERVER_ONLY` makes the intent explicit at the call site and
+* keeps the endpoint off the HTTP surface even if a path is later added by
+* mistake: better-call's router skips an endpoint when its path is missing *or*
+* when `SERVER_ONLY` is set, so the two together are defense in depth. Relying
+* on path omission alone is invisible and one keystroke away from exposure.
+*
+* @example
+* ```ts
+* viewBackupCodes: createAuthEndpoint.serverOnly(
+* 	{ method: "POST", body: schema },
+* 	async (ctx) => { ... },
+* )
+* ```
+*/
+createAuthEndpoint.serverOnly = (options, handler) => createAuthEndpoint(withServerOnly(options), handler);
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/auth/trusted-origins.mjs
 /**
 * Matches the given url against an origin or origin pattern
 * See "options.trustedOrigins" for details of supported patterns
@@ -1063,7 +7300,22 @@ var matchesOriginPattern = (url, pattern, settings) => {
 	return protocol === "http:" || protocol === "https:" || !protocol ? pattern === getOrigin(url) : url.startsWith(pattern);
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/middlewares/origin-check.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/utils/deprecate.mjs
+/**
+* Wraps a function to log a deprecation warning at once.
+*/
+function deprecate(fn, message, logger) {
+	let warned = false;
+	return function(...args) {
+		if (!warned) {
+			(logger?.warn ?? console.warn)(`[Deprecation] ${message}`);
+			warned = true;
+		}
+		return fn.apply(this, args);
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/middlewares/origin-check.mjs
 /**
 * Checks if CSRF should be skipped for backward compatibility.
 * Previously, disableOriginCheck also disabled CSRF checks.
@@ -1083,7 +7335,10 @@ function shouldSkipOriginCheck(ctx) {
 	if (Array.isArray(skipOriginCheck) && ctx.request) try {
 		const basePath = new URL(ctx.context.baseURL).pathname;
 		const currentPath = normalizePathname(ctx.request.url, basePath);
-		return skipOriginCheck.some((skipPath) => currentPath.startsWith(skipPath));
+		return skipOriginCheck.some((skipPath) => {
+			const normalizedSkipPath = skipPath.replace(/\/+$/, "");
+			return currentPath === normalizedSkipPath || currentPath.startsWith(`${normalizedSkipPath}/`);
+		});
 	} catch {}
 	return false;
 }
@@ -1107,6 +7362,7 @@ var originCheckMiddleware = createAuthMiddleware(async (ctx) => {
 	const newUserCallbackURL = body?.newUserCallbackURL;
 	const validateURL = (url, label) => {
 		if (!url) return;
+		if (typeof url !== "string") throw APIError.fromStatus("BAD_REQUEST", { message: `Invalid ${label}: expected a string` });
 		if (!ctx.context.isTrustedOrigin(url, { allowRelativePaths: label !== "origin" })) {
 			ctx.context.logger.error(`Invalid ${label}: ${url}`);
 			ctx.context.logger.info(`If it's a valid URL, please add ${url} to trustedOrigins in your auth config\n`, `Current list of trustedOrigins: ${ctx.context.trustedOrigins}`);
@@ -1201,31 +7457,294 @@ async function validateFormCsrf(ctx) {
 		}
 		return await validateOrigin(ctx, true);
 	}
+	if (headers.get("origin") || headers.get("referer")) return await validateOrigin(ctx, true);
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/get-request-ip.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/utils/ip.mjs
+/**
+* Checks if an IP is valid IPv4 or IPv6
+*/
+function isValidIP(ip) {
+	return z$1.ipv4().safeParse(ip).success || z$1.ipv6().safeParse(ip).success;
+}
+/**
+* Checks if an IP is IPv6
+*/
+function isIPv6(ip) {
+	return z$1.ipv6().safeParse(ip).success;
+}
+/**
+* Converts IPv4-mapped IPv6 address to IPv4
+* e.g., "::ffff:192.0.2.1" -> "192.0.2.1"
+*/
+function extractIPv4FromMapped(ipv6) {
+	const lower = ipv6.toLowerCase();
+	if (lower.startsWith("::ffff:")) {
+		const ipv4Part = lower.substring(7);
+		if (z$1.ipv4().safeParse(ipv4Part).success) return ipv4Part;
+	}
+	const parts = ipv6.split(":");
+	if (parts.length === 7 && parts[5]?.toLowerCase() === "ffff") {
+		const ipv4Part = parts[6];
+		if (ipv4Part && z$1.ipv4().safeParse(ipv4Part).success) return ipv4Part;
+	}
+	if (lower.includes("::ffff:") || lower.includes(":ffff:")) {
+		const groups = expandIPv6(ipv6);
+		if (groups.length === 8 && groups[0] === "0000" && groups[1] === "0000" && groups[2] === "0000" && groups[3] === "0000" && groups[4] === "0000" && groups[5] === "ffff" && groups[6] && groups[7]) return `${Number.parseInt(groups[6].substring(0, 2), 16)}.${Number.parseInt(groups[6].substring(2, 4), 16)}.${Number.parseInt(groups[7].substring(0, 2), 16)}.${Number.parseInt(groups[7].substring(2, 4), 16)}`;
+	}
+	return null;
+}
+/**
+* Expands a compressed IPv6 address to full form
+* e.g., "2001:db8::1" -> ["2001", "0db8", "0000", "0000", "0000", "0000", "0000", "0001"]
+*/
+function expandIPv6(ipv6) {
+	if (ipv6.includes("::")) {
+		const sides = ipv6.split("::");
+		const left = sides[0] ? sides[0].split(":") : [];
+		const right = sides[1] ? sides[1].split(":") : [];
+		const missingGroups = 8 - left.length - right.length;
+		const zeros = Array(missingGroups).fill("0000");
+		const paddedLeft = left.map((g) => g.padStart(4, "0"));
+		const paddedRight = right.map((g) => g.padStart(4, "0"));
+		return [
+			...paddedLeft,
+			...zeros,
+			...paddedRight
+		];
+	}
+	return ipv6.split(":").map((g) => g.padStart(4, "0"));
+}
+/**
+* Normalizes an IPv6 address to canonical form
+* e.g., "2001:DB8::1" -> "2001:0db8:0000:0000:0000:0000:0000:0001"
+*/
+function normalizeIPv6(ipv6, subnetPrefix) {
+	const groups = expandIPv6(ipv6);
+	if (subnetPrefix !== void 0 && subnetPrefix < 128) {
+		let bitsRemaining = Math.max(0, Math.floor(subnetPrefix));
+		return groups.map((group) => {
+			if (bitsRemaining <= 0) return "0000";
+			if (bitsRemaining >= 16) {
+				bitsRemaining -= 16;
+				return group;
+			}
+			const masked = Number.parseInt(group, 16) & (65535 << 16 - bitsRemaining & 65535);
+			bitsRemaining = 0;
+			return masked.toString(16).padStart(4, "0");
+		}).join(":").toLowerCase();
+	}
+	return groups.join(":").toLowerCase();
+}
+/**
+* Normalizes an IP address (IPv4 or IPv6) for consistent rate limiting.
+*
+* @param ip - The IP address to normalize
+* @param options - Normalization options
+* @returns Normalized IP address
+*
+* @example
+* normalizeIP("2001:DB8::1")
+* // -> "2001:0db8:0000:0000:0000:0000:0000:0000"
+*
+* @example
+* normalizeIP("::ffff:192.0.2.1")
+* // -> "192.0.2.1" (converted to IPv4)
+*
+* @example
+* normalizeIP("2001:db8::1", { ipv6Subnet: 64 })
+* // -> "2001:0db8:0000:0000:0000:0000:0000:0000" (subnet /64)
+*/
+function normalizeIP(ip, options = {}) {
+	if (z$1.ipv4().safeParse(ip).success) return ip.toLowerCase();
+	if (!isIPv6(ip)) return ip.toLowerCase();
+	const ipv4 = extractIPv4FromMapped(ip);
+	if (ipv4) return ipv4.toLowerCase();
+	return normalizeIPv6(ip, options.ipv6Subnet ?? 64);
+}
+/**
+* Raw bytes of an IP for CIDR comparison. Returns `null` for an invalid IP.
+*/
+function ipToBytes(ip) {
+	if (z$1.ipv4().safeParse(ip).success) return Uint8Array.from(ip.split(".").map((octet) => Number(octet)));
+	if (!isIPv6(ip)) return null;
+	const mapped = extractIPv4FromMapped(ip);
+	if (mapped) return Uint8Array.from(mapped.split(".").map((octet) => Number(octet)));
+	const groups = expandIPv6(ip);
+	const bytes = /* @__PURE__ */ new Uint8Array(16);
+	for (let i = 0; i < 8; i++) {
+		const group = Number.parseInt(groups[i] ?? "0", 16);
+		bytes[i * 2] = group >> 8 & 255;
+		bytes[i * 2 + 1] = group & 255;
+	}
+	return bytes;
+}
+var CIDR_PREFIX_PATTERN = /^\d+$/;
+/**
+* Parses an IP or `IP/prefix` string into network bytes and a prefix length.
+* The prefix must be digits only and within the address family. `null` if the
+* value is not a valid IP or CIDR range, which keeps a malformed entry from
+* silently behaving like a non-match.
+*/
+function parseCIDR(value) {
+	const slash = value.lastIndexOf("/");
+	const bytes = ipToBytes(slash === -1 ? value : value.slice(0, slash));
+	if (!bytes) return null;
+	const maxBits = bytes.length * 8;
+	if (slash === -1) return {
+		bytes,
+		prefix: maxBits
+	};
+	const prefixPart = value.slice(slash + 1);
+	if (!CIDR_PREFIX_PATTERN.test(prefixPart)) return null;
+	const prefix = Number(prefixPart);
+	return prefix <= maxBits ? {
+		bytes,
+		prefix
+	} : null;
+}
+/**
+* Whether `ipBytes` falls inside an already-parsed CIDR network.
+*/
+function matchesCIDR(ipBytes, net) {
+	if (ipBytes.length !== net.bytes.length) return false;
+	let bitsRemaining = net.prefix;
+	for (let i = 0; i < ipBytes.length && bitsRemaining > 0; i++) {
+		const take = bitsRemaining >= 8 ? 8 : bitsRemaining;
+		const mask = take === 8 ? 255 : 255 << 8 - take & 255;
+		if (((ipBytes[i] ?? 0) & mask) !== ((net.bytes[i] ?? 0) & mask)) return false;
+		bitsRemaining -= 8;
+	}
+	return true;
+}
+/**
+* Trusted-proxy entries that are not a valid IP address or CIDR range.
+*/
+function findInvalidTrustedProxies(entries) {
+	return entries.filter((entry) => parseCIDR(entry) === null);
+}
+/**
+* Resolves the client IP from a forwarded header. The leftmost token is spoofable,
+* so with `trustedProxies` the chain is stripped from the right to the first
+* untrusted hop. Otherwise only a single-value header is trusted. Returns `null`
+* when no trustworthy client IP can be resolved.
+*/
+function getIPFromHeader(value, options = {}) {
+	const forwardedIps = value.split(",").map((ip) => ip.trim()).filter(Boolean);
+	if (forwardedIps.length === 0) return null;
+	const trustedProxies = (options.trustedProxies ?? []).map(parseCIDR).filter((proxy) => {
+		return proxy !== null;
+	});
+	if (trustedProxies.length > 0) {
+		for (let i = forwardedIps.length - 1; i >= 0; i--) {
+			const ip = forwardedIps[i];
+			const ipBytes = ip ? ipToBytes(ip) : null;
+			if (!ip || !ipBytes) return null;
+			if (trustedProxies.some((proxy) => matchesCIDR(ipBytes, proxy))) continue;
+			return normalizeIP(ip, { ipv6Subnet: options.ipv6Subnet });
+		}
+		return null;
+	}
+	if (forwardedIps.length !== 1) return null;
+	const selectedIp = forwardedIps[0];
+	if (!selectedIp || !isValidIP(selectedIp)) return null;
+	return normalizeIP(selectedIp, { ipv6Subnet: options.ipv6Subnet });
+}
 var LOCALHOST_IP = "127.0.0.1";
+var DEFAULT_IP_HEADERS = ["x-forwarded-for"];
+/**
+* Resolves the client IP for a request from the configured IP headers.
+* Honors `disableIpTracking`, walks `ipAddressHeaders` in order (default
+* `x-forwarded-for`), and falls back to localhost in development and test.
+* Returns `null` when tracking is disabled or no trustworthy IP can be resolved.
+*/
 function getIp(req, options) {
 	if (options.advanced?.ipAddress?.disableIpTracking) return null;
 	const headers = "headers" in req ? req.headers : req;
-	const ipHeaders = options.advanced?.ipAddress?.ipAddressHeaders || ["x-forwarded-for"];
+	const ipHeaders = options.advanced?.ipAddress?.ipAddressHeaders || DEFAULT_IP_HEADERS;
 	for (const key of ipHeaders) {
 		const value = "get" in headers ? headers.get(key) : headers[key];
 		if (typeof value === "string") {
-			const ip = value.split(",")[0].trim();
-			if (isValidIP(ip)) return normalizeIP(ip, { ipv6Subnet: options.advanced?.ipAddress?.ipv6Subnet });
+			const ip = getIPFromHeader(value, {
+				ipv6Subnet: options.advanced?.ipAddress?.ipv6Subnet,
+				trustedProxies: options.advanced?.ipAddress?.trustedProxies
+			});
+			if (ip) return ip;
 		}
 	}
 	if (isTest() || isDevelopment()) return LOCALHOST_IP;
 	return null;
 }
+/**
+* Creates a rate limit key from IP and path
+* Uses a separator to prevent collision attacks
+*
+* @param ip - The IP address (should be normalized)
+* @param path - The request path
+* @returns Rate limit key
+*/
+function createRateLimitKey(ip, path) {
+	return `${ip}|${path}`;
+}
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/rate-limiter/index.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/rate-limiter/index.mjs
 var memory = /* @__PURE__ */ new Map();
-function shouldRateLimit(max, window, rateLimitData) {
+var MEMORY_STORE_MAX_ENTRIES = 1e5;
+function pruneMemoryStore() {
 	const now = Date.now();
-	const windowInMs = window * 1e3;
-	return now - rateLimitData.lastRequest < windowInMs && rateLimitData.count >= max;
+	for (const [key, entry] of memory) if (now >= entry.expiresAt) memory.delete(key);
+	if (memory.size <= MEMORY_STORE_MAX_ENTRIES) return;
+	const overflow = memory.size - MEMORY_STORE_MAX_ENTRIES;
+	let removed = 0;
+	for (const key of memory.keys()) {
+		memory.delete(key);
+		if (++removed >= overflow) break;
+	}
+}
+/**
+* Decide an atomic rate-limit step against an in-memory `RateLimit` snapshot
+* for the rolling `window` (seconds) and `max`. Shared by the memory backend
+* (read-decide-write is atomic under single-threaded JS) and as the fallback
+* for storages lacking an atomic primitive.
+*/
+function decideConsume(data, rule, now) {
+	const windowInMs = rule.window * 1e3;
+	if (!data) return {
+		next: {
+			key: "",
+			count: 1,
+			lastRequest: now
+		},
+		update: false,
+		allowed: true,
+		retryAfter: null
+	};
+	if (now - data.lastRequest > windowInMs) return {
+		next: {
+			...data,
+			count: 1,
+			lastRequest: now
+		},
+		update: true,
+		allowed: true,
+		retryAfter: null
+	};
+	if (data.count >= rule.max) return {
+		next: data,
+		update: true,
+		allowed: false,
+		retryAfter: getRetryAfter(data.lastRequest, rule.window)
+	};
+	return {
+		next: {
+			...data,
+			count: data.count + 1,
+			lastRequest: now
+		},
+		update: true,
+		allowed: true,
+		retryAfter: null
+	};
 }
 function rateLimitResponse(retryAfter) {
 	return new Response(JSON.stringify({ message: "Too many requests. Please try again later." }), {
@@ -1242,18 +7761,109 @@ function getRetryAfter(lastRequest, window) {
 function createDatabaseStorageWrapper(ctx) {
 	const model = "rateLimit";
 	const db = ctx.adapter;
-	return {
-		get: async (key) => {
-			const data = (await db.findMany({
+	const readRow = async (key) => {
+		const data = (await db.findMany({
+			model,
+			where: [{
+				field: "key",
+				value: key
+			}]
+		}))[0];
+		if (typeof data?.lastRequest === "bigint") data.lastRequest = Number(data.lastRequest);
+		return data;
+	};
+	const consume = async (key, rule) => {
+		const windowInMs = rule.window * 1e3;
+		const data = await readRow(key);
+		const now = Date.now();
+		if (!data) try {
+			await db.create({
+				model,
+				data: {
+					key,
+					count: 1,
+					lastRequest: now
+				}
+			});
+			return {
+				allowed: true,
+				retryAfter: null
+			};
+		} catch (error) {
+			if (!await readRow(key)) throw error;
+			return consume(key, rule);
+		}
+		if (now - data.lastRequest > windowInMs) {
+			if (await db.incrementOne({
 				model,
 				where: [{
 					field: "key",
 					value: key
-				}]
-			}))[0];
-			if (typeof data?.lastRequest === "bigint") data.lastRequest = Number(data.lastRequest);
-			return data;
-		},
+				}, {
+					field: "lastRequest",
+					operator: "lte",
+					value: data.lastRequest
+				}],
+				increment: {},
+				set: {
+					count: 1,
+					lastRequest: now
+				}
+			})) {
+				deleteExpiredRows(now);
+				return {
+					allowed: true,
+					retryAfter: null
+				};
+			}
+			return consume(key, rule);
+		}
+		const windowStart = now - windowInMs;
+		if (await db.incrementOne({
+			model,
+			where: [
+				{
+					field: "key",
+					value: key
+				},
+				{
+					field: "lastRequest",
+					operator: "gt",
+					value: windowStart
+				},
+				{
+					field: "count",
+					operator: "lt",
+					value: rule.max
+				}
+			],
+			increment: { count: 1 },
+			set: { lastRequest: now }
+		})) return {
+			allowed: true,
+			retryAfter: null
+		};
+		const fresh = await readRow(key);
+		if (!fresh) return consume(key, rule);
+		if (now - fresh.lastRequest > windowInMs) return consume(key, rule);
+		return {
+			allowed: false,
+			retryAfter: getRetryAfter(fresh.lastRequest, rule.window)
+		};
+	};
+	const deleteExpiredRows = (now) => {
+		const cutoff = now - Math.max(ctx.rateLimit.window, ...getDefaultSpecialRules().map((r) => r.window)) * 1e3;
+		ctx.runInBackground(db.deleteMany({
+			model,
+			where: [{
+				field: "lastRequest",
+				operator: "lt",
+				value: cutoff
+			}]
+		}).then(() => void 0).catch((e) => ctx.logger.error("Error pruning rate limit rows", e)));
+	};
+	return {
+		get: readRow,
 		set: async (key, value, _update) => {
 			try {
 				if (_update) await db.updateMany({
@@ -1278,58 +7888,88 @@ function createDatabaseStorageWrapper(ctx) {
 			} catch (e) {
 				ctx.logger.error("Error setting rate limit", e);
 			}
-		}
+		},
+		consume
 	};
 }
 function getRateLimitStorage(ctx, rateLimitSettings) {
 	if (ctx.options.rateLimit?.customStorage) return ctx.options.rateLimit.customStorage;
 	const storage = ctx.rateLimit.storage;
-	if (storage === "secondary-storage") return {
-		get: async (key) => {
-			const data = await ctx.options.secondaryStorage?.get(key);
-			return data ? safeJSONParse(data) : null;
-		},
-		set: async (key, value, _update) => {
-			const ttl = rateLimitSettings?.window ?? ctx.options.rateLimit?.window ?? 10;
-			await ctx.options.secondaryStorage?.set?.(key, JSON.stringify(value), ttl);
-		}
-	};
-	else if (storage === "memory") return {
-		async get(key) {
-			const entry = memory.get(key);
-			if (!entry) return null;
-			if (Date.now() >= entry.expiresAt) {
-				memory.delete(key);
-				return null;
+	if (storage === "secondary-storage") {
+		const ttlFor = (window) => window ?? ctx.options.rateLimit?.window ?? 10;
+		return {
+			get: async (key) => {
+				const data = await ctx.options.secondaryStorage?.get(key);
+				return data ? safeJSONParse(data) : null;
+			},
+			set: async (key, value, _update) => {
+				await ctx.options.secondaryStorage?.set?.(key, JSON.stringify(value), ttlFor(rateLimitSettings.window));
+			},
+			consume: ctx.options.secondaryStorage?.increment ? async (key, rule) => {
+				if (await ctx.options.secondaryStorage.increment(key, ttlFor(rule.window)) <= rule.max) return {
+					allowed: true,
+					retryAfter: null
+				};
+				return {
+					allowed: false,
+					retryAfter: rule.window
+				};
+			} : void 0
+		};
+	} else if (storage === "memory") {
+		const ttlFor = (window) => window ?? ctx.options.rateLimit?.window ?? 10;
+		return {
+			async get(key) {
+				const entry = memory.get(key);
+				if (!entry) return null;
+				if (Date.now() >= entry.expiresAt) {
+					memory.delete(key);
+					return null;
+				}
+				return entry.data;
+			},
+			async set(key, value, _update) {
+				const expiresAt = Date.now() + ttlFor(rateLimitSettings.window) * 1e3;
+				memory.set(key, {
+					data: value,
+					expiresAt
+				});
+			},
+			async consume(key, rule) {
+				pruneMemoryStore();
+				const now = Date.now();
+				const entry = memory.get(key);
+				const decision = decideConsume(entry && now < entry.expiresAt ? entry.data : void 0, rule, now);
+				if (decision.allowed) memory.set(key, {
+					data: {
+						...decision.next,
+						key
+					},
+					expiresAt: now + ttlFor(rule.window) * 1e3
+				});
+				return {
+					allowed: decision.allowed,
+					retryAfter: decision.retryAfter
+				};
 			}
-			return entry.data;
-		},
-		async set(key, value, _update) {
-			const ttl = rateLimitSettings?.window ?? ctx.options.rateLimit?.window ?? 10;
-			const expiresAt = Date.now() + ttl * 1e3;
-			memory.set(key, {
-				data: value,
-				expiresAt
-			});
-		}
-	};
+		};
+	}
 	return createDatabaseStorageWrapper(ctx);
 }
 var ipWarningLogged = false;
+var NO_TRUSTED_IP_KEY = "no-trusted-ip";
 async function resolveRateLimitConfig(req, ctx) {
 	const basePath = new URL(ctx.baseURL).pathname;
 	const path = normalizePathname(req.url, basePath);
 	let currentWindow = ctx.rateLimit.window;
 	let currentMax = ctx.rateLimit.max;
 	const ip = getIp(req, ctx.options);
-	if (!ip) {
-		if (!ipWarningLogged) {
-			ctx.logger.warn("Rate limiting skipped: could not determine client IP address. Ensure your runtime forwards a trusted client IP header and configure `advanced.ipAddress.ipAddressHeaders` if needed.");
-			ipWarningLogged = true;
-		}
-		return null;
+	if (!ip && ctx.options.advanced?.ipAddress?.disableIpTracking) return null;
+	if (!ip && !ipWarningLogged) {
+		ctx.logger.warn("Rate limiting could not determine a client IP and is falling back to a single shared per-path bucket. Ensure your runtime forwards a trusted client IP header, then set `advanced.ipAddress.ipAddressHeaders` or `advanced.ipAddress.trustedProxies` so the address can be resolved.");
+		ipWarningLogged = true;
 	}
-	const key = createRateLimitKey(ip, path);
+	const key = createRateLimitKey(ip ?? NO_TRUSTED_IP_KEY, path);
 	const specialRule = getDefaultSpecialRules().find((rule) => rule.pathMatcher(path));
 	if (specialRule) {
 		currentWindow = specialRule.window;
@@ -1367,37 +8007,50 @@ async function resolveRateLimitConfig(req, ctx) {
 		currentMax
 	};
 }
+var legacyFallbackWarningLogged = false;
+/**
+* Decides the rate limit for the request in a single atomic step. The whole
+* check-and-increment happens here in the request phase; there is no separate
+* response-phase write-back, so concurrent requests cannot all pass a stale
+* read before any increment lands.
+*/
 async function onRequestRateLimit(req, ctx) {
 	if (!ctx.rateLimit.enabled) return;
 	const config = await resolveRateLimitConfig(req, ctx);
 	if (!config) return;
 	const { key, currentWindow, currentMax } = config;
-	const data = await getRateLimitStorage(ctx, { window: currentWindow }).get(key);
-	if (data && shouldRateLimit(currentMax, currentWindow, data)) return rateLimitResponse(getRetryAfter(data.lastRequest, currentWindow));
-}
-async function onResponseRateLimit(req, ctx) {
-	if (!ctx.rateLimit.enabled) return;
-	const config = await resolveRateLimitConfig(req, ctx);
-	if (!config) return;
-	const { key, currentWindow } = config;
 	const storage = getRateLimitStorage(ctx, { window: currentWindow });
-	const data = await storage.get(key);
-	const now = Date.now();
-	if (!data) await storage.set(key, {
-		key,
-		count: 1,
-		lastRequest: now
-	});
-	else if (now - data.lastRequest > currentWindow * 1e3) await storage.set(key, {
-		...data,
-		count: 1,
-		lastRequest: now
-	}, true);
-	else await storage.set(key, {
-		...data,
-		count: data.count + 1,
-		lastRequest: now
-	}, true);
+	const rule = {
+		window: currentWindow,
+		max: currentMax
+	};
+	if (storage.consume) {
+		const { allowed, retryAfter } = await storage.consume(key, rule);
+		if (!allowed) return rateLimitResponse(retryAfter ?? currentWindow);
+		return;
+	}
+	return legacyConsume(ctx, storage, key, rule);
+}
+/**
+* Non-atomic check-then-increment for storages that do not implement `consume`
+* (custom storages, or secondary storages without `increment`). Under
+* concurrency this is best-effort: simultaneous requests can each pass the
+* check before either write lands.
+*
+* FIXME(rate-limit-consume-required): remove on `next` once `consume` is the
+* sole required member of the storage contract.
+*/
+async function legacyConsume(ctx, storage, key, rule) {
+	if (!legacyFallbackWarningLogged) {
+		ctx.logger.warn("Rate limiting is best-effort: the configured storage has no atomic `consume`, so concurrent requests may bypass the limit. Provide a storage that implements `consume` for strict enforcement.");
+		legacyFallbackWarningLogged = true;
+	}
+	const decision = decideConsume(await storage.get(key), rule, Date.now());
+	if (!decision.allowed) return rateLimitResponse(decision.retryAfter ?? rule.window);
+	await storage.set(key, {
+		...decision.next,
+		key
+	}, decision.update);
 }
 function getDefaultSpecialRules() {
 	return [{
@@ -1415,7 +8068,7 @@ function getDefaultSpecialRules() {
 	}];
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/state/should-session-refresh.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/state/should-session-refresh.mjs
 /**
 * State for skipping session refresh
 *
@@ -1426,7 +8079,7 @@ function getDefaultSpecialRules() {
 */
 var { get: getShouldSkipSessionRefresh, set: setShouldSkipSessionRefresh } = defineRequestState(() => false);
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/session.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/session.mjs
 var getSession = () => createAuthEndpoint("/get-session", {
 	method: ["GET", "POST"],
 	operationId: "getSession",
@@ -1469,10 +8122,7 @@ var getSession = () => createAuthEndpoint("/get-session", {
 					},
 					expiresAt: payload.exp ? payload.exp * 1e3 : Date.now()
 				};
-				else {
-					expireCookie(ctx, ctx.context.authCookies.sessionData);
-					return ctx.json(null);
-				}
+				else expireCookie(ctx, ctx.context.authCookies.sessionData);
 			} else if (strategy === "jwt") {
 				const payload = await verifyJWT(sessionDataCookie, ctx.context.secret);
 				if (payload && payload.session && payload.user) sessionDataPayload = {
@@ -1484,20 +8134,14 @@ var getSession = () => createAuthEndpoint("/get-session", {
 					},
 					expiresAt: payload.exp ? payload.exp * 1e3 : Date.now()
 				};
-				else {
-					expireCookie(ctx, ctx.context.authCookies.sessionData);
-					return ctx.json(null);
-				}
+				else expireCookie(ctx, ctx.context.authCookies.sessionData);
 			} else {
 				const parsed = safeJSONParse(binary.decode(base64Url.decode(sessionDataCookie)));
 				if (parsed) if (await createHMAC("SHA-256", "base64urlnopad").verify(ctx.context.secret, JSON.stringify({
 					...parsed.session,
 					expiresAt: parsed.expiresAt
 				}), parsed.signature)) sessionDataPayload = parsed;
-				else {
-					expireCookie(ctx, ctx.context.authCookies.sessionData);
-					return ctx.json(null);
-				}
+				else expireCookie(ctx, ctx.context.authCookies.sessionData);
 			}
 		}
 		const dontRememberMe = await ctx.getSignedCookie(ctx.context.authCookies.dontRememberToken.name, ctx.context.secret);
@@ -1543,12 +8187,8 @@ var getSession = () => createAuthEndpoint("/get-session", {
 					const updateAge = cookieRefreshCache.updateAge * 1e3;
 					const shouldSkipSessionRefresh = await getShouldSkipSessionRefresh();
 					if (timeUntilExpiry < updateAge && !shouldSkipSessionRefresh) {
-						const newExpiresAt = getDate(ctx.context.options.session?.cookieCache?.maxAge || 300, "sec");
 						const refreshedSession = {
-							session: {
-								...session.session,
-								expiresAt: newExpiresAt
-							},
+							session: { ...session.session },
 							user: session.user,
 							updatedAt: Date.now()
 						};
@@ -1658,7 +8298,7 @@ var getSession = () => createAuthEndpoint("/get-session", {
 				deleteSessionCookie(ctx);
 				throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.FAILED_TO_GET_SESSION);
 			}
-			const maxAge = (updatedSession.expiresAt.valueOf() - Date.now()) / 1e3;
+			const maxAge = ctx.context.sessionConfig.expiresIn;
 			await setSessionCookie(ctx, {
 				session: updatedSession,
 				user: session.user
@@ -1683,6 +8323,17 @@ var getSession = () => createAuthEndpoint("/get-session", {
 		throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_GET_SESSION);
 	}
 });
+/**
+* Whether the deployment keeps sessions in a durable server-side store
+* (a database or secondary storage) rather than only in the signed cookie.
+*
+* Sensitive operations use this to decide whether the cookie cache is merely an
+* optimization that must be bypassed for an authoritative read (`true`), or the
+* only place the session lives and therefore the authority itself (`false`, for
+* stateless / DB-less deployments). Pass the result as `disableCookieCache` so a
+* revoked-but-cached session cannot authorize a sensitive action.
+*/
+var isStateful = (ctx) => hasServerSessionStore(ctx.context.options);
 var getSessionFromCtx = async (ctx, config) => {
 	if (ctx.context.session) return ctx.context.session;
 	const session = await getSession()({
@@ -1690,17 +8341,40 @@ var getSessionFromCtx = async (ctx, config) => {
 		method: "GET",
 		asResponse: false,
 		headers: ctx.headers,
-		returnHeaders: false,
+		returnHeaders: true,
 		returnStatus: false,
 		query: {
 			...config,
-			...ctx.query
+			...ctx.query,
+			disableCookieCache: config?.disableCookieCache || ctx.query?.disableCookieCache,
+			disableRefresh: config?.disableRefresh || ctx.query?.disableRefresh
 		}
-	}).catch((e) => {
+	}).catch(() => {
 		return null;
 	});
-	ctx.context.session = session;
-	return session;
+	if (!session) {
+		ctx.context.session = null;
+		return null;
+	}
+	if (session.headers) session.headers.forEach((value, key) => {
+		if (!ctx.context.responseHeaders) ctx.context.responseHeaders = new Headers({ [key]: value });
+		else if (key.toLowerCase() === "set-cookie") ctx.context.responseHeaders.append(key, value);
+		else ctx.context.responseHeaders.set(key, value);
+	});
+	ctx.context.session = session.response;
+	return session.response;
+};
+/**
+* Reads the session from the source that can authorize sensitive work.
+*
+* Stateful deployments must re-read the server-side session store because an
+* earlier hook may have populated `ctx.context.session` from cookie cache.
+* Stateless deployments keep the signed cookie as the session record.
+*/
+var getAuthoritativeSessionFromCtx = async (ctx) => {
+	if (!isStateful(ctx)) return getSessionFromCtx(ctx);
+	ctx.context.session = null;
+	return getSessionFromCtx(ctx, { disableCookieCache: true });
 };
 /**
 * The middleware forces the endpoint to require a valid session.
@@ -1714,12 +8388,11 @@ var sessionMiddleware = createAuthMiddleware(async (ctx) => {
 	return { session };
 });
 /**
-* This middleware forces the endpoint to require a valid session and ignores cookie cache.
+* This middleware forces the endpoint to require a valid authoritative session.
 * This should be used for sensitive operations like password changes, account deletion, etc.
-* to ensure that revoked sessions cannot be used even if they're still cached in cookies.
 */
 var sensitiveSessionMiddleware = createAuthMiddleware(async (ctx) => {
-	const session = await getSessionFromCtx(ctx, { disableCookieCache: true });
+	const session = await getAuthoritativeSessionFromCtx(ctx);
 	if (!session?.session) throw APIError.from("UNAUTHORIZED", {
 		message: "Unauthorized",
 		code: "UNAUTHORIZED"
@@ -1760,7 +8433,7 @@ var freshSessionMiddleware = createAuthMiddleware(async (ctx) => {
 var listSessions = () => createAuthEndpoint("/list-sessions", {
 	method: "GET",
 	operationId: "listUserSessions",
-	use: [sessionMiddleware],
+	use: [freshSessionMiddleware],
 	requireHeaders: true,
 	metadata: { openapi: {
 		operationId: "listUserSessions",
@@ -1850,7 +8523,7 @@ var revokeSessions = createAuthEndpoint("/revoke-sessions", {
 	} }
 }, async (ctx) => {
 	try {
-		await ctx.context.internalAdapter.deleteSessions(ctx.context.session.user.id);
+		await ctx.context.internalAdapter.deleteUserSessions(ctx.context.session.user.id);
 	} catch (error) {
 		ctx.context.logger.error(error && typeof error === "object" && "name" in error ? error.name : "", error);
 		throw APIError.from("INTERNAL_SERVER_ERROR", {
@@ -1891,7 +8564,7 @@ var revokeOtherSessions = createAuthEndpoint("/revoke-other-sessions", {
 	return ctx.json({ status: true });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/verification-token-storage.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/verification-token-storage.mjs
 var defaultKeyHasher$1 = async (identifier) => {
 	const hash = await createHash("SHA-256").digest(new TextEncoder().encode(identifier));
 	return base64Url.encode(new Uint8Array(hash), { padding: false });
@@ -1913,7 +8586,15 @@ function getStorageOption(identifier, config) {
 	return config;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/with-hooks.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/instrumentation/attributes.mjs
+/** Operation identifier (e.g. getSession, signUpWithEmailAndPassword). Uses endpoint operationId when set, otherwise the endpoint key. */
+var ATTR_OPERATION_ID = "better_auth.operation_id";
+/** Hook type (e.g. before, after, create.before). */
+var ATTR_HOOK_TYPE = "better_auth.hook.type";
+/** Execution context (e.g. user, plugin:id). */
+var ATTR_CONTEXT = "better_auth.context";
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/with-hooks.mjs
 function getWithHooks(adapter, ctx) {
 	const hooksEntries = ctx.hooks;
 	async function createWithHooks(data, model, customCreateFn) {
@@ -2039,9 +8720,9 @@ function getWithHooks(adapter, ctx) {
 			const toRun = hooks[model]?.delete?.before;
 			if (toRun) {
 				if (await withSpan(`db delete.before ${model}`, {
-					[ATTR_HOOK_TYPE]: "delete.before",
-					[ATTR_DB_COLLECTION_NAME]: model,
-					[ATTR_CONTEXT]: source
+					["better_auth.hook.type"]: "delete.before",
+					["db.collection.name"]: model,
+					["better_auth.context"]: source
 				}, () => toRun(entityToDelete, context)) === false) return null;
 			}
 		}
@@ -2075,9 +8756,9 @@ function getWithHooks(adapter, ctx) {
 			const toRun = hooks[model]?.delete?.before;
 			if (toRun) {
 				if (await withSpan(`db delete.before ${model}`, {
-					[ATTR_HOOK_TYPE]: "delete.before",
-					[ATTR_DB_COLLECTION_NAME]: model,
-					[ATTR_CONTEXT]: source
+					["better_auth.hook.type"]: "delete.before",
+					["db.collection.name"]: model,
+					["better_auth.context"]: source
 				}, () => toRun(entity, context)) === false) return null;
 			}
 		}
@@ -2134,9 +8815,9 @@ function getWithHooks(adapter, ctx) {
 			} catch {}
 			if (snapshot) {
 				for (const { source, fn } of beforeHooks) if (await withSpan(`db delete.before ${model}`, {
-					[ATTR_HOOK_TYPE]: "delete.before",
-					[ATTR_DB_COLLECTION_NAME]: model,
-					[ATTR_CONTEXT]: source
+					["better_auth.hook.type"]: "delete.before",
+					["db.collection.name"]: model,
+					["better_auth.context"]: source
 				}, () => fn(snapshot, context)) === false) return null;
 			}
 		}
@@ -2164,7 +8845,7 @@ function getWithHooks(adapter, ctx) {
 	};
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/internal-adapter.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/internal-adapter.mjs
 function getTTLSeconds(expiresAt, now = Date.now()) {
 	const expiresMs = typeof expiresAt === "number" ? expiresAt : expiresAt.getTime();
 	return Math.max(Math.floor((expiresMs - now) / 1e3), 0);
@@ -2174,6 +8855,7 @@ var createInternalAdapter = (adapter, ctx) => {
 	const options = ctx.options;
 	const secondaryStorage = options.secondaryStorage;
 	const verificationConsumeLocks = /* @__PURE__ */ new Map();
+	let warnedNonAtomicConsume = false;
 	const sessionExpiration = options.session?.expiresIn || 3600 * 24 * 7;
 	const { createWithHooks, updateWithHooks, updateManyWithHooks, deleteWithHooks, deleteManyWithHooks, consumeOneWithHooks } = getWithHooks(adapter, ctx);
 	async function refreshUserSessions(user) {
@@ -2324,7 +9006,7 @@ var createInternalAdapter = (adapter, ctx) => {
 			let sessionId;
 			if (secondaryStorage && !storeInDb) {
 				const generatedId = ctx.generateId({ model: "session" });
-				sessionId = generatedId !== false ? generatedId : generateId();
+				sessionId = generatedId !== false ? generatedId : generateId$1();
 			}
 			const defaultAdditionalFields = getSessionDefaultFields(options);
 			const data = {
@@ -2334,7 +9016,7 @@ var createInternalAdapter = (adapter, ctx) => {
 				...rest,
 				expiresAt: dontRememberMe ? getDate(3600 * 24, "sec") : getDate(sessionExpiration, "sec"),
 				userId,
-				token: generateId(32),
+				token: generateId$1(32),
 				createdAt: /* @__PURE__ */ new Date(),
 				updatedAt: /* @__PURE__ */ new Date(),
 				...defaultAdditionalFields,
@@ -2546,21 +9228,29 @@ var createInternalAdapter = (adapter, ctx) => {
 				value: id
 			}], "account", void 0);
 		},
-		deleteSessions: async (userIdOrSessionTokens) => {
+		deleteUserSessions: async (userId) => {
 			if (secondaryStorage) {
-				if (typeof userIdOrSessionTokens === "string") {
-					const activeSession = await secondaryStorage.get(`active-sessions-${userIdOrSessionTokens}`);
-					const sessions = activeSession ? safeJSONParse(activeSession) : [];
-					if (!sessions) return;
-					for (const session of sessions) await secondaryStorage.delete(session.token);
-					await secondaryStorage.delete(`active-sessions-${userIdOrSessionTokens}`);
-				} else for (const sessionToken of userIdOrSessionTokens) if (await secondaryStorage.get(sessionToken)) await secondaryStorage.delete(sessionToken);
+				const activeSession = await secondaryStorage.get(`active-sessions-${userId}`);
+				const sessions = activeSession ? safeJSONParse(activeSession) : [];
+				if (!sessions) return;
+				for (const session of sessions) await secondaryStorage.delete(session.token);
+				await secondaryStorage.delete(`active-sessions-${userId}`);
 				if (!options.session?.storeSessionInDatabase || ctx.options.session?.preserveSessionInDatabase) return;
 			}
 			await deleteManyWithHooks([{
-				field: Array.isArray(userIdOrSessionTokens) ? "token" : "userId",
-				value: userIdOrSessionTokens,
-				operator: Array.isArray(userIdOrSessionTokens) ? "in" : void 0
+				field: "userId",
+				value: userId
+			}], "session", void 0);
+		},
+		deleteSessions: async (sessionTokens) => {
+			if (secondaryStorage) {
+				for (const sessionToken of sessionTokens) if (await secondaryStorage.get(sessionToken)) await secondaryStorage.delete(sessionToken);
+				if (!options.session?.storeSessionInDatabase || ctx.options.session?.preserveSessionInDatabase) return;
+			}
+			await deleteManyWithHooks([{
+				field: "token",
+				value: sessionTokens,
+				operator: "in"
 			}], "session", void 0);
 		},
 		findOAuthUser: async (email, accountId, providerId) => {
@@ -2690,15 +9380,6 @@ var createInternalAdapter = (adapter, ctx) => {
 				}]
 			});
 		},
-		findAccount: async (accountId) => {
-			return await (await getCurrentAdapter(adapter)).findOne({
-				model: "account",
-				where: [{
-					field: "accountId",
-					value: accountId
-				}]
-			});
-		},
 		findAccountByProviderId: async (accountId, providerId) => {
 			return await (await getCurrentAdapter(adapter)).findOne({
 				model: "account",
@@ -2797,17 +9478,27 @@ var createInternalAdapter = (adapter, ctx) => {
 			const storageOption = getStorageOption(identifier, options.verification?.storeIdentifier);
 			const storedIdentifier = await processIdentifier(identifier, storageOption);
 			const identifiersToTry = storageOption && storageOption !== "plain" ? [storedIdentifier, identifier] : [storedIdentifier];
-			if (secondaryStorage && !options.verification?.storeInDatabase) {
-				const parseCachedVerification = (raw) => {
-					if (!raw) return null;
-					if (typeof raw === "string") return safeJSONParse(raw);
-					if (typeof raw === "object") return raw;
-					return null;
+			const hydrateCachedVerification = (raw) => {
+				if (!raw) return null;
+				const candidate = typeof raw === "string" ? safeJSONParse(raw) : typeof raw === "object" ? raw : null;
+				if (!candidate) return null;
+				const expiresAt = new Date(candidate.expiresAt);
+				if (!Number.isFinite(expiresAt.getTime())) return null;
+				return {
+					...candidate,
+					expiresAt
 				};
+			};
+			let consumed = null;
+			if (secondaryStorage && !options.verification?.storeInDatabase) {
 				const consumeCacheKey = async (key) => {
-					if (secondaryStorage.getAndDelete) return parseCachedVerification(await secondaryStorage.getAndDelete(key));
+					if (secondaryStorage.getAndDelete) return hydrateCachedVerification(await secondaryStorage.getAndDelete(key));
+					if (!warnedNonAtomicConsume) {
+						warnedNonAtomicConsume = true;
+						logger.warn("Secondary storage does not implement `getAndDelete`, so single-use verification values cannot be consumed atomically across processes. Implement `getAndDelete` or use database-backed verification storage to guarantee single use.");
+					}
 					return withVerificationConsumeLock(key, async () => {
-						const parsed = parseCachedVerification(await secondaryStorage.get(key));
+						const parsed = hydrateCachedVerification(await secondaryStorage.get(key));
 						if (!parsed) return null;
 						await secondaryStorage.delete(key);
 						return parsed;
@@ -2817,17 +9508,16 @@ var createInternalAdapter = (adapter, ctx) => {
 					const cached = await consumeCacheKey(`verification:${stored}`);
 					if (!cached) continue;
 					await Promise.all(identifiersToTry.filter((candidate) => candidate !== stored).map((candidate) => secondaryStorage.delete(`verification:${candidate}`)));
-					return cached;
+					consumed = cached;
+					break;
 				}
-				return null;
-			}
-			async function consumeByIdentifier(id) {
-				const where = [{
-					field: "identifier",
-					value: id
-				}];
-				return withVerificationConsumeLock(`verification:${id}`, () => runWithTransaction(adapter, async () => {
+			} else {
+				const consumeByIdentifier = async (id) => withVerificationConsumeLock(`verification:${id}`, () => runWithTransaction(adapter, async () => {
 					const txAdapter = await getCurrentAdapter(adapter);
+					const where = [{
+						field: "identifier",
+						value: id
+					}];
 					const latest = (await txAdapter.findMany({
 						model: "verification",
 						where,
@@ -2838,31 +9528,82 @@ var createInternalAdapter = (adapter, ctx) => {
 						limit: 1
 					}))[0] ?? null;
 					if (!latest) return null;
-					const hookWhere = [{
+					return consumeOneWithHooks("verification", [{
 						field: "id",
 						value: latest.id
-					}];
-					return consumeOneWithHooks("verification", hookWhere, async () => {
-						const consumed = await txAdapter.consumeOne({
+					}], async () => {
+						const row = await txAdapter.consumeOne({
 							model: "verification",
-							where: hookWhere
+							where: [{
+								field: "id",
+								value: latest.id
+							}]
 						});
-						if (!consumed) return null;
+						if (!row) return null;
 						await txAdapter.deleteMany({
 							model: "verification",
 							where
 						});
-						return consumed;
+						return row;
 					}, latest);
 				}));
+				for (const stored of identifiersToTry) {
+					consumed = await consumeByIdentifier(stored);
+					if (consumed) break;
+				}
+				if (consumed && secondaryStorage) await Promise.all(identifiersToTry.map((stored) => secondaryStorage.delete(`verification:${stored}`)));
 			}
-			let consumed = null;
-			for (const stored of identifiersToTry) {
-				consumed = await consumeByIdentifier(stored);
-				if (consumed) break;
-			}
-			if (consumed && secondaryStorage) await Promise.all(identifiersToTry.map((stored) => secondaryStorage.delete(`verification:${stored}`)));
+			if (!consumed || consumed.expiresAt < /* @__PURE__ */ new Date()) return null;
 			return consumed;
+		},
+		reserveVerificationValue: async (data) => {
+			const reservationId = base64Url.encode(new Uint8Array(await createHash("SHA-256").digest(new TextEncoder().encode("reserve:" + data.identifier))), { padding: false });
+			const storageOption = getStorageOption(data.identifier, options.verification?.storeIdentifier);
+			const storedIdentifier = await processIdentifier(data.identifier, storageOption);
+			if (secondaryStorage && !options.verification?.storeInDatabase) {
+				const cacheKey = `verification:${storedIdentifier}`;
+				if (await secondaryStorage.get(cacheKey)) return false;
+				await secondaryStorage.set(cacheKey, JSON.stringify({
+					id: reservationId,
+					identifier: storedIdentifier,
+					value: data.value,
+					expiresAt: data.expiresAt
+				}), getTTLSeconds(data.expiresAt));
+				return true;
+			}
+			try {
+				await adapter.create({
+					model: "verification",
+					data: {
+						id: reservationId,
+						identifier: storedIdentifier,
+						value: data.value,
+						expiresAt: data.expiresAt,
+						createdAt: /* @__PURE__ */ new Date(),
+						updatedAt: /* @__PURE__ */ new Date()
+					},
+					forceAllowId: true
+				});
+			} catch (error) {
+				if (await adapter.findOne({
+					model: "verification",
+					where: [{
+						field: "id",
+						value: reservationId
+					}]
+				})) return false;
+				throw error;
+			}
+			if (secondaryStorage) {
+				const ttl = getTTLSeconds(data.expiresAt);
+				if (ttl > 0) await secondaryStorage.set(`verification:${storedIdentifier}`, JSON.stringify({
+					id: reservationId,
+					identifier: storedIdentifier,
+					value: data.value,
+					expiresAt: data.expiresAt
+				}), ttl);
+			}
+			return true;
 		},
 		updateVerificationByIdentifier: async (identifier, data) => {
 			const storedIdentifier = await processIdentifier(identifier, getStorageOption(identifier, options.verification?.storeIdentifier));
@@ -2892,7 +9633,250 @@ var createInternalAdapter = (adapter, ctx) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/context/helpers.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/utils/host.mjs
+/**
+* Cloud provider instance metadata service FQDNs. These resolve to link-local
+* IPs (usually `169.254.169.254`) inside their respective clouds and are
+* prime SSRF targets.
+*
+* The IPs themselves are already caught by the `linkLocal` kind; this set
+* only exists for the FQDN form that a naive server-side fetch might resolve
+* via its own resolver.
+*/
+var CLOUD_METADATA_HOSTS = /* @__PURE__ */ new Set([
+	"metadata.google.internal",
+	"metadata.goog",
+	"metadata",
+	"instance-data",
+	"instance-data.ec2.internal"
+]);
+/** Strip `[...]` if the entire input is bracketed (IPv6 literal form). */
+function stripBrackets(host) {
+	if (host.length >= 2 && host.startsWith("[") && host.endsWith("]")) return host.slice(1, -1);
+	return host;
+}
+/**
+* Strip trailing `:port` from host-with-port strings.
+*
+* - Bracketed IPv6 with port: `[::1]:8080` → `[::1]`
+* - IPv4/FQDN with port: `127.0.0.1:3000` / `example.com:443` → base form
+* - Bare IPv6: `::1` / `fe80::1` → unchanged (multiple colons means no port)
+*/
+function stripPort(host) {
+	if (host.startsWith("[")) {
+		const end = host.indexOf("]");
+		if (end === -1) return host;
+		return host.slice(0, end + 1);
+	}
+	const firstColon = host.indexOf(":");
+	if (firstColon === -1) return host;
+	if (host.indexOf(":", firstColon + 1) !== -1) return host;
+	return host.slice(0, firstColon);
+}
+/** Strip IPv6 zone identifier: `fe80::1%eth0` → `fe80::1`. */
+function stripZoneId(host) {
+	const zone = host.indexOf("%");
+	if (zone === -1) return host;
+	return host.slice(0, zone);
+}
+/**
+* Strip trailing dots (RFC 1034 absolute DNS form): `localhost.` → `localhost`.
+* Without this, `metadata.google.internal.` would fall through to `public` and
+* bypass the cloud-metadata / `.localhost` checks, since WHATWG URL parsing
+* preserves the trailing dot in `url.hostname`.
+*/
+function stripTrailingDot(host) {
+	return host.replace(/\.+$/, "");
+}
+/** Fast dotted-decimal shape check. Does NOT validate octet bounds. */
+function looksLikeIPv4(host) {
+	return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host);
+}
+/** Pack a validated dotted-decimal IPv4 into a 32-bit unsigned integer. */
+function ipv4ToUint32(ip) {
+	const parts = ip.split(".");
+	return (Number(parts[0]) << 24 | Number(parts[1]) << 16 | Number(parts[2]) << 8 | Number(parts[3])) >>> 0;
+}
+/** Check whether a 32-bit value matches `prefix/length` (both unsigned). */
+function inIPv4Range(value, prefix, length) {
+	if (length === 0) return true;
+	const mask = length === 32 ? 4294967295 : -1 << 32 - length >>> 0;
+	return (value & mask) === (prefix & mask);
+}
+function classifyIPv4(ip) {
+	if (ip === "0.0.0.0") return "unspecified";
+	if (ip === "255.255.255.255") return "broadcast";
+	const n = ipv4ToUint32(ip);
+	if (inIPv4Range(n, ipv4ToUint32("127.0.0.0"), 8)) return "loopback";
+	if (inIPv4Range(n, ipv4ToUint32("10.0.0.0"), 8)) return "private";
+	if (inIPv4Range(n, ipv4ToUint32("172.16.0.0"), 12)) return "private";
+	if (inIPv4Range(n, ipv4ToUint32("192.168.0.0"), 16)) return "private";
+	if (inIPv4Range(n, ipv4ToUint32("169.254.0.0"), 16)) return "linkLocal";
+	if (inIPv4Range(n, ipv4ToUint32("100.64.0.0"), 10)) return "sharedAddressSpace";
+	if (inIPv4Range(n, ipv4ToUint32("192.0.2.0"), 24)) return "documentation";
+	if (inIPv4Range(n, ipv4ToUint32("198.51.100.0"), 24)) return "documentation";
+	if (inIPv4Range(n, ipv4ToUint32("203.0.113.0"), 24)) return "documentation";
+	if (inIPv4Range(n, ipv4ToUint32("198.18.0.0"), 15)) return "benchmarking";
+	if (inIPv4Range(n, ipv4ToUint32("224.0.0.0"), 4)) return "multicast";
+	if (inIPv4Range(n, ipv4ToUint32("0.0.0.0"), 8)) return "reserved";
+	if (inIPv4Range(n, ipv4ToUint32("192.0.0.0"), 24)) return "reserved";
+	if (inIPv4Range(n, ipv4ToUint32("240.0.0.0"), 4)) return "reserved";
+	return "public";
+}
+/**
+* Extract an IPv4 address embedded in an expanded IPv6 literal.
+*
+* Used to recurse into tunnel/translation forms (6to4, NAT64, Teredo) so a
+* private destination cannot be smuggled behind a syntactically-public IPv6
+* literal. `startGroup` is the index of the first of two 16-bit groups in the
+* expanded form (`0000:0000:...`). With `xor: true`, the 32-bit value is XORed
+* with `0xffffffff` before decoding (Teredo obfuscates the client IPv4 this
+* way).
+*/
+function extractEmbeddedIPv4(expanded, startGroup, options = {}) {
+	const offset = startGroup * 5;
+	const g1 = Number.parseInt(expanded.slice(offset, offset + 4), 16);
+	const g2 = Number.parseInt(expanded.slice(offset + 5, offset + 9), 16);
+	if (!Number.isFinite(g1) || !Number.isFinite(g2)) return null;
+	let combined = (g1 << 16 | g2) >>> 0;
+	if (options.xor) combined = (combined ^ 4294967295) >>> 0;
+	return `${combined >>> 24 & 255}.${combined >>> 16 & 255}.${combined >>> 8 & 255}.${combined & 255}`;
+}
+/**
+* Classify an expanded, full-form, lowercase IPv6 address (no IPv4-mapped
+* input — those are unmapped to IPv4 before reaching here).
+*
+* 6to4 (`2002::/16`), NAT64 (`64:ff9b::/96`) and Teredo (`2001:0000::/32`)
+* embed an IPv4 that can route to private/loopback space. If the embedded
+* IPv4 classifies as non-`public`, return `reserved` — blocks SSRF without
+* advertising the address as a loopback literal for RFC 8252 §7.3 matching.
+*/
+function classifyIPv6(expanded) {
+	if (expanded === "0000:0000:0000:0000:0000:0000:0000:0000") return "unspecified";
+	if (expanded === "0000:0000:0000:0000:0000:0000:0000:0001") return "loopback";
+	const firstByte = Number.parseInt(expanded.slice(0, 2), 16);
+	const secondByte = Number.parseInt(expanded.slice(2, 4), 16);
+	if (firstByte === 255) return "multicast";
+	if (firstByte === 254 && (secondByte & 192) === 128) return "linkLocal";
+	if ((firstByte & 254) === 252) return "private";
+	if (expanded.startsWith("2001:0db8:")) return "documentation";
+	if (expanded.startsWith("2001:0002:0000:")) return "benchmarking";
+	if (expanded.startsWith("2002:")) {
+		const embedded = extractEmbeddedIPv4(expanded, 1);
+		if (embedded && classifyIPv4(embedded) !== "public") return "reserved";
+		return "public";
+	}
+	if (expanded.startsWith("0064:ff9b:0000:0000:0000:0000:")) {
+		const embedded = extractEmbeddedIPv4(expanded, 6);
+		if (embedded && classifyIPv4(embedded) !== "public") return "reserved";
+		return "reserved";
+	}
+	if (expanded.startsWith("0064:ff9b:0001:")) return "reserved";
+	if (expanded.startsWith("2001:0000:")) {
+		const embedded = extractEmbeddedIPv4(expanded, 6, { xor: true });
+		if (embedded && classifyIPv4(embedded) !== "public") return "reserved";
+		return "reserved";
+	}
+	if (expanded.startsWith("0100:0000:0000:0000:")) return "reserved";
+	if (expanded.startsWith("3fff:0")) return "documentation";
+	if (expanded.startsWith("5f00:")) return "reserved";
+	return "public";
+}
+/**
+* Classify a host string according to RFC 6890 / RFC 6761.
+*
+* Accepts inputs in any of these shapes and normalizes before classifying:
+*
+*   - Bare IPv4: `127.0.0.1`
+*   - Bare IPv6: `::1`, `fe80::1%eth0`
+*   - Bracketed IPv6: `[::1]`
+*   - Host with port: `localhost:3000`, `127.0.0.1:443`, `[::1]:8080`
+*   - FQDN: `example.com`, `tenant.localhost`
+*   - IPv4-mapped IPv6: `::ffff:192.0.2.1` (reported as `literal: "ipv4"`)
+*
+* Invalid or non-resolvable FQDNs are returned as `{ kind: "public", literal: "fqdn" }`
+* — this function never throws. Callers that need structural validation must
+* combine this with a URL/hostname validator upstream.
+*
+* @example
+* classifyHost("127.0.0.1")
+* // { kind: "loopback", literal: "ipv4", canonical: "127.0.0.1" }
+*
+* @example
+* classifyHost("[::1]:8080")
+* // { kind: "loopback", literal: "ipv6", canonical: "0000:0000:...:0001" }
+*
+* @example
+* classifyHost("::ffff:192.0.2.1")
+* // { kind: "documentation", literal: "ipv4", canonical: "192.0.2.1" }
+*
+* @example
+* classifyHost("tenant-a.localhost")
+* // { kind: "localhost", literal: "fqdn", canonical: "tenant-a.localhost" }
+*/
+function classifyHost(host) {
+	const lowered = stripTrailingDot(stripZoneId(stripBrackets(stripPort(host.trim())))).toLowerCase();
+	if (lowered === "") return {
+		kind: "reserved",
+		literal: "fqdn",
+		canonical: ""
+	};
+	if (!isValidIP(lowered)) {
+		if (lowered === "localhost" || lowered.endsWith(".localhost")) return {
+			kind: "localhost",
+			literal: "fqdn",
+			canonical: lowered
+		};
+		if (CLOUD_METADATA_HOSTS.has(lowered)) return {
+			kind: "cloudMetadata",
+			literal: "fqdn",
+			canonical: lowered
+		};
+		return {
+			kind: "public",
+			literal: "fqdn",
+			canonical: lowered
+		};
+	}
+	if (looksLikeIPv4(lowered)) return {
+		kind: classifyIPv4(lowered),
+		literal: "ipv4",
+		canonical: lowered
+	};
+	const canonical = normalizeIP(lowered, { ipv6Subnet: 128 });
+	if (looksLikeIPv4(canonical)) return {
+		kind: classifyIPv4(canonical),
+		literal: "ipv4",
+		canonical
+	};
+	return {
+		kind: classifyIPv6(canonical),
+		literal: "ipv6",
+		canonical
+	};
+}
+/**
+* Permissive loopback check for developer-ergonomics code paths.
+*
+* Returns true for IPv4 `127.0.0.0/8`, IPv6 `::1`, the literal name `localhost`,
+* and any RFC 6761 `.localhost` subdomain (`tenant.localhost`, `app.localhost`).
+*
+* Use this for things like: allowing HTTP for dev servers, skipping Secure
+* cookie requirements, browser-trust heuristics. Do NOT use this for OAuth
+* redirect URI matching — use {@link isLoopbackIP} there.
+*
+* @example
+* isLoopbackHost("localhost")         // true
+* isLoopbackHost("tenant.localhost")  // true  (RFC 6761)
+* isLoopbackHost("127.0.0.1")         // true
+* isLoopbackHost("0.0.0.0")           // false (unspecified, NOT loopback)
+*/
+function isLoopbackHost(host) {
+	const kind = classifyHost(host).kind;
+	return kind === "loopback" || kind === "localhost";
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/context/helpers.mjs
 async function runPluginInit(context) {
 	let options = context.options;
 	const plugins = options.plugins || [];
@@ -2947,9 +9931,10 @@ async function getTrustedOrigins(options, request) {
 	const trustedOrigins = [];
 	if (isDynamicBaseURLConfig(options.baseURL)) {
 		const allowedHosts = options.baseURL.allowedHosts;
+		const proto = options.baseURL.protocol;
 		for (const host of allowedHosts) if (!host.includes("://")) {
-			trustedOrigins.push(`https://${host}`);
-			if (isLoopbackHost(host)) trustedOrigins.push(`http://${host}`);
+			if (!proto || proto === "https" || proto === "auto") trustedOrigins.push(`https://${host}`);
+			if (proto === "http" || proto === "auto" || isLoopbackHost(host)) trustedOrigins.push(`http://${host}`);
 		} else trustedOrigins.push(host);
 		if (options.baseURL.fallback) try {
 			trustedOrigins.push(new URL(options.baseURL.fallback).origin);
@@ -3039,18 +10024,7 @@ async function getTrustedProviders(options, request) {
 	return (await trustedProviders(request) ?? []).filter((v) => Boolean(v));
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/oauth2/errors.mjs
-var HANDLING_DOCS_URL = "https://www.better-auth.com/docs/concepts/oauth#handling-providers-without-email";
-/**
-* Build the logger message shown when an OAuth provider does not return an
-* email address. Kept in one place so every rejection site points users at
-* the same workaround docs.
-*/
-function missingEmailLogMessage(providerId, options) {
-	return `${options?.source === "generic" ? `Generic OAuth provider "${providerId}"` : `Provider "${providerId}"`} did not return an email${options?.source === "id_token" ? " in the id token" : ""}. Either request the provider's email scope, or synthesize one via \`mapProfileToUser\`. See ${HANDLING_DOCS_URL}`;
-}
-//#endregion
-//#region ../../node_modules/better-auth/dist/oauth2/utils.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/oauth2/utils.mjs
 /**
 * Check if a string looks like encrypted data
 */
@@ -3077,7 +10051,3646 @@ function setTokenUtil(token, ctx) {
 	return token;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/account.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/email-verification.mjs
+async function createEmailVerificationToken(secret, email, updateTo, expiresIn = 3600, extraPayload) {
+	return await signJWT({
+		email: email.toLowerCase(),
+		updateTo: updateTo?.toLowerCase(),
+		...extraPayload
+	}, secret, expiresIn);
+}
+/**
+* A function to send a verification email to the user
+*/
+async function sendVerificationEmailFn(ctx, user) {
+	if (!ctx.context.options.emailVerification?.sendVerificationEmail) {
+		ctx.context.logger.error("Verification email isn't enabled.");
+		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.VERIFICATION_EMAIL_NOT_ENABLED);
+	}
+	const token = await createEmailVerificationToken(ctx.context.secret, user.email, void 0, ctx.context.options.emailVerification?.expiresIn);
+	const callbackURL = ctx.body.callbackURL ? encodeURIComponent(ctx.body.callbackURL) : encodeURIComponent("/");
+	const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${callbackURL}`;
+	await ctx.context.options.emailVerification.sendVerificationEmail({
+		user,
+		url,
+		token
+	}, ctx.request);
+}
+var sendVerificationEmail = createAuthEndpoint("/send-verification-email", {
+	method: "POST",
+	operationId: "sendVerificationEmail",
+	cloneRequest: true,
+	body: z$1.object({
+		email: z$1.email().meta({ description: "The email to send the verification email to" }),
+		callbackURL: z$1.string().meta({ description: "The URL to use for email verification callback" }).optional()
+	}),
+	metadata: { openapi: {
+		operationId: "sendVerificationEmail",
+		description: "Send a verification email to the user",
+		requestBody: { content: { "application/json": { schema: {
+			type: "object",
+			properties: {
+				email: {
+					type: "string",
+					description: "The email to send the verification email to",
+					example: "user@example.com"
+				},
+				callbackURL: {
+					type: "string",
+					description: "The URL to use for email verification callback",
+					example: "https://example.com/callback",
+					nullable: true
+				}
+			},
+			required: ["email"]
+		} } } },
+		responses: {
+			"200": {
+				description: "Success",
+				content: { "application/json": { schema: {
+					type: "object",
+					properties: { status: {
+						type: "boolean",
+						description: "Indicates if the email was sent successfully",
+						example: true
+					} }
+				} } }
+			},
+			"400": {
+				description: "Bad Request",
+				content: { "application/json": { schema: {
+					type: "object",
+					properties: { message: {
+						type: "string",
+						description: "Error message",
+						example: "Verification email isn't enabled"
+					} }
+				} } }
+			}
+		}
+	} }
+}, async (ctx) => {
+	if (!ctx.context.options.emailVerification?.sendVerificationEmail) {
+		ctx.context.logger.error("Verification email isn't enabled.");
+		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.VERIFICATION_EMAIL_NOT_ENABLED);
+	}
+	const { email } = ctx.body;
+	const session = await getSessionFromCtx(ctx);
+	if (!session) {
+		/**
+		* Enforce a constant-time floor so an attacker cannot distinguish
+		* "email not found / already verified" (fast local JWT sign) from
+		* "email found and unverified" (slow external email-send) by
+		* comparing response times.
+		*/
+		const MINIMUM_MS = 500;
+		const start = Date.now();
+		const user = await ctx.context.internalAdapter.findUserByEmail(email);
+		let error;
+		if (!user || user.user.emailVerified) await createEmailVerificationToken(ctx.context.secret, email, void 0, ctx.context.options.emailVerification?.expiresIn);
+		else try {
+			await sendVerificationEmailFn(ctx, user.user);
+		} catch (e) {
+			error = e;
+		}
+		const remaining = MINIMUM_MS - (Date.now() - start);
+		if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+		if (error) throw error;
+		return ctx.json({ status: true });
+	}
+	if (session?.user.email.toLowerCase() !== email.toLowerCase()) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.EMAIL_MISMATCH);
+	if (session?.user.emailVerified) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.EMAIL_ALREADY_VERIFIED);
+	await sendVerificationEmailFn(ctx, session.user);
+	return ctx.json({ status: true });
+});
+var verifyEmail = createAuthEndpoint("/verify-email", {
+	method: "GET",
+	operationId: "verifyEmail",
+	query: z$1.object({
+		token: z$1.string().meta({ description: "The token to verify the email" }),
+		callbackURL: z$1.string().meta({ description: "The URL to redirect to after email verification" }).optional()
+	}),
+	use: [originCheck((ctx) => ctx.query.callbackURL)],
+	metadata: { openapi: {
+		description: "Verify the email of the user",
+		parameters: [{
+			name: "token",
+			in: "query",
+			description: "The token to verify the email",
+			required: true,
+			schema: { type: "string" }
+		}, {
+			name: "callbackURL",
+			in: "query",
+			description: "The URL to redirect to after email verification",
+			required: false,
+			schema: { type: "string" }
+		}],
+		responses: { "200": {
+			description: "Success",
+			content: { "application/json": { schema: {
+				type: "object",
+				properties: {
+					user: {
+						type: "object",
+						$ref: "#/components/schemas/User"
+					},
+					status: {
+						type: "boolean",
+						description: "Indicates if the email was verified successfully"
+					}
+				},
+				required: ["user", "status"]
+			} } }
+		} }
+	} }
+}, async (ctx) => {
+	function redirectOnError(error) {
+		if (ctx.query.callbackURL) {
+			if (ctx.query.callbackURL.includes("?")) throw ctx.redirect(`${ctx.query.callbackURL}&error=${error.code}`);
+			throw ctx.redirect(`${ctx.query.callbackURL}?error=${error.code}`);
+		}
+		throw APIError.from("UNAUTHORIZED", error);
+	}
+	const { token } = ctx.query;
+	let jwt;
+	try {
+		jwt = await jwtVerify(token, new TextEncoder().encode(ctx.context.secret), { algorithms: ["HS256"] });
+	} catch (e) {
+		if (e instanceof JWTExpired) return redirectOnError(BASE_ERROR_CODES.TOKEN_EXPIRED);
+		return redirectOnError(BASE_ERROR_CODES.INVALID_TOKEN);
+	}
+	const parsed = z$1.object({
+		email: z$1.email(),
+		updateTo: z$1.string().optional(),
+		requestType: z$1.string().optional()
+	}).parse(jwt.payload);
+	const user = await ctx.context.internalAdapter.findUserByEmail(parsed.email);
+	if (!user) return redirectOnError(BASE_ERROR_CODES.USER_NOT_FOUND);
+	if (parsed.updateTo) {
+		const session = await getSessionFromCtx(ctx);
+		if (session && session.user.email !== parsed.email) return redirectOnError(BASE_ERROR_CODES.INVALID_USER);
+		switch (parsed.requestType) {
+			case "change-email-confirmation": {
+				const newToken = await createEmailVerificationToken(ctx.context.secret, parsed.email, parsed.updateTo, ctx.context.options.emailVerification?.expiresIn, { requestType: "change-email-verification" });
+				const updateCallbackURL = ctx.query.callbackURL ? encodeURIComponent(ctx.query.callbackURL) : encodeURIComponent("/");
+				const url = `${ctx.context.baseURL}/verify-email?token=${newToken}&callbackURL=${updateCallbackURL}`;
+				if (ctx.context.options.emailVerification?.sendVerificationEmail) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailVerification.sendVerificationEmail({
+					user: {
+						...user.user,
+						email: parsed.updateTo
+					},
+					url,
+					token: newToken
+				}, ctx.request?.clone()));
+				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
+				return ctx.json({ status: true });
+			}
+			case "change-email-verification": {
+				let activeSession = session;
+				if (!activeSession) {
+					const newSession = await ctx.context.internalAdapter.createSession(user.user.id);
+					if (!newSession) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
+					activeSession = {
+						session: newSession,
+						user: user.user
+					};
+				}
+				const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, {
+					email: parsed.updateTo,
+					emailVerified: true
+				});
+				if (ctx.context.options.emailVerification?.afterEmailVerification) await ctx.context.options.emailVerification.afterEmailVerification(updatedUser, ctx.request);
+				await setSessionCookie(ctx, {
+					session: activeSession.session,
+					user: {
+						...activeSession.user,
+						email: parsed.updateTo,
+						emailVerified: true
+					}
+				});
+				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
+				return ctx.json({
+					status: true,
+					user: parseUserOutput(ctx.context.options, updatedUser)
+				});
+			}
+			default: {
+				let activeSession = session;
+				if (!activeSession) {
+					const newSession = await ctx.context.internalAdapter.createSession(user.user.id);
+					if (!newSession) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
+					activeSession = {
+						session: newSession,
+						user: user.user
+					};
+				}
+				const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, {
+					email: parsed.updateTo,
+					emailVerified: false
+				});
+				const newToken = await createEmailVerificationToken(ctx.context.secret, parsed.updateTo);
+				const updateCallbackURL = ctx.query.callbackURL ? encodeURIComponent(ctx.query.callbackURL) : encodeURIComponent("/");
+				if (ctx.context.options.emailVerification?.sendVerificationEmail) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailVerification.sendVerificationEmail({
+					user: updatedUser,
+					url: `${ctx.context.baseURL}/verify-email?token=${newToken}&callbackURL=${updateCallbackURL}`,
+					token: newToken
+				}, ctx.request?.clone()));
+				await setSessionCookie(ctx, {
+					session: activeSession.session,
+					user: {
+						...activeSession.user,
+						email: parsed.updateTo,
+						emailVerified: false
+					}
+				});
+				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
+				return ctx.json({
+					status: true,
+					user: parseUserOutput(ctx.context.options, updatedUser)
+				});
+			}
+		}
+	}
+	if (user.user.emailVerified) {
+		if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
+		return ctx.json({
+			status: true,
+			user: null
+		});
+	}
+	if (ctx.context.options.emailVerification?.beforeEmailVerification) await ctx.context.options.emailVerification.beforeEmailVerification(user.user, ctx.request);
+	const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, { emailVerified: true });
+	if (ctx.context.options.emailVerification?.afterEmailVerification) await ctx.context.options.emailVerification.afterEmailVerification(updatedUser, ctx.request);
+	if (ctx.context.options.emailVerification?.autoSignInAfterVerification) {
+		const currentSession = await getSessionFromCtx(ctx);
+		if (!currentSession || currentSession.user.email !== parsed.email) {
+			const session = await ctx.context.internalAdapter.createSession(user.user.id);
+			if (!session) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
+			await setSessionCookie(ctx, {
+				session,
+				user: {
+					...user.user,
+					emailVerified: true
+				}
+			});
+		} else await setSessionCookie(ctx, {
+			session: currentSession.session,
+			user: {
+				...currentSession.user,
+				emailVerified: true
+			}
+		});
+	}
+	if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
+	return ctx.json({
+		status: true,
+		user: null
+	});
+});
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/oauth2/link-account.mjs
+async function handleOAuthUserInfo(c, opts) {
+	const { userInfo, account, callbackURL, disableSignUp, overrideUserInfo } = opts;
+	const dbUser = await c.context.internalAdapter.findOAuthUser(userInfo.email.toLowerCase(), account.accountId, account.providerId).catch((e) => {
+		c.context.logger.error("Better auth was unable to query your database.\nError: ", e);
+		redirectOnError(c, c.context.options.onAPIError?.errorURL || `${c.context.baseURL}/error`, "internal_server_error");
+	});
+	let user = dbUser?.user;
+	const isRegister = !user;
+	if (dbUser) {
+		const linkedAccount = dbUser.linkedAccount ?? dbUser.accounts.find((acc) => acc.providerId === account.providerId && acc.accountId === account.accountId);
+		if (!linkedAccount) {
+			const accountLinking = c.context.options.account?.accountLinking;
+			const isTrustedProvider = opts.isTrustedProvider || opts.trustProviderByName !== false && c.context.trustedProviders.includes(account.providerId);
+			const requireLocalEmailVerified = accountLinking?.requireLocalEmailVerified ?? true;
+			if (!isTrustedProvider && !userInfo.emailVerified || requireLocalEmailVerified && !dbUser.user.emailVerified || accountLinking?.enabled === false || accountLinking?.disableImplicitLinking === true) {
+				if (isDevelopment()) c.context.logger.warn(`User already exist but account isn't linked to ${account.providerId}. To read more about how account linking works in Better Auth see https://www.better-auth.com/docs/concepts/users-accounts#account-linking.`);
+				return {
+					error: "account not linked",
+					data: null
+				};
+			}
+			try {
+				await c.context.internalAdapter.linkAccount({
+					providerId: account.providerId,
+					accountId: userInfo.id.toString(),
+					userId: dbUser.user.id,
+					accessToken: await setTokenUtil(account.accessToken, c.context),
+					refreshToken: await setTokenUtil(account.refreshToken, c.context),
+					idToken: account.idToken,
+					accessTokenExpiresAt: account.accessTokenExpiresAt,
+					refreshTokenExpiresAt: account.refreshTokenExpiresAt,
+					scope: account.scope
+				});
+			} catch (e) {
+				c.context.logger.error("Unable to link account", e);
+				return {
+					error: "unable to link account",
+					data: null
+				};
+			}
+			if (userInfo.emailVerified && !dbUser.user.emailVerified && userInfo.email.toLowerCase() === dbUser.user.email) await c.context.internalAdapter.updateUser(dbUser.user.id, { emailVerified: true });
+			user = await applyUpdateUserInfoOnLink(c, dbUser.user.id, userInfo) ?? user;
+		} else {
+			const freshTokens = c.context.options.account?.updateAccountOnSignIn !== false ? Object.fromEntries(Object.entries({
+				idToken: account.idToken,
+				accessToken: await setTokenUtil(account.accessToken, c.context),
+				refreshToken: await setTokenUtil(account.refreshToken, c.context),
+				accessTokenExpiresAt: account.accessTokenExpiresAt,
+				refreshTokenExpiresAt: account.refreshTokenExpiresAt,
+				scope: account.scope
+			}).filter(([_, value]) => value !== void 0)) : {};
+			if (c.context.options.account?.storeAccountCookie) await setAccountCookie(c, {
+				...linkedAccount,
+				...freshTokens
+			});
+			if (Object.keys(freshTokens).length > 0) await c.context.internalAdapter.updateAccount(linkedAccount.id, freshTokens);
+			if (userInfo.emailVerified && !dbUser.user.emailVerified && userInfo.email.toLowerCase() === dbUser.user.email) await c.context.internalAdapter.updateUser(dbUser.user.id, { emailVerified: true });
+		}
+		if (overrideUserInfo) {
+			const { id: _id, email: _email, emailVerified: _emailVerified, name, image, ...providerProfile } = userInfo;
+			const additionalUserFields = parseAdditionalUserInputFromProviderProfile(c.context.options, providerProfile, "update");
+			user = await c.context.internalAdapter.updateUser(dbUser.user.id, {
+				name,
+				image,
+				...additionalUserFields,
+				email: userInfo.email.toLowerCase(),
+				emailVerified: userInfo.email.toLowerCase() === dbUser.user.email ? dbUser.user.emailVerified || userInfo.emailVerified : userInfo.emailVerified
+			});
+		}
+	} else {
+		if (disableSignUp) return {
+			error: "signup disabled",
+			data: null,
+			isRegister: false
+		};
+		try {
+			const { id: _id, email: _email, emailVerified: _emailVerified, name, image, ...providerProfile } = userInfo;
+			const additionalUserFields = parseAdditionalUserInputFromProviderProfile(c.context.options, providerProfile, "create");
+			const accountData = {
+				accessToken: await setTokenUtil(account.accessToken, c.context),
+				refreshToken: await setTokenUtil(account.refreshToken, c.context),
+				idToken: account.idToken,
+				accessTokenExpiresAt: account.accessTokenExpiresAt,
+				refreshTokenExpiresAt: account.refreshTokenExpiresAt,
+				scope: account.scope,
+				providerId: account.providerId,
+				accountId: userInfo.id.toString()
+			};
+			const { user: createdUser, account: createdAccount } = await c.context.internalAdapter.createOAuthUser({
+				name,
+				image,
+				...additionalUserFields,
+				email: userInfo.email.toLowerCase(),
+				emailVerified: userInfo.emailVerified
+			}, accountData);
+			user = createdUser;
+			if (c.context.options.account?.storeAccountCookie) await setAccountCookie(c, createdAccount);
+			if (!userInfo.emailVerified && user && c.context.options.emailVerification?.sendOnSignUp && c.context.options.emailVerification?.sendVerificationEmail) {
+				const token = await createEmailVerificationToken(c.context.secret, user.email, void 0, c.context.options.emailVerification?.expiresIn);
+				const url = `${c.context.baseURL}/verify-email?token=${token}&callbackURL=${encodeURIComponent(callbackURL || "/")}`;
+				await c.context.runInBackgroundOrAwait(c.context.options.emailVerification.sendVerificationEmail({
+					user,
+					url,
+					token
+				}, c.request));
+			}
+		} catch (e) {
+			c.context.logger.error(e);
+			if (isAPIError(e)) return {
+				error: e.message,
+				data: null,
+				isRegister: false
+			};
+			return {
+				error: "unable to create user",
+				data: null,
+				isRegister: false
+			};
+		}
+	}
+	if (!user) return {
+		error: "unable to create user",
+		data: null,
+		isRegister: false
+	};
+	const session = await c.context.internalAdapter.createSession(user.id);
+	if (!session) return {
+		error: "unable to create session",
+		data: null,
+		isRegister: false
+	};
+	return {
+		data: {
+			session,
+			user
+		},
+		error: null,
+		isRegister
+	};
+}
+/**
+* Apply the `account.accountLinking.updateUserInfoOnLink` policy: when enabled,
+* copy the freshly linked provider's profile onto the local user, matching the
+* field set persisted on sign-up. The local `email` and `emailVerified` are
+* never changed, so a link can't rebind the account's identity, and
+* `updateUser` drops `undefined` fields, so a provider that omits one leaves
+* the existing column intact.
+*
+* Returns the updated user so a caller that issues a session can seed the
+* cookie cache with the fresh row. Returns `undefined` when the policy is
+* disabled or the update fails: a failed profile sync must not abort the link.
+*/
+async function applyUpdateUserInfoOnLink(c, userId, userInfo) {
+	if (c.context.options.account?.accountLinking?.updateUserInfoOnLink !== true) return;
+	try {
+		const { id: _id, email: _email, emailVerified: _emailVerified, name, image, ...providerProfile } = userInfo;
+		const additionalUserFields = parseAdditionalUserInputFromProviderProfile(c.context.options, providerProfile, "update");
+		return await c.context.internalAdapter.updateUser(userId, {
+			name,
+			image,
+			...additionalUserFields
+		});
+	} catch (e) {
+		c.context.logger.warn("Could not update user info on account link", e);
+		return;
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/oauth2/utils.mjs
+function getOAuth2Tokens(data) {
+	const getDate = (seconds) => {
+		return new Date((/* @__PURE__ */ new Date()).getTime() + seconds * 1e3);
+	};
+	return {
+		tokenType: data.token_type,
+		accessToken: data.access_token,
+		refreshToken: data.refresh_token,
+		accessTokenExpiresAt: data.expires_in ? getDate(data.expires_in) : void 0,
+		refreshTokenExpiresAt: data.refresh_token_expires_in ? getDate(data.refresh_token_expires_in) : void 0,
+		scopes: data?.scope ? typeof data.scope === "string" ? data.scope.split(" ") : data.scope : [],
+		idToken: data.id_token,
+		raw: data
+	};
+}
+/**
+* Return the provider's primary Client ID: the single string, or the entry at
+* array index 0 for the cross-platform form used by ID token audience
+* verification. Index 0 is the designated primary and pairs with
+* `clientSecret` for the authorization code flow; later array entries are
+* only used as additional accepted audiences. Returns `undefined` when the
+* primary value is missing or an empty string.
+*/
+function getPrimaryClientId(clientId) {
+	const value = Array.isArray(clientId) ? clientId[0] : clientId;
+	return typeof value === "string" && value.length > 0 ? value : void 0;
+}
+async function generateCodeChallenge(codeVerifier) {
+	const data = new TextEncoder().encode(codeVerifier);
+	const hash = await crypto.subtle.digest("SHA-256", data);
+	return base64Url.encode(new Uint8Array(hash), { padding: false });
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/oauth2/create-authorization-url.mjs
+async function createAuthorizationURL({ id, options, authorizationEndpoint, state, codeVerifier, scopes, claims, redirectURI, duration, prompt, accessType, responseType, display, loginHint, hd, responseMode, additionalParams, scopeJoiner }) {
+	options = typeof options === "function" ? await options() : options;
+	const url = new URL(options.authorizationEndpoint || authorizationEndpoint);
+	url.searchParams.set("response_type", responseType || "code");
+	const primaryClientId = Array.isArray(options.clientId) ? options.clientId[0] : options.clientId;
+	url.searchParams.set("client_id", primaryClientId);
+	url.searchParams.set("state", state);
+	if (scopes) url.searchParams.set("scope", scopes.join(scopeJoiner || " "));
+	url.searchParams.set("redirect_uri", options.redirectURI || redirectURI);
+	duration && url.searchParams.set("duration", duration);
+	display && url.searchParams.set("display", display);
+	loginHint && url.searchParams.set("login_hint", loginHint);
+	prompt && url.searchParams.set("prompt", prompt);
+	hd && url.searchParams.set("hd", hd);
+	accessType && url.searchParams.set("access_type", accessType);
+	responseMode && url.searchParams.set("response_mode", responseMode);
+	if (codeVerifier) {
+		const codeChallenge = await generateCodeChallenge(codeVerifier);
+		url.searchParams.set("code_challenge_method", "S256");
+		url.searchParams.set("code_challenge", codeChallenge);
+	}
+	if (claims) {
+		const claimsObj = claims.reduce((acc, claim) => {
+			acc[claim] = null;
+			return acc;
+		}, {});
+		url.searchParams.set("claims", JSON.stringify({ id_token: {
+			email: null,
+			email_verified: null,
+			...claimsObj
+		} }));
+	}
+	if (additionalParams) Object.entries(additionalParams).forEach(([key, value]) => {
+		url.searchParams.set(key, value);
+	});
+	return url;
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/oauth2/reject-redirects.mjs
+var HTTP_REDIRECT_STATUSES = /* @__PURE__ */ new Set([
+	301,
+	302,
+	303,
+	307,
+	308
+]);
+/**
+* Whether a response from a `redirect: "manual"` fetch is a redirect.
+*
+* Node/undici exposes the real 3xx status. Spec-compliant runtimes (Cloudflare
+* Workers, Deno, browsers) return an opaque-redirect filtered response with
+* status 0 and type `"opaqueredirect"`, so the status alone is not enough.
+*/
+function isRedirectResponse(response) {
+	return response.type === "opaqueredirect" || HTTP_REDIRECT_STATUSES.has(response.status);
+}
+function redirectRefused(endpoint) {
+	return new BetterAuthError(`The OAuth endpoint "${endpoint}" returned an HTTP redirect. Server-side OAuth fetches refuse redirects to prevent SSRF; configure the final endpoint URL.`);
+}
+/**
+* Fetch option that refuses HTTP redirects portably.
+*
+* Cloudflare Workers (workerd) rejects `redirect: "error"`, so manual mode is
+* used and the resolved response is checked with {@link assertResponseNotRedirect}
+* (or, for betterFetch, with {@link fetchRefusingRedirects}).
+*/
+var NO_FOLLOW_REDIRECT = { redirect: "manual" };
+/**
+* betterFetch that refuses HTTP redirects on a server-side OAuth fetch.
+*
+* Returns the betterFetch result and throws if the endpoint redirected, on both
+* undici (real 3xx status) and spec-compliant runtimes (opaque redirect, where
+* the error status is 0). The redirect is never followed on any runtime.
+*/
+async function fetchRefusingRedirects(url, options) {
+	let redirected = false;
+	const result = await betterFetch(url, {
+		...options,
+		...NO_FOLLOW_REDIRECT,
+		onError(context) {
+			if (isRedirectResponse(context.response)) redirected = true;
+		}
+	});
+	if (redirected) throw redirectRefused(url);
+	return result;
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/oauth2/refresh-access-token.mjs
+/**
+* @deprecated use async'd refreshAccessTokenRequest instead
+*/
+function createRefreshAccessTokenRequest({ refreshToken, options, authentication, extraParams, resource }) {
+	const body = new URLSearchParams();
+	const headers = {
+		"content-type": "application/x-www-form-urlencoded",
+		accept: "application/json"
+	};
+	body.set("grant_type", "refresh_token");
+	body.set("refresh_token", refreshToken);
+	if (authentication === "basic") {
+		const primaryClientId = Array.isArray(options.clientId) ? options.clientId[0] : options.clientId;
+		if (primaryClientId) headers["authorization"] = "Basic " + base64.encode(`${primaryClientId}:${options.clientSecret ?? ""}`);
+		else headers["authorization"] = "Basic " + base64.encode(`:${options.clientSecret ?? ""}`);
+	} else {
+		const primaryClientId = Array.isArray(options.clientId) ? options.clientId[0] : options.clientId;
+		body.set("client_id", primaryClientId);
+		if (options.clientSecret) body.set("client_secret", options.clientSecret);
+	}
+	if (resource) if (typeof resource === "string") body.append("resource", resource);
+	else for (const _resource of resource) body.append("resource", _resource);
+	if (extraParams) for (const [key, value] of Object.entries(extraParams)) body.set(key, value);
+	return {
+		body,
+		headers
+	};
+}
+async function refreshAccessToken({ refreshToken, options, tokenEndpoint, authentication, extraParams }) {
+	const { body, headers } = await createRefreshAccessTokenRequest({
+		refreshToken,
+		options,
+		authentication,
+		extraParams
+	});
+	const { data, error } = await fetchRefusingRedirects(tokenEndpoint, {
+		method: "POST",
+		body,
+		headers
+	});
+	if (error) throw error;
+	const tokens = {
+		accessToken: data.access_token,
+		refreshToken: data.refresh_token,
+		tokenType: data.token_type,
+		scopes: data.scope?.split(" "),
+		idToken: data.id_token
+	};
+	if (data.expires_in) tokens.accessTokenExpiresAt = new Date((/* @__PURE__ */ new Date()).getTime() + data.expires_in * 1e3);
+	if (data.refresh_token_expires_in) tokens.refreshTokenExpiresAt = new Date((/* @__PURE__ */ new Date()).getTime() + data.refresh_token_expires_in * 1e3);
+	return tokens;
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/oauth2/validate-authorization-code.mjs
+async function authorizationCodeRequest({ code, codeVerifier, redirectURI, options, authentication, deviceId, headers, additionalParams = {}, resource }) {
+	options = typeof options === "function" ? await options() : options;
+	return createAuthorizationCodeRequest({
+		code,
+		codeVerifier,
+		redirectURI,
+		options,
+		authentication,
+		deviceId,
+		headers,
+		additionalParams,
+		resource
+	});
+}
+/**
+* @deprecated use async'd authorizationCodeRequest instead
+*/
+function createAuthorizationCodeRequest({ code, codeVerifier, redirectURI, options, authentication, deviceId, headers, additionalParams = {}, resource }) {
+	const body = new URLSearchParams();
+	const requestHeaders = {
+		"content-type": "application/x-www-form-urlencoded",
+		accept: "application/json",
+		...headers
+	};
+	body.set("grant_type", "authorization_code");
+	body.set("code", code);
+	codeVerifier && body.set("code_verifier", codeVerifier);
+	options.clientKey && body.set("client_key", options.clientKey);
+	deviceId && body.set("device_id", deviceId);
+	body.set("redirect_uri", options.redirectURI || redirectURI);
+	if (resource) if (typeof resource === "string") body.append("resource", resource);
+	else for (const _resource of resource) body.append("resource", _resource);
+	if (authentication === "basic") {
+		const primaryClientId = Array.isArray(options.clientId) ? options.clientId[0] : options.clientId;
+		requestHeaders["authorization"] = `Basic ${base64.encode(`${primaryClientId}:${options.clientSecret ?? ""}`)}`;
+	} else {
+		const primaryClientId = Array.isArray(options.clientId) ? options.clientId[0] : options.clientId;
+		body.set("client_id", primaryClientId);
+		if (options.clientSecret) body.set("client_secret", options.clientSecret);
+	}
+	for (const [key, value] of Object.entries(additionalParams)) if (!body.has(key)) body.append(key, value);
+	return {
+		body,
+		headers: requestHeaders
+	};
+}
+async function validateAuthorizationCode({ code, codeVerifier, redirectURI, options, tokenEndpoint, authentication, deviceId, headers, additionalParams = {}, resource }) {
+	const { body, headers: requestHeaders } = await authorizationCodeRequest({
+		code,
+		codeVerifier,
+		redirectURI,
+		options,
+		authentication,
+		deviceId,
+		headers,
+		additionalParams,
+		resource
+	});
+	const { data, error } = await fetchRefusingRedirects(tokenEndpoint, {
+		method: "POST",
+		body,
+		headers: requestHeaders
+	});
+	if (error) throw error;
+	return getOAuth2Tokens(data);
+}
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/apple.mjs
+async function sha256Hex(value) {
+	const data = new TextEncoder().encode(value);
+	const digest = await crypto.subtle.digest("SHA-256", data);
+	return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+async function nonceMatches(jwtNonce, nonce) {
+	if (typeof jwtNonce !== "string") return false;
+	if (jwtNonce === nonce) return true;
+	return jwtNonce === await sha256Hex(nonce);
+}
+var apple = (options) => {
+	const tokenEndpoint = "https://appleid.apple.com/auth/token";
+	return {
+		id: "apple",
+		name: "Apple",
+		async createAuthorizationURL({ state, scopes, redirectURI }) {
+			if (!getPrimaryClientId(options.clientId) || !options.clientSecret) {
+				logger.error("Client ID and client secret are required for Apple. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			const _scope = options.disableDefaultScope ? [] : ["email", "name"];
+			if (options.scope) _scope.push(...options.scope);
+			if (scopes) _scope.push(...scopes);
+			return await createAuthorizationURL({
+				id: "apple",
+				options,
+				authorizationEndpoint: "https://appleid.apple.com/auth/authorize",
+				scopes: _scope,
+				state,
+				redirectURI,
+				responseMode: "form_post",
+				responseType: "code id_token"
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			try {
+				const { kid, alg: jwtAlg } = decodeProtectedHeader(token);
+				if (!kid || !jwtAlg) return false;
+				const { payload: jwtClaims } = await jwtVerify(token, await getApplePublicKey(kid), {
+					algorithms: [jwtAlg],
+					issuer: "https://appleid.apple.com",
+					audience: options.audience && options.audience.length ? options.audience : options.appBundleIdentifier ? options.appBundleIdentifier : options.clientId,
+					maxTokenAge: "1h"
+				});
+				["email_verified", "is_private_email"].forEach((field) => {
+					if (jwtClaims[field] !== void 0) jwtClaims[field] = Boolean(jwtClaims[field]);
+				});
+				if (nonce && !await nonceMatches(jwtClaims.nonce, nonce)) return false;
+				return !!jwtClaims;
+			} catch {
+				return false;
+			}
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options,
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.idToken) return null;
+			const profile = decodeJwt(token.idToken);
+			if (!profile) return null;
+			let name;
+			if (token.user?.name) name = `${token.user.name.firstName || ""} ${token.user.name.lastName || ""}`.trim();
+			else name = profile.name || "";
+			const emailVerified = typeof profile.email_verified === "boolean" ? profile.email_verified : profile.email_verified === "true";
+			const enrichedProfile = {
+				...profile,
+				name
+			};
+			const userMap = await options.mapProfileToUser?.(enrichedProfile);
+			return {
+				user: {
+					id: profile.sub,
+					name: enrichedProfile.name,
+					emailVerified,
+					email: profile.email,
+					...userMap
+				},
+				data: enrichedProfile
+			};
+		},
+		options
+	};
+};
+var getApplePublicKey = async (kid) => {
+	const { data } = await betterFetch(`https://appleid.apple.com/auth/keys`);
+	if (!data?.keys) throw new APIError("BAD_REQUEST", { message: "Keys not found" });
+	const jwk = data.keys.find((key) => key.kid === kid);
+	if (!jwk) throw new Error(`JWK with kid ${kid} not found`);
+	return await importJWK(jwk, jwk.alg);
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/atlassian.mjs
+var atlassian = (options) => {
+	const tokenEndpoint = "https://auth.atlassian.com/oauth/token";
+	return {
+		id: "atlassian",
+		name: "Atlassian",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			if (!options.clientId || !options.clientSecret) {
+				logger.error("Client Id and Secret are required for Atlassian");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Atlassian");
+			const _scopes = options.disableDefaultScope ? [] : ["read:jira-user", "offline_access"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "atlassian",
+				options,
+				authorizationEndpoint: "https://auth.atlassian.com/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				additionalParams: { audience: "api.atlassian.com" },
+				prompt: options.prompt
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.accessToken) return null;
+			try {
+				const { data: profile } = await betterFetch("https://api.atlassian.com/me", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+				if (!profile) return null;
+				const userMap = await options.mapProfileToUser?.(profile);
+				return {
+					user: {
+						id: profile.account_id,
+						name: profile.name,
+						email: profile.email,
+						image: profile.picture,
+						emailVerified: false,
+						...userMap
+					},
+					data: profile
+				};
+			} catch (error) {
+				logger.error("Failed to fetch user info from Figma:", error);
+				return null;
+			}
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/cognito.mjs
+var cognito = (options) => {
+	if (!options.domain || !options.region || !options.userPoolId) {
+		logger.error("Domain, region and userPoolId are required for Amazon Cognito. Make sure to provide them in the options.");
+		throw new BetterAuthError("DOMAIN_AND_REGION_REQUIRED");
+	}
+	const cleanDomain = options.domain.replace(/^https?:\/\//, "");
+	const authorizationEndpoint = `https://${cleanDomain}/oauth2/authorize`;
+	const tokenEndpoint = `https://${cleanDomain}/oauth2/token`;
+	const userInfoEndpoint = `https://${cleanDomain}/oauth2/userinfo`;
+	return {
+		id: "cognito",
+		name: "Cognito",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			if (!getPrimaryClientId(options.clientId)) {
+				logger.error("ClientId is required for Amazon Cognito. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (options.requireClientSecret && !options.clientSecret) {
+				logger.error("Client Secret is required when requireClientSecret is true. Make sure to provide it in the options.");
+				throw new BetterAuthError("CLIENT_SECRET_REQUIRED");
+			}
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			const url = await createAuthorizationURL({
+				id: "cognito",
+				options: { ...options },
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				prompt: options.prompt
+			});
+			const scopeValue = url.searchParams.get("scope");
+			if (scopeValue) {
+				url.searchParams.delete("scope");
+				const encodedScope = encodeURIComponent(scopeValue);
+				const urlString = url.toString();
+				const separator = urlString.includes("?") ? "&" : "?";
+				return new URL(`${urlString}${separator}scope=${encodedScope}`);
+			}
+			return url;
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			try {
+				const { kid, alg: jwtAlg } = decodeProtectedHeader(token);
+				if (!kid || !jwtAlg) return false;
+				const publicKey = await getCognitoPublicKey(kid, options.region, options.userPoolId);
+				const expectedIssuer = `https://cognito-idp.${options.region}.amazonaws.com/${options.userPoolId}`;
+				const { payload: jwtClaims } = await jwtVerify(token, publicKey, {
+					algorithms: [jwtAlg],
+					issuer: expectedIssuer,
+					audience: options.clientId,
+					maxTokenAge: "1h"
+				});
+				if (nonce && jwtClaims.nonce !== nonce) return false;
+				return true;
+			} catch (error) {
+				logger.error("Failed to verify ID token:", error);
+				return false;
+			}
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (token.idToken) try {
+				const profile = decodeJwt(token.idToken);
+				if (!profile) return null;
+				const name = profile.name || profile.given_name || profile.username || "";
+				const enrichedProfile = {
+					...profile,
+					name
+				};
+				const userMap = await options.mapProfileToUser?.(enrichedProfile);
+				return {
+					user: {
+						id: profile.sub,
+						name: enrichedProfile.name,
+						email: profile.email,
+						image: profile.picture,
+						emailVerified: profile.email_verified,
+						...userMap
+					},
+					data: enrichedProfile
+				};
+			} catch (error) {
+				logger.error("Failed to decode ID token:", error);
+			}
+			if (token.accessToken) try {
+				const { data: userInfo } = await betterFetch(userInfoEndpoint, { headers: { Authorization: `Bearer ${token.accessToken}` } });
+				if (userInfo) {
+					const userMap = await options.mapProfileToUser?.(userInfo);
+					return {
+						user: {
+							id: userInfo.sub,
+							name: userInfo.name || userInfo.given_name || userInfo.username || "",
+							email: userInfo.email,
+							image: userInfo.picture,
+							emailVerified: userInfo.email_verified,
+							...userMap
+						},
+						data: userInfo
+					};
+				}
+			} catch (error) {
+				logger.error("Failed to fetch user info from Cognito:", error);
+			}
+			return null;
+		},
+		options
+	};
+};
+var getCognitoPublicKey = async (kid, region, userPoolId) => {
+	const COGNITO_JWKS_URI = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
+	try {
+		const { data } = await betterFetch(COGNITO_JWKS_URI);
+		if (!data?.keys) throw new APIError("BAD_REQUEST", { message: "Keys not found" });
+		const jwk = data.keys.find((key) => key.kid === kid);
+		if (!jwk) throw new Error(`JWK with kid ${kid} not found`);
+		return await importJWK(jwk, jwk.alg);
+	} catch (error) {
+		logger.error("Failed to fetch Cognito public key:", error);
+		throw error;
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/discord.mjs
+var discord = (options) => {
+	const tokenEndpoint = "https://discord.com/api/oauth2/token";
+	return {
+		id: "discord",
+		name: "Discord",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["identify", "email"];
+			if (scopes) _scopes.push(...scopes);
+			if (options.scope) _scopes.push(...options.scope);
+			const permissionsParam = _scopes.includes("bot") && options.permissions !== void 0 ? `&permissions=${options.permissions}` : "";
+			return new URL(`https://discord.com/api/oauth2/authorize?scope=${_scopes.join("+")}&response_type=code&client_id=${options.clientId}&redirect_uri=${encodeURIComponent(options.redirectURI || redirectURI)}&state=${state}&prompt=${options.prompt || "none"}${permissionsParam}`);
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://discord.com/api/users/@me", { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			if (profile.avatar === null) profile.image_url = `https://cdn.discordapp.com/embed/avatars/${profile.discriminator === "0" ? Number(BigInt(profile.id) >> BigInt(22)) % 6 : parseInt(profile.discriminator) % 5}.png`;
+			else {
+				const format = profile.avatar.startsWith("a_") ? "gif" : "png";
+				profile.image_url = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.${format}`;
+			}
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.global_name || profile.username || "",
+					email: profile.email,
+					emailVerified: profile.verified,
+					image: profile.image_url,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/dropbox.mjs
+var dropbox = (options) => {
+	const tokenEndpoint = "https://api.dropboxapi.com/oauth2/token";
+	return {
+		id: "dropbox",
+		name: "Dropbox",
+		createAuthorizationURL: async ({ state, scopes, codeVerifier, redirectURI }) => {
+			const _scopes = options.disableDefaultScope ? [] : ["account_info.read"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			const additionalParams = {};
+			if (options.accessType) additionalParams.token_access_type = options.accessType;
+			return await createAuthorizationURL({
+				id: "dropbox",
+				options,
+				authorizationEndpoint: "https://www.dropbox.com/oauth2/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				codeVerifier,
+				additionalParams
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return await validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.dropboxapi.com/2/users/get_current_account", {
+				method: "POST",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.account_id,
+					name: profile.name?.display_name,
+					email: profile.email,
+					emailVerified: profile.email_verified || false,
+					image: profile.profile_photo_url,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/facebook.mjs
+/**
+* Validate an opaque Facebook access token against the configured app.
+*
+* Facebook access tokens are not audience-bound at the Graph `/me` endpoint: a
+* token minted for any Facebook app returns that app's profile. Without this
+* check, a token issued to an unrelated app could be presented to this
+* app's direct sign-in path and accepted as proof of identity. We call the
+* `debug_token` endpoint and require the token to be valid, bound to one of the
+* configured client ids, and tied to a user.
+*
+* @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/debugging
+*
+* @returns the inspected token's `user_id` when the token is valid and bound to
+* the configured app, otherwise `null`.
+*/
+async function verifyFacebookAccessToken(accessToken, options) {
+	const primaryClientId = getPrimaryClientId(options.clientId);
+	if (!primaryClientId || !options.clientSecret) return null;
+	const clientIds = Array.isArray(options.clientId) ? options.clientId : [options.clientId];
+	const { data, error } = await betterFetch("https://graph.facebook.com/debug_token", { query: {
+		input_token: accessToken,
+		access_token: `${primaryClientId}|${options.clientSecret}`
+	} });
+	if (error || !data?.data) return null;
+	const { is_valid, app_id, user_id } = data.data;
+	if (is_valid !== true || !app_id || !clientIds.includes(app_id) || !user_id) return null;
+	return user_id;
+}
+var facebook = (options) => {
+	return {
+		id: "facebook",
+		name: "Facebook",
+		async createAuthorizationURL({ state, scopes, redirectURI, loginHint }) {
+			if (!getPrimaryClientId(options.clientId) || !options.clientSecret) {
+				logger.error("Client ID and client secret are required for Facebook. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			const _scopes = options.disableDefaultScope ? [] : ["email", "public_profile"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "facebook",
+				options,
+				authorizationEndpoint: "https://www.facebook.com/v24.0/dialog/oauth",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				loginHint,
+				additionalParams: options.configId ? { config_id: options.configId } : {}
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint: "https://graph.facebook.com/v24.0/oauth/access_token"
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			if (token.split(".").length === 3) try {
+				const { payload: jwtClaims } = await jwtVerify(token, createRemoteJWKSet(new URL("https://limited.facebook.com/.well-known/oauth/openid/jwks/")), {
+					algorithms: ["RS256"],
+					audience: options.clientId,
+					issuer: "https://www.facebook.com"
+				});
+				if (nonce && jwtClaims.nonce !== nonce) return false;
+				return !!jwtClaims;
+			} catch {
+				return false;
+			}
+			return await verifyFacebookAccessToken(token, options) !== null;
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint: "https://graph.facebook.com/v24.0/oauth/access_token"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (token.idToken && token.idToken.split(".").length === 3) {
+				const profile = decodeJwt(token.idToken);
+				const user = {
+					id: profile.sub,
+					name: profile.name,
+					email: profile.email,
+					picture: { data: {
+						url: profile.picture,
+						height: 100,
+						width: 100,
+						is_silhouette: false
+					} }
+				};
+				const userMap = await options.mapProfileToUser?.({
+					...user,
+					email_verified: false
+				});
+				return {
+					user: {
+						...user,
+						emailVerified: false,
+						...userMap
+					},
+					data: profile
+				};
+			}
+			const accessToken = token.accessToken;
+			if (!accessToken) return null;
+			const tokenUserId = await verifyFacebookAccessToken(accessToken, options);
+			if (!tokenUserId) return null;
+			const { data: profile, error } = await betterFetch("https://graph.facebook.com/me?fields=" + [
+				"id",
+				"name",
+				"email",
+				"picture",
+				...options?.fields || []
+			].join(","), { auth: {
+				type: "Bearer",
+				token: accessToken
+			} });
+			if (error) return null;
+			if (profile.id !== tokenUserId) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.name,
+					email: profile.email,
+					image: profile.picture.data.url,
+					emailVerified: profile.email_verified ?? false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/figma.mjs
+var figma = (options) => {
+	const tokenEndpoint = "https://api.figma.com/v1/oauth/token";
+	return {
+		id: "figma",
+		name: "Figma",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			if (!options.clientId || !options.clientSecret) {
+				logger.error("Client Id and Client Secret are required for Figma. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Figma");
+			const _scopes = options.disableDefaultScope ? [] : ["current_user:read"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "figma",
+				options,
+				authorizationEndpoint: "https://www.figma.com/oauth",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint,
+				authentication: "basic"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint,
+				authentication: "basic"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			try {
+				const { data: profile } = await betterFetch("https://api.figma.com/v1/me", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+				if (!profile) {
+					logger.error("Failed to fetch user from Figma");
+					return null;
+				}
+				const userMap = await options.mapProfileToUser?.(profile);
+				return {
+					user: {
+						id: profile.id,
+						name: profile.handle,
+						email: profile.email,
+						image: profile.img_url,
+						emailVerified: false,
+						...userMap
+					},
+					data: profile
+				};
+			} catch (error) {
+				logger.error("Failed to fetch user info from Figma:", error);
+				return null;
+			}
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/github.mjs
+var github = (options) => {
+	const tokenEndpoint = "https://github.com/login/oauth/access_token";
+	return {
+		id: "github",
+		name: "GitHub",
+		createAuthorizationURL({ state, scopes, loginHint, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["read:user", "user:email"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "github",
+				options,
+				authorizationEndpoint: "https://github.com/login/oauth/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				loginHint,
+				prompt: options.prompt
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			const { body, headers: requestHeaders } = createAuthorizationCodeRequest({
+				code,
+				codeVerifier,
+				redirectURI,
+				options
+			});
+			const { data, error } = await betterFetch(tokenEndpoint, {
+				method: "POST",
+				body,
+				headers: requestHeaders
+			});
+			if (error) {
+				logger.error("GitHub OAuth token exchange failed:", error);
+				return null;
+			}
+			if ("error" in data) {
+				logger.error("GitHub OAuth token exchange failed:", data);
+				return null;
+			}
+			return getOAuth2Tokens(data);
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.github.com/user", { headers: {
+				"User-Agent": "better-auth",
+				authorization: `Bearer ${token.accessToken}`
+			} });
+			if (error) return null;
+			const { data: emails } = await betterFetch("https://api.github.com/user/emails", { headers: {
+				Authorization: `Bearer ${token.accessToken}`,
+				"User-Agent": "better-auth"
+			} });
+			if (!profile.email && emails) profile.email = (emails.find((e) => e.primary) ?? emails[0])?.email;
+			const emailVerified = emails?.find((e) => e.email === profile.email)?.verified ?? false;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.name || profile.login || "",
+					email: profile.email,
+					image: profile.avatar_url,
+					emailVerified,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/gitlab.mjs
+var cleanDoubleSlashes = (input = "") => {
+	return input.split("://").map((str) => str.replace(/\/{2,}/g, "/")).join("://");
+};
+var issuerToEndpoints = (issuer) => {
+	const baseUrl = issuer || "https://gitlab.com";
+	return {
+		authorizationEndpoint: cleanDoubleSlashes(`${baseUrl}/oauth/authorize`),
+		tokenEndpoint: cleanDoubleSlashes(`${baseUrl}/oauth/token`),
+		userinfoEndpoint: cleanDoubleSlashes(`${baseUrl}/api/v4/user`)
+	};
+};
+var gitlab = (options) => {
+	const { authorizationEndpoint, tokenEndpoint, userinfoEndpoint } = issuerToEndpoints(options.issuer);
+	const issuerId = "gitlab";
+	return {
+		id: issuerId,
+		name: "Gitlab",
+		createAuthorizationURL: async ({ state, scopes, codeVerifier, loginHint, redirectURI }) => {
+			const _scopes = options.disableDefaultScope ? [] : ["read_user"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: issuerId,
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				redirectURI,
+				codeVerifier,
+				loginHint
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI, codeVerifier }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				codeVerifier,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch(userinfoEndpoint, { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error || profile.state !== "active" || profile.locked) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.name ?? profile.username ?? "",
+					email: profile.email,
+					image: profile.avatar_url,
+					emailVerified: profile.email_verified ?? false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/google.mjs
+var GOOGLE_ID_TOKEN_MAX_AGE = "1h";
+/**
+* Verifies a Google ID token against Google's issuer, audience, signature,
+* expiry, and maximum token age.
+*/
+var verifyGoogleIdToken = async ({ token, audience, nonce }) => {
+	try {
+		const { kid, alg: jwtAlg } = decodeProtectedHeader(token);
+		if (!kid || !jwtAlg) return null;
+		const { payload: jwtClaims } = await jwtVerify(token, await getGooglePublicKey(kid), {
+			algorithms: [jwtAlg],
+			issuer: ["https://accounts.google.com", "accounts.google.com"],
+			audience,
+			maxTokenAge: GOOGLE_ID_TOKEN_MAX_AGE
+		});
+		if (nonce && jwtClaims.nonce !== nonce) return null;
+		return jwtClaims;
+	} catch {
+		return null;
+	}
+};
+/**
+* Checks whether Google's verified `hd` claim satisfies the configured hosted
+* domain restriction. `hd: "*"` accepts any Google Workspace hosted domain.
+*/
+var isGoogleHostedDomainAllowed = (configuredHostedDomain, tokenHostedDomain) => {
+	if (!configuredHostedDomain) return true;
+	if (typeof tokenHostedDomain !== "string" || !tokenHostedDomain) return false;
+	if (configuredHostedDomain === "*") return true;
+	return tokenHostedDomain === configuredHostedDomain;
+};
+var google = (options) => {
+	return {
+		id: "google",
+		name: "Google",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI, loginHint, display }) {
+			if (!getPrimaryClientId(options.clientId) || !options.clientSecret) {
+				logger.error("Client Id and Client Secret is required for Google. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Google");
+			const _scopes = options.disableDefaultScope ? [] : [
+				"email",
+				"profile",
+				"openid"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "google",
+				options,
+				authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				prompt: options.prompt,
+				accessType: options.accessType,
+				display: display || options.display,
+				loginHint,
+				hd: options.hd,
+				additionalParams: { include_granted_scopes: "true" }
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint: "https://oauth2.googleapis.com/token"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint: "https://oauth2.googleapis.com/token"
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			const jwtClaims = await verifyGoogleIdToken({
+				token,
+				audience: options.clientId,
+				nonce
+			});
+			if (!jwtClaims) return false;
+			return isGoogleHostedDomainAllowed(options.hd, jwtClaims.hd);
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.idToken) return null;
+			const user = decodeJwt(token.idToken);
+			if (!isGoogleHostedDomainAllowed(options.hd, user.hd)) {
+				logger.error(`Google sign-in rejected: id token hosted domain (hd) "${user.hd ?? "<missing>"}" does not satisfy the configured "hd" option "${options.hd}".`);
+				return null;
+			}
+			const userMap = await options.mapProfileToUser?.(user);
+			return {
+				user: {
+					id: user.sub,
+					name: user.name,
+					email: user.email,
+					image: user.picture,
+					emailVerified: user.email_verified,
+					...userMap
+				},
+				data: user
+			};
+		},
+		options
+	};
+};
+var getGooglePublicKey = async (kid) => {
+	const { data } = await betterFetch("https://www.googleapis.com/oauth2/v3/certs");
+	if (!data?.keys) throw new APIError("BAD_REQUEST", { message: "Keys not found" });
+	const jwk = data.keys.find((key) => key.kid === kid);
+	if (!jwk) throw new Error(`JWK with kid ${kid} not found`);
+	return await importJWK(jwk, jwk.alg);
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/huggingface.mjs
+var huggingface = (options) => {
+	const tokenEndpoint = "https://huggingface.co/oauth/token";
+	return {
+		id: "huggingface",
+		name: "Hugging Face",
+		createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "huggingface",
+				options,
+				authorizationEndpoint: "https://huggingface.co/oauth/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://huggingface.co/oauth/userinfo", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.name || profile.preferred_username || "",
+					email: profile.email,
+					image: profile.picture,
+					emailVerified: profile.email_verified ?? false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/kakao.mjs
+var kakao = (options) => {
+	const tokenEndpoint = "https://kauth.kakao.com/oauth/token";
+	return {
+		id: "kakao",
+		name: "Kakao",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"account_email",
+				"profile_image",
+				"profile_nickname"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "kakao",
+				options,
+				authorizationEndpoint: "https://kauth.kakao.com/oauth/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://kapi.kakao.com/v2/user/me", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+			if (error || !profile) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			const account = profile.kakao_account || {};
+			const kakaoProfile = account.profile || {};
+			return {
+				user: {
+					id: String(profile.id),
+					name: kakaoProfile.nickname || account.name || "",
+					email: account.email,
+					image: kakaoProfile.profile_image_url || kakaoProfile.thumbnail_image_url,
+					emailVerified: !!account.is_email_valid && !!account.is_email_verified,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/kick.mjs
+var kick = (options) => {
+	return {
+		id: "kick",
+		name: "Kick",
+		createAuthorizationURL({ state, scopes, redirectURI, codeVerifier }) {
+			const _scopes = options.disableDefaultScope ? [] : ["user:read"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "kick",
+				redirectURI,
+				options,
+				authorizationEndpoint: "https://id.kick.com/oauth/authorize",
+				scopes: _scopes,
+				codeVerifier,
+				state
+			});
+		},
+		async validateAuthorizationCode({ code, redirectURI, codeVerifier }) {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint: "https://id.kick.com/oauth/token",
+				codeVerifier
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint: "https://id.kick.com/oauth/token"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data, error } = await betterFetch("https://api.kick.com/public/v1/users", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (error) return null;
+			const profile = data.data[0];
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.user_id,
+					name: profile.name,
+					email: profile.email,
+					image: profile.profile_picture,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/line.mjs
+/**
+* LINE Login v2.1
+* - Authorization endpoint: https://access.line.me/oauth2/v2.1/authorize
+* - Token endpoint: https://api.line.me/oauth2/v2.1/token
+* - UserInfo endpoint: https://api.line.me/oauth2/v2.1/userinfo
+* - Verify ID token: https://api.line.me/oauth2/v2.1/verify
+*
+* Docs: https://developers.line.biz/en/reference/line-login/#issue-access-token
+*/
+var line = (options) => {
+	const authorizationEndpoint = "https://access.line.me/oauth2/v2.1/authorize";
+	const tokenEndpoint = "https://api.line.me/oauth2/v2.1/token";
+	const userInfoEndpoint = "https://api.line.me/oauth2/v2.1/userinfo";
+	const verifyIdTokenEndpoint = "https://api.line.me/oauth2/v2.1/verify";
+	return {
+		id: "line",
+		name: "LINE",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI, loginHint }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "line",
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				loginHint
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			const body = new URLSearchParams();
+			body.set("id_token", token);
+			body.set("client_id", options.clientId);
+			if (nonce) body.set("nonce", nonce);
+			const { data, error } = await betterFetch(verifyIdTokenEndpoint, {
+				method: "POST",
+				headers: { "content-type": "application/x-www-form-urlencoded" },
+				body
+			});
+			if (error || !data) return false;
+			if (data.aud !== options.clientId) return false;
+			if (data.nonce && data.nonce !== nonce) return false;
+			return true;
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			let profile = null;
+			if (token.idToken) try {
+				profile = decodeJwt(token.idToken);
+			} catch {}
+			if (!profile) {
+				const { data } = await betterFetch(userInfoEndpoint, { headers: { authorization: `Bearer ${token.accessToken}` } });
+				profile = data || null;
+			}
+			if (!profile) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			const id = profile.sub || profile.userId;
+			const name = profile.name || profile.displayName || "";
+			const image = profile.picture || profile.pictureUrl || void 0;
+			return {
+				user: {
+					id,
+					name,
+					email: profile.email,
+					image,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/linear.mjs
+var linear = (options) => {
+	const tokenEndpoint = "https://api.linear.app/oauth/token";
+	return {
+		id: "linear",
+		name: "Linear",
+		createAuthorizationURL({ state, scopes, loginHint, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["read"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "linear",
+				options,
+				authorizationEndpoint: "https://linear.app/oauth/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				loginHint
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.linear.app/graphql", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token.accessToken}`
+				},
+				body: JSON.stringify({ query: `
+							query {
+								viewer {
+									id
+									name
+									email
+									avatarUrl
+									active
+									createdAt
+									updatedAt
+								}
+							}
+						` })
+			});
+			if (error || !profile?.data?.viewer) return null;
+			const userData = profile.data.viewer;
+			const userMap = await options.mapProfileToUser?.(userData);
+			return {
+				user: {
+					id: profile.data.viewer.id,
+					name: profile.data.viewer.name,
+					email: profile.data.viewer.email,
+					image: profile.data.viewer.avatarUrl,
+					emailVerified: false,
+					...userMap
+				},
+				data: userData
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/linkedin.mjs
+var linkedin = (options) => {
+	const authorizationEndpoint = "https://www.linkedin.com/oauth/v2/authorization";
+	const tokenEndpoint = "https://www.linkedin.com/oauth/v2/accessToken";
+	return {
+		id: "linkedin",
+		name: "Linkedin",
+		createAuthorizationURL: async ({ state, scopes, redirectURI, loginHint }) => {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"profile",
+				"email",
+				"openid"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "linkedin",
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				loginHint,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return await validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.linkedin.com/v2/userinfo", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.name,
+					email: profile.email,
+					emailVerified: profile.email_verified ?? false,
+					image: profile.picture,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/microsoft-entra-id.mjs
+/**
+* Microsoft's fixed tenant id for personal (consumer) Microsoft accounts. Every
+* personal-account token carries it as the `tid` claim, so it distinguishes the
+* consumer account class from work/school tenants.
+* @see https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference
+*/
+var MICROSOFT_CONSUMER_TENANT_ID = "9188040d-6c67-4c5b-b112-36a304b66dad";
+var microsoft = (options) => {
+	const tenant = options.tenantId || "common";
+	let authority = options.authority || "https://login.microsoftonline.com";
+	while (authority.endsWith("/")) authority = authority.slice(0, -1);
+	const authorizationEndpoint = `${authority}/${tenant}/oauth2/v2.0/authorize`;
+	const tokenEndpoint = `${authority}/${tenant}/oauth2/v2.0/token`;
+	return {
+		id: "microsoft",
+		name: "Microsoft EntraID",
+		createAuthorizationURL(data) {
+			if (!getPrimaryClientId(options.clientId)) {
+				logger.error("Client Id is required for Microsoft Entra ID. Make sure to provide it in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			const scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email",
+				"User.Read",
+				"offline_access"
+			];
+			if (options.scope) scopes.push(...options.scope);
+			if (data.scopes) scopes.push(...data.scopes);
+			return createAuthorizationURL({
+				id: "microsoft",
+				options,
+				authorizationEndpoint,
+				state: data.state,
+				codeVerifier: data.codeVerifier,
+				scopes,
+				redirectURI: data.redirectURI,
+				prompt: options.prompt,
+				loginHint: data.loginHint
+			});
+		},
+		validateAuthorizationCode({ code, codeVerifier, redirectURI }) {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			try {
+				const { kid, alg: jwtAlg } = decodeProtectedHeader(token);
+				if (!kid || !jwtAlg) return false;
+				const publicKey = await getMicrosoftPublicKey(kid, tenant, authority);
+				const verifyOptions = {
+					algorithms: [jwtAlg],
+					audience: options.clientId,
+					maxTokenAge: "1h"
+				};
+				/**
+				* Issuer varies per user's tenant for multi-tenant endpoints, so only validate for specific tenants.
+				* @see https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols#endpoints
+				*/
+				if (tenant !== "common" && tenant !== "organizations" && tenant !== "consumers") verifyOptions.issuer = `${authority}/${tenant}/v2.0`;
+				const { payload: jwtClaims } = await jwtVerify(token, publicKey, verifyOptions);
+				if (nonce && jwtClaims.nonce !== nonce) return false;
+				const tid = jwtClaims.tid;
+				if (typeof tid !== "string" || jwtClaims.iss !== `${authority}/${tid}/v2.0`) return false;
+				if (tenant === "organizations" && tid === MICROSOFT_CONSUMER_TENANT_ID) return false;
+				if (tenant === "consumers" && tid !== MICROSOFT_CONSUMER_TENANT_ID) return false;
+				return true;
+			} catch (error) {
+				logger.error("Failed to verify ID token:", error);
+				return false;
+			}
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.idToken) return null;
+			const user = decodeJwt(token.idToken);
+			const profilePhotoSize = options.profilePhotoSize || 48;
+			await betterFetch(`https://graph.microsoft.com/v1.0/me/photos/${profilePhotoSize}x${profilePhotoSize}/$value`, {
+				headers: { Authorization: `Bearer ${token.accessToken}` },
+				async onResponse(context) {
+					if (options.disableProfilePhoto || !context.response.ok) return;
+					try {
+						const pictureBuffer = await context.response.clone().arrayBuffer();
+						user.picture = `data:image/jpeg;base64, ${base64.encode(pictureBuffer)}`;
+					} catch (e) {
+						logger.error(e && typeof e === "object" && "name" in e ? e.name : "", e);
+					}
+				}
+			});
+			const userMap = await options.mapProfileToUser?.(user);
+			const emailVerified = user.email_verified !== void 0 ? user.email_verified : user.email && (user.verified_primary_email?.includes(user.email) || user.verified_secondary_email?.includes(user.email)) ? true : false;
+			return {
+				user: {
+					id: user.sub,
+					name: user.name,
+					email: user.email,
+					image: user.picture,
+					emailVerified,
+					...userMap
+				},
+				data: user
+			};
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			const scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email",
+				"User.Read",
+				"offline_access"
+			];
+			if (options.scope) scopes.push(...options.scope);
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientSecret: options.clientSecret
+				},
+				extraParams: { scope: scopes.join(" ") },
+				tokenEndpoint
+			});
+		},
+		options
+	};
+};
+var getMicrosoftPublicKey = async (kid, tenant, authority) => {
+	const { data } = await betterFetch(`${authority}/${tenant}/discovery/v2.0/keys`);
+	if (!data?.keys) throw new APIError("BAD_REQUEST", { message: "Keys not found" });
+	const jwk = data.keys.find((key) => key.kid === kid);
+	if (!jwk) throw new Error(`JWK with kid ${kid} not found`);
+	return await importJWK(jwk, jwk.alg);
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/naver.mjs
+var naver = (options) => {
+	const tokenEndpoint = "https://nid.naver.com/oauth2.0/token";
+	return {
+		id: "naver",
+		name: "Naver",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["profile", "email"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "naver",
+				options,
+				authorizationEndpoint: "https://nid.naver.com/oauth2.0/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://openapi.naver.com/v1/nid/me", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+			if (error || !profile || profile.resultcode !== "00") return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			const res = profile.response || {};
+			return {
+				user: {
+					id: res.id,
+					name: res.name || res.nickname || "",
+					email: res.email,
+					image: res.profile_image,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/notion.mjs
+var notion = (options) => {
+	const tokenEndpoint = "https://api.notion.com/v1/oauth/token";
+	return {
+		id: "notion",
+		name: "Notion",
+		createAuthorizationURL({ state, scopes, loginHint, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "notion",
+				options,
+				authorizationEndpoint: "https://api.notion.com/v1/oauth/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				loginHint,
+				additionalParams: { owner: "user" }
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint,
+				authentication: "basic"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.notion.com/v1/users/me", { headers: {
+				Authorization: `Bearer ${token.accessToken}`,
+				"Notion-Version": "2022-06-28"
+			} });
+			if (error || !profile) return null;
+			const userProfile = profile.bot?.owner?.user;
+			if (!userProfile) return null;
+			const userMap = await options.mapProfileToUser?.(userProfile);
+			return {
+				user: {
+					id: userProfile.id,
+					name: userProfile.name || "",
+					email: userProfile.person?.email || null,
+					image: userProfile.avatar_url,
+					emailVerified: false,
+					...userMap
+				},
+				data: userProfile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/paybin.mjs
+var paybin = (options) => {
+	const issuer = options.issuer || "https://idp.paybin.io";
+	const authorizationEndpoint = `${issuer}/oauth2/authorize`;
+	const tokenEndpoint = `${issuer}/oauth2/token`;
+	return {
+		id: "paybin",
+		name: "Paybin",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI, loginHint }) {
+			if (!options.clientId || !options.clientSecret) {
+				logger.error("Client Id and Client Secret is required for Paybin. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Paybin");
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"email",
+				"profile"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return await createAuthorizationURL({
+				id: "paybin",
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				prompt: options.prompt,
+				loginHint
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.idToken) return null;
+			const user = decodeJwt(token.idToken);
+			const userMap = await options.mapProfileToUser?.(user);
+			return {
+				user: {
+					id: user.sub,
+					name: user.name || user.preferred_username || "",
+					email: user.email,
+					image: user.picture,
+					emailVerified: user.email_verified || false,
+					...userMap
+				},
+				data: user
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/paypal.mjs
+/**
+* ID token signing algorithms advertised by PayPal's OpenID configuration.
+* Anything outside this allowlist is rejected so each token is only ever
+* verified with the algorithm it was issued for.
+*
+* @see https://www.paypal.com/.well-known/openid-configuration
+*/
+var PAYPAL_ID_TOKEN_ALGORITHMS = ["RS256", "HS256"];
+var paypal = (options) => {
+	const isSandbox = (options.environment || "sandbox") === "sandbox";
+	const authorizationEndpoint = isSandbox ? "https://www.sandbox.paypal.com/signin/authorize" : "https://www.paypal.com/signin/authorize";
+	const tokenEndpoint = isSandbox ? "https://api-m.sandbox.paypal.com/v1/oauth2/token" : "https://api-m.paypal.com/v1/oauth2/token";
+	const userInfoEndpoint = isSandbox ? "https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo" : "https://api-m.paypal.com/v1/identity/oauth2/userinfo";
+	/**
+	* Issuer and JWKS endpoints used to cryptographically verify ID tokens.
+	*
+	* @see https://www.paypal.com/.well-known/openid-configuration
+	*/
+	const issuer = isSandbox ? "https://www.sandbox.paypal.com" : "https://www.paypal.com";
+	const jwksEndpoint = isSandbox ? "https://api.sandbox.paypal.com/v1/oauth2/certs" : "https://api.paypal.com/v1/oauth2/certs";
+	return {
+		id: "paypal",
+		name: "PayPal",
+		async createAuthorizationURL({ state, codeVerifier, redirectURI }) {
+			if (!options.clientId || !options.clientSecret) {
+				logger.error("Client Id and Client Secret is required for PayPal. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			return await createAuthorizationURL({
+				id: "paypal",
+				options,
+				authorizationEndpoint,
+				scopes: [],
+				state,
+				codeVerifier,
+				redirectURI,
+				prompt: options.prompt
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			/**
+			* PayPal requires Basic Auth for token exchange
+			**/
+			const credentials = base64.encode(`${options.clientId}:${options.clientSecret}`);
+			try {
+				const response = await betterFetch(tokenEndpoint, {
+					method: "POST",
+					headers: {
+						Authorization: `Basic ${credentials}`,
+						Accept: "application/json",
+						"Accept-Language": "en_US",
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					body: new URLSearchParams({
+						grant_type: "authorization_code",
+						code,
+						redirect_uri: redirectURI
+					}).toString()
+				});
+				if (!response.data) throw new BetterAuthError("FAILED_TO_GET_ACCESS_TOKEN");
+				const data = response.data;
+				return {
+					accessToken: data.access_token,
+					refreshToken: data.refresh_token,
+					accessTokenExpiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1e3) : void 0,
+					idToken: data.id_token
+				};
+			} catch (error) {
+				logger.error("PayPal token exchange failed:", error);
+				throw new BetterAuthError("FAILED_TO_GET_ACCESS_TOKEN");
+			}
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			const credentials = base64.encode(`${options.clientId}:${options.clientSecret}`);
+			try {
+				const response = await betterFetch(tokenEndpoint, {
+					method: "POST",
+					headers: {
+						Authorization: `Basic ${credentials}`,
+						Accept: "application/json",
+						"Accept-Language": "en_US",
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					body: new URLSearchParams({
+						grant_type: "refresh_token",
+						refresh_token: refreshToken
+					}).toString()
+				});
+				if (!response.data) throw new BetterAuthError("FAILED_TO_REFRESH_ACCESS_TOKEN");
+				const data = response.data;
+				return {
+					accessToken: data.access_token,
+					refreshToken: data.refresh_token,
+					accessTokenExpiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1e3) : void 0
+				};
+			} catch (error) {
+				logger.error("PayPal token refresh failed:", error);
+				throw new BetterAuthError("FAILED_TO_REFRESH_ACCESS_TOKEN");
+			}
+		},
+		async verifyIdToken(token, nonce) {
+			if (options.disableIdTokenSignIn) return false;
+			if (options.verifyIdToken) return options.verifyIdToken(token, nonce);
+			try {
+				const { kid, alg: jwtAlg } = decodeProtectedHeader(token);
+				if (!jwtAlg) return false;
+				if (!PAYPAL_ID_TOKEN_ALGORITHMS.includes(jwtAlg)) return false;
+				const key = jwtAlg === "HS256" ? new TextEncoder().encode(options.clientSecret) : kid ? await getPayPalPublicKey(kid, jwksEndpoint) : void 0;
+				if (!key) return false;
+				const { payload: jwtClaims } = await jwtVerify(token, key, {
+					algorithms: [jwtAlg],
+					issuer,
+					audience: options.clientId,
+					maxTokenAge: "1h"
+				});
+				if (nonce && jwtClaims.nonce !== nonce) return false;
+				return true;
+			} catch (error) {
+				logger.error("Failed to verify PayPal ID token:", error);
+				return false;
+			}
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			if (!token.accessToken) {
+				logger.error("Access token is required to fetch PayPal user info");
+				return null;
+			}
+			try {
+				const response = await betterFetch(`${userInfoEndpoint}?schema=paypalv1.1`, { headers: {
+					Authorization: `Bearer ${token.accessToken}`,
+					Accept: "application/json"
+				} });
+				if (!response.data) {
+					logger.error("Failed to fetch user info from PayPal");
+					return null;
+				}
+				const userInfo = response.data;
+				if (token.idToken) {
+					let idTokenSubject;
+					try {
+						idTokenSubject = decodeJwt(token.idToken).sub;
+					} catch (error) {
+						logger.error("Failed to decode PayPal ID token:", error);
+						return null;
+					}
+					const userInfoSubject = userInfo.sub ?? userInfo.user_id;
+					if (!idTokenSubject || userInfoSubject !== idTokenSubject) {
+						logger.error("PayPal user info subject does not match ID token subject");
+						return null;
+					}
+				}
+				const userMap = await options.mapProfileToUser?.(userInfo);
+				return {
+					user: {
+						id: userInfo.user_id,
+						name: userInfo.name,
+						email: userInfo.email,
+						image: userInfo.picture,
+						emailVerified: userInfo.email_verified,
+						...userMap
+					},
+					data: userInfo
+				};
+			} catch (error) {
+				logger.error("Failed to fetch user info from PayPal:", error);
+				return null;
+			}
+		},
+		options
+	};
+};
+var getPayPalPublicKey = async (kid, jwksUri) => {
+	const { data } = await betterFetch(jwksUri);
+	if (!data?.keys) throw new APIError("BAD_REQUEST", { message: "Keys not found" });
+	const jwk = data.keys.find((key) => key.kid === kid);
+	if (!jwk) throw new Error(`JWK with kid ${kid} not found`);
+	return await importJWK(jwk, jwk.alg);
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/polar.mjs
+var polar = (options) => {
+	const tokenEndpoint = "https://api.polar.sh/v1/oauth2/token";
+	return {
+		id: "polar",
+		name: "Polar",
+		createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "polar",
+				options,
+				authorizationEndpoint: "https://polar.sh/oauth2/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI,
+				prompt: options.prompt
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.polar.sh/v1/oauth2/userinfo", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.public_name || profile.username || "",
+					email: profile.email,
+					image: profile.avatar_url,
+					emailVerified: profile.email_verified ?? false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/railway.mjs
+var authorizationEndpoint = "https://backboard.railway.com/oauth/auth";
+var tokenEndpoint = "https://backboard.railway.com/oauth/token";
+var userinfoEndpoint = "https://backboard.railway.com/oauth/me";
+var railway = (options) => {
+	return {
+		id: "railway",
+		name: "Railway",
+		createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"email",
+				"profile"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "railway",
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint,
+				authentication: "basic"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint,
+				authentication: "basic"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch(userinfoEndpoint, { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error || !profile) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.name,
+					email: profile.email,
+					image: profile.picture,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/reddit.mjs
+var reddit = (options) => {
+	return {
+		id: "reddit",
+		name: "Reddit",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["identity"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "reddit",
+				options,
+				authorizationEndpoint: "https://www.reddit.com/api/v1/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				duration: options.duration
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			const body = new URLSearchParams({
+				grant_type: "authorization_code",
+				code,
+				redirect_uri: options.redirectURI || redirectURI
+			});
+			const { data, error } = await betterFetch("https://www.reddit.com/api/v1/access_token", {
+				method: "POST",
+				headers: {
+					"content-type": "application/x-www-form-urlencoded",
+					accept: "text/plain",
+					"user-agent": "better-auth",
+					Authorization: `Basic ${base64.encode(`${options.clientId}:${options.clientSecret}`)}`
+				},
+				body: body.toString()
+			});
+			if (error) throw error;
+			return getOAuth2Tokens(data);
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				authentication: "basic",
+				tokenEndpoint: "https://www.reddit.com/api/v1/access_token"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://oauth.reddit.com/api/v1/me", { headers: {
+				Authorization: `Bearer ${token.accessToken}`,
+				"User-Agent": "better-auth"
+			} });
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			const email = userMap?.email || `${profile.id}@reddit.invalid`;
+			return {
+				user: {
+					id: profile.id,
+					name: profile.name,
+					image: profile.icon_img?.split("?")[0],
+					...userMap,
+					email,
+					emailVerified: userMap?.emailVerified ?? false
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/roblox.mjs
+var roblox = (options) => {
+	const tokenEndpoint = "https://apis.roblox.com/oauth/v1/token";
+	return {
+		id: "roblox",
+		name: "Roblox",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["openid", "profile"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return new URL(`https://apis.roblox.com/oauth/v1/authorize?scope=${_scopes.join("+")}&response_type=code&client_id=${options.clientId}&redirect_uri=${encodeURIComponent(options.redirectURI || redirectURI)}&state=${state}&prompt=${options.prompt || "select_account consent"}`);
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI: options.redirectURI || redirectURI,
+				options,
+				tokenEndpoint,
+				authentication: "post"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://apis.roblox.com/oauth/v1/userinfo", { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.nickname || profile.preferred_username || "",
+					image: profile.picture,
+					email: profile.preferred_username || null,
+					emailVerified: false,
+					...userMap
+				},
+				data: { ...profile }
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/salesforce.mjs
+var salesforce = (options) => {
+	const isSandbox = (options.environment ?? "production") === "sandbox";
+	const authorizationEndpoint = options.loginUrl ? `https://${options.loginUrl}/services/oauth2/authorize` : isSandbox ? "https://test.salesforce.com/services/oauth2/authorize" : "https://login.salesforce.com/services/oauth2/authorize";
+	const tokenEndpoint = options.loginUrl ? `https://${options.loginUrl}/services/oauth2/token` : isSandbox ? "https://test.salesforce.com/services/oauth2/token" : "https://login.salesforce.com/services/oauth2/token";
+	const userInfoEndpoint = options.loginUrl ? `https://${options.loginUrl}/services/oauth2/userinfo` : isSandbox ? "https://test.salesforce.com/services/oauth2/userinfo" : "https://login.salesforce.com/services/oauth2/userinfo";
+	return {
+		id: "salesforce",
+		name: "Salesforce",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			if (!options.clientId || !options.clientSecret) {
+				logger.error("Client Id and Client Secret are required for Salesforce. Make sure to provide them in the options.");
+				throw new BetterAuthError("CLIENT_ID_AND_SECRET_REQUIRED");
+			}
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Salesforce");
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"email",
+				"profile"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "salesforce",
+				options,
+				authorizationEndpoint,
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI: options.redirectURI || redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI: options.redirectURI || redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			try {
+				const { data: user } = await betterFetch(userInfoEndpoint, { headers: { Authorization: `Bearer ${token.accessToken}` } });
+				if (!user) {
+					logger.error("Failed to fetch user info from Salesforce");
+					return null;
+				}
+				const userMap = await options.mapProfileToUser?.(user);
+				return {
+					user: {
+						id: user.user_id,
+						name: user.name,
+						email: user.email,
+						image: user.photos?.picture || user.photos?.thumbnail,
+						emailVerified: user.email_verified ?? false,
+						...userMap
+					},
+					data: user
+				};
+			} catch (error) {
+				logger.error("Failed to fetch user info from Salesforce:", error);
+				return null;
+			}
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/slack.mjs
+var slack = (options) => {
+	const tokenEndpoint = "https://slack.com/api/openid.connect.token";
+	return {
+		id: "slack",
+		name: "Slack",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"openid",
+				"profile",
+				"email"
+			];
+			if (scopes) _scopes.push(...scopes);
+			if (options.scope) _scopes.push(...options.scope);
+			const url = new URL("https://slack.com/openid/connect/authorize");
+			url.searchParams.set("scope", _scopes.join(" "));
+			url.searchParams.set("response_type", "code");
+			url.searchParams.set("client_id", options.clientId);
+			url.searchParams.set("redirect_uri", options.redirectURI || redirectURI);
+			url.searchParams.set("state", state);
+			return url;
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://slack.com/api/openid.connect.userInfo", { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile["https://slack.com/user_id"],
+					name: profile.name || "",
+					email: profile.email,
+					emailVerified: profile.email_verified,
+					image: profile.picture || profile["https://slack.com/user_image_512"],
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/spotify.mjs
+var spotify = (options) => {
+	const tokenEndpoint = "https://accounts.spotify.com/api/token";
+	return {
+		id: "spotify",
+		name: "Spotify",
+		createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["user-read-email"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "spotify",
+				options,
+				authorizationEndpoint: "https://accounts.spotify.com/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.spotify.com/v1/me", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.display_name,
+					email: profile.email,
+					image: profile.images[0]?.url,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/tiktok.mjs
+var tiktok = (options) => {
+	const tokenEndpoint = "https://open.tiktokapis.com/v2/oauth/token/";
+	return {
+		id: "tiktok",
+		name: "TikTok",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["user.info.profile"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return new URL(`https://www.tiktok.com/v2/auth/authorize?scope=${_scopes.join(",")}&response_type=code&client_key=${options.clientKey}&redirect_uri=${encodeURIComponent(options.redirectURI || redirectURI)}&state=${state}`);
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI: options.redirectURI || redirectURI,
+				options: {
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: { clientSecret: options.clientSecret },
+				tokenEndpoint,
+				authentication: "post",
+				extraParams: { client_key: options.clientKey }
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch(`https://open.tiktokapis.com/v2/user/info/?fields=${[
+				"open_id",
+				"avatar_large_url",
+				"display_name",
+				"username"
+			].join(",")}`, { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			return {
+				user: {
+					email: profile.data.user.email || profile.data.user.username,
+					id: profile.data.user.open_id,
+					name: profile.data.user.display_name || profile.data.user.username || "",
+					image: profile.data.user.avatar_large_url,
+					emailVerified: false
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/twitch.mjs
+var twitch = (options) => {
+	const tokenEndpoint = "https://id.twitch.tv/oauth2/token";
+	return {
+		id: "twitch",
+		name: "Twitch",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["user:read:email", "openid"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "twitch",
+				redirectURI,
+				options,
+				authorizationEndpoint: "https://id.twitch.tv/oauth2/authorize",
+				scopes: _scopes,
+				state,
+				claims: options.claims || [
+					"email",
+					"email_verified",
+					"preferred_username",
+					"picture"
+				]
+			});
+		},
+		validateAuthorizationCode: async ({ code, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const idToken = token.idToken;
+			if (!idToken) {
+				logger.error("No idToken found in token");
+				return null;
+			}
+			const profile = decodeJwt(idToken);
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.preferred_username,
+					email: profile.email,
+					image: profile.picture,
+					emailVerified: profile.email_verified,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/twitter.mjs
+var twitter = (options) => {
+	const tokenEndpoint = "https://api.x.com/2/oauth2/token";
+	return {
+		id: "twitter",
+		name: "Twitter",
+		createAuthorizationURL(data) {
+			const _scopes = options.disableDefaultScope ? [] : [
+				"users.read",
+				"tweet.read",
+				"offline.access",
+				"users.email"
+			];
+			if (options.scope) _scopes.push(...options.scope);
+			if (data.scopes) _scopes.push(...data.scopes);
+			return createAuthorizationURL({
+				id: "twitter",
+				options,
+				authorizationEndpoint: "https://x.com/i/oauth2/authorize",
+				scopes: _scopes,
+				state: data.state,
+				codeVerifier: data.codeVerifier,
+				redirectURI: data.redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				authentication: "basic",
+				redirectURI,
+				options,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				authentication: "basic",
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error: profileError } = await betterFetch("https://api.x.com/2/users/me?user.fields=profile_image_url", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			if (profileError) return null;
+			const { data: emailData, error: emailError } = await betterFetch("https://api.x.com/2/users/me?user.fields=confirmed_email", {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token.accessToken}` }
+			});
+			let emailVerified = false;
+			if (!emailError && emailData?.data?.confirmed_email) {
+				profile.data.email = emailData.data.confirmed_email;
+				emailVerified = true;
+			}
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.data.id,
+					name: profile.data.name,
+					email: profile.data.email || profile.data.username || null,
+					image: profile.data.profile_image_url,
+					emailVerified,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/vercel.mjs
+var vercel = (options) => {
+	return {
+		id: "vercel",
+		name: "Vercel",
+		createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			if (!codeVerifier) throw new BetterAuthError("codeVerifier is required for Vercel");
+			let _scopes = void 0;
+			if (options.scope !== void 0 || scopes !== void 0) {
+				_scopes = [];
+				if (options.scope) _scopes.push(...options.scope);
+				if (scopes) _scopes.push(...scopes);
+			}
+			return createAuthorizationURL({
+				id: "vercel",
+				options,
+				authorizationEndpoint: "https://vercel.com/oauth/authorize",
+				scopes: _scopes,
+				state,
+				codeVerifier,
+				redirectURI
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI,
+				options,
+				tokenEndpoint: "https://api.vercel.com/login/oauth/token"
+			});
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.vercel.com/login/oauth/userinfo", { headers: { Authorization: `Bearer ${token.accessToken}` } });
+			if (error || !profile) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.sub,
+					name: profile.name ?? profile.preferred_username ?? "",
+					email: profile.email,
+					image: profile.picture,
+					emailVerified: profile.email_verified ?? false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/vk.mjs
+var vk = (options) => {
+	const tokenEndpoint = "https://id.vk.com/oauth2/auth";
+	return {
+		id: "vk",
+		name: "VK",
+		async createAuthorizationURL({ state, scopes, codeVerifier, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["email", "phone"];
+			if (options.scope) _scopes.push(...options.scope);
+			if (scopes) _scopes.push(...scopes);
+			return createAuthorizationURL({
+				id: "vk",
+				options,
+				authorizationEndpoint: "https://id.vk.com/authorize",
+				scopes: _scopes,
+				state,
+				redirectURI,
+				codeVerifier
+			});
+		},
+		validateAuthorizationCode: async ({ code, codeVerifier, redirectURI, deviceId }) => {
+			return validateAuthorizationCode({
+				code,
+				codeVerifier,
+				redirectURI: options.redirectURI || redirectURI,
+				options,
+				deviceId,
+				tokenEndpoint
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			return refreshAccessToken({
+				refreshToken,
+				options: {
+					clientId: options.clientId,
+					clientKey: options.clientKey,
+					clientSecret: options.clientSecret
+				},
+				tokenEndpoint
+			});
+		},
+		async getUserInfo(data) {
+			if (options.getUserInfo) return options.getUserInfo(data);
+			if (!data.accessToken) return null;
+			const { data: profile, error } = await betterFetch("https://id.vk.com/oauth2/user_info", {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({
+					access_token: data.accessToken,
+					client_id: options.clientId
+				}).toString()
+			});
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			if (!profile.user.email && !userMap?.email) return null;
+			return {
+				user: {
+					id: profile.user.user_id,
+					first_name: profile.user.first_name,
+					last_name: profile.user.last_name,
+					email: profile.user.email,
+					image: profile.user.avatar,
+					emailVerified: false,
+					birthday: profile.user.birthday,
+					sex: profile.user.sex,
+					name: `${profile.user.first_name} ${profile.user.last_name}`,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/wechat.mjs
+var wechat = (options) => {
+	return {
+		id: "wechat",
+		name: "WeChat",
+		createAuthorizationURL({ state, scopes, redirectURI }) {
+			const _scopes = options.disableDefaultScope ? [] : ["snsapi_login"];
+			options.scope && _scopes.push(...options.scope);
+			scopes && _scopes.push(...scopes);
+			const url = new URL("https://open.weixin.qq.com/connect/qrconnect");
+			url.searchParams.set("scope", _scopes.join(","));
+			url.searchParams.set("response_type", "code");
+			url.searchParams.set("appid", options.clientId);
+			url.searchParams.set("redirect_uri", options.redirectURI || redirectURI);
+			url.searchParams.set("state", state);
+			url.searchParams.set("lang", options.lang || "cn");
+			url.hash = "wechat_redirect";
+			return url;
+		},
+		validateAuthorizationCode: async ({ code }) => {
+			const { data: tokenData, error } = await betterFetch("https://api.weixin.qq.com/sns/oauth2/access_token?" + new URLSearchParams({
+				appid: options.clientId,
+				secret: options.clientSecret,
+				code,
+				grant_type: "authorization_code"
+			}).toString(), { method: "GET" });
+			if (error || !tokenData || tokenData.errcode) throw new Error(`Failed to validate authorization code: ${tokenData?.errmsg || error?.message || "Unknown error"}`);
+			return {
+				tokenType: "Bearer",
+				accessToken: tokenData.access_token,
+				refreshToken: tokenData.refresh_token,
+				accessTokenExpiresAt: new Date(Date.now() + tokenData.expires_in * 1e3),
+				scopes: tokenData.scope.split(","),
+				openid: tokenData.openid,
+				unionid: tokenData.unionid
+			};
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => {
+			const { data: tokenData, error } = await betterFetch("https://api.weixin.qq.com/sns/oauth2/refresh_token?" + new URLSearchParams({
+				appid: options.clientId,
+				grant_type: "refresh_token",
+				refresh_token: refreshToken
+			}).toString(), { method: "GET" });
+			if (error || !tokenData || tokenData.errcode) throw new Error(`Failed to refresh access token: ${tokenData?.errmsg || error?.message || "Unknown error"}`);
+			return {
+				tokenType: "Bearer",
+				accessToken: tokenData.access_token,
+				refreshToken: tokenData.refresh_token,
+				accessTokenExpiresAt: new Date(Date.now() + tokenData.expires_in * 1e3),
+				scopes: tokenData.scope.split(",")
+			};
+		},
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const openid = token.openid;
+			if (!openid) return null;
+			const { data: profile, error } = await betterFetch("https://api.weixin.qq.com/sns/userinfo?" + new URLSearchParams({
+				access_token: token.accessToken || "",
+				openid,
+				lang: "zh_CN"
+			}).toString(), { method: "GET" });
+			if (error || !profile || profile.errcode) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.unionid || profile.openid || openid,
+					name: profile.nickname,
+					email: profile.email || `${profile.unionid || profile.openid || openid}@wechat.invalid`,
+					image: profile.headimgurl,
+					emailVerified: false,
+					...userMap
+				},
+				data: profile
+			};
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/zoom.mjs
+var zoom = (userOptions) => {
+	const options = {
+		pkce: true,
+		...userOptions
+	};
+	return {
+		id: "zoom",
+		name: "Zoom",
+		createAuthorizationURL: async ({ state, redirectURI, codeVerifier }) => {
+			const params = new URLSearchParams({
+				response_type: "code",
+				redirect_uri: options.redirectURI ? options.redirectURI : redirectURI,
+				client_id: options.clientId,
+				state
+			});
+			if (options.pkce) {
+				const codeChallenge = await generateCodeChallenge(codeVerifier);
+				params.set("code_challenge_method", "S256");
+				params.set("code_challenge", codeChallenge);
+			}
+			const url = new URL("https://zoom.us/oauth/authorize");
+			url.search = params.toString();
+			return url;
+		},
+		validateAuthorizationCode: async ({ code, redirectURI, codeVerifier }) => {
+			return validateAuthorizationCode({
+				code,
+				redirectURI: options.redirectURI || redirectURI,
+				codeVerifier,
+				options,
+				tokenEndpoint: "https://zoom.us/oauth/token",
+				authentication: "post"
+			});
+		},
+		refreshAccessToken: options.refreshAccessToken ? options.refreshAccessToken : async (refreshToken) => refreshAccessToken({
+			refreshToken,
+			options: {
+				clientId: options.clientId,
+				clientKey: options.clientKey,
+				clientSecret: options.clientSecret
+			},
+			tokenEndpoint: "https://zoom.us/oauth/token"
+		}),
+		async getUserInfo(token) {
+			if (options.getUserInfo) return options.getUserInfo(token);
+			const { data: profile, error } = await betterFetch("https://api.zoom.us/v2/users/me", { headers: { authorization: `Bearer ${token.accessToken}` } });
+			if (error) return null;
+			const userMap = await options.mapProfileToUser?.(profile);
+			return {
+				user: {
+					id: profile.id,
+					name: profile.display_name,
+					image: profile.pic_url,
+					email: profile.email,
+					emailVerified: Boolean(profile.verified),
+					...userMap
+				},
+				data: { ...profile }
+			};
+		}
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/social-providers/index.mjs
+var socialProviders = {
+	apple,
+	atlassian,
+	cognito,
+	discord,
+	facebook,
+	figma,
+	github,
+	microsoft,
+	google,
+	huggingface,
+	slack,
+	spotify,
+	twitch,
+	twitter,
+	dropbox,
+	kick,
+	linear,
+	linkedin,
+	gitlab,
+	tiktok,
+	reddit,
+	roblox,
+	salesforce,
+	vk,
+	zoom,
+	notion,
+	kakao,
+	naver,
+	line,
+	paybin,
+	paypal,
+	polar,
+	railway,
+	vercel,
+	wechat
+};
+var socialProviderList = Object.keys(socialProviders);
+var SocialProviderListEnum = z$1.enum(socialProviderList).or(z$1.string());
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/account.mjs
 var listUserAccounts = createAuthEndpoint("/list-accounts", {
 	method: "GET",
 	use: [sessionMiddleware],
@@ -3188,7 +13801,7 @@ var linkSocialAccount = createAuthEndpoint("/link-social", {
 		}
 		const { token, nonce } = c.body.idToken;
 		if (!await provider.verifyIdToken(token, nonce)) {
-			c.context.logger.error("Invalid id token", { provider: c.body.provider });
+			c.context.logger.warn("Invalid id token", { provider: c.body.provider });
 			throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_TOKEN);
 		}
 		const linkingUserInfo = await provider.getUserInfo({
@@ -3234,14 +13847,7 @@ var linkSocialAccount = createAuthEndpoint("/link-social", {
 				code: "LINKING_FAILED"
 			});
 		}
-		if (c.context.options.account?.accountLinking?.updateUserInfoOnLink === true) try {
-			await c.context.internalAdapter.updateUser(session.user.id, {
-				name: linkingUserInfo.user?.name,
-				image: linkingUserInfo.user?.image
-			});
-		} catch (e) {
-			console.warn("Could not update user - " + e.toString());
-		}
+		await applyUpdateUserInfoOnLink(c, session.user.id, linkingUserInfo.user);
 		return c.json({
 			url: "",
 			status: true,
@@ -3290,50 +13896,57 @@ var unlinkAccount = createAuthEndpoint("/unlink-account", {
 	await ctx.context.internalAdapter.deleteAccount(accountExist.id);
 	return ctx.json({ status: true });
 });
-var getAccessToken = createAuthEndpoint("/get-access-token", {
-	method: "POST",
-	body: z$1.object({
-		providerId: z$1.string().meta({ description: "The provider ID for the OAuth provider" }),
-		accountId: z$1.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
-		userId: z$1.string().meta({ description: "The user ID associated with the account" }).optional()
-	}),
-	metadata: { openapi: {
-		description: "Get a valid access token, doing a refresh if needed",
-		responses: {
-			200: {
-				description: "A Valid access token",
-				content: { "application/json": { schema: {
-					type: "object",
-					properties: {
-						tokenType: { type: "string" },
-						idToken: { type: "string" },
-						accessToken: { type: "string" },
-						accessTokenExpiresAt: {
-							type: "string",
-							format: "date-time"
-						}
-					}
-				} } }
-			},
-			400: { description: "Invalid refresh token or provider configuration" }
-		}
-	} }
-}, async (ctx) => {
-	const { providerId, accountId, userId } = ctx.body || {};
-	const req = ctx.request;
-	const session = await getSessionFromCtx(ctx);
-	if (req && !session) throw ctx.error("UNAUTHORIZED");
+/**
+* Resolves the user id an account-token operation should act on.
+*
+* A caller reaching the server over HTTP (a request or session headers are
+* present) must have a valid session, and that session's user always wins.
+* A trusted server-side `auth.api` caller with no session may instead name a
+* `userId` directly. Throws `UNAUTHORIZED` when an HTTP caller is
+* unauthenticated, and `USER_ID_OR_SESSION_REQUIRED` when neither a session
+* nor a `userId` is available.
+*
+* When a durable store is authoritative, bypasses the cookie cache: these
+* routes mint or refresh provider access tokens, so a server-side session
+* revocation must take effect immediately rather than waiting for the cached
+* cookie to expire. DB-less deployments keep the session in the cookie itself,
+* so the cache is left in place for them.
+*/
+async function resolveUserId(ctx, userId) {
+	const session = await getSessionFromCtx(ctx, { disableCookieCache: isStateful(ctx) });
+	if (!session && (ctx.request || ctx.headers)) throw ctx.error("UNAUTHORIZED");
 	const resolvedUserId = session?.user?.id || userId;
-	if (!resolvedUserId) throw ctx.error("UNAUTHORIZED");
+	if (!resolvedUserId) throw APIError.from("BAD_REQUEST", {
+		message: "Either userId or session is required",
+		code: "USER_ID_OR_SESSION_REQUIRED"
+	});
+	return resolvedUserId;
+}
+function matchesAccountSelection(ctx, account, { resolvedUserId, providerId, accountId }) {
+	return (!shouldBindAccountCookieToSessionUser(ctx.context.options) || account.userId === resolvedUserId) && (!providerId || providerId === account.providerId) && (!accountId || account.accountId === accountId);
+}
+/**
+* Fetches a currently-valid access token for a user's provider account,
+* refreshing and persisting it when it is within five seconds of expiry.
+* Shared by the `/get-access-token` endpoint and `/account-info` so both
+* resolve and refresh tokens through one path.
+*/
+async function getValidAccessToken(ctx, { resolvedUserId, providerId, accountId, account: resolvedAccount }) {
 	const provider = await getAwaitableValue(ctx.context.socialProviders, { value: providerId });
 	if (!provider) throw APIError.from("BAD_REQUEST", {
 		message: `Provider ${providerId} is not supported.`,
 		code: "PROVIDER_NOT_SUPPORTED"
 	});
-	const accountData = await getAccountCookie(ctx);
-	let account = void 0;
-	if (accountData && accountData.userId === resolvedUserId && providerId === accountData.providerId && (!accountId || accountData.accountId === accountId)) account = accountData;
-	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.accountId === accountId && acc.providerId === providerId : acc.providerId === providerId);
+	let account = resolvedAccount;
+	if (!account) {
+		const accountData = await getAccountCookie(ctx);
+		if (accountData && matchesAccountSelection(ctx, accountData, {
+			resolvedUserId,
+			providerId,
+			accountId
+		})) account = accountData;
+		else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.accountId === accountId && acc.providerId === providerId : acc.providerId === providerId);
+	}
 	if (!account) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.ACCOUNT_NOT_FOUND);
 	try {
 		let newTokens = null;
@@ -3365,19 +13978,55 @@ var getAccessToken = createAuthEndpoint("/get-access-token", {
 				return account.accessTokenExpiresAt;
 			}
 		})();
-		const tokens = {
+		return {
 			accessToken: newTokens?.accessToken ?? await decryptOAuthToken(account.accessToken ?? "", ctx.context),
 			accessTokenExpiresAt,
 			scopes: account.scope?.split(",") ?? [],
 			idToken: newTokens?.idToken ?? account.idToken ?? void 0
 		};
-		return ctx.json(tokens);
 	} catch (_error) {
 		throw APIError.from("BAD_REQUEST", {
 			message: "Failed to get a valid access token",
 			code: "FAILED_TO_GET_ACCESS_TOKEN"
 		});
 	}
+}
+var getAccessToken = createAuthEndpoint("/get-access-token", {
+	method: "POST",
+	body: z$1.object({
+		providerId: z$1.string().meta({ description: "The provider ID for the OAuth provider" }),
+		accountId: z$1.string().meta({ description: "The account ID associated with the refresh token" }).optional(),
+		userId: z$1.string().meta({ description: "The user ID associated with the account" }).optional()
+	}),
+	metadata: { openapi: {
+		description: "Get a valid access token, doing a refresh if needed",
+		responses: {
+			200: {
+				description: "A Valid access token",
+				content: { "application/json": { schema: {
+					type: "object",
+					properties: {
+						tokenType: { type: "string" },
+						idToken: { type: "string" },
+						accessToken: { type: "string" },
+						accessTokenExpiresAt: {
+							type: "string",
+							format: "date-time"
+						}
+					}
+				} } }
+			},
+			400: { description: "Invalid refresh token or provider configuration" }
+		}
+	} }
+}, async (ctx) => {
+	const { providerId, accountId, userId } = ctx.body || {};
+	const tokens = await getValidAccessToken(ctx, {
+		resolvedUserId: await resolveUserId(ctx, userId),
+		providerId,
+		accountId
+	});
+	return ctx.json(tokens);
 });
 var refreshToken = createAuthEndpoint("/refresh-token", {
 	method: "POST",
@@ -3414,14 +14063,7 @@ var refreshToken = createAuthEndpoint("/refresh-token", {
 	} }
 }, async (ctx) => {
 	const { providerId, accountId, userId } = ctx.body;
-	const req = ctx.request;
-	const session = await getSessionFromCtx(ctx);
-	if (req && !session) throw ctx.error("UNAUTHORIZED");
-	const resolvedUserId = session?.user?.id || userId;
-	if (!resolvedUserId) throw APIError.from("BAD_REQUEST", {
-		message: `Either userId or session is required`,
-		code: "USER_ID_OR_SESSION_REQUIRED"
-	});
+	const resolvedUserId = await resolveUserId(ctx, userId);
 	const provider = await getAwaitableValue(ctx.context.socialProviders, { value: providerId });
 	if (!provider) throw APIError.from("BAD_REQUEST", {
 		message: `Provider ${providerId} is not supported.`,
@@ -3433,12 +14075,15 @@ var refreshToken = createAuthEndpoint("/refresh-token", {
 	});
 	let account = void 0;
 	const accountData = await getAccountCookie(ctx);
-	if (accountData && accountData.userId === resolvedUserId && (!providerId || providerId === accountData?.providerId)) account = accountData;
+	const usedAccountCookie = !!accountData && matchesAccountSelection(ctx, accountData, {
+		resolvedUserId,
+		providerId,
+		accountId
+	});
+	if (usedAccountCookie) account = accountData;
 	else account = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).find((acc) => accountId ? acc.accountId === accountId && acc.providerId === providerId : acc.providerId === providerId);
 	if (!account) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.ACCOUNT_NOT_FOUND);
-	let refreshToken = void 0;
-	if (accountData && providerId === accountData.providerId) refreshToken = accountData.refreshToken ?? void 0;
-	else refreshToken = account.refreshToken ?? void 0;
+	const refreshToken = account.refreshToken ?? void 0;
 	if (!refreshToken) throw APIError.from("BAD_REQUEST", {
 		message: "Refresh token not found",
 		code: "REFRESH_TOKEN_NOT_FOUND"
@@ -3460,7 +14105,7 @@ var refreshToken = createAuthEndpoint("/refresh-token", {
 			};
 			await ctx.context.internalAdapter.updateAccount(account.id, updateData);
 		}
-		if (accountData && providerId === accountData.providerId && ctx.context.options.account?.storeAccountCookie) await setAccountCookie(ctx, {
+		if (usedAccountCookie && ctx.context.options.account?.storeAccountCookie) await setAccountCookie(ctx, {
 			...accountData,
 			accessToken: await setTokenUtil(tokens.accessToken, ctx.context),
 			refreshToken: resolvedRefreshToken,
@@ -3486,10 +14131,8 @@ var refreshToken = createAuthEndpoint("/refresh-token", {
 		});
 	}
 });
-var accountInfoQuerySchema = z$1.optional(z$1.object({ accountId: z$1.string().meta({ description: "The provider given account id for which to get the account info" }).optional() }));
 var accountInfo = createAuthEndpoint("/account-info", {
 	method: "GET",
-	use: [sessionMiddleware],
 	metadata: { openapi: {
 		description: "Get the account info provided by the provider",
 		responses: { "200": {
@@ -3519,34 +14162,42 @@ var accountInfo = createAuthEndpoint("/account-info", {
 			} } }
 		} }
 	} },
-	query: accountInfoQuerySchema
+	query: z$1.optional(z$1.object({
+		accountId: z$1.string().meta({ description: "The provider given account id for which to get the account info" }).optional(),
+		providerId: z$1.string().meta({ description: "The provider ID to disambiguate provider-issued account IDs" }).optional(),
+		userId: z$1.string().meta({ description: "The user ID associated with the account" }).optional()
+	}))
 }, async (ctx) => {
-	const providedAccountId = ctx.query?.accountId;
+	const { accountId: providedAccountId, providerId: providedProviderId, userId } = ctx.query || {};
+	const resolvedUserId = await resolveUserId(ctx, userId);
 	let account = void 0;
 	if (!providedAccountId) {
 		if (ctx.context.options.account?.storeAccountCookie) {
 			const accountData = await getAccountCookie(ctx);
-			if (accountData) account = accountData;
+			if (accountData && matchesAccountSelection(ctx, accountData, {
+				resolvedUserId,
+				providerId: providedProviderId
+			})) account = accountData;
 		}
 	} else {
-		const accountData = await ctx.context.internalAdapter.findAccount(providedAccountId);
-		if (accountData) account = accountData;
+		const matchingAccounts = (await ctx.context.internalAdapter.findAccounts(resolvedUserId)).filter((acc) => acc.accountId === providedAccountId && (!providedProviderId || acc.providerId === providedProviderId));
+		if (matchingAccounts.length > 1) throw APIError.from("BAD_REQUEST", {
+			message: "Multiple accounts share this account ID. Pass a providerId to disambiguate.",
+			code: "AMBIGUOUS_ACCOUNT"
+		});
+		account = matchingAccounts[0];
 	}
-	if (!account || account.userId !== ctx.context.session.user.id) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.ACCOUNT_NOT_FOUND);
+	if (!account || !matchesAccountSelection(ctx, account, { resolvedUserId })) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.ACCOUNT_NOT_FOUND);
 	const provider = await getAwaitableValue(ctx.context.socialProviders, { value: account.providerId });
-	if (!provider) throw APIError.from("INTERNAL_SERVER_ERROR", {
-		message: `Provider account provider is ${account.providerId} but it is not configured`,
+	if (!provider) throw APIError.from("BAD_REQUEST", {
+		message: "Account is not associated with a configured social provider.",
 		code: "PROVIDER_NOT_CONFIGURED"
 	});
-	const tokens = await getAccessToken({
-		...ctx,
-		method: "POST",
-		body: {
-			accountId: account.accountId,
-			providerId: account.providerId
-		},
-		returnHeaders: false,
-		returnStatus: false
+	const tokens = await getValidAccessToken(ctx, {
+		resolvedUserId,
+		providerId: account.providerId,
+		accountId: account.accountId,
+		account
 	});
 	if (!tokens.accessToken) throw APIError.from("BAD_REQUEST", {
 		message: "Access token not found",
@@ -3559,426 +14210,7 @@ var accountInfo = createAuthEndpoint("/account-info", {
 	return ctx.json(info);
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/email-verification.mjs
-async function createEmailVerificationToken(secret, email, updateTo, expiresIn = 3600, extraPayload) {
-	return await signJWT({
-		email: email.toLowerCase(),
-		updateTo: updateTo?.toLowerCase(),
-		...extraPayload
-	}, secret, expiresIn);
-}
-/**
-* A function to send a verification email to the user
-*/
-async function sendVerificationEmailFn(ctx, user) {
-	if (!ctx.context.options.emailVerification?.sendVerificationEmail) {
-		ctx.context.logger.error("Verification email isn't enabled.");
-		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.VERIFICATION_EMAIL_NOT_ENABLED);
-	}
-	const token = await createEmailVerificationToken(ctx.context.secret, user.email, void 0, ctx.context.options.emailVerification?.expiresIn);
-	const callbackURL = ctx.body.callbackURL ? encodeURIComponent(ctx.body.callbackURL) : encodeURIComponent("/");
-	const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${callbackURL}`;
-	await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailVerification.sendVerificationEmail({
-		user,
-		url,
-		token
-	}, ctx.request));
-}
-var sendVerificationEmail = createAuthEndpoint("/send-verification-email", {
-	method: "POST",
-	operationId: "sendVerificationEmail",
-	body: z$1.object({
-		email: z$1.email().meta({ description: "The email to send the verification email to" }),
-		callbackURL: z$1.string().meta({ description: "The URL to use for email verification callback" }).optional()
-	}),
-	metadata: { openapi: {
-		operationId: "sendVerificationEmail",
-		description: "Send a verification email to the user",
-		requestBody: { content: { "application/json": { schema: {
-			type: "object",
-			properties: {
-				email: {
-					type: "string",
-					description: "The email to send the verification email to",
-					example: "user@example.com"
-				},
-				callbackURL: {
-					type: "string",
-					description: "The URL to use for email verification callback",
-					example: "https://example.com/callback",
-					nullable: true
-				}
-			},
-			required: ["email"]
-		} } } },
-		responses: {
-			"200": {
-				description: "Success",
-				content: { "application/json": { schema: {
-					type: "object",
-					properties: { status: {
-						type: "boolean",
-						description: "Indicates if the email was sent successfully",
-						example: true
-					} }
-				} } }
-			},
-			"400": {
-				description: "Bad Request",
-				content: { "application/json": { schema: {
-					type: "object",
-					properties: { message: {
-						type: "string",
-						description: "Error message",
-						example: "Verification email isn't enabled"
-					} }
-				} } }
-			}
-		}
-	} }
-}, async (ctx) => {
-	if (!ctx.context.options.emailVerification?.sendVerificationEmail) {
-		ctx.context.logger.error("Verification email isn't enabled.");
-		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.VERIFICATION_EMAIL_NOT_ENABLED);
-	}
-	const { email } = ctx.body;
-	const session = await getSessionFromCtx(ctx);
-	if (!session) {
-		const user = await ctx.context.internalAdapter.findUserByEmail(email);
-		if (!user || user.user.emailVerified) {
-			await createEmailVerificationToken(ctx.context.secret, email, void 0, ctx.context.options.emailVerification?.expiresIn);
-			return ctx.json({ status: true });
-		}
-		await sendVerificationEmailFn(ctx, user.user);
-		return ctx.json({ status: true });
-	}
-	if (session?.user.email.toLowerCase() !== email.toLowerCase()) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.EMAIL_MISMATCH);
-	if (session?.user.emailVerified) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.EMAIL_ALREADY_VERIFIED);
-	await sendVerificationEmailFn(ctx, session.user);
-	return ctx.json({ status: true });
-});
-var verifyEmail = createAuthEndpoint("/verify-email", {
-	method: "GET",
-	operationId: "verifyEmail",
-	query: z$1.object({
-		token: z$1.string().meta({ description: "The token to verify the email" }),
-		callbackURL: z$1.string().meta({ description: "The URL to redirect to after email verification" }).optional()
-	}),
-	use: [originCheck((ctx) => ctx.query.callbackURL)],
-	metadata: { openapi: {
-		description: "Verify the email of the user",
-		parameters: [{
-			name: "token",
-			in: "query",
-			description: "The token to verify the email",
-			required: true,
-			schema: { type: "string" }
-		}, {
-			name: "callbackURL",
-			in: "query",
-			description: "The URL to redirect to after email verification",
-			required: false,
-			schema: { type: "string" }
-		}],
-		responses: { "200": {
-			description: "Success",
-			content: { "application/json": { schema: {
-				type: "object",
-				properties: {
-					user: {
-						type: "object",
-						$ref: "#/components/schemas/User"
-					},
-					status: {
-						type: "boolean",
-						description: "Indicates if the email was verified successfully"
-					}
-				},
-				required: ["user", "status"]
-			} } }
-		} }
-	} }
-}, async (ctx) => {
-	function redirectOnError(error) {
-		if (ctx.query.callbackURL) {
-			if (ctx.query.callbackURL.includes("?")) throw ctx.redirect(`${ctx.query.callbackURL}&error=${error.code}`);
-			throw ctx.redirect(`${ctx.query.callbackURL}?error=${error.code}`);
-		}
-		throw APIError.from("UNAUTHORIZED", error);
-	}
-	const { token } = ctx.query;
-	let jwt;
-	try {
-		jwt = await jwtVerify(token, new TextEncoder().encode(ctx.context.secret), { algorithms: ["HS256"] });
-	} catch (e) {
-		if (e instanceof JWTExpired) return redirectOnError(BASE_ERROR_CODES.TOKEN_EXPIRED);
-		return redirectOnError(BASE_ERROR_CODES.INVALID_TOKEN);
-	}
-	const parsed = z$1.object({
-		email: z$1.email(),
-		updateTo: z$1.string().optional(),
-		requestType: z$1.string().optional()
-	}).parse(jwt.payload);
-	const user = await ctx.context.internalAdapter.findUserByEmail(parsed.email);
-	if (!user) return redirectOnError(BASE_ERROR_CODES.USER_NOT_FOUND);
-	if (parsed.updateTo) {
-		const session = await getSessionFromCtx(ctx);
-		if (session && session.user.email !== parsed.email) return redirectOnError(BASE_ERROR_CODES.INVALID_USER);
-		switch (parsed.requestType) {
-			case "change-email-confirmation": {
-				const newToken = await createEmailVerificationToken(ctx.context.secret, parsed.email, parsed.updateTo, ctx.context.options.emailVerification?.expiresIn, { requestType: "change-email-verification" });
-				const updateCallbackURL = ctx.query.callbackURL ? encodeURIComponent(ctx.query.callbackURL) : encodeURIComponent("/");
-				const url = `${ctx.context.baseURL}/verify-email?token=${newToken}&callbackURL=${updateCallbackURL}`;
-				if (ctx.context.options.emailVerification?.sendVerificationEmail) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailVerification.sendVerificationEmail({
-					user: {
-						...user.user,
-						email: parsed.updateTo
-					},
-					url,
-					token: newToken
-				}, ctx.request));
-				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
-				return ctx.json({ status: true });
-			}
-			case "change-email-verification": {
-				let activeSession = session;
-				if (!activeSession) {
-					const newSession = await ctx.context.internalAdapter.createSession(user.user.id);
-					if (!newSession) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
-					activeSession = {
-						session: newSession,
-						user: user.user
-					};
-				}
-				const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, {
-					email: parsed.updateTo,
-					emailVerified: true
-				});
-				if (ctx.context.options.emailVerification?.afterEmailVerification) await ctx.context.options.emailVerification.afterEmailVerification(updatedUser, ctx.request);
-				await setSessionCookie(ctx, {
-					session: activeSession.session,
-					user: {
-						...activeSession.user,
-						email: parsed.updateTo,
-						emailVerified: true
-					}
-				});
-				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
-				return ctx.json({
-					status: true,
-					user: parseUserOutput(ctx.context.options, updatedUser)
-				});
-			}
-			default: {
-				let activeSession = session;
-				if (!activeSession) {
-					const newSession = await ctx.context.internalAdapter.createSession(user.user.id);
-					if (!newSession) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
-					activeSession = {
-						session: newSession,
-						user: user.user
-					};
-				}
-				const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, {
-					email: parsed.updateTo,
-					emailVerified: false
-				});
-				const newToken = await createEmailVerificationToken(ctx.context.secret, parsed.updateTo);
-				const updateCallbackURL = ctx.query.callbackURL ? encodeURIComponent(ctx.query.callbackURL) : encodeURIComponent("/");
-				if (ctx.context.options.emailVerification?.sendVerificationEmail) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailVerification.sendVerificationEmail({
-					user: updatedUser,
-					url: `${ctx.context.baseURL}/verify-email?token=${newToken}&callbackURL=${updateCallbackURL}`,
-					token: newToken
-				}, ctx.request));
-				await setSessionCookie(ctx, {
-					session: activeSession.session,
-					user: {
-						...activeSession.user,
-						email: parsed.updateTo,
-						emailVerified: false
-					}
-				});
-				if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
-				return ctx.json({
-					status: true,
-					user: parseUserOutput(ctx.context.options, updatedUser)
-				});
-			}
-		}
-	}
-	if (user.user.emailVerified) {
-		if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
-		return ctx.json({
-			status: true,
-			user: null
-		});
-	}
-	if (ctx.context.options.emailVerification?.beforeEmailVerification) await ctx.context.options.emailVerification.beforeEmailVerification(user.user, ctx.request);
-	const updatedUser = await ctx.context.internalAdapter.updateUserByEmail(parsed.email, { emailVerified: true });
-	if (ctx.context.options.emailVerification?.afterEmailVerification) await ctx.context.options.emailVerification.afterEmailVerification(updatedUser, ctx.request);
-	if (ctx.context.options.emailVerification?.autoSignInAfterVerification) {
-		const currentSession = await getSessionFromCtx(ctx);
-		if (!currentSession || currentSession.user.email !== parsed.email) {
-			const session = await ctx.context.internalAdapter.createSession(user.user.id);
-			if (!session) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_CREATE_SESSION);
-			await setSessionCookie(ctx, {
-				session,
-				user: {
-					...user.user,
-					emailVerified: true
-				}
-			});
-		} else await setSessionCookie(ctx, {
-			session: currentSession.session,
-			user: {
-				...currentSession.user,
-				emailVerified: true
-			}
-		});
-	}
-	if (ctx.query.callbackURL) throw ctx.redirect(ctx.query.callbackURL);
-	return ctx.json({
-		status: true,
-		user: null
-	});
-});
-//#endregion
-//#region ../../node_modules/better-auth/dist/oauth2/link-account.mjs
-async function handleOAuthUserInfo(c, opts) {
-	const { userInfo, account, callbackURL, disableSignUp, overrideUserInfo } = opts;
-	const dbUser = await c.context.internalAdapter.findOAuthUser(userInfo.email.toLowerCase(), account.accountId, account.providerId).catch((e) => {
-		logger.error("Better auth was unable to query your database.\nError: ", e);
-		const errorURL = c.context.options.onAPIError?.errorURL || `${c.context.baseURL}/error`;
-		throw c.redirect(`${errorURL}?error=internal_server_error`);
-	});
-	let user = dbUser?.user;
-	const isRegister = !user;
-	if (dbUser) {
-		const linkedAccount = dbUser.linkedAccount ?? dbUser.accounts.find((acc) => acc.providerId === account.providerId && acc.accountId === account.accountId);
-		if (!linkedAccount) {
-			const accountLinking = c.context.options.account?.accountLinking;
-			const isTrustedProvider = opts.isTrustedProvider || c.context.trustedProviders.includes(account.providerId);
-			const requireLocalEmailVerified = accountLinking?.requireLocalEmailVerified ?? true;
-			if (!isTrustedProvider && !userInfo.emailVerified || requireLocalEmailVerified && !dbUser.user.emailVerified || accountLinking?.enabled === false || accountLinking?.disableImplicitLinking === true) {
-				if (isDevelopment()) logger.warn(`User already exist but account isn't linked to ${account.providerId}. To read more about how account linking works in Better Auth see https://www.better-auth.com/docs/concepts/users-accounts#account-linking.`);
-				return {
-					error: "account not linked",
-					data: null
-				};
-			}
-			try {
-				await c.context.internalAdapter.linkAccount({
-					providerId: account.providerId,
-					accountId: userInfo.id.toString(),
-					userId: dbUser.user.id,
-					accessToken: await setTokenUtil(account.accessToken, c.context),
-					refreshToken: await setTokenUtil(account.refreshToken, c.context),
-					idToken: account.idToken,
-					accessTokenExpiresAt: account.accessTokenExpiresAt,
-					refreshTokenExpiresAt: account.refreshTokenExpiresAt,
-					scope: account.scope
-				});
-			} catch (e) {
-				logger.error("Unable to link account", e);
-				return {
-					error: "unable to link account",
-					data: null
-				};
-			}
-			if (userInfo.emailVerified && !dbUser.user.emailVerified && userInfo.email.toLowerCase() === dbUser.user.email) await c.context.internalAdapter.updateUser(dbUser.user.id, { emailVerified: true });
-		} else {
-			const freshTokens = c.context.options.account?.updateAccountOnSignIn !== false ? Object.fromEntries(Object.entries({
-				idToken: account.idToken,
-				accessToken: await setTokenUtil(account.accessToken, c.context),
-				refreshToken: await setTokenUtil(account.refreshToken, c.context),
-				accessTokenExpiresAt: account.accessTokenExpiresAt,
-				refreshTokenExpiresAt: account.refreshTokenExpiresAt,
-				scope: account.scope
-			}).filter(([_, value]) => value !== void 0)) : {};
-			if (c.context.options.account?.storeAccountCookie) await setAccountCookie(c, {
-				...linkedAccount,
-				...freshTokens
-			});
-			if (Object.keys(freshTokens).length > 0) await c.context.internalAdapter.updateAccount(linkedAccount.id, freshTokens);
-			if (userInfo.emailVerified && !dbUser.user.emailVerified && userInfo.email.toLowerCase() === dbUser.user.email) await c.context.internalAdapter.updateUser(dbUser.user.id, { emailVerified: true });
-		}
-		if (overrideUserInfo) {
-			const { id: _, ...restUserInfo } = userInfo;
-			user = await c.context.internalAdapter.updateUser(dbUser.user.id, {
-				...restUserInfo,
-				email: userInfo.email.toLowerCase(),
-				emailVerified: userInfo.email.toLowerCase() === dbUser.user.email ? dbUser.user.emailVerified || userInfo.emailVerified : userInfo.emailVerified
-			});
-		}
-	} else {
-		if (disableSignUp) return {
-			error: "signup disabled",
-			data: null,
-			isRegister: false
-		};
-		try {
-			const { id: _, ...restUserInfo } = userInfo;
-			const accountData = {
-				accessToken: await setTokenUtil(account.accessToken, c.context),
-				refreshToken: await setTokenUtil(account.refreshToken, c.context),
-				idToken: account.idToken,
-				accessTokenExpiresAt: account.accessTokenExpiresAt,
-				refreshTokenExpiresAt: account.refreshTokenExpiresAt,
-				scope: account.scope,
-				providerId: account.providerId,
-				accountId: userInfo.id.toString()
-			};
-			const { user: createdUser, account: createdAccount } = await c.context.internalAdapter.createOAuthUser({
-				...restUserInfo,
-				email: userInfo.email.toLowerCase()
-			}, accountData);
-			user = createdUser;
-			if (c.context.options.account?.storeAccountCookie) await setAccountCookie(c, createdAccount);
-			if (!userInfo.emailVerified && user && c.context.options.emailVerification?.sendOnSignUp && c.context.options.emailVerification?.sendVerificationEmail) {
-				const token = await createEmailVerificationToken(c.context.secret, user.email, void 0, c.context.options.emailVerification?.expiresIn);
-				const url = `${c.context.baseURL}/verify-email?token=${token}&callbackURL=${callbackURL}`;
-				await c.context.runInBackgroundOrAwait(c.context.options.emailVerification.sendVerificationEmail({
-					user,
-					url,
-					token
-				}, c.request));
-			}
-		} catch (e) {
-			logger.error(e);
-			if (isAPIError(e)) return {
-				error: e.message,
-				data: null,
-				isRegister: false
-			};
-			return {
-				error: "unable to create user",
-				data: null,
-				isRegister: false
-			};
-		}
-	}
-	if (!user) return {
-		error: "unable to create user",
-		data: null,
-		isRegister: false
-	};
-	const session = await c.context.internalAdapter.createSession(user.id);
-	if (!session) return {
-		error: "unable to create session",
-		data: null,
-		isRegister: false
-	};
-	return {
-		data: {
-			session,
-			user
-		},
-		error: null,
-		isRegister
-	};
-}
-//#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/callback.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/callback.mjs
 var schema$1 = z$1.object({
 	code: z$1.string().optional(),
 	error: z$1.string().optional(),
@@ -4017,31 +14249,20 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 		else throw new Error("Unsupported method");
 	} catch (e) {
 		c.context.logger.error("INVALID_CALLBACK_REQUEST", e);
-		throw c.redirect(`${defaultErrorURL}?error=invalid_callback_request`);
+		redirectOnError(c, defaultErrorURL, "invalid_callback_request");
 	}
-	const { code, error, state, error_description, device_id, user: userData } = queryOrBody;
-	if (!state) {
-		c.context.logger.error("State not found", error);
-		const url = `${defaultErrorURL}${defaultErrorURL.includes("?") ? "&" : "?"}state=state_not_found`;
-		throw c.redirect(url);
-	}
+	const { code, error, error_description, device_id, user: userData } = queryOrBody;
 	const { codeVerifier, callbackURL, link, errorURL, newUserURL, requestSignUp } = await parseState(c);
-	function redirectOnError(error, description) {
-		const baseURL = errorURL ?? defaultErrorURL;
-		const params = new URLSearchParams({ error });
-		if (description) params.set("error_description", description);
-		const url = `${baseURL}${baseURL.includes("?") ? "&" : "?"}${params.toString()}`;
-		throw c.redirect(url);
-	}
-	if (error) redirectOnError(error, error_description);
+	const resolvedErrorURL = errorURL ?? defaultErrorURL;
+	if (error) redirectOnError(c, resolvedErrorURL, error, error_description);
 	if (!code) {
-		c.context.logger.error("Code not found");
-		throw redirectOnError("no_code");
+		c.context.logger.warn("Code not found");
+		redirectOnError(c, resolvedErrorURL, "no_code");
 	}
 	const provider = await getAwaitableValue(c.context.socialProviders, { value: c.params.id });
 	if (!provider) {
-		c.context.logger.error("Oauth provider with id", c.params.id, "not found");
-		throw redirectOnError("oauth_provider_not_found");
+		c.context.logger.warn("OAuth provider not found", { providerId: c.params.id });
+		redirectOnError(c, resolvedErrorURL, "oauth_provider_not_found");
 	}
 	let tokens;
 	try {
@@ -4053,32 +14274,32 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 		});
 	} catch (e) {
 		c.context.logger.error("", e);
-		throw redirectOnError("invalid_code");
+		redirectOnError(c, resolvedErrorURL, "invalid_code");
 	}
-	if (!tokens) throw redirectOnError("invalid_code");
+	if (!tokens) redirectOnError(c, resolvedErrorURL, "invalid_code");
 	const parsedUserData = userData ? safeJSONParse(userData) : null;
 	const userInfo = await provider.getUserInfo({
 		...tokens,
 		user: parsedUserData ?? void 0
 	}).then((res) => res?.user);
-	if (!userInfo || userInfo.id === void 0 || userInfo.id === null) {
+	if (!userInfo || userInfo.id === void 0 || userInfo.id === null || userInfo.id === "") {
 		c.context.logger.error("Unable to get user info");
-		return redirectOnError("unable_to_get_user_info");
+		redirectOnError(c, resolvedErrorURL, "unable_to_get_user_info");
 	}
 	const providerAccountId = String(userInfo.id);
 	if (!callbackURL) {
 		c.context.logger.error("No callback URL found");
-		throw redirectOnError("no_callback_url");
+		redirectOnError(c, resolvedErrorURL, "no_callback_url");
 	}
 	if (link) {
 		if (!c.context.trustedProviders.includes(provider.id) && !userInfo.emailVerified || c.context.options.account?.accountLinking?.enabled === false) {
 			c.context.logger.error("Unable to link account - untrusted provider");
-			return redirectOnError("unable_to_link_account");
+			redirectOnError(c, resolvedErrorURL, "unable_to_link_account");
 		}
-		if (userInfo.email?.toLowerCase() !== link.email.toLowerCase() && c.context.options.account?.accountLinking?.allowDifferentEmails !== true) return redirectOnError("email_doesn't_match");
+		if (userInfo.email?.toLowerCase() !== link.email.toLowerCase() && c.context.options.account?.accountLinking?.allowDifferentEmails !== true) redirectOnError(c, resolvedErrorURL, "email_doesn't_match");
 		const existingAccount = await c.context.internalAdapter.findAccountByProviderId(providerAccountId, provider.id);
 		if (existingAccount) {
-			if (existingAccount.userId.toString() !== link.userId.toString()) return redirectOnError("account_already_linked_to_different_user");
+			if (existingAccount.userId.toString() !== link.userId.toString()) redirectOnError(c, resolvedErrorURL, "account_already_linked_to_different_user");
 			const updateData = Object.fromEntries(Object.entries({
 				accessToken: await setTokenUtil(tokens.accessToken, c.context),
 				refreshToken: await setTokenUtil(tokens.refreshToken, c.context),
@@ -4096,7 +14317,8 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 			accessToken: await setTokenUtil(tokens.accessToken, c.context),
 			refreshToken: await setTokenUtil(tokens.refreshToken, c.context),
 			scope: tokens.scopes?.join(",")
-		})) return redirectOnError("unable_to_link_account");
+		})) redirectOnError(c, resolvedErrorURL, "unable_to_link_account");
+		await applyUpdateUserInfoOnLink(c, link.userId, userInfo);
 		let toRedirectTo;
 		try {
 			toRedirectTo = callbackURL.toString();
@@ -4107,7 +14329,7 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 	}
 	if (!userInfo.email) {
 		c.context.logger.error(missingEmailLogMessage(provider.id));
-		return redirectOnError("email_not_found");
+		redirectOnError(c, resolvedErrorURL, "email_not_found");
 	}
 	const accountData = {
 		providerId: provider.id,
@@ -4115,21 +14337,27 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 		...tokens,
 		scope: tokens.scopes?.join(",")
 	};
-	const result = await handleOAuthUserInfo(c, {
-		userInfo: {
-			...userInfo,
-			id: providerAccountId,
-			email: userInfo.email,
-			name: userInfo.name || ""
-		},
-		account: accountData,
-		callbackURL,
-		disableSignUp: provider.disableImplicitSignUp && !requestSignUp || provider.options?.disableSignUp,
-		overrideUserInfo: provider.options?.overrideUserInfoOnSignIn
-	});
+	let result;
+	try {
+		result = await handleOAuthUserInfo(c, {
+			userInfo: {
+				...userInfo,
+				id: providerAccountId,
+				email: userInfo.email,
+				name: userInfo.name || ""
+			},
+			account: accountData,
+			callbackURL,
+			disableSignUp: provider.disableImplicitSignUp && !requestSignUp || provider.options?.disableSignUp,
+			overrideUserInfo: provider.options?.overrideUserInfoOnSignIn
+		});
+	} catch (e) {
+		if (isAPIError(e) && e.body?.code) redirectOnError(c, resolvedErrorURL, e.body.code, e.body.message);
+		throw e;
+	}
 	if (result.error) {
 		c.context.logger.error(result.error.split(" ").join("_"));
-		return redirectOnError(result.error.split(" ").join("_"));
+		redirectOnError(c, resolvedErrorURL, result.error.split(" ").join("_"));
 	}
 	const { session, user } = result.data;
 	await setSessionCookie(c, {
@@ -4145,7 +14373,7 @@ var callbackOAuth = createAuthEndpoint("/callback/:id", {
 	throw c.redirect(toRedirectTo);
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/error.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/error.mjs
 function sanitize(input) {
 	return input.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/&(?!amp;|lt;|gt;|quot;|#39;|#x[0-9a-fA-F]+;|#[0-9]+;)/g, "&amp;");
 }
@@ -4524,7 +14752,7 @@ var error = createAuthEndpoint("/error", {
 	return new Response(html(c.context.options, safeCode, safeDescription), { headers: { "Content-Type": "text/html" } });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/ok.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/ok.mjs
 var ok = createAuthEndpoint("/ok", {
 	method: "GET",
 	metadata: {
@@ -4548,7 +14776,7 @@ var ok = createAuthEndpoint("/ok", {
 	return ctx.json({ ok: true });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/password.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/password.mjs
 async function validatePassword(ctx, data) {
 	const credentialAccount = (await ctx.context.internalAdapter.findAccounts(data.userId))?.find((account) => account.providerId === "credential");
 	const currentPassword = credentialAccount?.password;
@@ -4573,7 +14801,7 @@ async function checkPassword(userId, c) {
 	return true;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/password.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/password.mjs
 function redirectError(ctx, callbackURL, query) {
 	const url = callbackURL ? new URL(callbackURL, ctx.baseURL) : new URL(`${ctx.baseURL}/error`);
 	if (query) Object.entries(query).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -4620,16 +14848,16 @@ var requestPasswordReset = createAuthEndpoint("/request-password-reset", {
 		* We simulate the verification token generation and the database lookup
 		* to mitigate timing attacks.
 		*/
-		generateId(24);
+		generateId$1(24);
 		await ctx.context.internalAdapter.findVerificationValue("dummy-verification-token");
-		ctx.context.logger.error("Reset Password: User not found", { email });
+		ctx.context.logger.warn("Reset Password: User not found");
 		return ctx.json({
 			status: true,
 			message: "If this email exists in our system, check your email for the reset link"
 		});
 	}
 	const expiresAt = getDate(ctx.context.options.emailAndPassword.resetPasswordTokenExpiresIn || 3600 * 1, "sec");
-	const verificationToken = generateId(24);
+	const verificationToken = generateId$1(24);
 	await ctx.context.internalAdapter.createVerificationValue({
 		value: user.user.id,
 		identifier: `reset-password:${verificationToken}`,
@@ -4712,8 +14940,8 @@ var resetPassword = createAuthEndpoint("/reset-password", {
 	if (newPassword.length < minLength) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_SHORT);
 	if (newPassword.length > maxLength) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_LONG);
 	const id = `reset-password:${token}`;
-	const verification = await ctx.context.internalAdapter.findVerificationValue(id);
-	if (!verification || verification.expiresAt < /* @__PURE__ */ new Date()) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_TOKEN);
+	const verification = await ctx.context.internalAdapter.consumeVerificationValue(id);
+	if (!verification) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_TOKEN);
 	const userId = verification.value;
 	const hashedPassword = await ctx.context.password.hash(newPassword);
 	if (!(await ctx.context.internalAdapter.findAccounts(userId)).find((ac) => ac.providerId === "credential")) await ctx.context.internalAdapter.createAccount({
@@ -4723,15 +14951,14 @@ var resetPassword = createAuthEndpoint("/reset-password", {
 		accountId: userId
 	});
 	else await ctx.context.internalAdapter.updatePassword(userId, hashedPassword);
-	await ctx.context.internalAdapter.deleteVerificationByIdentifier(id);
 	if (ctx.context.options.emailAndPassword?.onPasswordReset) {
 		const user = await ctx.context.internalAdapter.findUserById(userId);
 		if (user) await ctx.context.options.emailAndPassword.onPasswordReset({ user }, ctx.request);
 	}
-	if (ctx.context.options.emailAndPassword?.revokeSessionsOnPasswordReset) await ctx.context.internalAdapter.deleteSessions(userId);
+	if (ctx.context.options.emailAndPassword?.revokeSessionsOnPasswordReset) await ctx.context.internalAdapter.deleteUserSessions(userId);
 	return ctx.json({ status: true });
 });
-var verifyPassword$1 = createAuthEndpoint("/verify-password", {
+var verifyPassword = createAuthEndpoint("/verify-password", {
 	method: "POST",
 	body: z$1.object({ password: z$1.string().meta({ description: "The password to verify" }) }),
 	metadata: {
@@ -4759,7 +14986,7 @@ var verifyPassword$1 = createAuthEndpoint("/verify-password", {
 	return ctx.json({ status: true });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/sign-in.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/sign-in.mjs
 var socialSignInBodySchema = z$1.object({
 	callbackURL: z$1.string().meta({ description: "Callback URL to redirect to after the user has signed in" }).optional(),
 	newUserCallbackURL: z$1.string().optional(),
@@ -4829,7 +15056,7 @@ var signInSocial = () => createAuthEndpoint("/sign-in/social", {
 		}
 		const { token, nonce } = c.body.idToken;
 		if (!await provider.verifyIdToken(token, nonce)) {
-			c.context.logger.error("Invalid id token", { provider: c.body.provider });
+			c.context.logger.warn("Invalid id token", { provider: c.body.provider });
 			throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_TOKEN);
 		}
 		const userInfo = await provider.getUserInfo({
@@ -4893,6 +15120,7 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 	method: "POST",
 	operationId: "signInEmail",
 	use: [formCsrfMiddleware],
+	cloneRequest: true,
 	body: z$1.object({
 		email: z$1.string().meta({ description: "Email of the user" }),
 		password: z$1.string().meta({ description: "Password of the user" }),
@@ -4953,26 +15181,26 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 	const user = await ctx.context.internalAdapter.findUserByEmail(email, { includeAccounts: true });
 	if (!user) {
 		await ctx.context.password.hash(password);
-		ctx.context.logger.error("User not found", { email });
+		ctx.context.logger.warn("User not found");
 		throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD);
 	}
 	const credentialAccount = user.accounts.find((a) => a.providerId === "credential");
 	if (!credentialAccount) {
 		await ctx.context.password.hash(password);
-		ctx.context.logger.error("Credential account not found", { email });
+		ctx.context.logger.warn("Credential account not found");
 		throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD);
 	}
 	const currentPassword = credentialAccount?.password;
 	if (!currentPassword) {
 		await ctx.context.password.hash(password);
-		ctx.context.logger.error("Password not found", { email });
+		ctx.context.logger.warn("Password not found");
 		throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD);
 	}
 	if (!await ctx.context.password.verify({
 		hash: currentPassword,
 		password
 	})) {
-		ctx.context.logger.error("Invalid password");
+		ctx.context.logger.warn("Invalid password");
 		throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD);
 	}
 	if (ctx.context.options?.emailAndPassword?.requireEmailVerification && !user.user.emailVerified) {
@@ -4985,7 +15213,7 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 				user: user.user,
 				url,
 				token
-			}, ctx.request));
+			}, ctx.request?.clone()));
 		}
 		throw APIError.from("FORBIDDEN", BASE_ERROR_CODES.EMAIL_NOT_VERIFIED);
 	}
@@ -5007,7 +15235,7 @@ var signInEmail = () => createAuthEndpoint("/sign-in/email", {
 	});
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/sign-out.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/sign-out.mjs
 var signOut = createAuthEndpoint("/sign-out", {
 	method: "POST",
 	operationId: "signOut",
@@ -5034,7 +15262,7 @@ var signOut = createAuthEndpoint("/sign-out", {
 	return ctx.json({ success: true });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/sign-up.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/sign-up.mjs
 var signUpEmailBodySchema = z$1.object({
 	name: z$1.string(),
 	email: z$1.email(),
@@ -5048,6 +15276,7 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 	operationId: "signUpWithEmailAndPassword",
 	use: [formCsrfMiddleware],
 	body: signUpEmailBodySchema,
+	cloneRequest: true,
 	metadata: {
 		allowedMediaTypes: ["application/x-www-form-urlencoded", "application/json"],
 		$Infer: {
@@ -5174,12 +15403,12 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 		if (!password || typeof password !== "string") throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_PASSWORD);
 		const minPasswordLength = ctx.context.password.config.minPasswordLength;
 		if (password.length < minPasswordLength) {
-			ctx.context.logger.error("Password is too short");
+			ctx.context.logger.warn("Password is too short");
 			throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_SHORT);
 		}
 		const maxPasswordLength = ctx.context.password.config.maxPasswordLength;
 		if (password.length > maxPasswordLength) {
-			ctx.context.logger.error("Password is too long");
+			ctx.context.logger.warn("Password is too long");
 			throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_LONG);
 		}
 		const shouldReturnGenericDuplicateResponse = ctx.context.options.emailAndPassword.requireEmailVerification || ctx.context.options.emailAndPassword.autoSignIn === false;
@@ -5195,14 +15424,14 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 				* between existing and non-existing emails.
 				*/
 				await ctx.context.password.hash(password);
-				if (ctx.context.options.emailAndPassword?.onExistingUserSignUp) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailAndPassword.onExistingUserSignUp({ user: dbUser.user }, ctx.request));
+				if (ctx.context.options.emailAndPassword?.onExistingUserSignUp) await ctx.context.runInBackgroundOrAwait(ctx.context.options.emailAndPassword.onExistingUserSignUp({ user: dbUser.user }, ctx.request?.clone()));
 				const now = /* @__PURE__ */ new Date();
-				const generatedId = ctx.context.generateId({ model: "user" }) || generateId();
+				const generatedId = ctx.context.generateId({ model: "user" }) || generateId$1();
 				const coreFields = {
 					name,
 					email: normalizedEmail,
 					emailVerified: false,
-					image: image || null,
+					image: image ?? null,
 					createdAt: now,
 					updatedAt: now
 				};
@@ -5212,16 +15441,17 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 					const additionalFieldKeys = Object.keys(ctx.context.options.user?.additionalFields ?? {});
 					const additionalFields = {};
 					for (const key of additionalFieldKeys) if (key in additionalUserFields) additionalFields[key] = additionalUserFields[key];
-					syntheticUser = customSyntheticUser({
+					const customResult = customSyntheticUser({
 						coreFields,
 						additionalFields,
 						id: generatedId
 					});
-				} else syntheticUser = {
+					syntheticUser = buildSyntheticUserOutput(ctx.context.options, customResult);
+				} else syntheticUser = buildSyntheticUserOutput(ctx.context.options, {
 					...coreFields,
 					...additionalUserFields,
 					id: generatedId
-				};
+				});
 				return ctx.json({
 					token: null,
 					user: parseUserOutput(ctx.context.options, syntheticUser)
@@ -5269,7 +15499,7 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 				user: createdUser,
 				url,
 				token
-			}, ctx.request));
+			}, ctx.request?.clone()));
 		}
 		if (shouldSkipAutoSignIn) return ctx.json({
 			token: null,
@@ -5288,7 +15518,7 @@ var signUpEmail = () => createAuthEndpoint("/sign-up/email", {
 	});
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/update-session.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/update-session.mjs
 var updateSessionBodySchema = z$1.record(z$1.string().meta({ description: "Field name must be a string" }), z$1.any());
 var updateSession = () => createAuthEndpoint("/update-session", {
 	method: "POST",
@@ -5318,10 +15548,15 @@ var updateSession = () => createAuthEndpoint("/update-session", {
 	const session = ctx.context.session;
 	const additionalFields = parseSessionInput(ctx.context.options, body, "update");
 	if (Object.keys(additionalFields).length === 0) throw APIError.fromStatus("BAD_REQUEST", { message: "No fields to update" });
-	const newSession = await ctx.context.internalAdapter.updateSession(session.session.token, {
+	const updatedSession = await ctx.context.internalAdapter.updateSession(session.session.token, {
 		...additionalFields,
 		updatedAt: /* @__PURE__ */ new Date()
-	}) ?? {
+	});
+	if (!updatedSession && isStateful(ctx)) {
+		deleteSessionCookie(ctx);
+		throw APIError.from("UNAUTHORIZED", BASE_ERROR_CODES.FAILED_TO_GET_SESSION);
+	}
+	const newSession = updatedSession ?? {
 		...session.session,
 		...additionalFields,
 		updatedAt: /* @__PURE__ */ new Date()
@@ -5333,7 +15568,7 @@ var updateSession = () => createAuthEndpoint("/update-session", {
 	return ctx.json({ session: parseSessionOutput(ctx.context.options, newSession) });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/routes/update-user.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/routes/update-user.mjs
 var updateUserBodySchema = z$1.record(z$1.string().meta({ description: "Field name must be a string" }), z$1.any());
 var updateUser = () => createAuthEndpoint("/update-user", {
 	method: "POST",
@@ -5476,12 +15711,12 @@ var changePassword = createAuthEndpoint("/change-password", {
 	const session = ctx.context.session;
 	const minPasswordLength = ctx.context.password.config.minPasswordLength;
 	if (newPassword.length < minPasswordLength) {
-		ctx.context.logger.error("Password is too short");
+		ctx.context.logger.warn("Password is too short");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_SHORT);
 	}
 	const maxPasswordLength = ctx.context.password.config.maxPasswordLength;
 	if (newPassword.length > maxPasswordLength) {
-		ctx.context.logger.error("Password is too long");
+		ctx.context.logger.warn("Password is too long");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_LONG);
 	}
 	const account = (await ctx.context.internalAdapter.findAccounts(session.user.id)).find((account) => account.providerId === "credential" && account.password);
@@ -5494,7 +15729,7 @@ var changePassword = createAuthEndpoint("/change-password", {
 	await ctx.context.internalAdapter.updateAccount(account.id, { password: passwordHash });
 	let token = null;
 	if (revokeOtherSessions) {
-		await ctx.context.internalAdapter.deleteSessions(session.user.id);
+		await ctx.context.internalAdapter.deleteUserSessions(session.user.id);
 		const newSession = await ctx.context.internalAdapter.createSession(session.user.id);
 		if (!newSession) throw APIError.from("INTERNAL_SERVER_ERROR", BASE_ERROR_CODES.FAILED_TO_GET_SESSION);
 		await setSessionCookie(ctx, {
@@ -5508,7 +15743,7 @@ var changePassword = createAuthEndpoint("/change-password", {
 		user: parseUserOutput(ctx.context.options, session.user)
 	});
 });
-var setPassword = createAuthEndpoint({
+var setPassword = createAuthEndpoint.serverOnly({
 	method: "POST",
 	body: z$1.object({ newPassword: z$1.string().meta({ description: "The new password to set is required" }) }),
 	use: [sensitiveSessionMiddleware]
@@ -5517,12 +15752,12 @@ var setPassword = createAuthEndpoint({
 	const session = ctx.context.session;
 	const minPasswordLength = ctx.context.password.config.minPasswordLength;
 	if (newPassword.length < minPasswordLength) {
-		ctx.context.logger.error("Password is too short");
+		ctx.context.logger.warn("Password is too short");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_SHORT);
 	}
 	const maxPasswordLength = ctx.context.password.config.maxPasswordLength;
 	if (newPassword.length > maxPasswordLength) {
-		ctx.context.logger.error("Password is too long");
+		ctx.context.logger.warn("Password is too long");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_LONG);
 	}
 	const account = (await ctx.context.internalAdapter.findAccounts(session.user.id)).find((account) => account.providerId === "credential" && account.password);
@@ -5635,7 +15870,7 @@ var deleteUser = createAuthEndpoint("/delete-user", {
 	const beforeDelete = ctx.context.options.user.deleteUser?.beforeDelete;
 	if (beforeDelete) await beforeDelete(session.user, ctx.request);
 	await ctx.context.internalAdapter.deleteUser(session.user.id);
-	await ctx.context.internalAdapter.deleteSessions(session.user.id);
+	await ctx.context.internalAdapter.deleteUserSessions(session.user.id);
 	deleteSessionCookie(ctx);
 	const afterDelete = ctx.context.options.user.deleteUser?.afterDelete;
 	if (afterDelete) await afterDelete(session.user, ctx.request);
@@ -5680,17 +15915,15 @@ var deleteUserCallback = createAuthEndpoint("/delete-user/callback", {
 			code: "NOT_FOUND"
 		});
 	}
-	const session = await getSessionFromCtx(ctx);
+	const session = await getSessionFromCtx(ctx, { disableCookieCache: isStateful(ctx) });
 	if (!session) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.FAILED_TO_GET_USER_INFO);
-	const token = await ctx.context.internalAdapter.findVerificationValue(`delete-account-${ctx.query.token}`);
-	if (!token || token.expiresAt < /* @__PURE__ */ new Date()) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.INVALID_TOKEN);
-	if (token.value !== session.user.id) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.INVALID_TOKEN);
+	const token = await ctx.context.internalAdapter.consumeVerificationValue(`delete-account-${ctx.query.token}`);
+	if (!token || token.value !== session.user.id) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.INVALID_TOKEN);
 	const beforeDelete = ctx.context.options.user.deleteUser?.beforeDelete;
 	if (beforeDelete) await beforeDelete(session.user, ctx.request);
 	await ctx.context.internalAdapter.deleteUser(session.user.id);
-	await ctx.context.internalAdapter.deleteSessions(session.user.id);
+	await ctx.context.internalAdapter.deleteUserSessions(session.user.id);
 	await ctx.context.internalAdapter.deleteAccounts(session.user.id);
-	await ctx.context.internalAdapter.deleteVerificationByIdentifier(`delete-account-${ctx.query.token}`);
 	deleteSessionCookie(ctx);
 	const afterDelete = ctx.context.options.user.deleteUser?.afterDelete;
 	if (afterDelete) await afterDelete(session.user, ctx.request);
@@ -5740,7 +15973,7 @@ var changeEmail = createAuthEndpoint("/change-email", {
 	}
 	const newEmail = ctx.body.newEmail.toLowerCase();
 	if (newEmail === ctx.context.session.user.email) {
-		ctx.context.logger.error("Email is the same");
+		ctx.context.logger.warn("Email is the same");
 		throw APIError.fromStatus("BAD_REQUEST", { message: "Email is the same" });
 	}
 	/**
@@ -5750,8 +15983,8 @@ var changeEmail = createAuthEndpoint("/change-email", {
 	* email would later throw 400, leaking email existence.
 	*/
 	const canUpdateWithoutVerification = ctx.context.session.user.emailVerified !== true && ctx.context.options.user.changeEmail.updateEmailWithoutVerification;
-	const canSendConfirmation = ctx.context.session.user.emailVerified && ctx.context.options.user.changeEmail.sendChangeEmailConfirmation;
 	const canSendVerification = ctx.context.options.emailVerification?.sendVerificationEmail;
+	const canSendConfirmation = canSendVerification && ctx.context.session.user.emailVerified && ctx.context.options.user.changeEmail.sendChangeEmailConfirmation;
 	if (!canUpdateWithoutVerification && !canSendConfirmation && !canSendVerification) {
 		ctx.context.logger.error("Verification email isn't enabled.");
 		throw APIError.fromStatus("BAD_REQUEST", { message: "Verification email isn't enabled" });
@@ -5775,7 +16008,7 @@ var changeEmail = createAuthEndpoint("/change-email", {
 		});
 		if (canSendVerification) {
 			const token = await createEmailVerificationToken(ctx.context.secret, newEmail, void 0, ctx.context.options.emailVerification?.expiresIn);
-			const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${ctx.body.callbackURL || "/"}`;
+			const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${encodeURIComponent(ctx.body.callbackURL || "/")}`;
 			await ctx.context.runInBackgroundOrAwait(canSendVerification({
 				user: {
 					...ctx.context.session.user,
@@ -5792,7 +16025,7 @@ var changeEmail = createAuthEndpoint("/change-email", {
 	*/
 	if (canSendConfirmation) {
 		const token = await createEmailVerificationToken(ctx.context.secret, ctx.context.session.user.email, newEmail, ctx.context.options.emailVerification?.expiresIn, { requestType: "change-email-confirmation" });
-		const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${ctx.body.callbackURL || "/"}`;
+		const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${encodeURIComponent(ctx.body.callbackURL || "/")}`;
 		await ctx.context.runInBackgroundOrAwait(canSendConfirmation({
 			user: ctx.context.session.user,
 			newEmail,
@@ -5806,7 +16039,7 @@ var changeEmail = createAuthEndpoint("/change-email", {
 		throw APIError.fromStatus("BAD_REQUEST", { message: "Verification email isn't enabled" });
 	}
 	const token = await createEmailVerificationToken(ctx.context.secret, ctx.context.session.user.email, newEmail, ctx.context.options.emailVerification?.expiresIn, { requestType: "change-email-verification" });
-	const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${ctx.body.callbackURL || "/"}`;
+	const url = `${ctx.context.baseURL}/verify-email?token=${token}&callbackURL=${encodeURIComponent(ctx.body.callbackURL || "/")}`;
 	await ctx.context.runInBackgroundOrAwait(canSendVerification({
 		user: {
 			...ctx.context.session.user,
@@ -5818,7 +16051,7 @@ var changeEmail = createAuthEndpoint("/change-email", {
 	return ctx.json({ status: true });
 });
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/to-auth-endpoints.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/dispatch.mjs
 var defuReplaceArrays = createDefu((obj, key, value) => {
 	if (Array.isArray(obj[key]) && Array.isArray(value)) {
 		obj[key] = value;
@@ -5826,183 +16059,52 @@ var defuReplaceArrays = createDefu((obj, key, value) => {
 	}
 });
 var hooksSourceWeakMap = /* @__PURE__ */ new WeakMap();
-function getOperationId(endpoint, key) {
-	if (!endpoint?.options) return key;
+/**
+* Resolves the operation id used for spans, preferring an explicit
+* `operationId`, then the OpenAPI one, then the caller's `fallback` (the
+* `auth.api.*` map key), and finally the route path.
+*/
+function getOperationId(endpoint, fallback) {
 	const opts = endpoint.options;
-	return opts.operationId ?? opts.metadata?.openapi?.operationId ?? key;
+	return opts?.operationId ?? opts?.metadata?.openapi?.operationId ?? fallback ?? endpoint.path ?? "/:virtual";
 }
 /**
-* Resolves the per-call `AuthContext` for endpoints with a dynamic `baseURL`.
-*
-* - `rawCtx.baseURL` already set: HTTP handler rehydrated upstream; return as-is.
-* - Direct `auth.api` call with a source or a configured `fallback`: resolve here.
-* - Neither: throw `APIError` with a helpful message. Leaving `baseURL = ""`
-*   would let plugins build `new URL("")` and crash cryptically downstream.
+* Merge a set of response headers onto the dispatch's accumulator, appending
+* `set-cookie` (multiple cookies are legal) and replacing everything else.
 */
-async function resolveDynamicContext(rawCtx, input) {
-	if (rawCtx.baseURL) return rawCtx;
-	const source = pickSource(input);
-	const config = rawCtx.options.baseURL;
-	const hasFallback = isDynamicBaseURLConfig(config) && Boolean(config.fallback);
-	if (source === void 0 && !hasFallback) throw new APIError("INTERNAL_SERVER_ERROR", { message: "Dynamic baseURL could not be resolved for this direct auth.api call. Pass `headers: request.headers` (or `request`) to the call, or add `fallback` to your baseURL config." });
-	try {
-		return await resolveRequestContext(rawCtx, source, resolveDynamicTrustedProxyHeaders(rawCtx.options));
-	} catch (err) {
-		if (err instanceof BetterAuthError) throw new APIError("INTERNAL_SERVER_ERROR", { message: err.message });
-		throw err;
-	}
+function mergeResponseHeaders(context, headers) {
+	if (!headers) return;
+	headers.forEach((value, key) => {
+		if (!context.responseHeaders) context.responseHeaders = new Headers({ [key]: value });
+		else if (key.toLowerCase() === "set-cookie") context.responseHeaders.append(key, value);
+		else context.responseHeaders.set(key, value);
+	});
 }
-function toAuthEndpoints(endpoints, ctx) {
-	const api = {};
-	for (const [key, endpoint] of Object.entries(endpoints)) {
-		api[key] = async (context) => {
-			const operationId = getOperationId(endpoint, key);
-			const endpointMethod = endpoint?.options?.method;
-			const defaultMethod = Array.isArray(endpointMethod) ? endpointMethod[0] : endpointMethod;
-			const run = async () => {
-				const rawContext = await ctx;
-				const methodName = context?.method ?? context?.request?.method ?? defaultMethod ?? "?";
-				const route = endpoint.path ?? "/:virtual";
-				const authContext = isDynamicBaseURLConfig(rawContext.options.baseURL) ? await resolveDynamicContext(rawContext, context) : rawContext;
-				let internalContext = {
-					...context,
-					context: {
-						...authContext,
-						returned: void 0,
-						responseHeaders: void 0,
-						session: null
-					},
-					path: endpoint.path,
-					headers: context?.headers ? new Headers(context?.headers) : void 0
-				};
-				const hasRequest = isRequestLike(context?.request);
-				const shouldReturnResponse = context?.asResponse ?? hasRequest;
-				return withSpan(`${methodName} ${route}`, {
-					[ATTR_HTTP_ROUTE]: route,
-					[ATTR_OPERATION_ID]: operationId
-				}, async () => runWithEndpointContext(internalContext, async () => {
-					const { beforeHooks, afterHooks } = getHooks(authContext);
-					const before = await runBeforeHooks(internalContext, beforeHooks, endpoint, operationId);
-					/**
-					* If `before.context` is returned, it should
-					* get merged with the original context
-					*/
-					if ("context" in before && before.context && typeof before.context === "object") {
-						const { headers, ...rest } = before.context;
-						/**
-						* Headers should be merged differently
-						* so the hook doesn't override the whole
-						* header
-						*/
-						if (headers) headers.forEach((value, key) => {
-							internalContext.headers.set(key, value);
-						});
-						internalContext = defuReplaceArrays(rest, internalContext);
-					} else if (before) return shouldReturnResponse ? toResponse(before, { headers: context?.headers }) : context?.returnHeaders ? {
-						headers: context?.headers,
-						response: before
-					} : before;
-					internalContext.asResponse = false;
-					internalContext.returnHeaders = true;
-					internalContext.returnStatus = true;
-					const result = await runWithEndpointContext(internalContext, () => withSpan(`handler ${route}`, {
-						[ATTR_HTTP_ROUTE]: route,
-						[ATTR_OPERATION_ID]: operationId
-					}, () => endpoint(internalContext))).catch((e) => {
-						if (isAPIError(e)) {
-							/**
-							* API Errors from response are caught
-							* and returned to hooks.
-							*
-							* Headers come from two sources that must both
-							* survive:
-							* - `kAPIErrorHeaderSymbol`: ctx.responseHeaders
-							*   accumulated via c.setCookie / c.setHeader
-							*   before the throw.
-							* - `e.headers`: explicit headers on the APIError
-							*   (e.g. `location` from c.redirect).
-							*
-							* Start from the accumulated ctx headers, then
-							* apply e.headers on top — appending `set-cookie`
-							* and setting others — so explicit APIError
-							* headers override while cookies accumulate.
-							*/
-							const ctxHeaders = e[kAPIErrorHeaderSymbol];
-							/**
-							* `c.redirect()` (and similar APIError throws) reuse
-							* `ctx.responseHeaders` as `e.headers`, so when both sources
-							* reference the same Headers, iterating both duplicates every
-							* `set-cookie`. Skip the `errHeaders` copy in that case.
-							*/
-							const errHeaders = e.headers && e.headers !== ctxHeaders ? new Headers(e.headers) : null;
-							let headers = null;
-							if (ctxHeaders || errHeaders) {
-								headers = new Headers();
-								ctxHeaders?.forEach((value, key) => {
-									headers.append(key, value);
-								});
-								errHeaders?.forEach((value, key) => {
-									if (key.toLowerCase() === "set-cookie") headers.append(key, value);
-									else headers.set(key, value);
-								});
-							}
-							return {
-								response: e,
-								status: e.statusCode,
-								headers
-							};
-						}
-						throw e;
-					});
-					if (result && result instanceof Response) return result;
-					internalContext.context.returned = result.response;
-					internalContext.context.responseHeaders = result.headers;
-					const after = await runAfterHooks(internalContext, afterHooks, endpoint, operationId);
-					if (after.response) result.response = after.response;
-					if (isAPIError(result.response) && shouldPublishLog(authContext.logger.level, "debug")) result.response.stack = result.response.errorStack;
-					if (isAPIError(result.response) && !shouldReturnResponse) {
-						/**
-						* Non-response path: we re-throw the raw APIError
-						* to callers of `auth.api.*`. `result.headers`
-						* holds the merged ctx + explicit headers (see
-						* catch block above) — rewrite
-						* `kAPIErrorHeaderSymbol` with the merged set so
-						* downstream pipelines (e.g. better-call's
-						* response builder, or an outer hook catch) see
-						* the same headers we'd have written on the
-						* response.
-						*/
-						if (result.headers) Object.defineProperty(result.response, kAPIErrorHeaderSymbol, {
-							enumerable: false,
-							configurable: true,
-							writable: false,
-							value: result.headers
-						});
-						throw result.response;
-					}
-					return shouldReturnResponse ? toResponse(result.response, {
-						headers: result.headers,
-						status: result.status
-					}) : context?.returnHeaders ? context?.returnStatus ? {
-						headers: result.headers,
-						response: result.response,
-						status: result.status
-					} : {
-						headers: result.headers,
-						response: result.response
-					} : context?.returnStatus ? {
-						response: result.response,
-						status: result.status
-					} : result.response;
-				}));
-			};
-			if (await hasRequestState()) return run();
-			else return runWithRequestState(/* @__PURE__ */ new WeakMap(), run);
-		};
-		api[key].path = endpoint.path;
-		api[key].options = endpoint.options;
-	}
-	return api;
+/**
+* Combine the two header sources an `APIError` can carry into one set:
+* - `kAPIErrorHeaderSymbol`: `ctx.responseHeaders` accumulated via
+*   `c.setCookie` / `c.setHeader` before the throw.
+* - `e.headers`: explicit headers on the error (e.g. `location` from
+*   `c.redirect`).
+*
+* `c.redirect()` reuses `ctx.responseHeaders` as `e.headers`, so when both
+* point at the same object iterating each would duplicate every `set-cookie`;
+* the identity check skips that copy. Explicit error headers override
+* accumulated ones, while cookies from both accumulate.
+*/
+function mergeAPIErrorHeaders(error) {
+	const ctxHeaders = error[kAPIErrorHeaderSymbol];
+	const errHeaders = error.headers && error.headers !== ctxHeaders ? new Headers(error.headers) : null;
+	if (!ctxHeaders && !errHeaders) return null;
+	const headers = new Headers();
+	ctxHeaders?.forEach((value, key) => {
+		headers.append(key, value);
+	});
+	errHeaders?.forEach((value, key) => {
+		if (key.toLowerCase() === "set-cookie") headers.append(key, value);
+		else headers.set(key, value);
+	});
+	return headers;
 }
 async function runBeforeHooks(context, hooks, endpoint, operationId) {
 	let modifiedContext = {};
@@ -6013,41 +16115,43 @@ async function runBeforeHooks(context, hooks, endpoint, operationId) {
 		} catch (error) {
 			const hookSource = hooksSourceWeakMap.get(hook.handler) ?? "unknown";
 			context.context.logger.error(`An error occurred during ${hookSource} hook matcher execution:`, error);
-			throw new APIError("INTERNAL_SERVER_ERROR", { message: `An error occurred during hook matcher execution. Check the logs for more details.` });
+			throw new APIError("INTERNAL_SERVER_ERROR", { message: "An error occurred during hook matcher execution. Check the logs for more details." });
 		}
-		if (matched) {
-			const hookSource = hooksSourceWeakMap.get(hook.handler) ?? "unknown";
-			const route = endpoint.path ?? "/:virtual";
-			const result = await withSpan(`hook before ${route} ${hookSource}`, {
-				[ATTR_HOOK_TYPE]: "before",
-				[ATTR_HTTP_ROUTE]: route,
-				[ATTR_CONTEXT]: hookSource,
-				[ATTR_OPERATION_ID]: operationId
-			}, () => hook.handler({
-				...context,
-				returnHeaders: false
-			})).catch((e) => {
-				if (isAPIError(e) && shouldPublishLog(context.context.logger.level, "debug")) e.stack = e.errorStack;
-				throw e;
-			});
-			if (result && typeof result === "object") {
-				if ("context" in result && typeof result.context === "object") {
-					const { headers, ...rest } = result.context;
-					if (headers instanceof Headers) if (modifiedContext.headers) headers.forEach((value, key) => {
-						modifiedContext.headers?.set(key, value);
-					});
-					else modifiedContext.headers = headers;
-					modifiedContext = defuReplaceArrays(rest, modifiedContext);
-					continue;
-				}
-				return result;
+		if (!matched) continue;
+		const hookSource = hooksSourceWeakMap.get(hook.handler) ?? "unknown";
+		const route = endpoint.path ?? "/:virtual";
+		const result = await withSpan(`hook before ${route} ${hookSource}`, {
+			[ATTR_HOOK_TYPE]: "before",
+			[ATTR_HTTP_ROUTE]: route,
+			[ATTR_CONTEXT]: hookSource,
+			[ATTR_OPERATION_ID]: operationId
+		}, () => hook.handler({
+			...context,
+			returnHeaders: true
+		})).catch((e) => {
+			if (isAPIError(e) && shouldPublishLog(context.context.logger.level, "debug")) e.stack = e.errorStack;
+			throw e;
+		});
+		mergeResponseHeaders(context.context, result?.headers);
+		const hookReturn = result?.response;
+		if (hookReturn && typeof hookReturn === "object") {
+			if ("context" in hookReturn && typeof hookReturn.context === "object") {
+				const { headers, ...rest } = hookReturn.context;
+				if (headers instanceof Headers) if (modifiedContext.headers) headers.forEach((value, key) => {
+					modifiedContext.headers?.set(key, value);
+				});
+				else modifiedContext.headers = headers;
+				modifiedContext = defuReplaceArrays(rest, modifiedContext);
+				continue;
 			}
+			return hookReturn;
 		}
 	}
 	return { context: modifiedContext };
 }
 async function runAfterHooks(context, hooks, endpoint, operationId) {
-	for (const hook of hooks) if (hook.matcher(context)) {
+	for (const hook of hooks) {
+		if (!hook.matcher(context)) continue;
 		const hookSource = hooksSourceWeakMap.get(hook.handler) ?? "unknown";
 		const route = endpoint.path ?? "/:virtual";
 		const result = await withSpan(`hook after ${route} ${hookSource}`, {
@@ -6057,21 +16161,16 @@ async function runAfterHooks(context, hooks, endpoint, operationId) {
 			[ATTR_OPERATION_ID]: operationId
 		}, () => hook.handler(context)).catch((e) => {
 			if (isAPIError(e)) {
-				const headers = e[kAPIErrorHeaderSymbol];
 				if (shouldPublishLog(context.context.logger.level, "debug")) e.stack = e.errorStack;
 				return {
 					response: e,
-					headers: headers ? headers : e.headers ? new Headers(e.headers) : null
+					headers: mergeAPIErrorHeaders(e)
 				};
 			}
 			throw e;
 		});
-		if (result.headers) result.headers.forEach((value, key) => {
-			if (!context.context.responseHeaders) context.context.responseHeaders = new Headers({ [key]: value });
-			else if (key.toLowerCase() === "set-cookie") context.context.responseHeaders.append(key, value);
-			else context.context.responseHeaders.set(key, value);
-		});
-		if (result.response) context.context.returned = result.response;
+		mergeResponseHeaders(context.context, result.headers);
+		if (result.response !== void 0) context.context.returned = result.response;
 	}
 	return {
 		response: context.context.returned,
@@ -6106,9 +16205,6 @@ function getHooks(authContext) {
 		hooksSourceWeakMap.set(h.handler, `plugin:${plugin.id}`);
 		return h;
 	}));
-	/**
-	* Add plugin added hooks at last
-	*/
 	if (pluginBeforeHooks.length) beforeHooks.push(...pluginBeforeHooks);
 	if (pluginAfterHooks.length) afterHooks.push(...pluginAfterHooks);
 	return {
@@ -6116,8 +16212,161 @@ function getHooks(authContext) {
 		afterHooks
 	};
 }
+/**
+* Run a single endpoint through the configured `hooks.before` / `hooks.after`
+* pipeline, normalizing the response, headers, and `APIError`s the same way a
+* router or `auth.api.*` dispatch does.
+*
+* This is the canonical hook runner. The HTTP router and `auth.api.*` reach it
+* through {@link toAuthEndpoints}. Plugins call it directly when they need to
+* re-enter the pipeline on purpose, such as resuming `/oauth2/authorize` after
+* a fresh sign-in. Calling an endpoint as a plain function deliberately skips
+* hooks; `dispatchAuthEndpoint` is the supported way to opt back in.
+*
+* @param endpoint The endpoint to dispatch.
+* @param input Input context whose `context` is an already-resolved `AuthContext`.
+*/
+async function dispatchAuthEndpoint(endpoint, input) {
+	const operationId = input.operationId ?? getOperationId(endpoint);
+	const route = endpoint.path ?? "/:virtual";
+	const endpointMethod = endpoint.options?.method;
+	const defaultMethod = Array.isArray(endpointMethod) ? endpointMethod[0] : endpointMethod;
+	const methodName = input.method ?? input.request?.method ?? defaultMethod ?? "?";
+	const shouldReturnResponse = input.asResponse ?? isRequestLike(input.request);
+	let internalContext = {
+		...input,
+		context: {
+			...input.context,
+			returned: void 0,
+			responseHeaders: void 0,
+			session: input.context.session ?? null
+		},
+		path: endpoint.path,
+		headers: input.headers ? new Headers(input.headers) : void 0
+	};
+	return withSpan(`${methodName} ${route}`, {
+		[ATTR_HTTP_ROUTE]: route,
+		[ATTR_OPERATION_ID]: operationId
+	}, async () => runWithEndpointContext(internalContext, async () => {
+		const { beforeHooks, afterHooks } = getHooks(internalContext.context);
+		const before = await runBeforeHooks(internalContext, beforeHooks, endpoint, operationId);
+		if ("context" in before && before.context && typeof before.context === "object") {
+			const { headers, ...rest } = before.context;
+			if (headers) {
+				if (!internalContext.headers) internalContext.headers = new Headers();
+				const requestHeaders = internalContext.headers;
+				headers.forEach((value, key) => {
+					requestHeaders.set(key, value);
+				});
+			}
+			internalContext = defuReplaceArrays(rest, internalContext);
+		} else if (before) {
+			const responseHeaders = internalContext.context.responseHeaders;
+			return shouldReturnResponse ? toResponse(before, { headers: responseHeaders }) : input.returnHeaders ? {
+				headers: responseHeaders,
+				response: before
+			} : before;
+		}
+		internalContext.asResponse = false;
+		internalContext.returnHeaders = true;
+		internalContext.returnStatus = true;
+		const result = await runWithEndpointContext(internalContext, () => withSpan(`handler ${route}`, {
+			[ATTR_HTTP_ROUTE]: route,
+			[ATTR_OPERATION_ID]: operationId
+		}, () => endpoint(internalContext))).catch((e) => {
+			if (isAPIError(e)) return {
+				response: e,
+				status: e.statusCode,
+				headers: mergeAPIErrorHeaders(e)
+			};
+			throw e;
+		});
+		if (result instanceof Response) return result;
+		internalContext.context.returned = result.response;
+		internalContext.context.responseHeaders = result.headers ?? void 0;
+		const after = await runAfterHooks(internalContext, afterHooks, endpoint, operationId);
+		if (after.response !== void 0) result.response = after.response;
+		result.headers = after.headers ?? result.headers;
+		if (isAPIError(result.response) && shouldPublishLog(internalContext.context.logger.level, "debug")) result.response.stack = result.response.errorStack;
+		if (isAPIError(result.response) && !shouldReturnResponse) {
+			if (result.headers) Object.defineProperty(result.response, kAPIErrorHeaderSymbol, {
+				enumerable: false,
+				configurable: true,
+				writable: false,
+				value: result.headers
+			});
+			throw result.response;
+		}
+		return shouldReturnResponse ? toResponse(result.response, {
+			headers: result.headers ?? void 0,
+			status: result.status
+		}) : input.returnHeaders ? input.returnStatus ? {
+			headers: result.headers,
+			response: result.response,
+			status: result.status
+		} : {
+			headers: result.headers,
+			response: result.response
+		} : input.returnStatus ? {
+			response: result.response,
+			status: result.status
+		} : result.response;
+	}));
+}
 //#endregion
-//#region ../../node_modules/better-auth/dist/api/index.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/to-auth-endpoints.mjs
+/**
+* Resolves the per-call `AuthContext` for endpoints with a dynamic `baseURL`.
+*
+* - `rawCtx.baseURL` already set: HTTP handler rehydrated upstream; return as-is.
+* - Direct `auth.api` call with a source or a configured `fallback`: resolve here.
+* - Neither: throw `APIError` with a helpful message. Leaving `baseURL = ""`
+*   would let plugins build `new URL("")` and crash cryptically downstream.
+*/
+async function resolveDynamicContext(rawCtx, input) {
+	if (rawCtx.baseURL) return rawCtx;
+	const source = pickSource(input);
+	const config = rawCtx.options.baseURL;
+	const hasFallback = isDynamicBaseURLConfig(config) && Boolean(config.fallback);
+	if (source === void 0 && !hasFallback) throw new APIError("INTERNAL_SERVER_ERROR", { message: "Dynamic baseURL could not be resolved for this direct auth.api call. Pass `headers: request.headers` (or `request`) to the call, or add `fallback` to your baseURL config." });
+	try {
+		return await resolveRequestContext(rawCtx, source, resolveDynamicTrustedProxyHeaders(rawCtx.options));
+	} catch (err) {
+		if (err instanceof BetterAuthError) throw new APIError("INTERNAL_SERVER_ERROR", { message: err.message });
+		throw err;
+	}
+}
+/**
+* Wraps each raw endpoint so a router or `auth.api.*` call runs it through the
+* configured hook pipeline. Per-call work that is specific to this entry point
+* (dynamic `baseURL` resolution, request-state initialization) happens here;
+* the hook pipeline itself lives in {@link dispatchAuthEndpoint}.
+*/
+function toAuthEndpoints(endpoints, ctx) {
+	const api = {};
+	for (const [key, endpoint] of Object.entries(endpoints)) {
+		api[key] = async (context) => {
+			const operationId = getOperationId(endpoint, key);
+			const run = async () => {
+				const rawContext = await ctx;
+				const authContext = isDynamicBaseURLConfig(rawContext.options.baseURL) ? await resolveDynamicContext(rawContext, context) : rawContext;
+				return dispatchAuthEndpoint(endpoint, {
+					...context,
+					context: authContext,
+					operationId,
+					asResponse: context?.asResponse ?? isRequestLike(context?.request)
+				});
+			};
+			if (await hasRequestState()) return run();
+			return runWithRequestState(/* @__PURE__ */ new WeakMap(), run);
+		};
+		api[key].path = endpoint.path;
+		api[key].options = endpoint.options;
+	}
+	return api;
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/api/index.mjs
 function checkEndpointConflicts(options, logger) {
 	const endpointRegistry = /* @__PURE__ */ new Map();
 	options.plugins?.forEach((plugin) => {
@@ -6184,9 +16433,9 @@ function getEndpoints(ctx, options) {
 		const middleware = (async (context) => {
 			const authContext = await ctx;
 			return withSpan(`middleware ${m.path} ${plugin.id}`, {
-				[ATTR_HOOK_TYPE]: "middleware",
-				[ATTR_HTTP_ROUTE]: m.path,
-				[ATTR_CONTEXT]: `plugin:${plugin.id}`
+				["better_auth.hook.type"]: "middleware",
+				["http.route"]: m.path,
+				["better_auth.context"]: `plugin:${plugin.id}`
 			}, () => m.middleware({
 				...context,
 				context: {
@@ -6210,7 +16459,7 @@ function getEndpoints(ctx, options) {
 			signUpEmail: signUpEmail(),
 			signInEmail: signInEmail(),
 			resetPassword,
-			verifyPassword: verifyPassword$1,
+			verifyPassword,
 			verifyEmail,
 			sendVerificationEmail,
 			changeEmail,
@@ -6242,7 +16491,7 @@ function getEndpoints(ctx, options) {
 var router = (ctx, options) => {
 	const { api, middlewares } = getEndpoints(ctx, options);
 	const basePath = new URL(ctx.baseURL).pathname;
-	return createRouter(api, {
+	return createRouter$1(api, {
 		routerContext: ctx,
 		openapi: { disabled: true },
 		basePath,
@@ -6257,6 +16506,8 @@ var router = (ctx, options) => {
 			const normalizedPath = normalizePathname(req.url, basePath);
 			if (disabledPaths.includes(normalizedPath)) return new Response("Not Found", { status: 404 });
 			let currentRequest = req;
+			const rateLimitResponse = await onRequestRateLimit(currentRequest, ctx);
+			if (rateLimitResponse) return rateLimitResponse;
 			for (const plugin of ctx.options.plugins || []) if (plugin.onRequest) {
 				const response = await withSpan(`onRequest ${plugin.id}`, {
 					[ATTR_HOOK_TYPE]: "onRequest",
@@ -6265,12 +16516,9 @@ var router = (ctx, options) => {
 				if (response && "response" in response) return response.response;
 				if (response && "request" in response) currentRequest = response.request;
 			}
-			const rateLimitResponse = await onRequestRateLimit(currentRequest, ctx);
-			if (rateLimitResponse) return rateLimitResponse;
 			return currentRequest;
 		},
 		async onResponse(res, req) {
-			await onResponseRateLimit(req, ctx);
 			for (const plugin of ctx.options.plugins || []) if (plugin.onResponse) {
 				const response = await withSpan(`onResponse ${plugin.id}`, {
 					[ATTR_HOOK_TYPE]: "onResponse",
@@ -6306,7 +16554,7 @@ var router = (ctx, options) => {
 	});
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/adapter-base.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/adapter-base.mjs
 async function getBaseAdapter(options, handleDirectDatabase) {
 	let adapter;
 	if (!options.database) {
@@ -6315,7 +16563,7 @@ async function getBaseAdapter(options, handleDirectDatabase) {
 			acc[key] = [];
 			return acc;
 		}, {});
-		const { memoryAdapter } = await import("@better-auth/memory-adapter");
+		const { memoryAdapter } = await import("./dist3.js");
 		adapter = memoryAdapter(memoryDB)(options);
 	} else if (typeof options.database === "function") adapter = options.database(options);
 	else adapter = await handleDirectDatabase(options);
@@ -6328,7 +16576,7 @@ async function getBaseAdapter(options, handleDirectDatabase) {
 	return adapter;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/adapter-kysely.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/adapter-kysely.mjs
 async function getAdapter(options) {
 	return getBaseAdapter(options, async (opts) => {
 		const { createKyselyAdapter } = await import("./kysely-adapter.js");
@@ -6343,7 +16591,7 @@ async function getAdapter(options) {
 	});
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/get-schema.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/get-schema.mjs
 function getSchema(config) {
 	const tables = getAuthTables(config);
 	const schema = {};
@@ -6367,17 +16615,34 @@ function getSchema(config) {
 				...schema[table.modelName].fields,
 				...actualFields
 			};
+			if (table.disableMigrations) schema[table.modelName].disableMigrations = true;
 			continue;
 		}
 		schema[table.modelName] = {
 			fields: actualFields,
-			order: table.order || Infinity
+			order: table.order || Infinity,
+			disableMigrations: table.disableMigrations
 		};
 	}
 	return schema;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/db/get-migration.mjs
+//#region ../../node_modules/.bun/@better-auth+core@1.6.23+ad36ea17f9bad4d0/node_modules/@better-auth/core/dist/db/adapter/index.mjs
+var whereOperators = [
+	"eq",
+	"ne",
+	"lt",
+	"lte",
+	"gt",
+	"gte",
+	"in",
+	"not_in",
+	"contains",
+	"starts_with",
+	"ends_with"
+];
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/get-migration.mjs
 var map = {
 	postgres: {
 		string: [
@@ -6521,6 +16786,7 @@ async function getMigrations(config) {
 	const toBeCreated = [];
 	const toBeAdded = [];
 	for (const [key, value] of Object.entries(betterAuthSchema)) {
+		if (value.disableMigrations) continue;
 		const table = tableMetadata.find((t) => t.name === key);
 		if (!table) {
 			const tIndex = toBeCreated.findIndex((t) => t.table === key);
@@ -6642,13 +16908,14 @@ async function getMigrations(config) {
 			return `${model}.${field}`;
 		}
 	}
+	const deferredIndexes = [];
 	if (toBeAdded.length) for (const table of toBeAdded) for (const [fieldName, field] of Object.entries(table.fields)) {
 		const type = getType(field, fieldName);
 		const builder = db.schema.alterTable(table.table);
 		if (field.index) {
 			const indexName = `${table.table}_${fieldName}_${field.unique ? "uidx" : "idx"}`;
 			const indexBuilder = db.schema.createIndex(indexName).on(table.table).columns([fieldName]);
-			migrations.push(field.unique ? indexBuilder.unique() : indexBuilder);
+			deferredIndexes.push(field.unique ? indexBuilder.unique() : indexBuilder);
 		}
 		const built = builder.addColumn(fieldName, type, (col) => {
 			col = field.required !== false ? col.notNull() : col;
@@ -6660,7 +16927,6 @@ async function getMigrations(config) {
 		});
 		migrations.push(built);
 	}
-	const toBeIndexed = [];
 	if (toBeCreated.length) for (const table of toBeCreated) {
 		const idType = getType({ type: useNumberId ? "number" : "string" }, "id");
 		let dbT = db.schema.createTable(table.table).addColumn("id", idType, (col) => {
@@ -6688,12 +16954,12 @@ async function getMigrations(config) {
 			});
 			if (field.index) {
 				const builder = db.schema.createIndex(`${table.table}_${fieldName}_${field.unique ? "uidx" : "idx"}`).on(table.table).columns([fieldName]);
-				toBeIndexed.push(field.unique ? builder.unique() : builder);
+				deferredIndexes.push(field.unique ? builder.unique() : builder);
 			}
 		}
 		migrations.push(dbT);
 	}
-	if (toBeIndexed.length) for (const index of toBeIndexed) migrations.push(index);
+	for (const index of deferredIndexes) migrations.push(index);
 	async function runMigrations() {
 		for (const migration of migrations) await migration.execute();
 	}
@@ -6708,10 +16974,10 @@ async function getMigrations(config) {
 	};
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/constants.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/constants.mjs
 var DEFAULT_SECRET = "better-auth-secret-12345678901234567890";
 //#endregion
-//#region ../../node_modules/better-auth/dist/context/secret-utils.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/context/secret-utils.mjs
 /**
 * Estimates the entropy of a string in bits.
 * This is a simple approximation that helps detect low-entropy secrets.
@@ -6761,7 +17027,465 @@ function buildSecretConfig(secrets, legacySecret) {
 	};
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/context/create-context.mjs
+//#region ../../node_modules/.bun/@better-auth+telemetry@1.6.23+2eafd0ad69bdea18/node_modules/@better-auth/telemetry/dist/node.mjs
+async function getTelemetryAuthConfig(options, context) {
+	return {
+		database: context?.database,
+		adapter: context?.adapter,
+		emailVerification: {
+			sendVerificationEmail: !!options.emailVerification?.sendVerificationEmail,
+			sendOnSignUp: !!options.emailVerification?.sendOnSignUp,
+			sendOnSignIn: !!options.emailVerification?.sendOnSignIn,
+			autoSignInAfterVerification: !!options.emailVerification?.autoSignInAfterVerification,
+			expiresIn: options.emailVerification?.expiresIn,
+			beforeEmailVerification: !!options.emailVerification?.beforeEmailVerification,
+			afterEmailVerification: !!options.emailVerification?.afterEmailVerification
+		},
+		emailAndPassword: {
+			enabled: !!options.emailAndPassword?.enabled,
+			disableSignUp: !!options.emailAndPassword?.disableSignUp,
+			requireEmailVerification: !!options.emailAndPassword?.requireEmailVerification,
+			maxPasswordLength: options.emailAndPassword?.maxPasswordLength,
+			minPasswordLength: options.emailAndPassword?.minPasswordLength,
+			sendResetPassword: !!options.emailAndPassword?.sendResetPassword,
+			resetPasswordTokenExpiresIn: options.emailAndPassword?.resetPasswordTokenExpiresIn,
+			onPasswordReset: !!options.emailAndPassword?.onPasswordReset,
+			password: {
+				hash: !!options.emailAndPassword?.password?.hash,
+				verify: !!options.emailAndPassword?.password?.verify
+			},
+			autoSignIn: !!options.emailAndPassword?.autoSignIn,
+			revokeSessionsOnPasswordReset: !!options.emailAndPassword?.revokeSessionsOnPasswordReset
+		},
+		socialProviders: await Promise.all(Object.keys(options.socialProviders || {}).map(async (key) => {
+			const p = options.socialProviders?.[key];
+			if (!p) return {};
+			const provider = typeof p === "function" ? await p() : p;
+			return {
+				id: key,
+				mapProfileToUser: !!provider.mapProfileToUser,
+				disableDefaultScope: !!provider.disableDefaultScope,
+				disableIdTokenSignIn: !!provider.disableIdTokenSignIn,
+				disableImplicitSignUp: provider.disableImplicitSignUp,
+				disableSignUp: provider.disableSignUp,
+				getUserInfo: !!provider.getUserInfo,
+				overrideUserInfoOnSignIn: !!provider.overrideUserInfoOnSignIn,
+				prompt: provider.prompt,
+				verifyIdToken: !!provider.verifyIdToken,
+				scope: provider.scope,
+				refreshAccessToken: !!provider.refreshAccessToken
+			};
+		})),
+		plugins: options.plugins?.map((p) => p.id.toString()),
+		user: {
+			modelName: options.user?.modelName,
+			fields: options.user?.fields,
+			additionalFields: options.user?.additionalFields,
+			changeEmail: {
+				enabled: options.user?.changeEmail?.enabled,
+				sendChangeEmailConfirmation: !!options.user?.changeEmail?.sendChangeEmailConfirmation
+			}
+		},
+		verification: {
+			modelName: options.verification?.modelName,
+			disableCleanup: options.verification?.disableCleanup,
+			fields: options.verification?.fields
+		},
+		session: {
+			modelName: options.session?.modelName,
+			additionalFields: options.session?.additionalFields,
+			cookieCache: {
+				enabled: options.session?.cookieCache?.enabled,
+				maxAge: options.session?.cookieCache?.maxAge,
+				strategy: options.session?.cookieCache?.strategy
+			},
+			disableSessionRefresh: options.session?.disableSessionRefresh,
+			expiresIn: options.session?.expiresIn,
+			fields: options.session?.fields,
+			freshAge: options.session?.freshAge,
+			preserveSessionInDatabase: options.session?.preserveSessionInDatabase,
+			storeSessionInDatabase: options.session?.storeSessionInDatabase,
+			updateAge: options.session?.updateAge
+		},
+		account: {
+			modelName: options.account?.modelName,
+			fields: options.account?.fields,
+			encryptOAuthTokens: options.account?.encryptOAuthTokens,
+			updateAccountOnSignIn: options.account?.updateAccountOnSignIn,
+			accountLinking: {
+				enabled: options.account?.accountLinking?.enabled,
+				trustedProviders: options.account?.accountLinking?.trustedProviders,
+				updateUserInfoOnLink: options.account?.accountLinking?.updateUserInfoOnLink,
+				allowUnlinkingAll: options.account?.accountLinking?.allowUnlinkingAll
+			}
+		},
+		hooks: {
+			after: !!options.hooks?.after,
+			before: !!options.hooks?.before
+		},
+		secondaryStorage: !!options.secondaryStorage,
+		advanced: {
+			cookiePrefix: !!options.advanced?.cookiePrefix,
+			cookies: !!options.advanced?.cookies,
+			crossSubDomainCookies: {
+				domain: !!options.advanced?.crossSubDomainCookies?.domain,
+				enabled: options.advanced?.crossSubDomainCookies?.enabled,
+				additionalCookies: options.advanced?.crossSubDomainCookies?.additionalCookies
+			},
+			database: {
+				generateId: options.advanced?.database?.generateId,
+				defaultFindManyLimit: options.advanced?.database?.defaultFindManyLimit
+			},
+			useSecureCookies: options.advanced?.useSecureCookies,
+			ipAddress: {
+				disableIpTracking: options.advanced?.ipAddress?.disableIpTracking,
+				ipAddressHeaders: options.advanced?.ipAddress?.ipAddressHeaders
+			},
+			disableCSRFCheck: options.advanced?.disableCSRFCheck,
+			cookieAttributes: {
+				expires: options.advanced?.defaultCookieAttributes?.expires,
+				secure: options.advanced?.defaultCookieAttributes?.secure,
+				sameSite: options.advanced?.defaultCookieAttributes?.sameSite,
+				domain: !!options.advanced?.defaultCookieAttributes?.domain,
+				path: options.advanced?.defaultCookieAttributes?.path,
+				httpOnly: options.advanced?.defaultCookieAttributes?.httpOnly
+			}
+		},
+		trustedOrigins: options.trustedOrigins?.length,
+		rateLimit: {
+			storage: options.rateLimit?.storage,
+			modelName: options.rateLimit?.modelName,
+			window: options.rateLimit?.window,
+			customStorage: !!options.rateLimit?.customStorage,
+			enabled: options.rateLimit?.enabled,
+			max: options.rateLimit?.max
+		},
+		onAPIError: {
+			errorURL: options.onAPIError?.errorURL,
+			onError: !!options.onAPIError?.onError,
+			throw: options.onAPIError?.throw
+		},
+		logger: {
+			disabled: options.logger?.disabled,
+			level: options.logger?.level,
+			log: !!options.logger?.log
+		},
+		databaseHooks: {
+			user: {
+				create: {
+					after: !!options.databaseHooks?.user?.create?.after,
+					before: !!options.databaseHooks?.user?.create?.before
+				},
+				update: {
+					after: !!options.databaseHooks?.user?.update?.after,
+					before: !!options.databaseHooks?.user?.update?.before
+				}
+			},
+			session: {
+				create: {
+					after: !!options.databaseHooks?.session?.create?.after,
+					before: !!options.databaseHooks?.session?.create?.before
+				},
+				update: {
+					after: !!options.databaseHooks?.session?.update?.after,
+					before: !!options.databaseHooks?.session?.update?.before
+				}
+			},
+			account: {
+				create: {
+					after: !!options.databaseHooks?.account?.create?.after,
+					before: !!options.databaseHooks?.account?.create?.before
+				},
+				update: {
+					after: !!options.databaseHooks?.account?.update?.after,
+					before: !!options.databaseHooks?.account?.update?.before
+				}
+			},
+			verification: {
+				create: {
+					after: !!options.databaseHooks?.verification?.create?.after,
+					before: !!options.databaseHooks?.verification?.create?.before
+				},
+				update: {
+					after: !!options.databaseHooks?.verification?.update?.after,
+					before: !!options.databaseHooks?.verification?.update?.before
+				}
+			}
+		}
+	};
+}
+function detectPackageManager() {
+	const userAgent = env.npm_config_user_agent;
+	if (!userAgent) return;
+	const pmSpec = userAgent.split(" ")[0];
+	const separatorPos = pmSpec.lastIndexOf("/");
+	const name = pmSpec.substring(0, separatorPos);
+	return {
+		name: name === "npminstall" ? "cnpm" : name,
+		version: pmSpec.substring(separatorPos + 1)
+	};
+}
+function isCI() {
+	return env.CI !== "false" && ("BUILD_ID" in env || "BUILD_NUMBER" in env || "CI" in env || "CI_APP_ID" in env || "CI_BUILD_ID" in env || "CI_BUILD_NUMBER" in env || "CI_NAME" in env || "CONTINUOUS_INTEGRATION" in env || "RUN_ID" in env);
+}
+function detectRuntime() {
+	if (typeof Deno !== "undefined") return {
+		name: "deno",
+		version: Deno?.version?.deno ?? null
+	};
+	if (typeof Bun !== "undefined") return {
+		name: "bun",
+		version: Bun?.version ?? null
+	};
+	if (typeof process !== "undefined" && process?.versions?.node) return {
+		name: "node",
+		version: process.versions.node ?? null
+	};
+	return {
+		name: "edge",
+		version: null
+	};
+}
+function detectEnvironment() {
+	return getEnvVar("NODE_ENV") === "production" ? "production" : isCI() ? "ci" : isTest() ? "test" : "development";
+}
+async function hashToBase64(data) {
+	const buffer = await createHash("SHA-256").digest(data);
+	return base64.encode(buffer);
+}
+var generateId = (size) => {
+	return createRandomStringGenerator("a-z", "A-Z", "0-9")(size || 32);
+};
+var packageJSONCache;
+async function readRootPackageJson() {
+	if (packageJSONCache) return packageJSONCache;
+	try {
+		const cwd = process.cwd();
+		if (!cwd) return void 0;
+		const raw = await fsPromises.readFile(path.join(cwd, "package.json"), "utf-8");
+		packageJSONCache = JSON.parse(raw);
+		return packageJSONCache;
+	} catch {}
+}
+async function getPackageVersion(pkg) {
+	if (packageJSONCache) return packageJSONCache.dependencies?.[pkg] || packageJSONCache.devDependencies?.[pkg] || packageJSONCache.peerDependencies?.[pkg];
+	try {
+		const cwd = process.cwd();
+		if (!cwd) throw new Error("no-cwd");
+		const pkgJsonPath = path.join(cwd, "node_modules", pkg, "package.json");
+		const raw = await fsPromises.readFile(pkgJsonPath, "utf-8");
+		return JSON.parse(raw).version || await getVersionFromLocalPackageJson(pkg) || void 0;
+	} catch {}
+	return getVersionFromLocalPackageJson(pkg);
+}
+async function getVersionFromLocalPackageJson(pkg) {
+	const json = await readRootPackageJson();
+	if (!json) return void 0;
+	return {
+		...json.dependencies,
+		...json.devDependencies,
+		...json.peerDependencies
+	}[pkg];
+}
+async function getNameFromLocalPackageJson() {
+	return (await readRootPackageJson())?.name;
+}
+async function detectSystemInfo() {
+	try {
+		const cpus = os.cpus();
+		return {
+			deploymentVendor: getVendor(),
+			systemPlatform: os.platform(),
+			systemRelease: os.release(),
+			systemArchitecture: os.arch(),
+			cpuCount: cpus.length,
+			cpuModel: cpus.length ? cpus[0].model : null,
+			cpuSpeed: cpus.length ? cpus[0].speed : null,
+			memory: os.totalmem(),
+			isWSL: await isWsl(),
+			isDocker: await isDocker(),
+			isTTY: process.stdout ? process.stdout.isTTY : null
+		};
+	} catch {
+		return {
+			systemPlatform: null,
+			systemRelease: null,
+			systemArchitecture: null,
+			cpuCount: null,
+			cpuModel: null,
+			cpuSpeed: null,
+			memory: null,
+			isWSL: null,
+			isDocker: null,
+			isTTY: null
+		};
+	}
+}
+function getVendor() {
+	const env = process.env;
+	const hasAny = (...keys) => keys.some((k) => Boolean(env[k]));
+	if (hasAny("CF_PAGES", "CF_PAGES_URL", "CF_ACCOUNT_ID") || typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers") return "cloudflare";
+	if (hasAny("VERCEL", "VERCEL_URL", "VERCEL_ENV")) return "vercel";
+	if (hasAny("NETLIFY", "NETLIFY_URL")) return "netlify";
+	if (hasAny("RENDER", "RENDER_URL", "RENDER_INTERNAL_HOSTNAME", "RENDER_SERVICE_ID")) return "render";
+	if (hasAny("AWS_LAMBDA_FUNCTION_NAME", "AWS_EXECUTION_ENV", "LAMBDA_TASK_ROOT")) return "aws";
+	if (hasAny("GOOGLE_CLOUD_FUNCTION_NAME", "GOOGLE_CLOUD_PROJECT", "GCP_PROJECT", "K_SERVICE")) return "gcp";
+	if (hasAny("AZURE_FUNCTION_NAME", "FUNCTIONS_WORKER_RUNTIME", "WEBSITE_INSTANCE_ID", "WEBSITE_SITE_NAME")) return "azure";
+	if (hasAny("DENO_DEPLOYMENT_ID", "DENO_REGION")) return "deno-deploy";
+	if (hasAny("FLY_APP_NAME", "FLY_REGION", "FLY_ALLOC_ID")) return "fly-io";
+	if (hasAny("RAILWAY_STATIC_URL", "RAILWAY_ENVIRONMENT_NAME")) return "railway";
+	if (hasAny("DYNO", "HEROKU_APP_NAME")) return "heroku";
+	if (hasAny("DO_DEPLOYMENT_ID", "DO_APP_NAME", "DIGITALOCEAN")) return "digitalocean";
+	if (hasAny("KOYEB", "KOYEB_DEPLOYMENT_ID", "KOYEB_APP_NAME")) return "koyeb";
+	return null;
+}
+var isDockerCached;
+async function hasDockerEnv() {
+	try {
+		fs.statSync("/.dockerenv");
+		return true;
+	} catch {
+		return false;
+	}
+}
+async function hasDockerCGroup() {
+	try {
+		return fs.readFileSync("/proc/self/cgroup", "utf8").includes("docker");
+	} catch {
+		return false;
+	}
+}
+async function isDocker() {
+	if (isDockerCached === void 0) isDockerCached = await hasDockerEnv() || await hasDockerCGroup();
+	return isDockerCached;
+}
+var isInsideContainerCached;
+var hasContainerEnv = async () => {
+	try {
+		fs.statSync("/run/.containerenv");
+		return true;
+	} catch {
+		return false;
+	}
+};
+async function isInsideContainer() {
+	if (isInsideContainerCached === void 0) isInsideContainerCached = await hasContainerEnv() || await isDocker();
+	return isInsideContainerCached;
+}
+async function isWsl() {
+	try {
+		if (process.platform !== "linux") return false;
+		if (os.release().toLowerCase().includes("microsoft")) {
+			if (await isInsideContainer()) return false;
+			return true;
+		}
+		return fs.readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft") ? !await isInsideContainer() : false;
+	} catch {
+		return false;
+	}
+}
+var projectIdCached = null;
+async function getProjectId(baseUrl) {
+	if (projectIdCached) return projectIdCached;
+	const projectName = await getNameFromLocalPackageJson();
+	if (projectName) {
+		projectIdCached = await hashToBase64(baseUrl ? baseUrl + projectName : projectName);
+		return projectIdCached;
+	}
+	if (baseUrl) {
+		projectIdCached = await hashToBase64(baseUrl);
+		return projectIdCached;
+	}
+	projectIdCached = generateId(32);
+	return projectIdCached;
+}
+async function detectDatabaseNode() {
+	for (const [pkg, name] of Object.entries({
+		pg: "postgresql",
+		mysql: "mysql",
+		mariadb: "mariadb",
+		sqlite3: "sqlite",
+		"better-sqlite3": "sqlite",
+		"@prisma/client": "prisma",
+		mongoose: "mongodb",
+		mongodb: "mongodb",
+		"drizzle-orm": "drizzle"
+	})) {
+		const version = await getPackageVersion(pkg);
+		if (version) return {
+			name,
+			version
+		};
+	}
+}
+async function detectFrameworkNode() {
+	for (const [pkg, name] of Object.entries({
+		next: "next",
+		nuxt: "nuxt",
+		"react-router": "react-router",
+		astro: "astro",
+		"@sveltejs/kit": "sveltekit",
+		"solid-start": "solid-start",
+		"tanstack-start": "tanstack-start",
+		hono: "hono",
+		express: "express",
+		elysia: "elysia",
+		expo: "expo"
+	})) {
+		const version = await getPackageVersion(pkg);
+		if (version) return {
+			name,
+			version
+		};
+	}
+}
+var noop = async function noop() {};
+async function createTelemetry(options, context) {
+	const debugEnabled = options.telemetry?.debug || getBooleanEnvVar("BETTER_AUTH_TELEMETRY_DEBUG", false);
+	const telemetryEndpoint = ENV.BETTER_AUTH_TELEMETRY_ENDPOINT;
+	if (!telemetryEndpoint && !context?.customTrack) return { publish: noop };
+	const track = async (event) => {
+		if (context?.customTrack) await context.customTrack(event).catch(logger.error);
+		else if (telemetryEndpoint) if (debugEnabled) logger.info("telemetry event", JSON.stringify(event, null, 2));
+		else await betterFetch(telemetryEndpoint, {
+			method: "POST",
+			body: event
+		}).catch(logger.error);
+	};
+	const isEnabled = async () => {
+		const telemetryEnabled = options.telemetry?.enabled !== void 0 ? options.telemetry.enabled : false;
+		return (getBooleanEnvVar("BETTER_AUTH_TELEMETRY", false) || telemetryEnabled) && (context?.skipTestCheck || !isTest());
+	};
+	const enabled = await isEnabled();
+	let anonymousId;
+	if (enabled) {
+		anonymousId = await getProjectId(typeof options.baseURL === "string" ? options.baseURL : void 0);
+		track({
+			type: "init",
+			payload: {
+				config: await getTelemetryAuthConfig(options, context),
+				runtime: detectRuntime(),
+				database: await detectDatabaseNode(),
+				framework: await detectFrameworkNode(),
+				environment: detectEnvironment(),
+				systemInfo: await detectSystemInfo(),
+				packageManager: detectPackageManager()
+			},
+			anonymousId
+		});
+	}
+	return { publish: async (event) => {
+		if (!enabled) return;
+		if (!anonymousId) anonymousId = await getProjectId(typeof options.baseURL === "string" ? options.baseURL : void 0);
+		await track({
+			type: event.type,
+			payload: event.payload,
+			anonymousId
+		});
+	} };
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/context/create-context.mjs
 /**
 * Estimates the entropy of a string in bits.
 * This is a simple approximation that helps detect low-entropy secrets.
@@ -6786,18 +17510,14 @@ function validateSecret(secret, logger) {
 	if (estimateEntropy(secret) < 120) logger.warn("[better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.");
 }
 async function createAuthContext(adapter, options, getDatabaseType) {
-	if (!options.database) options = defu$1(options, {
-		session: { cookieCache: {
-			enabled: true,
-			strategy: "jwe",
-			refreshCache: true,
-			maxAge: options.session?.expiresIn || 3600 * 24 * 7
-		} },
-		account: {
-			storeStateStrategy: "cookie",
-			storeAccountCookie: true
-		}
-	});
+	const isStateful = hasServerSessionStore(options);
+	if (!isStateful) options = defu(options, { session: { cookieCache: {
+		enabled: true,
+		strategy: "jwe",
+		refreshCache: true,
+		maxAge: options.session?.expiresIn || 3600 * 24 * 7
+	} } });
+	if (!options.database) options = defu(options, { account: { storeAccountCookie: true } });
 	const plugins = options.plugins || [];
 	const internalPlugins = getInternalPlugins(options);
 	const logger = createLogger(options.logger);
@@ -6807,7 +17527,7 @@ async function createAuthContext(adapter, options, getDatabaseType) {
 		if (!allowedHosts || allowedHosts.length === 0) throw new BetterAuthError("baseURL.allowedHosts cannot be empty. Provide at least one allowed host pattern (e.g., [\"myapp.com\", \"*.vercel.app\"]).");
 	}
 	const baseURL = isDynamicConfig ? void 0 : getBaseURL(typeof options.baseURL === "string" ? options.baseURL : void 0, options.basePath);
-	if (!baseURL && !isDynamicConfig) logger.warn(`[better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly.`);
+	if (!baseURL && !isDynamicConfig) logger.warn(`[better-auth] Base URL is not set. Set the baseURL option or BETTER_AUTH_URL env, or use a dynamic baseURL with allowedHosts for multi-host setups. Without it the origin is derived from the incoming request, and callbacks and redirects may not work correctly.`);
 	if (adapter.id === "memory" && options.advanced?.database?.generateId === false) logger.error(`[better-auth] Misconfiguration detected.
 You are using the memory DB with generateId: false.
 This will cause no id to be generated for any model.
@@ -6833,6 +17553,11 @@ Most of the features of Better Auth will not work correctly.`);
 		plugins: plugins.concat(internalPlugins)
 	};
 	checkEndpointConflicts(options, logger);
+	const trustedProxies = options.advanced?.ipAddress?.trustedProxies;
+	if (trustedProxies && trustedProxies.length > 0) {
+		const invalid = findInvalidTrustedProxies(trustedProxies);
+		if (invalid.length > 0) logger.warn(`Ignoring invalid \`advanced.ipAddress.trustedProxies\` entries: ${invalid.join(", ")}. Each entry must be an IP address or CIDR range.`);
+	}
 	const cookies = getCookies(options);
 	const tables = getAuthTables(options);
 	const providers = (await Promise.all(Object.entries(options.socialProviders || {}).map(async ([key, originalConfig]) => {
@@ -6856,7 +17581,7 @@ Most of the features of Better Auth will not work correctly.`);
 		});
 		if (dbGenerateId === "uuid") return crypto.randomUUID();
 		if (dbGenerateId === "serial" || dbGenerateId === false) return false;
-		return generateId(size);
+		return generateId$1(size);
 	};
 	const { publish } = await createTelemetry(options, {
 		adapter: adapter.id,
@@ -6874,7 +17599,7 @@ Most of the features of Better Auth will not work correctly.`);
 		socialProviders: providers,
 		options,
 		oauthConfig: {
-			storeStateStrategy: options.account?.storeStateStrategy || (options.database ? "database" : "cookie"),
+			storeStateStrategy: options.account?.storeStateStrategy || (isStateful ? "database" : "cookie"),
 			skipStateCookieCheck: !!options.account?.skipStateCookieCheck
 		},
 		tables,
@@ -6890,7 +17615,7 @@ Most of the features of Better Auth will not work correctly.`);
 			cookieRefreshCache: (() => {
 				const refreshCache = options.session?.cookieCache?.refreshCache;
 				const maxAge = options.session?.cookieCache?.maxAge || 300;
-				if ((!!options.database || !!options.secondaryStorage) && refreshCache) {
+				if (isStateful && refreshCache) {
 					logger.warn("[better-auth] `session.cookieCache.refreshCache` is enabled while `database` or `secondaryStorage` is configured. `refreshCache` is meant for stateless (DB-less) setups. Disabling `refreshCache` — remove it from your config to silence this warning.");
 					return false;
 				}
@@ -6921,7 +17646,7 @@ Most of the features of Better Auth will not work correctly.`);
 		secondaryStorage: options.secondaryStorage,
 		password: {
 			hash: options.emailAndPassword?.password?.hash || hashPassword$1,
-			verify: options.emailAndPassword?.password?.verify || verifyPassword$1$1,
+			verify: options.emailAndPassword?.password?.verify || verifyPassword$1,
 			config: {
 				minPasswordLength: options.emailAndPassword?.minPasswordLength || 8,
 				maxPasswordLength: options.emailAndPassword?.maxPasswordLength || 128
@@ -6971,7 +17696,7 @@ Most of the features of Better Auth will not work correctly.`);
 	return ctx;
 }
 //#endregion
-//#region ../../node_modules/better-auth/dist/context/init.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/context/init.mjs
 var init = async (options) => {
 	const adapter = await getAdapter(options);
 	const getDatabaseType = (database) => getKyselyDatabaseType(database) || "unknown";
@@ -6984,7 +17709,7 @@ var init = async (options) => {
 	return ctx;
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/auth/base.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/auth/base.mjs
 var createBetterAuth = (options, initFn) => {
 	const authContext = initFn(options);
 	const { api } = getEndpoints(authContext, options);
@@ -6995,16 +17720,20 @@ var createBetterAuth = (options, initFn) => {
 			let handlerCtx;
 			if (isDynamicBaseURLConfig(options.baseURL)) handlerCtx = await resolveRequestContext(ctx, request, resolveDynamicTrustedProxyHeaders(ctx.options));
 			else {
-				handlerCtx = ctx;
+				handlerCtx = Object.create(Object.getPrototypeOf(ctx), Object.getOwnPropertyDescriptors(ctx));
+				let trustOptions = ctx.options;
 				if (!ctx.options.baseURL) {
 					const baseURL = getBaseURL(void 0, basePath, request, void 0, ctx.options.advanced?.trustedProxyHeaders);
-					if (baseURL) {
-						ctx.baseURL = baseURL;
-						ctx.options.baseURL = getOrigin(ctx.baseURL) || void 0;
-					} else throw new BetterAuthError("Could not get base URL from request. Please provide a valid base URL.");
+					if (!baseURL) throw new BetterAuthError("Could not get base URL from request. Please provide a valid base URL.");
+					handlerCtx.baseURL = baseURL;
+					handlerCtx.options = {
+						...ctx.options,
+						baseURL: getOrigin(baseURL) || void 0
+					};
+					trustOptions = handlerCtx.options;
 				}
-				handlerCtx.trustedOrigins = await getTrustedOrigins(ctx.options, request);
-				handlerCtx.trustedProviders = await getTrustedProviders(ctx.options, request);
+				handlerCtx.trustedOrigins = await getTrustedOrigins(trustOptions, request);
+				handlerCtx.trustedProviders = await getTrustedProviders(trustOptions, request);
 			}
 			const { handler } = router(handlerCtx, options);
 			return runWithAdapter(handlerCtx.adapter, () => handler(request));
@@ -7025,7 +17754,7 @@ var createBetterAuth = (options, initFn) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/auth/full.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/auth/full.mjs
 /**
 * Better Auth initializer for full mode (with Kysely)
 *
@@ -7051,12 +17780,597 @@ var betterAuth = (options) => {
 	return createBetterAuth(options, init);
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/adapters/drizzle-adapter/index.mjs
-var drizzle_adapter_exports = /* @__PURE__ */ __exportAll({});
-import * as import__better_auth_drizzle_adapter from "@better-auth/drizzle-adapter";
-__reExport(drizzle_adapter_exports, import__better_auth_drizzle_adapter);
+//#region ../../node_modules/.bun/@better-auth+drizzle-adapter@1.6.23+4c1e0a07896a389c/node_modules/@better-auth/drizzle-adapter/dist/index.mjs
+/**
+* Case-insensitive LIKE/ILIKE for pattern matching.
+* Uses ILIKE on PostgreSQL, LOWER()+LIKE on MySQL/SQLite.
+*/
+function insensitiveIlike(column, pattern, provider) {
+	return provider === "pg" ? ilike(column, pattern) : sql`LOWER(${column}) LIKE LOWER(${pattern})`;
+}
+/**
+* Case-insensitive IN for string arrays.
+*/
+function insensitiveInArray(column, values) {
+	if (values.length === 0) return sql`false`;
+	return sql`LOWER(${column}) IN (${sql.join(values.map((v) => sql`LOWER(${v})`), sql`, `)})`;
+}
+/**
+* Case-insensitive NOT IN for string arrays.
+*/
+function insensitiveNotInArray(column, values) {
+	if (values.length === 0) return sql`true`;
+	return sql`LOWER(${column}) NOT IN (${sql.join(values.map((v) => sql`LOWER(${v})`), sql`, `)})`;
+}
+/**
+* Case-insensitive equality for strings.
+*/
+function insensitiveEq(column, value) {
+	return sql`LOWER(${column}) = LOWER(${value})`;
+}
+/**
+* Case-insensitive inequality for strings.
+*/
+function insensitiveNe(column, value) {
+	return sql`LOWER(${column}) <> LOWER(${value})`;
+}
+/**
+* Derive the number of affected rows from a Drizzle write result.
+*
+* Drizzle returns the raw per-driver result for a non-returning write, so the
+* count lives under a different field per driver: node-postgres / neon expose
+* `rowCount`, postgres-js / bun-sql carry `count` on an Array subclass, mysql2
+* reports `affectedRows` (in a result-header array), planetscale and other
+* serverless drivers use `rowsAffected`, better-sqlite3 uses `changes`, and
+* Cloudflare D1 nests the count under `meta.changes`. This normalizes them so
+* write methods that depend on affected rows honor the adapter contract instead
+* of leaking the raw driver result.
+*/
+function getAffectedRowCount(result, operation, context) {
+	let count = 0;
+	if (result && typeof result === "object" && "rowCount" in result) count = result.rowCount;
+	else if (result && typeof result === "object" && typeof result.count === "number") count = result.count;
+	else if (Array.isArray(result)) count = result.length > 0 && hasDriverRowCount(result[0]) ? readDriverRowCount(result[0]) : result.length;
+	else if (hasDriverRowCount(result)) count = readDriverRowCount(result);
+	if (typeof count !== "number") {
+		logger.error(`[Drizzle Adapter] The result of the ${operation} operation is not a number. This is likely a bug in the adapter. Please report this issue to the Better Auth team.`, {
+			result,
+			...context
+		});
+		return 0;
+	}
+	return count;
+}
+function readDriverRowCount(result) {
+	if (!result || typeof result !== "object") return void 0;
+	if ("affectedRows" in result) return result.affectedRows;
+	if ("rowsAffected" in result) return result.rowsAffected;
+	if ("changes" in result) return result.changes;
+	if ("meta" in result) {
+		const meta = result.meta;
+		if (meta && typeof meta === "object" && "changes" in meta) return meta.changes;
+	}
+}
+function hasDriverRowCount(result) {
+	return readDriverRowCount(result) !== void 0;
+}
+var drizzleAdapter = (db, config) => {
+	let lazyOptions = null;
+	let mysqlNoIdWarned = false;
+	const createCustomAdapter = (db, inTransaction = false) => ({ getFieldName, getDefaultFieldName, getDefaultModelName, options, schema: baSchema }) => {
+		if (config.provider === "mysql" && options.advanced?.database?.generateId === false && !mysqlNoIdWarned) {
+			mysqlNoIdWarned = true;
+			logger.warn("[Drizzle Adapter] MySQL does not support INSERT...RETURNING. With generateId set to false, the adapter uses best-effort fallback strategies (unique columns, full-field match) to retrieve inserted rows. For reliable behavior, use Better Auth's default ID generation, a custom generateId function, or generateId: \"serial\" for auto-increment.");
+		}
+		function getSchema(model) {
+			const schema = config.schema || db._.fullSchema;
+			if (!schema) throw new BetterAuthError("Drizzle adapter failed to initialize. Schema not found. Please provide a schema object in the adapter options object.");
+			const schemaModel = schema[model];
+			if (!schemaModel) throw new BetterAuthError(`[# Drizzle Adapter]: The model "${model}" was not found in the schema object. Please pass the schema directly to the adapter options.`);
+			return schemaModel;
+		}
+		const withReturning = async (model, builder, data, where) => {
+			if (config.provider !== "mysql") return (await builder.returning())[0];
+			await builder.execute();
+			const schemaModel = getSchema(model);
+			const builderVal = builder.config?.values;
+			if (where?.length) {
+				const clause = convertWhereClause(where.map((w) => {
+					if (data[w.field] !== void 0) return {
+						...w,
+						value: data[w.field]
+					};
+					return w;
+				}), model);
+				return (await db.select().from(schemaModel).where(...clause))[0];
+			}
+			const fetchInserted = async (tx) => {
+				const builderId = builderVal?.[0]?.id?.value;
+				if (builderId) return (await tx.select().from(schemaModel).where(eq(schemaModel.id, builderId)).limit(1).execute())[0] ?? null;
+				if (data.id) return (await tx.select().from(schemaModel).where(eq(schemaModel.id, data.id)).limit(1).execute())[0] ?? null;
+				if (options.advanced?.database?.generateId === "serial" && schemaModel.id) {
+					const lastId = (await tx.select({ id: sql`LAST_INSERT_ID()` }).from(schemaModel).limit(1).execute())[0]?.id;
+					if (lastId) return (await tx.select().from(schemaModel).where(eq(schemaModel.id, lastId)).limit(1).execute())[0] ?? null;
+				}
+				const modelSchema = baSchema[getDefaultModelName(model)]?.fields;
+				if (modelSchema) for (const [fieldKey, fieldAttr] of Object.entries(modelSchema)) {
+					if (!fieldAttr.unique) continue;
+					const dbFieldName = getFieldName({
+						model,
+						field: fieldKey
+					});
+					const val = data[dbFieldName];
+					if (val === void 0 || val === null) continue;
+					if (!schemaModel[dbFieldName]) continue;
+					const res = await tx.select().from(schemaModel).where(eq(schemaModel[dbFieldName], val)).limit(1).execute();
+					if (res[0]) return res[0];
+				}
+				const conditions = [];
+				for (const [key, val] of Object.entries(data)) {
+					if (val === void 0 || !schemaModel[key]) continue;
+					conditions.push(val === null ? isNull(schemaModel[key]) : eq(schemaModel[key], val));
+				}
+				if (conditions.length > 0) {
+					const combined = and(...conditions);
+					if (combined) {
+						const res = await tx.select().from(schemaModel).where(combined).limit(2).execute();
+						if (res.length === 1) return res[0];
+					}
+				}
+				logger.warn(`[Drizzle Adapter] Unable to safely identify the inserted "${model}" row on MySQL. Enable Better Auth ID generation or use generateId: "serial" for reliable behavior.`);
+				return null;
+			};
+			return inTransaction ? fetchInserted(db) : db.transaction(fetchInserted);
+		};
+		function convertWhereClause(where, model) {
+			const schemaModel = getSchema(model);
+			if (!where) return [];
+			if (where.length === 1) {
+				const w = where[0];
+				if (!w) return [];
+				const field = getFieldName({
+					model,
+					field: w.field
+				});
+				if (!schemaModel[field]) throw new BetterAuthError(`The field "${w.field}" does not exist in the schema for the model "${model}". Please update your schema.`);
+				const isInsensitive = (w.mode ?? "sensitive") === "insensitive" && (typeof w.value === "string" || Array.isArray(w.value) && w.value.every((v) => typeof v === "string"));
+				if (w.operator === "in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "in" operator.`);
+					if (isInsensitive) return [insensitiveInArray(schemaModel[field], w.value)];
+					return [inArray(schemaModel[field], w.value)];
+				}
+				if (w.operator === "not_in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "not_in" operator.`);
+					if (isInsensitive) return [insensitiveNotInArray(schemaModel[field], w.value)];
+					return [notInArray(schemaModel[field], w.value)];
+				}
+				if (w.operator === "contains") {
+					if (isInsensitive && typeof w.value === "string") return [insensitiveIlike(schemaModel[field], `%${w.value}%`, config.provider)];
+					return [like(schemaModel[field], `%${w.value}%`)];
+				}
+				if (w.operator === "starts_with") {
+					if (isInsensitive && typeof w.value === "string") return [insensitiveIlike(schemaModel[field], `${w.value}%`, config.provider)];
+					return [like(schemaModel[field], `${w.value}%`)];
+				}
+				if (w.operator === "ends_with") {
+					if (isInsensitive && typeof w.value === "string") return [insensitiveIlike(schemaModel[field], `%${w.value}`, config.provider)];
+					return [like(schemaModel[field], `%${w.value}`)];
+				}
+				if (w.operator === "lt") return [lt(schemaModel[field], w.value)];
+				if (w.operator === "lte") return [lte(schemaModel[field], w.value)];
+				if (w.operator === "ne") {
+					if (w.value === null) return [isNotNull(schemaModel[field])];
+					if (isInsensitive && typeof w.value === "string") return [insensitiveNe(schemaModel[field], w.value)];
+					return [ne(schemaModel[field], w.value)];
+				}
+				if (w.operator === "gt") return [gt(schemaModel[field], w.value)];
+				if (w.operator === "gte") return [gte(schemaModel[field], w.value)];
+				if (w.value === null) return [isNull(schemaModel[field])];
+				if (isInsensitive && typeof w.value === "string") return [insensitiveEq(schemaModel[field], w.value)];
+				return [eq(schemaModel[field], w.value)];
+			}
+			const andGroup = where.filter((w) => w.connector === "AND" || !w.connector);
+			const orGroup = where.filter((w) => w.connector === "OR");
+			const andClause = and(...andGroup.map((w) => {
+				const field = getFieldName({
+					model,
+					field: w.field
+				});
+				const isInsensitive = (w.mode ?? "sensitive") === "insensitive" && (typeof w.value === "string" || Array.isArray(w.value) && w.value.every((v) => typeof v === "string"));
+				if (w.operator === "in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "in" operator.`);
+					if (isInsensitive) return insensitiveInArray(schemaModel[field], w.value);
+					return inArray(schemaModel[field], w.value);
+				}
+				if (w.operator === "not_in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "not_in" operator.`);
+					if (isInsensitive) return insensitiveNotInArray(schemaModel[field], w.value);
+					return notInArray(schemaModel[field], w.value);
+				}
+				if (w.operator === "contains") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `%${w.value}%`, config.provider);
+					return like(schemaModel[field], `%${w.value}%`);
+				}
+				if (w.operator === "starts_with") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `${w.value}%`, config.provider);
+					return like(schemaModel[field], `${w.value}%`);
+				}
+				if (w.operator === "ends_with") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `%${w.value}`, config.provider);
+					return like(schemaModel[field], `%${w.value}`);
+				}
+				if (w.operator === "lt") return lt(schemaModel[field], w.value);
+				if (w.operator === "lte") return lte(schemaModel[field], w.value);
+				if (w.operator === "gt") return gt(schemaModel[field], w.value);
+				if (w.operator === "gte") return gte(schemaModel[field], w.value);
+				if (w.operator === "ne") {
+					if (w.value === null) return isNotNull(schemaModel[field]);
+					if (isInsensitive && typeof w.value === "string") return insensitiveNe(schemaModel[field], w.value);
+					return ne(schemaModel[field], w.value);
+				}
+				if (w.value === null) return isNull(schemaModel[field]);
+				if (isInsensitive && typeof w.value === "string") return insensitiveEq(schemaModel[field], w.value);
+				return eq(schemaModel[field], w.value);
+			}));
+			const orClause = or(...orGroup.map((w) => {
+				const field = getFieldName({
+					model,
+					field: w.field
+				});
+				if (!schemaModel[field]) throw new BetterAuthError(`The field "${w.field}" does not exist in the schema for the model "${model}". Please update your schema.`);
+				const isInsensitive = (w.mode ?? "sensitive") === "insensitive" && (typeof w.value === "string" || Array.isArray(w.value) && w.value.every((v) => typeof v === "string"));
+				if (w.operator === "in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "in" operator.`);
+					if (isInsensitive) return insensitiveInArray(schemaModel[field], w.value);
+					return inArray(schemaModel[field], w.value);
+				}
+				if (w.operator === "not_in") {
+					if (!Array.isArray(w.value)) throw new BetterAuthError(`The value for the field "${w.field}" must be an array when using the "not_in" operator.`);
+					if (isInsensitive) return insensitiveNotInArray(schemaModel[field], w.value);
+					return notInArray(schemaModel[field], w.value);
+				}
+				if (w.operator === "contains") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `%${w.value}%`, config.provider);
+					return like(schemaModel[field], `%${w.value}%`);
+				}
+				if (w.operator === "starts_with") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `${w.value}%`, config.provider);
+					return like(schemaModel[field], `${w.value}%`);
+				}
+				if (w.operator === "ends_with") {
+					if (isInsensitive && typeof w.value === "string") return insensitiveIlike(schemaModel[field], `%${w.value}`, config.provider);
+					return like(schemaModel[field], `%${w.value}`);
+				}
+				if (w.operator === "lt") return lt(schemaModel[field], w.value);
+				if (w.operator === "lte") return lte(schemaModel[field], w.value);
+				if (w.operator === "gt") return gt(schemaModel[field], w.value);
+				if (w.operator === "gte") return gte(schemaModel[field], w.value);
+				if (w.operator === "ne") {
+					if (w.value === null) return isNotNull(schemaModel[field]);
+					if (isInsensitive && typeof w.value === "string") return insensitiveNe(schemaModel[field], w.value);
+					return ne(schemaModel[field], w.value);
+				}
+				if (w.value === null) return isNull(schemaModel[field]);
+				if (isInsensitive && typeof w.value === "string") return insensitiveEq(schemaModel[field], w.value);
+				return eq(schemaModel[field], w.value);
+			}));
+			if (andGroup.length && orGroup.length) return [and(andClause, orClause)];
+			if (andGroup.length) return [andClause];
+			if (orGroup.length) return [orClause];
+			return [];
+		}
+		function checkMissingFields(schema, model, values) {
+			if (!schema) throw new BetterAuthError("Drizzle adapter failed to initialize. Drizzle Schema not found. Please provide a schema object in the adapter options object.");
+			for (const key in values) {
+				let fieldName;
+				try {
+					fieldName = getFieldName({
+						model,
+						field: key
+					});
+				} catch {
+					fieldName = key;
+				}
+				if (!schema[fieldName]) throw new BetterAuthError(`The field "${key}" does not exist in the "${model}" Drizzle schema. Please update your drizzle schema or re-generate using "npx auth@latest generate".`);
+			}
+		}
+		/**
+		* Resolve the db.query key for a model.
+		*
+		* When `usePlural` is false (default), Better Auth uses singular model
+		* names like "user", but Drizzle's db.query is keyed by the schema
+		* export names (often plural like "users"). This function:
+		*
+		* 1. Tries the model name directly (works when schema keys match)
+		* 2. If usePlural is set, tries appending "s"
+		* 3. Falls back to scanning config.schema to find which db.query key
+		*    corresponds to the same table object
+		*/
+		function getQueryModel(model) {
+			if (db.query[model]) return model;
+			if (config.usePlural) {
+				const plural = `${model}s`;
+				if (db.query[plural]) return plural;
+			}
+			if (config.schema) {
+				const targetTable = config.schema[model];
+				if (targetTable) {
+					const fullSchema = db._.fullSchema;
+					if (fullSchema) {
+						for (const key of Object.keys(db.query)) if (fullSchema[key] === targetTable) return key;
+					}
+				}
+			}
+			return null;
+		}
+		return {
+			async create({ model, data: values }) {
+				const schemaModel = getSchema(model);
+				checkMissingFields(schemaModel, model, values);
+				return await withReturning(model, db.insert(schemaModel).values(values), values);
+			},
+			async findOne({ model, where, select, join }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				if (options.experimental?.joins) {
+					const queryModel = getQueryModel(model);
+					if (!db.query || !queryModel) {
+						logger.error(`[# Drizzle Adapter]: The model "${model}" was not found in the query object. Please update your Drizzle schema to include relations or re-generate using "npx auth@latest generate".`);
+						logger.info("Falling back to regular query");
+					} else {
+						let includes;
+						const pluralJoinResults = [];
+						if (join) {
+							includes = {};
+							const joinEntries = Object.entries(join);
+							for (const [model, joinAttr] of joinEntries) {
+								const limit = joinAttr.limit ?? options.advanced?.database?.defaultFindManyLimit ?? 100;
+								const isUnique = joinAttr.relation === "one-to-one";
+								const pluralSuffix = isUnique || config.usePlural ? "" : "s";
+								includes[`${model}${pluralSuffix}`] = isUnique ? true : { limit };
+								if (!isUnique) pluralJoinResults.push(`${model}${pluralSuffix}`);
+							}
+						}
+						const res = await db.query[queryModel].findFirst({
+							where: clause[0],
+							columns: select?.length && select.length > 0 ? select.reduce((acc, field) => {
+								acc[getFieldName({
+									model,
+									field
+								})] = true;
+								return acc;
+							}, {}) : void 0,
+							with: includes
+						});
+						if (res) for (const pluralJoinResult of pluralJoinResults) {
+							const singularKey = !config.usePlural ? pluralJoinResult.slice(0, -1) : pluralJoinResult;
+							res[singularKey] = res[pluralJoinResult];
+							if (pluralJoinResult !== singularKey) delete res[pluralJoinResult];
+						}
+						return res;
+					}
+				}
+				const res = await db.select(select?.length && select.length > 0 ? select.reduce((acc, field) => {
+					const fieldName = getFieldName({
+						model,
+						field
+					});
+					return {
+						...acc,
+						[fieldName]: schemaModel[fieldName]
+					};
+				}, {}) : void 0).from(schemaModel).where(...clause);
+				if (!res.length) return null;
+				return res[0];
+			},
+			async findMany({ model, where, sortBy, limit, select, offset, join }) {
+				const schemaModel = getSchema(model);
+				const clause = where ? convertWhereClause(where, model) : [];
+				const sortFn = sortBy?.direction === "desc" ? desc : asc;
+				if (options.experimental?.joins) {
+					const queryModel = getQueryModel(model);
+					if (!queryModel) {
+						logger.error(`[# Drizzle Adapter]: The model "${model}" was not found in the query object. Please update your Drizzle schema to include relations or re-generate using "npx auth@latest generate".`);
+						logger.info("Falling back to regular query");
+					} else {
+						let includes;
+						const pluralJoinResults = [];
+						if (join) {
+							includes = {};
+							const joinEntries = Object.entries(join);
+							for (const [model, joinAttr] of joinEntries) {
+								const isUnique = joinAttr.relation === "one-to-one";
+								const limit = joinAttr.limit ?? options.advanced?.database?.defaultFindManyLimit ?? 100;
+								const pluralSuffix = isUnique || config.usePlural ? "" : "s";
+								includes[`${model}${pluralSuffix}`] = isUnique ? true : { limit };
+								if (!isUnique) pluralJoinResults.push(`${model}${pluralSuffix}`);
+							}
+						}
+						let orderBy = void 0;
+						if (sortBy?.field) orderBy = [sortFn(schemaModel[getFieldName({
+							model,
+							field: sortBy?.field
+						})])];
+						const res = await db.query[queryModel].findMany({
+							where: clause[0],
+							with: includes,
+							columns: select?.length && select.length > 0 ? select.reduce((acc, field) => {
+								acc[getFieldName({
+									model,
+									field
+								})] = true;
+								return acc;
+							}, {}) : void 0,
+							limit: limit ?? 100,
+							offset: offset ?? 0,
+							orderBy
+						});
+						if (res) for (const item of res) for (const pluralJoinResult of pluralJoinResults) {
+							const singularKey = !config.usePlural ? pluralJoinResult.slice(0, -1) : pluralJoinResult;
+							if (singularKey === pluralJoinResult) continue;
+							item[singularKey] = item[pluralJoinResult];
+							delete item[pluralJoinResult];
+						}
+						return res;
+					}
+				}
+				let builder = db.select(select?.length && select.length > 0 ? select.reduce((acc, field) => {
+					const fieldName = getFieldName({
+						model,
+						field
+					});
+					return {
+						...acc,
+						[fieldName]: schemaModel[fieldName]
+					};
+				}, {}) : void 0).from(schemaModel);
+				const effectiveLimit = limit;
+				const effectiveOffset = offset;
+				if (typeof effectiveLimit !== "undefined") builder = builder.limit(effectiveLimit);
+				if (typeof effectiveOffset !== "undefined") builder = builder.offset(effectiveOffset);
+				if (sortBy?.field) builder = builder.orderBy(sortFn(schemaModel[getFieldName({
+					model,
+					field: sortBy?.field
+				})]));
+				return await builder.where(...clause);
+			},
+			async count({ model, where }) {
+				const schemaModel = getSchema(model);
+				const clause = where ? convertWhereClause(where, model) : [];
+				return (await db.select({ count: count() }).from(schemaModel).where(...clause))[0].count;
+			},
+			async update({ model, where, update: values }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				return await withReturning(model, db.update(schemaModel).set(values).where(...clause), values, where);
+			},
+			async updateMany({ model, where, update: values }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				return getAffectedRowCount(await db.update(schemaModel).set(values).where(...clause), "updateMany", {
+					model,
+					where
+				});
+			},
+			async delete({ model, where }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				return await db.delete(schemaModel).where(...clause);
+			},
+			async deleteMany({ model, where }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				return getAffectedRowCount(await db.delete(schemaModel).where(...clause), "deleteMany", {
+					model,
+					where
+				});
+			},
+			async consumeOne({ model, where }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				const idField = getFieldName({
+					model,
+					field: "id"
+				});
+				const idColumn = schemaModel[idField];
+				if (config.provider === "mysql") {
+					const claimFromTransaction = async (tx) => {
+						const target = (await tx.select().from(schemaModel).where(...clause).for("update").limit(1))[0];
+						if (!target) return null;
+						const targetId = target[idField] ?? target.id;
+						if (targetId === void 0 || targetId === null || !idColumn) return null;
+						return getAffectedRowCount(await tx.delete(schemaModel).where(eq(idColumn, targetId)).execute(), "consumeOne", {
+							model,
+							where
+						}) > 0 ? target : null;
+					};
+					return inTransaction ? claimFromTransaction(db) : db.transaction(claimFromTransaction);
+				}
+				if (!idColumn) return null;
+				const targetIds = db.select({ id: idColumn }).from(schemaModel).where(...clause).limit(1);
+				return (await db.delete(schemaModel).where(inArray(idColumn, targetIds)).returning())[0] ?? null;
+			},
+			async incrementOne({ model, where, increment, set }) {
+				const schemaModel = getSchema(model);
+				const clause = convertWhereClause(where, model);
+				const idField = getFieldName({
+					model,
+					field: "id"
+				});
+				const idColumn = schemaModel[idField];
+				const assignments = {};
+				for (const [field, delta] of Object.entries(increment)) {
+					const columnName = getFieldName({
+						model,
+						field
+					});
+					const column = schemaModel[columnName];
+					if (!column) throw new BetterAuthError(`The field "${field}" does not exist in the schema for the model "${model}". Please update your schema.`);
+					assignments[columnName] = sql`${column} + ${delta}`;
+				}
+				if (set) for (const [field, value] of Object.entries(set)) {
+					const columnName = getFieldName({
+						model,
+						field
+					});
+					if (!schemaModel[columnName]) throw new BetterAuthError(`The field "${field}" does not exist in the schema for the model "${model}". Please update your schema.`);
+					assignments[columnName] = value;
+				}
+				if (config.provider === "mysql") {
+					const mutateInTransaction = async (tx) => {
+						const target = (await tx.select().from(schemaModel).where(...clause).for("update").limit(1))[0];
+						if (!target) return null;
+						const targetId = target[idField] ?? target.id;
+						if (targetId === void 0 || targetId === null || !idColumn) return null;
+						await tx.update(schemaModel).set(assignments).where(eq(idColumn, targetId)).execute();
+						return (await tx.select().from(schemaModel).where(eq(idColumn, targetId)).limit(1).execute())[0] ?? null;
+					};
+					return inTransaction ? mutateInTransaction(db) : db.transaction(mutateInTransaction);
+				}
+				if (!idColumn) return null;
+				const targetIds = db.select({ id: idColumn }).from(schemaModel).where(...clause).limit(1);
+				return (await db.update(schemaModel).set(assignments).where(inArray(idColumn, targetIds)).returning())[0] ?? null;
+			},
+			options: config
+		};
+	};
+	let adapterOptions = null;
+	adapterOptions = {
+		config: {
+			adapterId: "drizzle",
+			adapterName: "Drizzle Adapter",
+			usePlural: config.usePlural ?? false,
+			debugLogs: config.debugLogs ?? false,
+			supportsUUIDs: config.provider === "pg" ? true : false,
+			supportsJSON: config.provider === "pg" ? true : false,
+			supportsArrays: config.provider === "pg" ? true : false,
+			customTransformOutput: ({ data, fieldAttributes }) => {
+				if (fieldAttributes.type === "date") {
+					if (data === null || data === void 0) return data;
+					return new Date(data);
+				}
+				return data;
+			},
+			transaction: config.transaction ?? false ? (cb) => db.transaction((tx) => {
+				return cb(createAdapterFactory({
+					config: {
+						...adapterOptions.config,
+						transaction: false
+					},
+					adapter: createCustomAdapter(tx, true)
+				})(lazyOptions));
+			}) : false
+		},
+		adapter: createCustomAdapter(db)
+	};
+	const adapter = createAdapterFactory(adapterOptions);
+	return (options) => {
+		lazyOptions = options;
+		return adapter(options);
+	};
+};
 //#endregion
-//#region ../../node_modules/better-auth/dist/utils/plugin-helper.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/utils/plugin-helper.mjs
 var getEndpointResponse = async (ctx) => {
 	const returned = ctx.context.returned;
 	if (!returned) return null;
@@ -7068,13 +18382,13 @@ var getEndpointResponse = async (ctx) => {
 	return returned;
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/admin/routes.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/admin/routes.mjs
 /**
 * Ensures a valid session, if not will throw.
 * Will also provide additional types on the user to include role types.
 */
 var adminMiddleware = createAuthMiddleware(async (ctx) => {
-	const session = await getSessionFromCtx(ctx);
+	const session = await getAuthoritativeSessionFromCtx(ctx);
 	if (!session) throw APIError.fromStatus("UNAUTHORIZED");
 	return { session };
 });
@@ -7132,6 +18446,7 @@ var setRole = (opts) => createAuthEndpoint("/admin/set-role", {
 		const inputRoles = Array.isArray(ctx.body.role) ? ctx.body.role : [ctx.body.role];
 		for (const role of inputRoles) if (!roles[role]) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_SET_NON_EXISTENT_VALUE);
 	}
+	if (!await ctx.context.internalAdapter.findUserById(ctx.body.userId)) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
 	const updatedUser = await ctx.context.internalAdapter.updateUser(ctx.body.userId, { role: parseRoles(ctx.body.role) });
 	return ctx.json({ user: parseUserOutput(ctx.context.options, updatedUser) });
 });
@@ -7205,7 +18520,7 @@ var createUser = (opts) => createAuthEndpoint("/admin/create-user", {
 		$Infer: { body: {} }
 	}
 }, async (ctx) => {
-	const session = await getSessionFromCtx(ctx);
+	const session = await getAuthoritativeSessionFromCtx(ctx);
 	if (!session && (ctx.request || ctx.headers)) throw ctx.error("UNAUTHORIZED");
 	if (session) {
 		if (!hasPermission({
@@ -7215,14 +18530,43 @@ var createUser = (opts) => createAuthEndpoint("/admin/create-user", {
 			permissions: { user: ["create"] }
 		})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_CREATE_USERS);
 	}
+	const { role: dataRole, ...userData } = ctx.body.data ?? {};
+	const requestedRole = ctx.body.role ?? dataRole;
+	if (requestedRole !== void 0) {
+		if (session) {
+			if (!hasPermission({
+				userId: session.user.id,
+				role: session.user.role,
+				options: opts,
+				permissions: { user: ["set-role"] }
+			})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_CHANGE_USERS_ROLE);
+		}
+		const inputRoles = Array.isArray(requestedRole) ? requestedRole : [requestedRole];
+		for (const role of inputRoles) {
+			if (typeof role !== "string") throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.INVALID_ROLE_TYPE);
+			if (opts.roles && !opts.roles[role]) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_SET_NON_EXISTENT_VALUE);
+		}
+	}
+	if (session && [
+		"banned",
+		"banReason",
+		"banExpires"
+	].some((key) => Object.prototype.hasOwnProperty.call(userData, key))) {
+		if (!hasPermission({
+			userId: session.user.id,
+			role: session.user.role,
+			options: opts,
+			permissions: { user: ["ban"] }
+		})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_BAN_USERS);
+	}
 	const email = ctx.body.email.toLowerCase();
 	if (!z$1.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
 	if (await ctx.context.internalAdapter.findUserByEmail(email)) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL);
 	const user = await ctx.context.internalAdapter.createUser({
+		...userData,
 		email,
 		name: ctx.body.name,
-		role: (ctx.body.role && parseRoles(ctx.body.role)) ?? opts?.defaultRole ?? "user",
-		...ctx.body.data
+		role: requestedRole !== void 0 ? parseRoles(requestedRole) : opts?.defaultRole ?? "user"
 	});
 	if (!user) throw APIError.from("INTERNAL_SERVER_ERROR", ADMIN_ERROR_CODES.FAILED_TO_CREATE_USER);
 	if (ctx.body.password) {
@@ -7279,6 +18623,9 @@ var adminUpdateUser = (opts) => createAuthEndpoint("/admin/update-user", {
 		permissions: { user: ["update"] }
 	})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_UPDATE_USERS);
 	if (Object.keys(ctx.body.data).length === 0) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.NO_DATA_TO_UPDATE);
+	const updateData = ctx.body.data;
+	const hasDataKey = (key) => Object.prototype.hasOwnProperty.call(updateData, key);
+	if (hasDataKey("password")) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.PASSWORD_CANNOT_BE_UPDATED_VIA_UPDATE_USER);
 	if (Object.prototype.hasOwnProperty.call(ctx.body.data, "role")) {
 		if (!hasPermission({
 			userId: ctx.context.session.user.id,
@@ -7294,7 +18641,37 @@ var adminUpdateUser = (opts) => createAuthEndpoint("/admin/update-user", {
 		}
 		ctx.body.data.role = parseRoles(inputRoles);
 	}
+	if ([
+		"banned",
+		"banReason",
+		"banExpires"
+	].some(hasDataKey)) {
+		if (!hasPermission({
+			userId: ctx.context.session.user.id,
+			role: ctx.context.session.user.role,
+			options: opts,
+			permissions: { user: ["ban"] }
+		})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_BAN_USERS);
+		if (updateData.banned === true && ctx.body.userId === ctx.context.session.user.id) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.YOU_CANNOT_BAN_YOURSELF);
+	}
+	if (hasDataKey("email") || hasDataKey("emailVerified")) {
+		if (!hasPermission({
+			userId: ctx.context.session.user.id,
+			role: ctx.context.session.user.role,
+			options: opts,
+			permissions: { user: ["set-email"] }
+		})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_SET_USERS_EMAIL);
+		if (hasDataKey("email")) {
+			const email = String(updateData.email).toLowerCase();
+			if (!z$1.email().safeParse(email).success) throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.INVALID_EMAIL);
+			const existUser = await ctx.context.internalAdapter.findUserByEmail(email);
+			if (existUser && existUser.user.id !== ctx.body.userId) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL);
+			updateData.email = email;
+		}
+	}
+	if (!await ctx.context.internalAdapter.findUserById(ctx.body.userId)) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
 	const updatedUser = await ctx.context.internalAdapter.updateUser(ctx.body.userId, ctx.body.data);
+	if (updateData.banned === true) await ctx.context.internalAdapter.deleteUserSessions(ctx.body.userId);
 	return ctx.json(parseUserOutput(ctx.context.options, updatedUser));
 });
 var listUsersQuerySchema = z$1.object({
@@ -7462,6 +18839,7 @@ var unbanUser = (opts) => createAuthEndpoint("/admin/unban-user", {
 		options: opts,
 		permissions: { user: ["ban"] }
 	})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_BAN_USERS);
+	if (!await ctx.context.internalAdapter.findUserById(ctx.body.userId)) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
 	const user = await ctx.context.internalAdapter.updateUser(ctx.body.userId, {
 		banned: false,
 		banExpires: null,
@@ -7522,7 +18900,7 @@ var banUser = (opts) => createAuthEndpoint("/admin/ban-user", {
 		banExpires: ctx.body.banExpiresIn ? getDate(ctx.body.banExpiresIn, "sec") : opts?.defaultBanExpiresIn ? getDate(opts.defaultBanExpiresIn, "sec") : void 0,
 		updatedAt: /* @__PURE__ */ new Date()
 	});
-	await ctx.context.internalAdapter.deleteSessions(ctx.body.userId);
+	await ctx.context.internalAdapter.deleteUserSessions(ctx.body.userId);
 	return ctx.json({ user: parseUserOutput(ctx.context.options, user) });
 });
 var impersonateUserBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
@@ -7718,7 +19096,7 @@ var revokeUserSessions = (opts) => createAuthEndpoint("/admin/revoke-user-sessio
 		options: opts,
 		permissions: { session: ["revoke"] }
 	})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_REVOKE_USERS_SESSIONS);
-	await ctx.context.internalAdapter.deleteSessions(ctx.body.userId);
+	await ctx.context.internalAdapter.deleteUserSessions(ctx.body.userId);
 	return ctx.json({ success: true });
 });
 var removeUserBodySchema = z$1.object({ userId: z$1.coerce.string().meta({ description: "The user id" }) });
@@ -7763,7 +19141,7 @@ var removeUser = (opts) => createAuthEndpoint("/admin/remove-user", {
 	})) throw APIError.from("FORBIDDEN", ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_DELETE_USERS);
 	if (ctx.body.userId === ctx.context.session.user.id) throw APIError.from("BAD_REQUEST", ADMIN_ERROR_CODES.YOU_CANNOT_REMOVE_YOURSELF);
 	if (!await ctx.context.internalAdapter.findUserById(ctx.body.userId)) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
-	await ctx.context.internalAdapter.deleteSessions(ctx.body.userId);
+	await ctx.context.internalAdapter.deleteUserSessions(ctx.body.userId);
 	await ctx.context.internalAdapter.deleteUser(ctx.body.userId);
 	return ctx.json({ success: true });
 });
@@ -7812,16 +19190,23 @@ var setUserPassword = (opts) => createAuthEndpoint("/admin/set-user-password", {
 	const { newPassword, userId } = ctx.body;
 	const minPasswordLength = ctx.context.password.config.minPasswordLength;
 	if (newPassword.length < minPasswordLength) {
-		ctx.context.logger.error("Password is too short");
+		ctx.context.logger.warn("Password is too short");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_SHORT);
 	}
 	const maxPasswordLength = ctx.context.password.config.maxPasswordLength;
 	if (newPassword.length > maxPasswordLength) {
-		ctx.context.logger.error("Password is too long");
+		ctx.context.logger.warn("Password is too long");
 		throw APIError.from("BAD_REQUEST", BASE_ERROR_CODES.PASSWORD_TOO_LONG);
 	}
+	if (!await ctx.context.internalAdapter.findUserById(userId)) throw APIError.from("NOT_FOUND", BASE_ERROR_CODES.USER_NOT_FOUND);
 	const hashedPassword = await ctx.context.password.hash(newPassword);
-	await ctx.context.internalAdapter.updatePassword(userId, hashedPassword);
+	if ((await ctx.context.internalAdapter.findAccounts(userId)).find((account) => account.providerId === "credential")) await ctx.context.internalAdapter.updatePassword(userId, hashedPassword);
+	else await ctx.context.internalAdapter.createAccount({
+		userId,
+		providerId: "credential",
+		accountId: userId,
+		password: hashedPassword
+	});
 	return ctx.json({ status: true });
 });
 var userHasPermissionBodySchema = z$1.object({
@@ -7874,7 +19259,7 @@ var userHasPermission = (opts) => {
 		}
 	}, async (ctx) => {
 		if (!ctx.body?.permissions) throw new APIError("BAD_REQUEST", { message: "invalid permission check. no permission(s) were passed." });
-		const session = await getSessionFromCtx(ctx);
+		const session = await getAuthoritativeSessionFromCtx(ctx);
 		if (!session && (ctx.request || ctx.headers)) throw new APIError("UNAUTHORIZED");
 		if (!session && !ctx.body.userId && !ctx.body.role) throw new APIError("BAD_REQUEST", { message: "user id or role is required" });
 		const user = session?.user || (ctx.body.role ? {
@@ -7895,7 +19280,7 @@ var userHasPermission = (opts) => {
 	});
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/admin/schema.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/admin/schema.mjs
 var schema = {
 	user: { fields: {
 		role: {
@@ -7922,11 +19307,12 @@ var schema = {
 	} },
 	session: { fields: { impersonatedBy: {
 		type: "string",
-		required: false
+		required: false,
+		input: false
 	} } }
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/admin/admin.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/admin/admin.mjs
 var admin = (options) => {
 	const opts = {
 		...options || {},
@@ -7960,10 +19346,6 @@ var admin = (options) => {
 								banExpires: null
 							});
 							return;
-						}
-						if (ctx && (ctx.path.startsWith("/callback") || ctx.path.startsWith("/oauth2/callback"))) {
-							const redirectURI = ctx.context.options.onAPIError?.errorURL || `${ctx.context.baseURL}/error`;
-							throw ctx.redirect(`${redirectURI}?error=banned&error_description=${opts.bannedUserMessage}`);
 						}
 						throw APIError.from("FORBIDDEN", {
 							message: opts.bannedUserMessage,
@@ -8009,7 +19391,75 @@ var admin = (options) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/custom-session/index.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/bearer/index.mjs
+var BEARER_SCHEME = "bearer ";
+function tryDecode(str) {
+	try {
+		return decodeURIComponent(str);
+	} catch {
+		return str;
+	}
+}
+/**
+* Converts bearer token to session cookie
+*/
+var bearer = (options) => {
+	return {
+		id: "bearer",
+		version: PACKAGE_VERSION,
+		hooks: {
+			before: [{
+				matcher(context) {
+					return Boolean(context.request?.headers.get("authorization") || context.headers?.get("authorization"));
+				},
+				handler: createAuthMiddleware(async (c) => {
+					const authHeader = c.request?.headers.get("authorization") || c.headers?.get("Authorization");
+					if (!authHeader) return;
+					if (authHeader.slice(0, 7).toLowerCase() !== BEARER_SCHEME) return;
+					const token = authHeader.slice(7).trim();
+					if (!token) return;
+					let decodedToken;
+					if (token.includes(".")) decodedToken = token.includes("%") ? tryDecode(token) : token;
+					else {
+						if (options?.requireSignature) return;
+						decodedToken = tryDecode((await serializeSignedCookie("", token, c.context.secret)).replace("=", ""));
+					}
+					try {
+						if (!await createHMAC("SHA-256", "base64urlnopad").verify(c.context.secret, decodedToken.split(".")[0], decodedToken.split(".")[1])) return;
+					} catch {
+						return;
+					}
+					const existingHeaders = c.request?.headers || c.headers;
+					const headers = new Headers({ ...Object.fromEntries(existingHeaders?.entries()) });
+					setRequestCookie(headers, c.context.authCookies.sessionToken.name, decodedToken);
+					return { context: { headers } };
+				})
+			}],
+			after: [{
+				matcher(context) {
+					return true;
+				},
+				handler: createAuthMiddleware(async (ctx) => {
+					const setCookie = ctx.context.responseHeaders?.get("set-cookie");
+					if (!setCookie) return;
+					const parsedCookies = parseSetCookieHeader(setCookie);
+					const cookieName = ctx.context.authCookies.sessionToken.name;
+					const sessionCookie = parsedCookies.get(cookieName);
+					if (!sessionCookie || !sessionCookie.value || sessionCookie["max-age"] === 0) return;
+					const token = sessionCookie.value;
+					const exposedHeaders = ctx.context.responseHeaders?.get("access-control-expose-headers") || "";
+					const headersSet = new Set(exposedHeaders.split(",").map((header) => header.trim()).filter(Boolean));
+					headersSet.add("set-auth-token");
+					ctx.setHeader("set-auth-token", token);
+					ctx.setHeader("Access-Control-Expose-Headers", Array.from(headersSet).join(", "));
+				})
+			}]
+		},
+		options
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/custom-session/index.mjs
 var customSession = (fn, options, pluginOptions) => {
 	return {
 		id: "custom-session",
@@ -8067,13 +19517,35 @@ var customSession = (fn, options, pluginOptions) => {
 	};
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/magic-link/utils.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/db/revoke-unproven-account-access.mjs
+/**
+* Strip every credential and session a pre-existing account accrued before
+* control of its email was proven.
+*
+* An `emailVerified: false` row carries no proof that the password on it belongs
+* to the mailbox owner. When an email-primary proof (magic link, email OTP)
+* resolves to such a row, deleting the `credential` account and revoking standing
+* sessions makes the verified owner inherit no password or session that predates
+* the proof. Call this before flipping `emailVerified` and minting the owner's
+* session; it no-ops if a concurrent flow has already verified the account.
+*
+* @param userId - The pre-existing, not-yet-verified user being promoted.
+*/
+async function revokeUnprovenAccountAccess(ctx, userId) {
+	const user = await ctx.context.internalAdapter.findUserById(userId);
+	if (!user || user.emailVerified) return;
+	const accounts = await ctx.context.internalAdapter.findAccounts(userId);
+	for (const account of accounts) if (account.providerId === "credential") await ctx.context.internalAdapter.deleteAccount(account.id);
+	await ctx.context.internalAdapter.deleteUserSessions(userId);
+}
+//#endregion
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/magic-link/utils.mjs
 var defaultKeyHasher = async (otp) => {
 	const hash = await createHash("SHA-256").digest(new TextEncoder().encode(otp));
 	return base64Url.encode(new Uint8Array(hash), { padding: false });
 };
 //#endregion
-//#region ../../node_modules/better-auth/dist/plugins/magic-link/index.mjs
+//#region ../../node_modules/.bun/better-auth@1.6.23+3a31d3dd3b463ac7/node_modules/better-auth/dist/plugins/magic-link/index.mjs
 var signInMagicLinkBodySchema = z$1.object({
 	email: z$1.email().meta({ description: "Email address to send the magic link" }),
 	name: z$1.string().meta({ description: "User display name. Only used if the user is registering for the first time. Eg: \"my-name\"" }).optional(),
@@ -8094,7 +19566,7 @@ var magicLink = (options) => {
 		allowedAttempts: 1,
 		...options
 	};
-	if (options.allowedAttempts !== void 0 && options.allowedAttempts !== 1) console.warn("[better-auth/magic-link] `allowedAttempts` is ignored: tokens are consumed atomically on the first verification call (GHSA-hc7v-rggr-4hvx). Any value other than `1` has no effect; remove the option to silence this warning.");
+	if (options.allowedAttempts !== void 0 && options.allowedAttempts !== 1) console.warn("[better-auth/magic-link] `allowedAttempts` is ignored: tokens are consumed atomically on the first verification call. Any value other than `1` has no effect; remove the option to silence this warning.");
 	async function storeToken(ctx, token) {
 		if (opts.storeToken === "hashed") return await defaultKeyHasher(token);
 		if (typeof opts.storeToken === "object" && "type" in opts.storeToken && opts.storeToken.type === "custom-hasher") return await opts.storeToken.hash(token);
@@ -8188,7 +19660,6 @@ var magicLink = (options) => {
 				const storedToken = await storeToken(ctx, token);
 				const tokenValue = await ctx.context.internalAdapter.consumeVerificationValue(storedToken);
 				if (!tokenValue) redirectWithError("INVALID_TOKEN");
-				if (tokenValue.expiresAt < /* @__PURE__ */ new Date()) redirectWithError("EXPIRED_TOKEN");
 				const { email, name } = JSON.parse(tokenValue.value);
 				let isNewUser = false;
 				let user = await ctx.context.internalAdapter.findUserByEmail(email).then((res) => res?.user);
@@ -8202,7 +19673,10 @@ var magicLink = (options) => {
 					user = newUser;
 					if (!user) redirectWithError("failed_to_create_user");
 				} else redirectWithError("new_user_signup_disabled");
-				if (!user.emailVerified) user = await ctx.context.internalAdapter.updateUser(user.id, { emailVerified: true });
+				if (!user.emailVerified) {
+					await revokeUnprovenAccountAccess(ctx, user.id);
+					user = await ctx.context.internalAdapter.updateUser(user.id, { emailVerified: true });
+				}
 				const session = await ctx.context.internalAdapter.createSession(user.id);
 				if (!session) redirectWithError("failed_to_create_session");
 				await setSessionCookie(ctx, {
@@ -8260,15 +19734,21 @@ var normalizeName = (name) => {
 };
 var auth = betterAuth({
 	baseURL: private_env.BETTER_AUTH_URL || "http://localhost:3000",
-	trustedOrigins: private_env.NODE_ENV === "production" ? [
-		"https://sepharstudios.com",
-		"https://www.sepharstudios.com",
-		"https://admin.sepharstudios.com",
-		"https://creators.sepharstudios.com",
-		"https://creator.sepharstudios.com",
-		"https://kids.sepharstudios.com"
-	] : ["http://localhost:3000", "http://localhost:5173"],
-	database: (0, drizzle_adapter_exports.drizzleAdapter)(db, {
+	trustedOrigins: [
+		"capacitor://localhost",
+		"http://localhost",
+		"tauri://localhost",
+		"https://tauri.localhost",
+		...private_env.NODE_ENV === "production" ? [
+			"https://sepharstudios.com",
+			"https://www.sepharstudios.com",
+			"https://admin.sepharstudios.com",
+			"https://creators.sepharstudios.com",
+			"https://creator.sepharstudios.com",
+			"https://kids.sepharstudios.com"
+		] : ["http://localhost:3000", "http://localhost:5173"]
+	],
+	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: schema$2
 	}),
@@ -8281,6 +19761,7 @@ var auth = betterAuth({
 		}
 	} : {} },
 	plugins: [
+		bearer(),
 		admin({
 			defaultRole: Role.USER,
 			adminRoles: [Role.ADMIN],
@@ -8330,10 +19811,10 @@ var auth = betterAuth({
 		clientSecret: private_env.GOOGLE_CLIENT_SECRET || ""
 	} },
 	hooks: {
-		before: createAuthMiddleware$1(async (ctx) => {
+		before: createAuthMiddleware(async (ctx) => {
 			if (ctx.path === "/sign-up/email") {
 				const domain = (ctx.body?.email).split("@")[1];
-				if (!VALID_DOMAINS.includes(domain)) throw new APIError$1("BAD_REQUEST", { message: "Invalid domain: " + domain + " is not permitted on this platform" });
+				if (!VALID_DOMAINS.includes(domain)) throw new APIError("BAD_REQUEST", { message: "Invalid domain: " + domain + " is not permitted on this platform" });
 				const name = normalizeName(ctx.body.name);
 				return { context: {
 					...ctx,
@@ -8354,7 +19835,7 @@ var auth = betterAuth({
 				} };
 			}
 		}),
-		after: createAuthMiddleware$1(async (ctx) => {
+		after: createAuthMiddleware(async (ctx) => {
 			if (ctx.path === "/sign-up/email") {
 				const newUserId = ctx.context.newSession?.user?.id ?? null;
 				const email = ctx.body?.email ?? null;
@@ -8362,14 +19843,21 @@ var auth = betterAuth({
 					method: "email",
 					domain: email ? email.split("@")[1] : null
 				});
-				if (newUserId) try {
-					await db.insert(playlists).values({
-						userId: newUserId,
-						name: "My List",
-						isDefault: true
-					});
-				} catch (err) {
-					console.warn("[auth] default playlist bootstrap failed", err);
+				if (newUserId) {
+					try {
+						await db.insert(playlists).values({
+							userId: newUserId,
+							name: "My List",
+							isDefault: true
+						});
+					} catch (err) {
+						console.warn("[auth] default playlist bootstrap failed", err);
+					}
+					try {
+						await awardSignupToken(newUserId);
+					} catch (err) {
+						console.warn("[auth] signup STC bonus failed", err);
+					}
 				}
 			}
 		})

@@ -1,4 +1,4 @@
-import { Ft as unsubscribe_stores, Mt as store_get, Ot as ensure_array_like, Pt as stringify, Wt as escape_html, kt as head } from "../../../../chunks/ui-libs.js";
+import { Et as head, Mt as unsubscribe_stores, Tt as ensure_array_like, jt as stringify, kt as store_get, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { t as Check } from "../../../../chunks/check.js";
 import { t as Coins } from "../../../../chunks/coins.js";
 import { t as Crown } from "../../../../chunks/crown.js";
@@ -25,17 +25,18 @@ function _page($$renderer, $$props) {
 		let plans = [
 			{
 				id: "freemium",
-				name: "Freemium",
-				price: 1,
-				cadence: "every 2 months",
-				maxProfiles: 1,
-				kidsAllowed: false,
+				name: "Free",
+				price: 0,
+				cadence: "forever",
+				maxProfiles: 2,
+				kidsAllowed: true,
 				hasAds: true,
 				features: [
 					"HD streaming with ads",
-					"1 profile",
+					"2 profiles",
+					"Kids & Teens — always ad-free",
 					"Access to standard library",
-					"Cancel anytime"
+					"No card required"
 				],
 				nftBenefits: ["Earn STC by watching", "No staking discount on this tier"]
 			},
@@ -121,7 +122,7 @@ function _page($$renderer, $$props) {
 			$$renderer.title(($$renderer) => {
 				$$renderer.push(`<title>Plans &amp; Pricing · Sephar Studios</title>`);
 			});
-			$$renderer.push(`<meta name="description" content="Choose your Sephar Studios plan: freemium with ads, basic ad-free, premium family (8 profiles + kids mode), or creator. STC stakers get up to 50% off."/>`);
+			$$renderer.push(`<meta name="description" content="Watch Sephar Studios free with ads — no card required. Or go ad-free from $4/month: basic, premium family (8 profiles + kids mode), or creator. STC stakers get up to 50% off."/>`);
 		});
 		$$renderer.push(`<div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-7xl pt-32 pb-16"><div class="text-center space-y-4 mb-8"><h1 class="text-3xl font-bold gradient-text svelte-19dwmhu">Choose Your Plan</h1> <p class="text-muted-foreground max-w-2xl mx-auto">Start with 3 months free on Basic, Premium or Creator. Freemium starts billing immediately at $1 every 2 months. `);
 		$$renderer.push("<!--[-1-->");
@@ -227,11 +228,18 @@ function _page($$renderer, $$props) {
 						class: "space-y-6",
 						children: ($$renderer) => {
 							$$renderer.push(`<div class="space-y-2"><div class="flex items-baseline flex-wrap">`);
-							if (plan.originalPrice && plan.originalPrice !== plan.price) {
+							if (plan.price === 0) {
 								$$renderer.push("<!--[0-->");
-								$$renderer.push(`<span class="text-lg line-through text-muted-foreground mr-2">$${escape_html(plan.originalPrice.toFixed(2))}</span>`);
-							} else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--> <span class="text-3xl font-bold">$${escape_html(plan.price.toFixed(2))}</span> <span class="text-muted-foreground ml-1">${escape_html(plan.cadence)}</span></div> `);
+								$$renderer.push(`<span class="text-3xl font-bold">Free</span> <span class="text-muted-foreground ml-1">${escape_html(plan.cadence)}</span>`);
+							} else {
+								$$renderer.push("<!--[-1-->");
+								if (plan.originalPrice && plan.originalPrice !== plan.price) {
+									$$renderer.push("<!--[0-->");
+									$$renderer.push(`<span class="text-lg line-through text-muted-foreground mr-2">$${escape_html(plan.originalPrice.toFixed(2))}</span>`);
+								} else $$renderer.push("<!--[-1-->");
+								$$renderer.push(`<!--]--> <span class="text-3xl font-bold">$${escape_html(plan.price.toFixed(2))}</span> <span class="text-muted-foreground ml-1">${escape_html(plan.cadence)}</span>`);
+							}
+							$$renderer.push(`<!--]--></div> `);
 							$$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--></div> <div class="space-y-3"><h4 class="font-medium text-sm">Platform Features</h4> <ul class="space-y-2"><!--[-->`);
 							const each_array_1 = ensure_array_like(plan.features);

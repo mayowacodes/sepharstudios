@@ -1,216 +1,455 @@
-import { t as __exportAll } from "./rolldown-runtime.js";
-import * as devalue from "devalue";
+import { n as __exportAll } from "./rolldown-runtime.js";
 import { clsx } from "clsx";
-import parse$1 from "style-to-object";
-import { focusable, isFocusable, isTabbable, tabbable } from "tabbable";
-import { arrow, autoUpdate, computePosition, flip, hide, limitShift, offset, shift, size } from "@floating-ui/dom";
-//#region ../../node_modules/svelte/src/internal/shared/errors.js
-/**
-* Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
-* @param {string} name
-* @returns {never}
-*/
-function experimental_async_required(name) {
-	throw new Error(`https://svelte.dev/e/experimental_async_required`);
-}
-/**
-* `%name%(...)` can only be used during component initialisation
-* @param {string} name
-* @returns {never}
-*/
-function lifecycle_outside_component(name) {
-	throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
-}
-/**
-* Context was not set in a parent component
-* @returns {never}
-*/
-function missing_context() {
-	throw new Error(`https://svelte.dev/e/missing_context`);
-}
+//#region ../../node_modules/.bun/devalue@5.8.1/node_modules/devalue/src/constants.js
+var MAX_ARRAY_LEN = 2 ** 32 - 1;
+var MAX_ARRAY_INDEX = MAX_ARRAY_LEN - 1;
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/errors.js
-/**
-* The node API `AsyncLocalStorage` is not available, but is required to use async server rendering.
-* @returns {never}
-*/
-function async_local_storage_unavailable() {
-	const error = /* @__PURE__ */ new Error(`async_local_storage_unavailable\nThe node API \`AsyncLocalStorage\` is not available, but is required to use async server rendering.\nhttps://svelte.dev/e/async_local_storage_unavailable`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* Encountered asynchronous work while rendering synchronously.
-* @returns {never}
-*/
-function await_invalid() {
-	const error = /* @__PURE__ */ new Error(`await_invalid\nEncountered asynchronous work while rendering synchronously.\nhttps://svelte.dev/e/await_invalid`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* `<svelte:element this="%tag%">` is not a valid element name — the element will not be rendered
-* @param {string} tag
-* @returns {never}
-*/
-function dynamic_element_invalid_tag(tag) {
-	const error = /* @__PURE__ */ new Error(`dynamic_element_invalid_tag\n\`<svelte:element this="${tag}">\` is not a valid element name — the element will not be rendered\nhttps://svelte.dev/e/dynamic_element_invalid_tag`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* The `html` property of server render results has been deprecated. Use `body` instead.
-* @returns {never}
-*/
-function html_deprecated() {
-	const error = /* @__PURE__ */ new Error(`html_deprecated\nThe \`html\` property of server render results has been deprecated. Use \`body\` instead.\nhttps://svelte.dev/e/html_deprecated`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* Failed to serialize `hydratable` data for key `%key%`.
-* 
-* `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
-* 
-* Cause:
-* %stack%
-* @param {string} key
-* @param {string} stack
-* @returns {never}
-*/
-function hydratable_serialization_failed(key, stack) {
-	const error = /* @__PURE__ */ new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
-
-\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
-
-Cause:
-${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
-* @returns {never}
-*/
-function invalid_csp() {
-	const error = /* @__PURE__ */ new Error(`invalid_csp\n\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.\nhttps://svelte.dev/e/invalid_csp`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* The `idPrefix` option cannot include `--`.
-* @returns {never}
-*/
-function invalid_id_prefix() {
-	const error = /* @__PURE__ */ new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`--\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* `%name%(...)` is not available on the server
-* @param {string} name
-* @returns {never}
-*/
-function lifecycle_function_unavailable(name) {
-	const error = /* @__PURE__ */ new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
-	error.name = "Svelte error";
-	throw error;
-}
-/**
-* Could not resolve `render` context.
-* @returns {never}
-*/
-function server_context_required() {
-	const error = /* @__PURE__ */ new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
-	error.name = "Svelte error";
-	throw error;
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/server/context.js
-/** @import { SSRContext } from '#server' */
-/** @type {SSRContext | null} */
-var ssr_context = null;
-/** @param {SSRContext | null} v */
-function set_ssr_context(v) {
-	ssr_context = v;
-}
-/**
-* @template T
-* @returns {[() => T, (context: T) => T]}
-* @since 5.40.0
-*/
-function createContext() {
-	const key = {};
-	return [() => {
-		if (!hasContext(key)) missing_context();
-		return getContext(key);
-	}, (context) => setContext(key, context)];
-}
-/**
-* @template T
-* @param {any} key
-* @returns {T}
-*/
-function getContext(key) {
-	return get_or_init_context_map("getContext").get(key);
-}
-/**
-* @template T
-* @param {any} key
-* @param {T} context
-* @returns {T}
-*/
-function setContext(key, context) {
-	get_or_init_context_map("setContext").set(key, context);
-	return context;
-}
-/**
-* @param {any} key
-* @returns {boolean}
-*/
-function hasContext(key) {
-	return get_or_init_context_map("hasContext").has(key);
-}
-/** @returns {Map<any, any>} */
-function getAllContexts() {
-	return get_or_init_context_map("getAllContexts");
-}
-/**
-* @param {string} name
-* @returns {Map<unknown, unknown>}
-*/
-function get_or_init_context_map(name) {
-	if (ssr_context === null) lifecycle_outside_component(name);
-	return ssr_context.c ??= new Map(get_parent_context(ssr_context) || void 0);
-}
-/**
-* @param {Function} [fn]
-*/
-function push$1(fn) {
-	ssr_context = {
-		p: ssr_context,
-		c: null,
-		r: null
-	};
-}
-function pop$1() {
-	ssr_context = ssr_context.p;
-}
-/**
-* @param {SSRContext} ssr_context
-* @returns {Map<unknown, unknown> | null}
-*/
-function get_parent_context(ssr_context) {
-	let parent = ssr_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) return context_map;
-		parent = parent.p;
+//#region ../../node_modules/.bun/devalue@5.8.1/node_modules/devalue/src/utils.js
+/** @type {Record<string, string>} */
+var escaped = {
+	"<": "\\u003C",
+	"\\": "\\\\",
+	"\b": "\\b",
+	"\f": "\\f",
+	"\n": "\\n",
+	"\r": "\\r",
+	"	": "\\t",
+	"\u2028": "\\u2028",
+	"\u2029": "\\u2029"
+};
+var DevalueError = class extends Error {
+	/**
+	* @param {string} message
+	* @param {string[]} keys
+	* @param {any} [value] - The value that failed to be serialized
+	* @param {any} [root] - The root value being serialized
+	*/
+	constructor(message, keys, value, root) {
+		super(message);
+		this.name = "DevalueError";
+		this.path = keys.join("");
+		this.value = value;
+		this.root = root;
 	}
-	return null;
+};
+/** @param {any} thing */
+function is_primitive(thing) {
+	return thing === null || typeof thing !== "object" && typeof thing !== "function";
+}
+var object_proto_names = /* @__PURE__ */ Object.getOwnPropertyNames(Object.prototype).sort().join("\0");
+/** @param {any} thing */
+function is_plain_object(thing) {
+	const proto = Object.getPrototypeOf(thing);
+	return proto === Object.prototype || proto === null || Object.getPrototypeOf(proto) === null || Object.getOwnPropertyNames(proto).sort().join("\0") === object_proto_names;
+}
+/** @param {any} thing */
+function get_type(thing) {
+	return Object.prototype.toString.call(thing).slice(8, -1);
+}
+/** @param {string} char */
+function get_escaped_char(char) {
+	switch (char) {
+		case "\"": return "\\\"";
+		case "<": return "\\u003C";
+		case "\\": return "\\\\";
+		case "\n": return "\\n";
+		case "\r": return "\\r";
+		case "	": return "\\t";
+		case "\b": return "\\b";
+		case "\f": return "\\f";
+		case "\u2028": return "\\u2028";
+		case "\u2029": return "\\u2029";
+		default: return char < " " ? `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}` : "";
+	}
+}
+/** @param {string} str */
+function stringify_string(str) {
+	let result = "";
+	let last_pos = 0;
+	const len = str.length;
+	for (let i = 0; i < len; i += 1) {
+		const char = str[i];
+		const replacement = get_escaped_char(char);
+		if (replacement) {
+			result += str.slice(last_pos, i) + replacement;
+			last_pos = i + 1;
+		}
+	}
+	return `"${last_pos === 0 ? str : result + str.slice(last_pos)}"`;
+}
+/** @param {Record<string | symbol, any>} object */
+function enumerable_symbols(object) {
+	return Object.getOwnPropertySymbols(object).filter((symbol) => Object.getOwnPropertyDescriptor(object, symbol).enumerable);
+}
+var is_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+/** @param {string} key */
+function stringify_key(key) {
+	return is_identifier.test(key) ? "." + key : "[" + JSON.stringify(key) + "]";
+}
+/** @param {number} n */
+function is_valid_array_index(n) {
+	if (!Number.isInteger(n)) return false;
+	if (n < 0) return false;
+	if (n > MAX_ARRAY_INDEX) return false;
+	return true;
+}
+/** @param {number} n */
+function is_valid_array_len(n) {
+	if (!Number.isInteger(n)) return false;
+	if (n < 0) return false;
+	if (n > MAX_ARRAY_LEN) return false;
+	return true;
+}
+/** @param {string} s */
+function is_valid_array_index_string(s) {
+	if (s.length === 0) return false;
+	if (s.length > 1 && s.charCodeAt(0) === 48) return false;
+	for (let i = 0; i < s.length; i++) {
+		const c = s.charCodeAt(i);
+		if (c < 48 || c > 57) return false;
+	}
+	return is_valid_array_index(+s);
+}
+/**
+* Finds the populated indices of an array.
+* @param {unknown[]} array
+*/
+function valid_array_indices(array) {
+	const keys = Object.keys(array);
+	for (var i = keys.length - 1; i >= 0; i--) if (is_valid_array_index_string(keys[i])) break;
+	keys.length = i + 1;
+	return keys;
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/shared/utils.js
+//#region ../../node_modules/.bun/devalue@5.8.1/node_modules/devalue/src/uneval.js
+var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+var unsafe_chars = /[<\b\f\n\r\t\0\u2028\u2029]/g;
+var reserved = /^(?:do|if|in|for|int|let|new|try|var|byte|case|char|else|enum|goto|long|this|void|with|await|break|catch|class|const|final|float|short|super|throw|while|yield|delete|double|export|import|native|return|switch|throws|typeof|boolean|default|extends|finally|package|private|abstract|continue|debugger|function|volatile|interface|protected|transient|implements|instanceof|synchronized)$/;
+/**
+* Turn a value into the JavaScript that creates an equivalent value
+* @param {any} value
+* @param {(value: any, uneval: (value: any) => string) => string | void} [replacer]
+*/
+function uneval(value, replacer) {
+	const counts = /* @__PURE__ */ new Map();
+	/** @type {string[]} */
+	const keys = [];
+	const custom = /* @__PURE__ */ new Map();
+	/** @param {any} thing */
+	function walk(thing) {
+		if (!is_primitive(thing)) {
+			if (counts.has(thing)) {
+				counts.set(thing, counts.get(thing) + 1);
+				return;
+			}
+			counts.set(thing, 1);
+			if (replacer) {
+				const str = replacer(thing, (value) => uneval(value, replacer));
+				if (typeof str === "string") {
+					custom.set(thing, str);
+					return;
+				}
+			}
+			if (typeof thing === "function") throw new DevalueError(`Cannot stringify a function`, keys, thing, value);
+			switch (get_type(thing)) {
+				case "Number":
+				case "BigInt":
+				case "String":
+				case "Boolean":
+				case "Date":
+				case "RegExp":
+				case "URL":
+				case "URLSearchParams": return;
+				case "Array":
+					/** @type {any[]} */ thing.forEach((value, i) => {
+						keys.push(`[${i}]`);
+						walk(value);
+						keys.pop();
+					});
+					break;
+				case "Set":
+					Array.from(thing).forEach(walk);
+					break;
+				case "Map":
+					for (const [key, value] of thing) {
+						keys.push(`.get(${is_primitive(key) ? stringify_primitive(key) : "..."})`);
+						walk(value);
+						keys.pop();
+					}
+					break;
+				case "Int8Array":
+				case "Uint8Array":
+				case "Uint8ClampedArray":
+				case "Int16Array":
+				case "Uint16Array":
+				case "Float16Array":
+				case "Int32Array":
+				case "Uint32Array":
+				case "Float32Array":
+				case "Float64Array":
+				case "BigInt64Array":
+				case "BigUint64Array":
+				case "DataView":
+					walk(thing.buffer);
+					return;
+				case "ArrayBuffer": return;
+				case "Temporal.Duration":
+				case "Temporal.Instant":
+				case "Temporal.PlainDate":
+				case "Temporal.PlainTime":
+				case "Temporal.PlainDateTime":
+				case "Temporal.PlainMonthDay":
+				case "Temporal.PlainYearMonth":
+				case "Temporal.ZonedDateTime": return;
+				default:
+					if (!is_plain_object(thing)) throw new DevalueError(`Cannot stringify arbitrary non-POJOs`, keys, thing, value);
+					if (enumerable_symbols(thing).length > 0) throw new DevalueError(`Cannot stringify POJOs with symbolic keys`, keys, thing, value);
+					for (const key of Object.keys(thing)) {
+						if (key === "__proto__") throw new DevalueError(`Cannot stringify objects with __proto__ keys`, keys, thing, value);
+						keys.push(stringify_key(key));
+						walk(thing[key]);
+						keys.pop();
+					}
+			}
+		} else if (typeof thing === "symbol") throw new DevalueError(`Cannot stringify a Symbol primitive`, keys, thing, value);
+	}
+	walk(value);
+	const names = /* @__PURE__ */ new Map();
+	Array.from(counts).filter((entry) => entry[1] > 1).sort((a, b) => b[1] - a[1]).forEach((entry, i) => {
+		names.set(entry[0], get_name(i));
+	});
+	/**
+	* @param {any} thing
+	* @returns {string}
+	*/
+	function stringify(thing) {
+		if (names.has(thing)) return names.get(thing);
+		if (is_primitive(thing)) return stringify_primitive(thing);
+		if (custom.has(thing)) return custom.get(thing);
+		const type = get_type(thing);
+		switch (type) {
+			case "Number":
+			case "String":
+			case "Boolean":
+			case "BigInt": return `Object(${stringify(thing.valueOf())})`;
+			case "RegExp":
+				const { source, flags } = thing;
+				return flags ? `new RegExp(${stringify_string(source)},"${flags}")` : `new RegExp(${stringify_string(source)})`;
+			case "Date": return `new Date(${thing.getTime()})`;
+			case "URL": return `new URL(${stringify_string(thing.toString())})`;
+			case "URLSearchParams": return `new URLSearchParams(${stringify_string(thing.toString())})`;
+			case "Array": {
+				let has_holes = false;
+				let result = "[";
+				for (let i = 0; i < thing.length; i += 1) {
+					if (i > 0) result += ",";
+					if (Object.hasOwn(thing, i)) result += stringify(thing[i]);
+					else if (!has_holes) {
+						const populated_keys = valid_array_indices(thing);
+						const population = populated_keys.length;
+						const d = String(thing.length).length;
+						if (thing.length + 2 > 25 + d + population * (d + 2)) {
+							const entries = populated_keys.map((k) => `${k}:${stringify(thing[k])}`).join(",");
+							return `Object.assign(Array(${thing.length}),{${entries}})`;
+						}
+						has_holes = true;
+						i -= 1;
+					}
+				}
+				const tail = thing.length === 0 || thing.length - 1 in thing ? "" : ",";
+				return result + tail + "]";
+			}
+			case "Set":
+			case "Map": return `new ${type}([${Array.from(thing).map(stringify).join(",")}])`;
+			case "Int8Array":
+			case "Uint8Array":
+			case "Uint8ClampedArray":
+			case "Int16Array":
+			case "Uint16Array":
+			case "Float16Array":
+			case "Int32Array":
+			case "Uint32Array":
+			case "Float32Array":
+			case "Float64Array":
+			case "BigInt64Array":
+			case "BigUint64Array": {
+				let str = `new ${type}`;
+				if (!names.has(thing.buffer)) {
+					const array = new thing.constructor(thing.buffer);
+					str += `([${array}])`;
+				} else str += `(${stringify(thing.buffer)})`;
+				if (thing.byteLength !== thing.buffer.byteLength) {
+					const start = thing.byteOffset / thing.BYTES_PER_ELEMENT;
+					const end = start + thing.length;
+					str += `.subarray(${start},${end})`;
+				}
+				return str;
+			}
+			case "DataView": {
+				let str = `new DataView`;
+				if (!names.has(thing.buffer)) str += `(new Uint8Array([${new Uint8Array(thing.buffer)}]).buffer`;
+				else str += `(${stringify(thing.buffer)}`;
+				if (thing.byteLength !== thing.buffer.byteLength) str += `,${thing.startOffset},${thing.byteLength}`;
+				return str + ")";
+			}
+			case "ArrayBuffer": return `new Uint8Array([${new Uint8Array(thing).toString()}]).buffer`;
+			case "Temporal.Duration":
+			case "Temporal.Instant":
+			case "Temporal.PlainDate":
+			case "Temporal.PlainTime":
+			case "Temporal.PlainDateTime":
+			case "Temporal.PlainMonthDay":
+			case "Temporal.PlainYearMonth":
+			case "Temporal.ZonedDateTime": return `${type}.from(${stringify_string(thing.toString())})`;
+			default:
+				const keys = Object.keys(thing);
+				const obj = keys.map((key) => `${safe_key(key)}:${stringify(thing[key])}`).join(",");
+				if (Object.getPrototypeOf(thing) === null) return keys.length > 0 ? `{${obj},__proto__:null}` : `{__proto__:null}`;
+				return `{${obj}}`;
+		}
+	}
+	const str = stringify(value);
+	if (names.size) {
+		/** @type {string[]} */
+		const params = [];
+		/** @type {string[]} */
+		const statements = [];
+		/** @type {string[]} */
+		const values = [];
+		names.forEach((name, thing) => {
+			params.push(name);
+			if (custom.has(thing)) {
+				values.push(custom.get(thing));
+				return;
+			}
+			if (is_primitive(thing)) {
+				values.push(stringify_primitive(thing));
+				return;
+			}
+			const type = get_type(thing);
+			switch (type) {
+				case "Number":
+				case "String":
+				case "Boolean":
+				case "BigInt":
+					values.push(`Object(${stringify(thing.valueOf())})`);
+					break;
+				case "RegExp":
+					const { source, flags } = thing;
+					const regexp = flags ? `new RegExp(${stringify_string(source)},"${flags}")` : `new RegExp(${stringify_string(source)})`;
+					values.push(regexp);
+					break;
+				case "Date":
+					values.push(`new Date(${thing.getTime()})`);
+					break;
+				case "URL":
+					values.push(`new URL(${stringify_string(thing.toString())})`);
+					break;
+				case "URLSearchParams":
+					values.push(`new URLSearchParams(${stringify_string(thing.toString())})`);
+					break;
+				case "Array":
+					values.push(`Array(${thing.length})`);
+					/** @type {any[]} */ thing.forEach((v, i) => {
+						statements.push(`${name}[${i}]=${stringify(v)}`);
+					});
+					break;
+				case "Set":
+					values.push(`new Set`);
+					statements.push(`${name}.${Array.from(thing).map((v) => `add(${stringify(v)})`).join(".")}`);
+					break;
+				case "Map":
+					values.push(`new Map`);
+					statements.push(`${name}.${Array.from(thing).map(([k, v]) => `set(${stringify(k)}, ${stringify(v)})`).join(".")}`);
+					break;
+				case "Int8Array":
+				case "Uint8Array":
+				case "Uint8ClampedArray":
+				case "Int16Array":
+				case "Uint16Array":
+				case "Float16Array":
+				case "Int32Array":
+				case "Uint32Array":
+				case "Float32Array":
+				case "Float64Array":
+				case "BigInt64Array":
+				case "BigUint64Array": {
+					let str = `new ${type}`;
+					if (!names.has(thing.buffer)) {
+						const array = new thing.constructor(thing.buffer);
+						str += `([${array}])`;
+					} else str += `(${stringify(thing.buffer)})`;
+					if (thing.byteLength !== thing.buffer.byteLength) {
+						const start = thing.byteOffset / thing.BYTES_PER_ELEMENT;
+						const end = start + thing.length;
+						str += `.subarray(${start},${end})`;
+					}
+					values.push(`{}`);
+					statements.push(`${name}=${str}`);
+					break;
+				}
+				case "DataView": {
+					let str = `new DataView`;
+					if (!names.has(thing.buffer)) str += `(new Uint8Array([${new Uint8Array(thing.buffer)}]).buffer`;
+					else str += `(${stringify(thing.buffer)}`;
+					if (thing.byteLength !== thing.buffer.byteLength) str += `,${thing.byteOffset},${thing.byteLength}`;
+					str += ")";
+					values.push(`{}`);
+					statements.push(`${name}=${str}`);
+					break;
+				}
+				case "ArrayBuffer":
+					values.push(`new Uint8Array([${new Uint8Array(thing)}]).buffer`);
+					break;
+				default:
+					values.push(Object.getPrototypeOf(thing) === null ? "Object.create(null)" : "{}");
+					Object.keys(thing).forEach((key) => {
+						statements.push(`${name}${safe_prop(key)}=${stringify(thing[key])}`);
+					});
+			}
+		});
+		statements.push(`return ${str}`);
+		return `(function(${params.join(",")}){${statements.join(";")}}(${values.join(",")}))`;
+	} else return str;
+}
+/** @param {number} num */
+function get_name(num) {
+	let name = "";
+	do {
+		name = chars[num % 54] + name;
+		num = ~~(num / 54) - 1;
+	} while (num >= 0);
+	return reserved.test(name) ? `${name}0` : name;
+}
+/** @param {string} c */
+function escape_unsafe_char(c) {
+	return escaped[c] || c;
+}
+/** @param {string} str */
+function escape_unsafe_chars(str) {
+	return str.replace(unsafe_chars, escape_unsafe_char);
+}
+/** @param {string} key */
+function safe_key(key) {
+	return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key) ? key : escape_unsafe_chars(JSON.stringify(key));
+}
+/** @param {string} key */
+function safe_prop(key) {
+	return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key) ? `.${key}` : `[${escape_unsafe_chars(JSON.stringify(key))}]`;
+}
+/** @param {any} thing */
+function stringify_primitive(thing) {
+	const type = typeof thing;
+	if (type === "string") return stringify_string(thing);
+	if (thing === void 0) return "void 0";
+	if (thing === 0 && 1 / thing < 0) return "-0";
+	const str = String(thing);
+	if (type === "number") return str.replace(/^(-)?0\./, "$1.");
+	if (type === "bigint") return thing + "n";
+	return str;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/shared/utils.js
 var is_array = Array.isArray;
 var index_of = Array.prototype.indexOf;
 var includes = Array.prototype.includes;
@@ -248,6 +487,25 @@ function deferred() {
 		resolve,
 		reject
 	};
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/equality.js
+/** @import { Equals } from '#client' */
+/** @type {Equals} */
+function equals(value) {
+	return value === this.v;
+}
+/**
+* @param {unknown} a
+* @param {unknown} b
+* @returns {boolean}
+*/
+function safe_not_equal(a, b) {
+	return a != a ? b == b : a !== b || a !== null && typeof a === "object" || typeof a === "function";
+}
+/** @type {Equals} */
+function safe_equals(value) {
+	return !safe_not_equal(value, this.v);
 }
 var CLEAN = 1024;
 var DIRTY = 2048;
@@ -287,260 +545,29 @@ var STALE_REACTION = new class StaleReactionError extends Error {
 }();
 globalThis.document?.contentType;
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/abort-signal.js
-/** @type {AbortController | null} */
-var controller = null;
-function abort() {
-	controller?.abort(STALE_REACTION);
-	controller = null;
-}
-function getAbortSignal() {
-	return (controller ??= new AbortController()).signal;
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/flags/index.js
-/** True if experimental.async=true */
-var async_mode_flag = false;
-/** True if we're not certain that we only have Svelte 5 code in the compilation */
-var legacy_mode_flag = false;
-//#endregion
-//#region ../../node_modules/svelte/src/internal/server/render-context.js
-/** @import { AsyncLocalStorage } from 'node:async_hooks' */
-/** @import { RenderContext } from '#server' */
-/** @type {Promise<void> | null} */
-var current_render = null;
-/** @type {RenderContext | null} */
-var context = null;
-/** @returns {RenderContext} */
-function get_render_context() {
-	const store = context ?? als?.getStore();
-	if (!store) server_context_required();
-	return store;
-}
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/shared/errors.js
 /**
-* @template T
-* @param {() => Promise<T>} fn
-* @returns {Promise<T>}
-*/
-async function with_render_context(fn) {
-	context = { hydratable: {
-		lookup: /* @__PURE__ */ new Map(),
-		comparisons: [],
-		unresolved_promises: /* @__PURE__ */ new Map()
-	} };
-	if (in_webcontainer()) {
-		const { promise, resolve } = deferred();
-		const previous_render = current_render;
-		current_render = promise;
-		await previous_render;
-		return fn().finally(resolve);
-	}
-	try {
-		if (als === null) async_local_storage_unavailable();
-		return als.run(context, fn);
-	} finally {
-		context = null;
-	}
-}
-/** @type {AsyncLocalStorage<RenderContext | null> | null} */
-var als = null;
-/** @type {Promise<void> | null} */
-var als_import = null;
-/**
-*
-* @returns {Promise<void>}
-*/
-function init_render_context() {
-	als_import ??= import("node:async_hooks").then((hooks) => {
-		als = new hooks.AsyncLocalStorage();
-	}).then(noop$1, noop$1);
-	return als_import;
-}
-function in_webcontainer() {
-	return !!globalThis.process?.versions?.webcontainer;
-}
-//#endregion
-//#region ../../node_modules/svelte/src/constants.js
-var HYDRATION_ERROR = {};
-var UNINITIALIZED = Symbol("uninitialized");
-var ATTACHMENT_KEY = "@attach";
-/**
-* A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
-* 
-* The `hydratable` was initialized in:
-* %stack%
-* @param {string} key
-* @param {string} stack
-*/
-function unresolved_hydratable(key, stack) {
-	console.warn(`https://svelte.dev/e/unresolved_hydratable`);
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/server/hydration.js
-var BLOCK_OPEN = `<!--[-->`;
-var BLOCK_CLOSE = `<!--]-->`;
-var EMPTY_COMMENT = `<!---->`;
-//#endregion
-//#region ../../node_modules/svelte/src/escaping.js
-var ATTR_REGEX = /[&"<]/g;
-var CONTENT_REGEX = /[&<]/g;
-/**
-* @template V
-* @param {V} value
-* @param {boolean} [is_attr]
-*/
-function escape_html(value, is_attr) {
-	const str = String(value ?? "");
-	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
-	pattern.lastIndex = 0;
-	let escaped = "";
-	let last = 0;
-	while (pattern.test(str)) {
-		const i = pattern.lastIndex - 1;
-		const ch = str[i];
-		escaped += str.substring(last, i) + (ch === "&" ? "&amp;" : ch === "\"" ? "&quot;" : "&lt;");
-		last = i + 1;
-	}
-	return escaped + str.substring(last);
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/shared/attributes.js
-/**
-* `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
-* `<div translate="false">`, which is equivalent to `<div translate="yes">`. There
-* may be other odd cases that need to be added to this list in future
-* @type {Record<string, Map<any, string>>}
-*/
-var replacements = { translate: new Map([[true, "yes"], [false, "no"]]) };
-/**
-* @template V
+* Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
 * @param {string} name
-* @param {V} value
-* @param {boolean} [is_boolean]
-* @returns {string}
+* @returns {never}
 */
-function attr(name, value, is_boolean = false) {
-	if (name === "hidden" && value !== "until-found") is_boolean = true;
-	if (value == null || !value && is_boolean) return "";
-	const normalized = has_own_property.call(replacements, name) && replacements[name].get(value) || value;
-	return ` ${name}${is_boolean ? `=""` : `="${escape_html(normalized, true)}"`}`;
+function experimental_async_required(name) {
+	throw new Error(`https://svelte.dev/e/experimental_async_required`);
 }
 /**
-* Small wrapper around clsx to preserve Svelte's (weird) handling of falsy values.
-* TODO Svelte 6 revisit this, and likely turn all falsy values into the empty string (what clsx also does)
-* @param  {any} value
-*/
-function clsx$1(value) {
-	if (typeof value === "object") return clsx(value);
-	else return value ?? "";
-}
-var whitespace = [..." 	\n\r\f\xA0\v﻿"];
-/**
-* @param {any} value
-* @param {string | null} [hash]
-* @param {Record<string, boolean>} [directives]
-* @returns {string | null}
-*/
-function to_class(value, hash, directives) {
-	var classname = value == null ? "" : "" + value;
-	if (hash) classname = classname ? classname + " " + hash : hash;
-	if (directives) {
-		for (var key of Object.keys(directives)) if (directives[key]) classname = classname ? classname + " " + key : key;
-		else if (classname.length) {
-			var len = key.length;
-			var a = 0;
-			while ((a = classname.indexOf(key, a)) >= 0) {
-				var b = a + len;
-				if ((a === 0 || whitespace.includes(classname[a - 1])) && (b === classname.length || whitespace.includes(classname[b]))) classname = (a === 0 ? "" : classname.substring(0, a)) + classname.substring(b + 1);
-				else a = b;
-			}
-		}
-	}
-	return classname === "" ? null : classname;
-}
-/**
-*
-* @param {Record<string,any>} styles
-* @param {boolean} important
-*/
-function append_styles(styles, important = false) {
-	var separator = important ? " !important;" : ";";
-	var css = "";
-	for (var key of Object.keys(styles)) {
-		var value = styles[key];
-		if (value != null && value !== "") css += " " + key + ": " + value + separator;
-	}
-	return css;
-}
-/**
+* `%name%(...)` can only be used during component initialisation
 * @param {string} name
-* @returns {string}
+* @returns {never}
 */
-function to_css_name(name) {
-	if (name[0] !== "-" || name[1] !== "-") return name.toLowerCase();
-	return name;
+function lifecycle_outside_component(name) {
+	throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
 }
 /**
-* @param {any} value
-* @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [styles]
-* @returns {string | null}
+* Context was not set in a parent component
+* @returns {never}
 */
-function to_style(value, styles) {
-	if (styles) {
-		var new_style = "";
-		/** @type {Record<string,any> | undefined} */
-		var normal_styles;
-		/** @type {Record<string,any> | undefined} */
-		var important_styles;
-		if (Array.isArray(styles)) {
-			normal_styles = styles[0];
-			important_styles = styles[1];
-		} else normal_styles = styles;
-		if (value) {
-			value = String(value).replaceAll(/\s*\/\*.*?\*\/\s*/g, "").trim();
-			/** @type {boolean | '"' | "'"} */
-			var in_str = false;
-			var in_apo = 0;
-			var in_comment = false;
-			var reserved_names = [];
-			if (normal_styles) reserved_names.push(...Object.keys(normal_styles).map(to_css_name));
-			if (important_styles) reserved_names.push(...Object.keys(important_styles).map(to_css_name));
-			var start_index = 0;
-			var name_index = -1;
-			const len = value.length;
-			for (var i = 0; i < len; i++) {
-				var c = value[i];
-				if (in_comment) {
-					if (c === "/" && value[i - 1] === "*") in_comment = false;
-				} else if (in_str) {
-					if (in_str === c) in_str = false;
-				} else if (c === "/" && value[i + 1] === "*") in_comment = true;
-				else if (c === "\"" || c === "'") in_str = c;
-				else if (c === "(") in_apo++;
-				else if (c === ")") in_apo--;
-				if (!in_comment && in_str === false && in_apo === 0) {
-					if (c === ":" && name_index === -1) name_index = i;
-					else if (c === ";" || i === len - 1) {
-						if (name_index !== -1) {
-							var name = to_css_name(value.substring(start_index, name_index).trim());
-							if (!reserved_names.includes(name)) {
-								if (c !== ";") i++;
-								var property = value.substring(start_index, i).trim();
-								new_style += " " + property + ";";
-							}
-						}
-						start_index = i + 1;
-						name_index = -1;
-					}
-				}
-			}
-		}
-		if (normal_styles) new_style += append_styles(normal_styles);
-		if (important_styles) new_style += append_styles(important_styles, true);
-		new_style = new_style.trim();
-		return new_style === "" ? null : new_style;
-	}
-	return value == null ? null : String(value);
+function missing_context() {
+	throw new Error(`https://svelte.dev/e/missing_context`);
 }
 /**
 * Maximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state
@@ -584,6 +611,11 @@ function state_unsafe_mutation() {
 function svelte_boundary_reset_onerror() {
 	throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
 }
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/constants.js
+var HYDRATION_ERROR = {};
+var UNINITIALIZED = Symbol("uninitialized");
+var ATTACHMENT_KEY = "@attach";
 /**
 * Reading a derived belonging to a now-destroyed effect may result in stale values
 */
@@ -604,7 +636,7 @@ function svelte_boundary_reset_noop() {
 	console.warn(`https://svelte.dev/e/svelte_boundary_reset_noop`);
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/hydration.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/hydration.js
 /** @import { TemplateNode } from '#client' */
 /**
 * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -663,26 +695,13 @@ function skip_nodes(remove = true) {
 	}
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/equality.js
-/** @import { Equals } from '#client' */
-/** @type {Equals} */
-function equals(value) {
-	return value === this.v;
-}
-/**
-* @param {unknown} a
-* @param {unknown} b
-* @returns {boolean}
-*/
-function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || a !== null && typeof a === "object" || typeof a === "function";
-}
-/** @type {Equals} */
-function safe_equals(value) {
-	return !safe_not_equal(value, this.v);
-}
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/flags/index.js
+/** True if experimental.async=true */
+var async_mode_flag = false;
+/** True if we're not certain that we only have Svelte 5 code in the compilation */
+var legacy_mode_flag = false;
 //#endregion
-//#region ../../node_modules/svelte/src/internal/shared/clone.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/shared/clone.js
 /** @import { Snapshot } from './types' */
 /**
 * In dev, we keep track of which properties could not be cloned. In prod
@@ -753,7 +772,7 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 	}
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/context.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/context.js
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
 /** @type {ComponentContext | null} */
 var component_context = null;
@@ -767,7 +786,7 @@ function set_component_context(context) {
 * @param {Function} [fn]
 * @returns {void}
 */
-function push(props, runes = false, fn) {
+function push$1(props, runes = false, fn) {
 	component_context = {
 		p: component_context,
 		i: false,
@@ -788,7 +807,7 @@ function push(props, runes = false, fn) {
 * @param {T} [component]
 * @returns {T}
 */
-function pop(component) {
+function pop$1(component) {
 	var context = component_context;
 	var effects = context.e;
 	if (effects !== null) {
@@ -805,7 +824,7 @@ function is_runes() {
 	return !legacy_mode_flag || component_context !== null && component_context.l === null;
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/task.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/task.js
 /** @type {Array<() => void>} */
 var micro_tasks = [];
 function run_micro_tasks() {
@@ -848,6 +867,7 @@ function handle_error(error) {
 * @param {Effect | null} effect
 */
 function invoke_error_boundary(error, effect) {
+	if (effect !== null && (effect.f & 16384) !== 0) return;
 	while (effect !== null) {
 		if ((effect.f & 128) !== 0) {
 			if ((effect.f & 32768) === 0) throw error;
@@ -863,7 +883,7 @@ function invoke_error_boundary(error, effect) {
 	throw error;
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/status.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/status.js
 /** @import { Derived, Signal } from '#client' */
 var STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 /**
@@ -882,7 +902,7 @@ function update_derived_status(derived) {
 	else set_signal_status(derived, MAYBE_DIRTY);
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/utils.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/utils.js
 /** @import { Derived, Effect, Value } from '#client' */
 /**
 * @param {Value[] | null} deps
@@ -910,920 +930,32 @@ function defer_effect(effect, dirty_effects, maybe_dirty_effects) {
 	set_signal_status(effect, CLEAN);
 }
 //#endregion
-//#region ../../node_modules/svelte/src/store/shared/index.js
-/** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
-/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
-/**
-* @type {Array<SubscribeInvalidateTuple<any> | any>}
-*/
-var subscriber_queue = [];
-/**
-* Creates a `Readable` store that allows reading by subscription.
-*
-* @template T
-* @param {T} [value] initial value
-* @param {StartStopNotifier<T>} [start]
-* @returns {Readable<T>}
-*/
-function readable(value, start) {
-	return { subscribe: writable(value, start).subscribe };
-}
-/**
-* Create a `Writable` store that allows both updating and reading by subscription.
-*
-* @template T
-* @param {T} [value] initial value
-* @param {StartStopNotifier<T>} [start]
-* @returns {Writable<T>}
-*/
-function writable(value, start = noop$1) {
-	/** @type {Unsubscriber | null} */
-	let stop = null;
-	/** @type {Set<SubscribeInvalidateTuple<T>>} */
-	const subscribers = /* @__PURE__ */ new Set();
-	/**
-	* @param {T} new_value
-	* @returns {void}
-	*/
-	function set(new_value) {
-		if (safe_not_equal(value, new_value)) {
-			value = new_value;
-			if (stop) {
-				const run_queue = !subscriber_queue.length;
-				for (const subscriber of subscribers) {
-					subscriber[1]();
-					subscriber_queue.push(subscriber, value);
-				}
-				if (run_queue) {
-					for (let i = 0; i < subscriber_queue.length; i += 2) subscriber_queue[i][0](subscriber_queue[i + 1]);
-					subscriber_queue.length = 0;
-				}
-			}
-		}
-	}
-	/**
-	* @param {Updater<T>} fn
-	* @returns {void}
-	*/
-	function update(fn) {
-		set(fn(value));
-	}
-	/**
-	* @param {Subscriber<T>} run
-	* @param {() => void} [invalidate]
-	* @returns {Unsubscriber}
-	*/
-	function subscribe(run, invalidate = noop$1) {
-		/** @type {SubscribeInvalidateTuple<T>} */
-		const subscriber = [run, invalidate];
-		subscribers.add(subscriber);
-		if (subscribers.size === 1) stop = start(set, update) || noop$1;
-		run(value);
-		return () => {
-			subscribers.delete(subscriber);
-			if (subscribers.size === 0 && stop) {
-				stop();
-				stop = null;
-			}
-		};
-	}
-	return {
-		set,
-		update,
-		subscribe
-	};
-}
-/**
-* Derived value store by synchronizing one or more readable stores and
-* applying an aggregation function over its input values.
-*
-* @template {Stores} S
-* @template T
-* @overload
-* @param {S} stores
-* @param {(values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void} fn
-* @param {T} [initial_value]
-* @returns {Readable<T>}
-*/
-/**
-* Derived value store by synchronizing one or more readable stores and
-* applying an aggregation function over its input values.
-*
-* @template {Stores} S
-* @template T
-* @overload
-* @param {S} stores
-* @param {(values: StoresValues<S>) => T} fn
-* @param {T} [initial_value]
-* @returns {Readable<T>}
-*/
-/**
-* @template {Stores} S
-* @template T
-* @param {S} stores
-* @param {Function} fn
-* @param {T} [initial_value]
-* @returns {Readable<T>}
-*/
-function derived$1(stores, fn, initial_value) {
-	const single = !Array.isArray(stores);
-	/** @type {Array<Readable<any>>} */
-	const stores_array = single ? [stores] : stores;
-	if (!stores_array.every(Boolean)) throw new Error("derived() expects stores as input, got a falsy value");
-	const auto = fn.length < 2;
-	return readable(initial_value, (set, update) => {
-		let started = false;
-		/** @type {T[]} */
-		const values = [];
-		let pending = 0;
-		let cleanup = noop$1;
-		const sync = () => {
-			if (pending) return;
-			cleanup();
-			const result = fn(single ? values[0] : values, set, update);
-			if (auto) set(result);
-			else cleanup = typeof result === "function" ? result : noop$1;
-		};
-		const unsubscribers = stores_array.map((store, i) => subscribe_to_store(store, (value) => {
-			values[i] = value;
-			pending &= ~(1 << i);
-			if (started) sync();
-		}, () => {
-			pending |= 1 << i;
-		}));
-		started = true;
-		sync();
-		return function stop() {
-			run_all(unsubscribers);
-			cleanup();
-			started = false;
-		};
-	});
-}
-/**
-* Get the current value from a store by subscribing and immediately unsubscribing.
-*
-* @template T
-* @param {Readable<T>} store
-* @returns {T}
-*/
-function get$3(store) {
-	let value;
-	subscribe_to_store(store, (_) => value = _)();
-	return value;
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/store.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/store.js
 /**
 * We set this to `true` when updating a store so that we correctly
 * schedule effects if the update takes place inside a `$:` effect
 */
 var legacy_is_updating_store = false;
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/batch.js
-/** @import { Fork } from 'svelte' */
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
-/** @type {Batch | null} */
-var first_batch = null;
-/** @type {Batch | null} */
-var last_batch = null;
-/** @type {Batch | null} */
-var current_batch = null;
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/elements/bindings/shared.js
 /**
-* This is needed to avoid overwriting inputs
-* @type {Batch | null}
+* @template T
+* @param {() => T} fn
 */
-var previous_batch = null;
-/**
-* When time travelling (i.e. working in one batch, while other batches
-* still have ongoing work), we ignore the real values of affected
-* signals in favour of their values within the batch
-* @type {Map<Value, any> | null}
-*/
-var batch_values = null;
-/** @type {Effect | null} */
-var last_scheduled_effect = null;
-var is_flushing_sync = false;
-var is_processing = false;
-/**
-* During traversal, this is an array. Newly created effects are (if not immediately
-* executed) pushed to this array, rather than going through the scheduling
-* rigamarole that would cause another turn of the flush loop.
-* @type {Effect[] | null}
-*/
-var collected_effects = null;
-/**
-* An array of effects that are marked during traversal as a result of a `set`
-* (not `internal_set`) call. These will be added to the next batch and
-* trigger another `batch.process()`
-* @type {Effect[] | null}
-* @deprecated when we get rid of legacy mode and stores, we can get rid of this
-*/
-var legacy_updates = null;
-var flush_count = 0;
-var uid = 1;
-var Batch = class Batch {
-	id = uid++;
-	/** True as soon as `#process` was called */
-	#started = false;
-	linked = true;
-	/** @type {Batch | null} */
-	#prev = null;
-	/** @type {Batch | null} */
-	#next = null;
-	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
-	async_deriveds = /* @__PURE__ */ new Map();
-	/**
-	* The current values of any signals that are updated in this batch.
-	* Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
-	* They keys of this map are identical to `this.#previous`
-	* @type {Map<Value, [any, boolean]>}
-	*/
-	current = /* @__PURE__ */ new Map();
-	/**
-	* The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	* They keys of this map are identical to `this.#current`
-	* @type {Map<Value, any>}
-	*/
-	previous = /* @__PURE__ */ new Map();
-	/**
-	* When the batch is committed (and the DOM is updated), we need to remove old branches
-	* and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	* @type {Set<(batch: Batch) => void>}
-	*/
-	#commit_callbacks = /* @__PURE__ */ new Set();
-	/**
-	* If a fork is discarded, we need to destroy any effects that are no longer needed
-	* @type {Set<(batch: Batch) => void>}
-	*/
-	#discard_callbacks = /* @__PURE__ */ new Set();
-	/**
-	* Callbacks that should run only when a fork is committed.
-	* @type {Set<(batch: Batch) => void>}
-	*/
-	#fork_commit_callbacks = /* @__PURE__ */ new Set();
-	/**
-	* The number of async effects that are currently in flight
-	*/
-	#pending = 0;
-	/**
-	* Async effects that are currently in flight, _not_ inside a pending boundary
-	* @type {Map<Effect, number>}
-	*/
-	#blocking_pending = /* @__PURE__ */ new Map();
-	/**
-	* A deferred that resolves when the batch is committed, used with `settled()`
-	* TODO replace with Promise.withResolvers once supported widely enough
-	* @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
-	*/
-	#deferred = null;
-	/**
-	* The root effects that need to be flushed
-	* @type {Effect[]}
-	*/
-	#roots = [];
-	/**
-	* Effects created while this batch was active.
-	* @type {Effect[]}
-	*/
-	#new_effects = [];
-	/**
-	* Deferred effects (which run after async work has completed) that are DIRTY
-	* @type {Set<Effect>}
-	*/
-	#dirty_effects = /* @__PURE__ */ new Set();
-	/**
-	* Deferred effects that are MAYBE_DIRTY
-	* @type {Set<Effect>}
-	*/
-	#maybe_dirty_effects = /* @__PURE__ */ new Set();
-	/**
-	* A map of branches that still exist, but will be destroyed when this batch
-	* is committed — we skip over these during `process`.
-	* The value contains child effects that were dirty/maybe_dirty before being reset,
-	* so they can be rescheduled if the branch survives.
-	* @type {Map<Effect, { d: Effect[], m: Effect[] }>}
-	*/
-	#skipped_branches = /* @__PURE__ */ new Map();
-	/**
-	* Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
-	* @type {Set<Effect>}
-	*/
-	#unskipped_branches = /* @__PURE__ */ new Set();
-	is_fork = false;
-	#decrement_queued = false;
-	constructor() {
-		if (last_batch === null) first_batch = last_batch = this;
-		else {
-			last_batch.#next = this;
-			this.#prev = last_batch;
-		}
-		last_batch = this;
-	}
-	#is_deferred() {
-		if (this.is_fork) return true;
-		for (const effect of this.#blocking_pending.keys()) {
-			var e = effect;
-			var skipped = false;
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					skipped = true;
-					break;
-				}
-				e = e.parent;
-			}
-			if (!skipped) return true;
-		}
-		return false;
-	}
-	/**
-	* Add an effect to the #skipped_branches map and reset its children
-	* @param {Effect} effect
-	*/
-	skip_effect(effect) {
-		if (!this.#skipped_branches.has(effect)) this.#skipped_branches.set(effect, {
-			d: [],
-			m: []
-		});
-		this.#unskipped_branches.delete(effect);
-	}
-	/**
-	* Remove an effect from the #skipped_branches map and reschedule
-	* any tracked dirty/maybe_dirty child effects
-	* @param {Effect} effect
-	* @param {(e: Effect) => void} callback
-	*/
-	unskip_effect(effect, callback = (e) => this.schedule(e)) {
-		var tracked = this.#skipped_branches.get(effect);
-		if (tracked) {
-			this.#skipped_branches.delete(effect);
-			for (var e of tracked.d) {
-				set_signal_status(e, DIRTY);
-				callback(e);
-			}
-			for (e of tracked.m) {
-				set_signal_status(e, MAYBE_DIRTY);
-				callback(e);
-			}
-		}
-		this.#unskipped_branches.add(effect);
-	}
-	#process() {
-		this.#started = true;
-		if (flush_count++ > 1e3) {
-			this.#unlink();
-			infinite_loop_guard();
-		}
-		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			this.schedule(e);
-		}
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			this.schedule(e);
-		}
-		const roots = this.#roots;
-		this.#roots = [];
-		this.apply();
-		/** @type {Effect[]} */
-		var effects = collected_effects = [];
-		/** @type {Effect[]} */
-		var render_effects = [];
-		/**
-		* @type {Effect[]}
-		* @deprecated when we get rid of legacy mode and stores, we can get rid of this
-		*/
-		var updates = legacy_updates = [];
-		for (const root of roots) try {
-			this.#traverse(root, effects, render_effects);
-		} catch (e) {
-			reset_all(root);
-			if (!this.#is_deferred()) this.discard();
-			throw e;
-		}
-		current_batch = null;
-		if (updates.length > 0) {
-			var batch = Batch.ensure();
-			for (const e of updates) batch.schedule(e);
-		}
-		collected_effects = null;
-		legacy_updates = null;
-		if (this.#is_deferred()) {
-			this.#defer_effects(render_effects);
-			this.#defer_effects(effects);
-			for (const [e, t] of this.#skipped_branches) reset_branch(e, t);
-			if (updates.length > 0)
- /** @type {Batch} */ current_batch.#process();
-			return;
-		}
-		const earlier_batch = this.#find_earlier_batch();
-		if (earlier_batch) {
-			this.#defer_effects(render_effects);
-			this.#defer_effects(effects);
-			earlier_batch.#merge(this);
-			return;
-		}
-		this.#dirty_effects.clear();
-		this.#maybe_dirty_effects.clear();
-		for (const fn of this.#commit_callbacks) fn(this);
-		this.#commit_callbacks.clear();
-		previous_batch = this;
-		flush_queued_effects(render_effects);
-		flush_queued_effects(effects);
-		previous_batch = null;
-		this.#deferred?.resolve();
-		var next_batch = current_batch;
-		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
-			this.#unlink();
-			if (async_mode_flag) {
-				this.#commit();
-				current_batch = next_batch;
-			}
-		}
-		if (this.#roots.length > 0) if (next_batch !== null) {
-			const batch = next_batch;
-			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
-		} else next_batch = this;
-		if (next_batch !== null) next_batch.#process();
-	}
-	/**
-	* Traverse the effect tree, executing effects or stashing
-	* them for later execution as appropriate
-	* @param {Effect} root
-	* @param {Effect[]} effects
-	* @param {Effect[]} render_effects
-	*/
-	#traverse(root, effects, render_effects) {
-		root.f ^= CLEAN;
-		var effect = root.first;
-		while (effect !== null) {
-			var flags = effect.f;
-			var is_branch = (flags & 96) !== 0;
-			if (!(is_branch && (flags & 1024) !== 0 || (flags & 8192) !== 0 || this.#skipped_branches.has(effect)) && effect.fn !== null) {
-				if (is_branch) effect.f ^= CLEAN;
-				else if ((flags & 4) !== 0) effects.push(effect);
-				else if (async_mode_flag && (flags & 16777224) !== 0) render_effects.push(effect);
-				else if (is_dirty(effect)) {
-					if ((flags & 16) !== 0) this.#maybe_dirty_effects.add(effect);
-					update_effect(effect);
-				}
-				var child = effect.first;
-				if (child !== null) {
-					effect = child;
-					continue;
-				}
-			}
-			while (effect !== null) {
-				var next = effect.next;
-				if (next !== null) {
-					effect = next;
-					break;
-				}
-				effect = effect.parent;
-			}
-		}
-	}
-	#find_earlier_batch() {
-		var batch = this.#prev;
-		while (batch !== null) {
-			if (!batch.is_fork) {
-				for (const [value, [, is_derived]] of this.current) if (batch.current.has(value) && !is_derived) return batch;
-			}
-			batch = batch.#prev;
-		}
-		return null;
-	}
-	/**
-	* @param {Batch} batch
-	*/
-	#merge(batch) {
-		for (const [source, value] of batch.current) {
-			if (!this.previous.has(source) && batch.previous.has(source)) this.previous.set(source, batch.previous.get(source));
-			this.current.set(source, value);
-		}
-		for (const [effect, deferred] of batch.async_deriveds) {
-			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve).catch(d.reject);
-		}
-		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
-		/**
-		* mark all effects that depend on `batch.current`, except the
-		* async effects that we just resolved (TODO unless they depend
-		* on values in this batch that are NOT in the later batch?).
-		* Through this we also will populate the correct #skipped_branches,
-		* oncommit callbacks etc, so we don't need to merge them separately.
-		* @param {Value} value
-		*/
-		const mark = (value) => {
-			var reactions = value.reactions;
-			if (reactions === null) return;
-			for (const reaction of reactions) {
-				var flags = reaction.f;
-				if ((flags & 2) !== 0) mark(reaction);
-				else {
-					var effect = reaction;
-					if (flags & 4194320 && !this.async_deriveds.has(effect)) {
-						this.#maybe_dirty_effects.delete(effect);
-						set_signal_status(effect, DIRTY);
-						this.schedule(effect);
-					}
-				}
-			}
-		};
-		for (const source of this.current.keys()) mark(source);
-		this.oncommit(() => batch.discard());
-		batch.#unlink();
-		current_batch = this;
-		this.#process();
-	}
-	/**
-	* @param {Effect[]} effects
-	*/
-	#defer_effects(effects) {
-		for (var i = 0; i < effects.length; i += 1) defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
-	}
-	/**
-	* Associate a change to a given source with the current
-	* batch, noting its previous and current values
-	* @param {Value} source
-	* @param {any} value
-	* @param {boolean} [is_derived]
-	*/
-	capture(source, value, is_derived = false) {
-		if (source.v !== UNINITIALIZED && !this.previous.has(source)) this.previous.set(source, source.v);
-		if ((source.f & 8388608) === 0) {
-			this.current.set(source, [value, is_derived]);
-			batch_values?.set(source, value);
-		}
-		if (!this.is_fork) source.v = value;
-	}
-	activate() {
-		current_batch = this;
-	}
-	deactivate() {
-		current_batch = null;
-		batch_values = null;
-	}
-	flush() {
-		try {
-			is_processing = true;
-			current_batch = this;
-			this.#process();
-		} finally {
-			flush_count = 0;
-			last_scheduled_effect = null;
-			collected_effects = null;
-			legacy_updates = null;
-			is_processing = false;
-			current_batch = null;
-			batch_values = null;
-			old_values.clear();
-		}
-	}
-	discard() {
-		for (const fn of this.#discard_callbacks) fn(this);
-		this.#discard_callbacks.clear();
-		this.#fork_commit_callbacks.clear();
-		this.#unlink();
-		this.#deferred?.resolve();
-	}
-	/**
-	* @param {Effect} effect
-	*/
-	register_created_effect(effect) {
-		this.#new_effects.push(effect);
-	}
-	#commit() {
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
-			var is_earlier = batch.id < this.id;
-			/** @type {Source[]} */
-			var sources = [];
-			for (const [source, [value, is_derived]] of this.current) {
-				if (batch.current.has(source)) {
-					var batch_value = batch.current.get(source)[0];
-					if (is_earlier && value !== batch_value) batch.current.set(source, [value, is_derived]);
-					else continue;
-				}
-				sources.push(source);
-			}
-			if (is_earlier) for (const [effect, deferred] of this.async_deriveds) {
-				const d = batch.async_deriveds.get(effect);
-				if (d) deferred.promise.then(d.resolve).catch(d.reject);
-			}
-			if (!batch.#started) continue;
-			var others = [...batch.current.keys()].filter((s) => !batch.current.get(s)[1] && !this.current.has(s));
-			if (others.length === 0) {
-				if (is_earlier) batch.discard();
-			} else if (sources.length > 0) {
-				if (is_earlier) for (const unskipped of this.#unskipped_branches) batch.unskip_effect(unskipped, (e) => {
-					if ((e.f & 4194320) !== 0) batch.schedule(e);
-					else batch.#defer_effects([e]);
-				});
-				batch.activate();
-				/** @type {Set<Value>} */
-				var marked = /* @__PURE__ */ new Set();
-				/** @type {Map<Reaction, boolean>} */
-				var checked = /* @__PURE__ */ new Map();
-				for (var source of sources) mark_effects(source, others, marked, checked);
-				checked = /* @__PURE__ */ new Map();
-				var current_unequal = [...batch.current].filter(([c, v1]) => {
-					const v2 = this.current.get(c);
-					if (!v2) return true;
-					return v2[0] !== v1[0] || v2[1] !== v1[1];
-				}).map(([c]) => c);
-				if (current_unequal.length > 0) {
-					for (const effect of this.#new_effects) if ((effect.f & 155648) === 0 && depends_on(effect, current_unequal, checked)) if ((effect.f & 4194320) !== 0) {
-						set_signal_status(effect, DIRTY);
-						batch.schedule(effect);
-					} else batch.#dirty_effects.add(effect);
-				}
-				if (batch.#roots.length > 0 && !batch.#decrement_queued) {
-					batch.apply();
-					for (var root of batch.#roots) batch.#traverse(root, [], []);
-					batch.#roots = [];
-				}
-				batch.deactivate();
-			}
-		}
-	}
-	/**
-	* @param {boolean} blocking
-	* @param {Effect} effect
-	*/
-	increment(blocking, effect) {
-		this.#pending += 1;
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			this.#blocking_pending.set(effect, blocking_pending_count + 1);
-		}
-	}
-	/**
-	* @param {boolean} blocking
-	* @param {Effect} effect
-	*/
-	decrement(blocking, effect) {
-		this.#pending -= 1;
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			if (blocking_pending_count === 1) this.#blocking_pending.delete(effect);
-			else this.#blocking_pending.set(effect, blocking_pending_count - 1);
-		}
-		if (this.#decrement_queued) return;
-		this.#decrement_queued = true;
-		queue_micro_task(() => {
-			this.#decrement_queued = false;
-			if (this.linked) this.flush();
-		});
-	}
-	/**
-	* @param {Set<Effect>} dirty_effects
-	* @param {Set<Effect>} maybe_dirty_effects
-	*/
-	transfer_effects(dirty_effects, maybe_dirty_effects) {
-		for (const e of dirty_effects) this.#dirty_effects.add(e);
-		for (const e of maybe_dirty_effects) this.#maybe_dirty_effects.add(e);
-		dirty_effects.clear();
-		maybe_dirty_effects.clear();
-	}
-	/** @param {(batch: Batch) => void} fn */
-	oncommit(fn) {
-		this.#commit_callbacks.add(fn);
-	}
-	/** @param {(batch: Batch) => void} fn */
-	ondiscard(fn) {
-		this.#discard_callbacks.add(fn);
-	}
-	/** @param {(batch: Batch) => void} fn */
-	on_fork_commit(fn) {
-		this.#fork_commit_callbacks.add(fn);
-	}
-	run_fork_commit_callbacks() {
-		for (const fn of this.#fork_commit_callbacks) fn(this);
-		this.#fork_commit_callbacks.clear();
-	}
-	settled() {
-		return (this.#deferred ??= deferred()).promise;
-	}
-	static ensure() {
-		if (current_batch === null) {
-			const batch = current_batch = new Batch();
-			if (!is_processing && !is_flushing_sync) queue_micro_task(() => {
-				if (!batch.#started) batch.flush();
-			});
-		}
-		return current_batch;
-	}
-	apply() {
-		if (!async_mode_flag || !this.is_fork && this.#prev === null && this.#next === null) {
-			batch_values = null;
-			return;
-		}
-		batch_values = /* @__PURE__ */ new Map();
-		for (const [source, [value]] of this.current) batch_values.set(source, value);
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
-			if (batch === this || batch.is_fork) continue;
-			var intersects = false;
-			if (batch.id < this.id) for (const [source, [, is_derived]] of batch.current) {
-				if (is_derived) continue;
-				if (this.current.has(source)) {
-					intersects = true;
-					break;
-				}
-			}
-			if (!intersects) {
-				for (const [source, previous] of batch.previous) if (!batch_values.has(source)) batch_values.set(source, previous);
-			}
-		}
-	}
-	/**
-	*
-	* @param {Effect} effect
-	*/
-	schedule(effect) {
-		last_scheduled_effect = effect;
-		if (effect.b?.is_pending && (effect.f & 16777228) !== 0 && (effect.f & 32768) === 0) {
-			effect.b.defer_effect(effect);
-			return;
-		}
-		var e = effect;
-		while (e.parent !== null) {
-			e = e.parent;
-			var flags = e.f;
-			if (collected_effects !== null && e === active_effect) {
-				if (async_mode_flag) return;
-				if ((active_reaction === null || (active_reaction.f & 2) === 0) && !legacy_is_updating_store) return;
-			}
-			if ((flags & 96) !== 0) {
-				if ((flags & 1024) === 0) return;
-				e.f ^= CLEAN;
-			}
-		}
-		this.#roots.push(e);
-	}
-	#unlink() {
-		if (!this.linked) return;
-		var prev = this.#prev;
-		var next = this.#next;
-		if (prev === null) first_batch = next;
-		else prev.#next = next;
-		if (next === null) last_batch = prev;
-		else next.#prev = prev;
-		this.linked = false;
-	}
-};
-/**
-* Synchronously flush any pending updates.
-* Returns void if no callback is provided, otherwise returns the result of calling the callback.
-* @template [T=void]
-* @param {(() => T) | undefined} [fn]
-* @returns {T}
-*/
-function flushSync(fn) {
-	var was_flushing_sync = is_flushing_sync;
-	is_flushing_sync = true;
+function without_reactive_context(fn) {
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+	set_active_reaction(null);
+	set_active_effect(null);
 	try {
-		var result;
-		if (fn) {
-			if (current_batch !== null && !current_batch.is_fork) current_batch.flush();
-			result = fn();
-		}
-		while (true) {
-			flush_tasks();
-			if (current_batch === null) return result;
-			current_batch.flush();
-		}
+		return fn();
 	} finally {
-		is_flushing_sync = was_flushing_sync;
-	}
-}
-function infinite_loop_guard() {
-	try {
-		effect_update_depth_exceeded();
-	} catch (error) {
-		invoke_error_boundary(error, last_scheduled_effect);
-	}
-}
-/** @type {Set<Effect> | null} */
-var eager_block_effects = null;
-/**
-* @param {Array<Effect>} effects
-* @returns {void}
-*/
-function flush_queued_effects(effects) {
-	var length = effects.length;
-	if (length === 0) return;
-	var i = 0;
-	while (i < length) {
-		var effect = effects[i++];
-		if ((effect.f & 24576) === 0 && is_dirty(effect)) {
-			eager_block_effects = /* @__PURE__ */ new Set();
-			update_effect(effect);
-			if (effect.deps === null && effect.first === null && effect.nodes === null && effect.teardown === null && effect.ac === null) unlink_effect(effect);
-			if (eager_block_effects?.size > 0) {
-				old_values.clear();
-				for (const e of eager_block_effects) {
-					if ((e.f & 24576) !== 0) continue;
-					/** @type {Effect[]} */
-					const ordered_effects = [e];
-					let ancestor = e.parent;
-					while (ancestor !== null) {
-						if (eager_block_effects.has(ancestor)) {
-							eager_block_effects.delete(ancestor);
-							ordered_effects.push(ancestor);
-						}
-						ancestor = ancestor.parent;
-					}
-					for (let j = ordered_effects.length - 1; j >= 0; j--) {
-						const e = ordered_effects[j];
-						if ((e.f & 24576) !== 0) continue;
-						update_effect(e);
-					}
-				}
-				eager_block_effects.clear();
-			}
-		}
-	}
-	eager_block_effects = null;
-}
-/**
-* This is similar to `mark_reactions`, but it only marks async/block effects
-* depending on `value` and at least one of the other `sources`, so that
-* these effects can re-run after another batch has been committed
-* @param {Value} value
-* @param {Source[]} sources
-* @param {Set<Value>} marked
-* @param {Map<Reaction, boolean>} checked
-*/
-function mark_effects(value, sources, marked, checked) {
-	if (marked.has(value)) return;
-	marked.add(value);
-	if (value.reactions !== null) for (const reaction of value.reactions) {
-		const flags = reaction.f;
-		if ((flags & 2) !== 0) mark_effects(reaction, sources, marked, checked);
-		else if ((flags & 4194320) !== 0 && (flags & 2048) === 0 && depends_on(reaction, sources, checked)) {
-			set_signal_status(reaction, DIRTY);
-			schedule_effect(reaction);
-		}
-	}
-}
-/**
-* @param {Reaction} reaction
-* @param {Source[]} sources
-* @param {Map<Reaction, boolean>} checked
-*/
-function depends_on(reaction, sources, checked) {
-	const depends = checked.get(reaction);
-	if (depends !== void 0) return depends;
-	if (reaction.deps !== null) for (const dep of reaction.deps) {
-		if (includes.call(sources, dep)) return true;
-		if ((dep.f & 2) !== 0 && depends_on(dep, sources, checked)) {
-			checked.set(dep, true);
-			return true;
-		}
-	}
-	checked.set(reaction, false);
-	return false;
-}
-/**
-* @param {Effect} effect
-* @returns {void}
-*/
-function schedule_effect(effect) {
-	/** @type {Batch} */ current_batch.schedule(effect);
-}
-/**
-* Mark all the effects inside a skipped branch CLEAN, so that
-* they can be correctly rescheduled later. Tracks dirty and maybe_dirty
-* effects so they can be rescheduled if the branch survives.
-* @param {Effect} effect
-* @param {{ d: Effect[], m: Effect[] }} tracked
-*/
-function reset_branch(effect, tracked) {
-	if ((effect.f & 32) !== 0 && (effect.f & 1024) !== 0) return;
-	if ((effect.f & 2048) !== 0) tracked.d.push(effect);
-	else if ((effect.f & 4096) !== 0) tracked.m.push(effect);
-	set_signal_status(effect, CLEAN);
-	var e = effect.first;
-	while (e !== null) {
-		reset_branch(e, tracked);
-		e = e.next;
-	}
-}
-/**
-* Mark an entire effect tree clean following an error
-* @param {Effect} effect
-*/
-function reset_all(effect) {
-	set_signal_status(effect, CLEAN);
-	var e = effect.first;
-	while (e !== null) {
-		reset_all(e);
-		e = e.next;
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
 }
 //#endregion
-//#region ../../node_modules/svelte/src/reactivity/create-subscriber.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/reactivity/create-subscriber.js
 /**
 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
@@ -1877,7 +1009,7 @@ function createSubscriber$1(start) {
 	let stop;
 	return () => {
 		if (effect_tracking()) {
-			get$2(version);
+			get$3(version);
 			render_effect(() => {
 				if (subscribers === 0) stop = untrack(() => start(() => increment(version)));
 				subscribers += 1;
@@ -1896,7 +1028,7 @@ function createSubscriber$1(start) {
 	};
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/blocks/boundary.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/blocks/boundary.js
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 /**
 * @typedef {{
@@ -2142,7 +1274,7 @@ var Boundary = class {
 	}
 	get_effect_pending() {
 		this.#effect_pending_subscriber();
-		return get$2(this.#effect_pending);
+		return get$3(this.#effect_pending);
 	}
 	/** @param {unknown} error */
 	error(error) {
@@ -2151,7 +1283,7 @@ var Boundary = class {
 			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
-			current_batch.on_fork_commit(() => {
+			current_batch.oncommit(() => {
 				this.#handle_error(error);
 			});
 		} else this.#handle_error(error);
@@ -2237,6 +1369,7 @@ var Boundary = class {
 		});
 	}
 };
+var OBSOLETE = Symbol("obsolete");
 /**
 * @param {Derived} derived
 * @returns {void}
@@ -2302,9 +1435,11 @@ function freeze_derived_effects(derived) {
 	if (derived.effects === null) return;
 	for (const e of derived.effects) if (e.teardown || e.ac) {
 		e.teardown?.();
-		e.ac?.abort(STALE_REACTION);
+		if (e.ac !== null) without_reactive_context(() => {
+			/** @type {AbortController} */ e.ac.abort(STALE_REACTION);
+			e.ac = null;
+		});
 		if (e.fn !== null) e.teardown = noop$1;
-		e.ac = null;
 		remove_reactions(e, 0);
 		destroy_effect_children(e);
 	}
@@ -2317,7 +1452,740 @@ function unfreeze_derived_effects(derived) {
 	for (const e of derived.effects) if (e.teardown && e.fn !== null) update_effect(e);
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/sources.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/batch.js
+/** @import { Fork } from 'svelte' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @type {Batch | null} */
+var first_batch = null;
+/** @type {Batch | null} */
+var last_batch = null;
+/** @type {Batch | null} */
+var current_batch = null;
+/**
+* This is needed to avoid overwriting inputs
+* @type {Batch | null}
+*/
+var previous_batch = null;
+/**
+* When time travelling (i.e. working in one batch, while other batches
+* still have ongoing work), we ignore the real values of affected
+* signals in favour of their values within the batch
+* @type {Map<Value, any> | null}
+*/
+var batch_values = null;
+/** @type {Effect | null} */
+var last_scheduled_effect = null;
+var is_flushing_sync = false;
+var is_processing = false;
+/**
+* During traversal, this is an array. Newly created effects are (if not immediately
+* executed) pushed to this array, rather than going through the scheduling
+* rigamarole that would cause another turn of the flush loop.
+* @type {Effect[] | null}
+*/
+var collected_effects = null;
+/**
+* An array of effects that are marked during traversal as a result of a `set`
+* (not `internal_set`) call. These will be added to the next batch and
+* trigger another `batch.process()`
+* @type {Effect[] | null}
+* @deprecated when we get rid of legacy mode and stores, we can get rid of this
+*/
+var legacy_updates = null;
+var flush_count = 0;
+var uid = 1;
+var Batch = class Batch {
+	id = uid++;
+	/** True as soon as `#process` was called */
+	#started = false;
+	linked = true;
+	/** @type {Batch | null} */
+	#prev = null;
+	/** @type {Batch | null} */
+	#next = null;
+	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
+	async_deriveds = /* @__PURE__ */ new Map();
+	/**
+	* The current values of any signals that are updated in this batch.
+	* Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
+	* They keys of this map are identical to `this.#previous`
+	* @type {Map<Value, [any, boolean]>}
+	*/
+	current = /* @__PURE__ */ new Map();
+	/**
+	* The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
+	* They keys of this map are identical to `this.#current`
+	* @type {Map<Value, any>}
+	*/
+	previous = /* @__PURE__ */ new Map();
+	/**
+	* When the batch is committed (and the DOM is updated), we need to remove old branches
+	* and append new ones by calling the functions added inside (if/each/key/etc) blocks
+	* @type {Set<(batch: Batch) => void>}
+	*/
+	#commit_callbacks = /* @__PURE__ */ new Set();
+	/**
+	* If a fork is discarded, we need to destroy any effects that are no longer needed
+	* @type {Set<(batch: Batch) => void>}
+	*/
+	#discard_callbacks = /* @__PURE__ */ new Set();
+	/**
+	* The number of async effects that are currently in flight
+	*/
+	#pending = 0;
+	/**
+	* Async effects that are currently in flight, _not_ inside a pending boundary
+	* @type {Map<Effect, number>}
+	*/
+	#blocking_pending = /* @__PURE__ */ new Map();
+	/**
+	* A deferred that resolves when the batch is committed, used with `settled()`
+	* TODO replace with Promise.withResolvers once supported widely enough
+	* @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
+	*/
+	#deferred = null;
+	/**
+	* The root effects that need to be flushed
+	* @type {Effect[]}
+	*/
+	#roots = [];
+	/**
+	* Effects created while this batch was active.
+	* @type {Effect[]}
+	*/
+	#new_effects = [];
+	/**
+	* Deferred effects (which run after async work has completed) that are DIRTY
+	* @type {Set<Effect>}
+	*/
+	#dirty_effects = /* @__PURE__ */ new Set();
+	/**
+	* Deferred effects that are MAYBE_DIRTY
+	* @type {Set<Effect>}
+	*/
+	#maybe_dirty_effects = /* @__PURE__ */ new Set();
+	/**
+	* A map of branches that still exist, but will be destroyed when this batch
+	* is committed — we skip over these during `process`.
+	* The value contains child effects that were dirty/maybe_dirty before being reset,
+	* so they can be rescheduled if the branch survives.
+	* @type {Map<Effect, { d: Effect[], m: Effect[] }>}
+	*/
+	#skipped_branches = /* @__PURE__ */ new Map();
+	/**
+	* Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
+	* @type {Set<Effect>}
+	*/
+	#unskipped_branches = /* @__PURE__ */ new Set();
+	is_fork = false;
+	#decrement_queued = false;
+	constructor() {
+		if (last_batch === null) first_batch = last_batch = this;
+		else {
+			last_batch.#next = this;
+			this.#prev = last_batch;
+		}
+		last_batch = this;
+	}
+	#is_deferred() {
+		if (this.is_fork) return true;
+		for (const effect of this.#blocking_pending.keys()) {
+			var e = effect;
+			var skipped = false;
+			while (e.parent !== null) {
+				if (this.#skipped_branches.has(e)) {
+					skipped = true;
+					break;
+				}
+				e = e.parent;
+			}
+			if (!skipped) return true;
+		}
+		return false;
+	}
+	/**
+	* Add an effect to the #skipped_branches map and reset its children
+	* @param {Effect} effect
+	*/
+	skip_effect(effect) {
+		if (!this.#skipped_branches.has(effect)) this.#skipped_branches.set(effect, {
+			d: [],
+			m: []
+		});
+		this.#unskipped_branches.delete(effect);
+	}
+	/**
+	* Remove an effect from the #skipped_branches map and reschedule
+	* any tracked dirty/maybe_dirty child effects
+	* @param {Effect} effect
+	* @param {(e: Effect) => void} callback
+	*/
+	unskip_effect(effect, callback = (e) => this.schedule(e)) {
+		var tracked = this.#skipped_branches.get(effect);
+		if (tracked) {
+			this.#skipped_branches.delete(effect);
+			for (var e of tracked.d) {
+				set_signal_status(e, DIRTY);
+				callback(e);
+			}
+			for (e of tracked.m) {
+				set_signal_status(e, MAYBE_DIRTY);
+				callback(e);
+			}
+		}
+		this.#unskipped_branches.add(effect);
+	}
+	#process() {
+		this.#started = true;
+		if (flush_count++ > 1e3) {
+			this.#unlink();
+			infinite_loop_guard();
+		}
+		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
+			set_signal_status(e, DIRTY);
+			this.schedule(e);
+		}
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			this.schedule(e);
+		}
+		const roots = this.#roots;
+		this.#roots = [];
+		this.apply();
+		/** @type {Effect[]} */
+		var effects = collected_effects = [];
+		/** @type {Effect[]} */
+		var render_effects = [];
+		/**
+		* @type {Effect[]}
+		* @deprecated when we get rid of legacy mode and stores, we can get rid of this
+		*/
+		var updates = legacy_updates = [];
+		for (const root of roots) try {
+			this.#traverse(root, effects, render_effects);
+		} catch (e) {
+			reset_all(root);
+			if (!this.#is_deferred()) this.discard();
+			throw e;
+		}
+		current_batch = null;
+		if (updates.length > 0) {
+			var batch = Batch.ensure();
+			for (const e of updates) batch.schedule(e);
+		}
+		collected_effects = null;
+		legacy_updates = null;
+		if (this.#is_deferred()) {
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
+			for (const [e, t] of this.#skipped_branches) reset_branch(e, t);
+			if (updates.length > 0)
+ /** @type {Batch} */ current_batch.#process();
+			return;
+		}
+		const earlier_batch = this.#find_earlier_batch();
+		if (earlier_batch) {
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
+			earlier_batch.#merge(this);
+			return;
+		}
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
+		for (const fn of this.#commit_callbacks) fn(this);
+		this.#commit_callbacks.clear();
+		previous_batch = this;
+		flush_queued_effects(render_effects);
+		flush_queued_effects(effects);
+		previous_batch = null;
+		this.#deferred?.resolve();
+		var next_batch = current_batch;
+		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
+			this.#unlink();
+			if (async_mode_flag) {
+				this.#commit();
+				current_batch = next_batch;
+			}
+		}
+		if (this.#roots.length > 0) if (next_batch !== null) {
+			const batch = next_batch;
+			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+		} else next_batch = this;
+		if (next_batch !== null) next_batch.#process();
+	}
+	/**
+	* Traverse the effect tree, executing effects or stashing
+	* them for later execution as appropriate
+	* @param {Effect} root
+	* @param {Effect[]} effects
+	* @param {Effect[]} render_effects
+	*/
+	#traverse(root, effects, render_effects) {
+		root.f ^= CLEAN;
+		var effect = root.first;
+		while (effect !== null) {
+			var flags = effect.f;
+			var is_branch = (flags & 96) !== 0;
+			if (!(is_branch && (flags & 1024) !== 0 || (flags & 8192) !== 0 || this.#skipped_branches.has(effect)) && effect.fn !== null) {
+				if (is_branch) effect.f ^= CLEAN;
+				else if ((flags & 4) !== 0) effects.push(effect);
+				else if (async_mode_flag && (flags & 16777224) !== 0) render_effects.push(effect);
+				else if (is_dirty(effect)) {
+					if ((flags & 16) !== 0) this.#maybe_dirty_effects.add(effect);
+					update_effect(effect);
+				}
+				var child = effect.first;
+				if (child !== null) {
+					effect = child;
+					continue;
+				}
+			}
+			while (effect !== null) {
+				var next = effect.next;
+				if (next !== null) {
+					effect = next;
+					break;
+				}
+				effect = effect.parent;
+			}
+		}
+	}
+	#find_earlier_batch() {
+		var batch = this.#prev;
+		while (batch !== null) {
+			if (!batch.is_fork) {
+				for (const [value, [, is_derived]] of this.current) if (batch.current.has(value) && !is_derived) return batch;
+			}
+			batch = batch.#prev;
+		}
+		return null;
+	}
+	/**
+	* @param {Batch} batch
+	*/
+	#merge(batch) {
+		for (const [source, value] of batch.current) {
+			if (!this.previous.has(source) && batch.previous.has(source)) this.previous.set(source, batch.previous.get(source));
+			this.current.set(source, value);
+		}
+		for (const [effect, deferred] of batch.async_deriveds) {
+			const d = this.async_deriveds.get(effect);
+			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+		}
+		batch.async_deriveds.clear();
+		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
+		/**
+		* mark all effects that depend on `batch.current`, except the
+		* async effects that we just resolved (TODO unless they depend
+		* on values in this batch that are NOT in the later batch?).
+		* Through this we also will populate the correct #skipped_branches,
+		* oncommit callbacks etc, so we don't need to merge them separately.
+		* @param {Value} value
+		*/
+		const mark = (value) => {
+			var reactions = value.reactions;
+			if (reactions === null) return;
+			if ((value.f & 2) !== 0 && (value.f & 6144) === 0) return;
+			for (const reaction of reactions) {
+				var flags = reaction.f;
+				if ((flags & 2) !== 0) mark(reaction);
+				else {
+					var effect = reaction;
+					if (flags & 4194320 && !this.async_deriveds.has(effect)) {
+						this.#maybe_dirty_effects.delete(effect);
+						set_signal_status(effect, DIRTY);
+						this.schedule(effect);
+					}
+				}
+			}
+		};
+		for (const source of this.current.keys()) mark(source);
+		this.oncommit(() => batch.discard());
+		batch.#unlink();
+		current_batch = this;
+		this.#process();
+	}
+	/**
+	* @param {Effect[]} effects
+	*/
+	#defer_effects(effects) {
+		for (var i = 0; i < effects.length; i += 1) defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
+	}
+	/**
+	* Associate a change to a given source with the current
+	* batch, noting its previous and current values
+	* @param {Value} source
+	* @param {any} value
+	* @param {boolean} [is_derived]
+	*/
+	capture(source, value, is_derived = false) {
+		if (source.v !== UNINITIALIZED && !this.previous.has(source)) this.previous.set(source, source.v);
+		if ((source.f & 8388608) === 0) {
+			this.current.set(source, [value, is_derived]);
+			batch_values?.set(source, value);
+		}
+		if (!this.is_fork) source.v = value;
+	}
+	activate() {
+		current_batch = this;
+	}
+	deactivate() {
+		current_batch = null;
+		batch_values = null;
+	}
+	flush() {
+		try {
+			is_processing = true;
+			current_batch = this;
+			this.#process();
+		} finally {
+			flush_count = 0;
+			last_scheduled_effect = null;
+			collected_effects = null;
+			legacy_updates = null;
+			is_processing = false;
+			current_batch = null;
+			batch_values = null;
+			old_values.clear();
+		}
+	}
+	discard() {
+		for (const fn of this.#discard_callbacks) fn(this);
+		this.#discard_callbacks.clear();
+		for (const deferred of this.async_deriveds.values()) deferred.reject(OBSOLETE);
+		this.#unlink();
+		this.#deferred?.resolve();
+	}
+	/**
+	* @param {Effect} effect
+	*/
+	register_created_effect(effect) {
+		this.#new_effects.push(effect);
+	}
+	#commit() {
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+			var is_earlier = batch.id < this.id;
+			/** @type {Source[]} */
+			var sources = [];
+			for (const [source, [value, is_derived]] of this.current) {
+				if (batch.current.has(source)) {
+					var batch_value = batch.current.get(source)[0];
+					if (is_earlier && value !== batch_value) batch.current.set(source, [value, is_derived]);
+					else continue;
+				}
+				sources.push(source);
+			}
+			if (is_earlier) for (const [effect, deferred] of this.async_deriveds) {
+				const d = batch.async_deriveds.get(effect);
+				if (d) deferred.promise.then(d.resolve).catch(d.reject);
+			}
+			var current = [...batch.current.keys()].filter((source) => !batch.current.get(source)[1]);
+			if (!batch.#started || current.length === 0) continue;
+			var others = current.filter((source) => !this.current.has(source));
+			if (others.length === 0) {
+				if (is_earlier) batch.discard();
+			} else if (sources.length > 0) {
+				if (is_earlier) for (const unskipped of this.#unskipped_branches) batch.unskip_effect(unskipped, (e) => {
+					if ((e.f & 4194320) !== 0) batch.schedule(e);
+					else batch.#defer_effects([e]);
+				});
+				batch.activate();
+				/** @type {Set<Value>} */
+				var marked = /* @__PURE__ */ new Set();
+				/** @type {Map<Reaction, boolean>} */
+				var checked = /* @__PURE__ */ new Map();
+				for (var source of sources) mark_effects(source, others, marked, checked);
+				checked = /* @__PURE__ */ new Map();
+				var current_unequal = [...batch.current].filter(([c, v1]) => {
+					const v2 = this.current.get(c);
+					if (!v2) return true;
+					return v2[0] !== v1[0] || v2[1] !== v1[1];
+				}).map(([c]) => c);
+				if (current_unequal.length > 0) {
+					for (const effect of this.#new_effects) if ((effect.f & 155648) === 0 && depends_on(effect, current_unequal, checked)) if ((effect.f & 4194320) !== 0) {
+						set_signal_status(effect, DIRTY);
+						batch.schedule(effect);
+					} else batch.#dirty_effects.add(effect);
+				}
+				if (batch.#roots.length > 0 && !batch.#decrement_queued) {
+					batch.apply();
+					for (var root of batch.#roots) batch.#traverse(root, [], []);
+					batch.#roots = [];
+				}
+				batch.deactivate();
+			}
+		}
+	}
+	/**
+	* @param {boolean} blocking
+	* @param {Effect} effect
+	*/
+	increment(blocking, effect) {
+		this.#pending += 1;
+		if (blocking) {
+			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+			this.#blocking_pending.set(effect, blocking_pending_count + 1);
+		}
+	}
+	/**
+	* @param {boolean} blocking
+	* @param {Effect} effect
+	*/
+	decrement(blocking, effect) {
+		this.#pending -= 1;
+		if (blocking) {
+			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+			if (blocking_pending_count === 1) this.#blocking_pending.delete(effect);
+			else this.#blocking_pending.set(effect, blocking_pending_count - 1);
+		}
+		if (this.#decrement_queued) return;
+		this.#decrement_queued = true;
+		queue_micro_task(() => {
+			this.#decrement_queued = false;
+			if (this.linked) this.flush();
+		});
+	}
+	/**
+	* @param {Set<Effect>} dirty_effects
+	* @param {Set<Effect>} maybe_dirty_effects
+	*/
+	transfer_effects(dirty_effects, maybe_dirty_effects) {
+		for (const e of dirty_effects) this.#dirty_effects.add(e);
+		for (const e of maybe_dirty_effects) this.#maybe_dirty_effects.add(e);
+		dirty_effects.clear();
+		maybe_dirty_effects.clear();
+	}
+	/** @param {(batch: Batch) => void} fn */
+	oncommit(fn) {
+		this.#commit_callbacks.add(fn);
+	}
+	/** @param {(batch: Batch) => void} fn */
+	ondiscard(fn) {
+		this.#discard_callbacks.add(fn);
+	}
+	settled() {
+		return (this.#deferred ??= deferred()).promise;
+	}
+	static ensure() {
+		if (current_batch === null) {
+			const batch = current_batch = new Batch();
+			if (!is_processing && !is_flushing_sync) queue_micro_task(() => {
+				if (!batch.#started) batch.flush();
+			});
+		}
+		return current_batch;
+	}
+	apply() {
+		if (!async_mode_flag || !this.is_fork && this.#prev === null && this.#next === null) {
+			batch_values = null;
+			return;
+		}
+		batch_values = /* @__PURE__ */ new Map();
+		for (const [source, [value]] of this.current) batch_values.set(source, value);
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+			if (batch === this || batch.is_fork) continue;
+			var intersects = false;
+			if (batch.id < this.id) for (const [source, [, is_derived]] of batch.current) {
+				if (is_derived) continue;
+				if (this.current.has(source)) {
+					intersects = true;
+					break;
+				}
+			}
+			if (!intersects) {
+				for (const [source, previous] of batch.previous) if (!batch_values.has(source)) batch_values.set(source, previous);
+			}
+		}
+	}
+	/**
+	*
+	* @param {Effect} effect
+	*/
+	schedule(effect) {
+		last_scheduled_effect = effect;
+		if (effect.b?.is_pending && (effect.f & 16777228) !== 0 && (effect.f & 32768) === 0) {
+			effect.b.defer_effect(effect);
+			return;
+		}
+		var e = effect;
+		while (e.parent !== null) {
+			e = e.parent;
+			var flags = e.f;
+			if (collected_effects !== null && e === active_effect) {
+				if (async_mode_flag) return;
+				if ((active_reaction === null || (active_reaction.f & 2) === 0) && !legacy_is_updating_store) return;
+			}
+			if ((flags & 96) !== 0) {
+				if ((flags & 1024) === 0) return;
+				e.f ^= CLEAN;
+			}
+		}
+		this.#roots.push(e);
+	}
+	#unlink() {
+		if (!this.linked) return;
+		var prev = this.#prev;
+		var next = this.#next;
+		if (prev === null) first_batch = next;
+		else prev.#next = next;
+		if (next === null) last_batch = prev;
+		else next.#prev = prev;
+		this.linked = false;
+	}
+};
+/**
+* Synchronously flush any pending updates.
+* Returns void if no callback is provided, otherwise returns the result of calling the callback.
+* @template [T=void]
+* @param {(() => T) | undefined} [fn]
+* @returns {T}
+*/
+function flushSync(fn) {
+	var was_flushing_sync = is_flushing_sync;
+	is_flushing_sync = true;
+	try {
+		var result;
+		if (fn) {
+			if (current_batch !== null && !current_batch.is_fork) current_batch.flush();
+			result = fn();
+		}
+		while (true) {
+			flush_tasks();
+			if (current_batch === null) return result;
+			current_batch.flush();
+		}
+	} finally {
+		is_flushing_sync = was_flushing_sync;
+	}
+}
+function infinite_loop_guard() {
+	try {
+		effect_update_depth_exceeded();
+	} catch (error) {
+		invoke_error_boundary(error, last_scheduled_effect);
+	}
+}
+/** @type {Set<Effect> | null} */
+var eager_block_effects = null;
+/**
+* @param {Array<Effect>} effects
+* @returns {void}
+*/
+function flush_queued_effects(effects) {
+	var length = effects.length;
+	if (length === 0) return;
+	var i = 0;
+	while (i < length) {
+		var effect = effects[i++];
+		if ((effect.f & 24576) === 0 && is_dirty(effect)) {
+			eager_block_effects = /* @__PURE__ */ new Set();
+			update_effect(effect);
+			if (effect.deps === null && effect.first === null && effect.nodes === null && effect.teardown === null && effect.ac === null) unlink_effect(effect);
+			if (eager_block_effects?.size > 0) {
+				old_values.clear();
+				for (const e of eager_block_effects) {
+					if ((e.f & 24576) !== 0) continue;
+					/** @type {Effect[]} */
+					const ordered_effects = [e];
+					let ancestor = e.parent;
+					while (ancestor !== null) {
+						if (eager_block_effects.has(ancestor)) {
+							eager_block_effects.delete(ancestor);
+							ordered_effects.push(ancestor);
+						}
+						ancestor = ancestor.parent;
+					}
+					for (let j = ordered_effects.length - 1; j >= 0; j--) {
+						const e = ordered_effects[j];
+						if ((e.f & 24576) !== 0) continue;
+						update_effect(e);
+					}
+				}
+				eager_block_effects.clear();
+			}
+		}
+	}
+	eager_block_effects = null;
+}
+/**
+* This is similar to `mark_reactions`, but it only marks async/block effects
+* depending on `value` and at least one of the other `sources`, so that
+* these effects can re-run after another batch has been committed
+* @param {Value} value
+* @param {Source[]} sources
+* @param {Set<Value>} marked
+* @param {Map<Reaction, boolean>} checked
+*/
+function mark_effects(value, sources, marked, checked) {
+	if (marked.has(value)) return;
+	marked.add(value);
+	if (value.reactions !== null) for (const reaction of value.reactions) {
+		const flags = reaction.f;
+		if ((flags & 2) !== 0) mark_effects(reaction, sources, marked, checked);
+		else if ((flags & 4194320) !== 0 && (flags & 2048) === 0 && depends_on(reaction, sources, checked)) {
+			set_signal_status(reaction, DIRTY);
+			schedule_effect(reaction);
+		}
+	}
+}
+/**
+* @param {Reaction} reaction
+* @param {Source[]} sources
+* @param {Map<Reaction, boolean>} checked
+*/
+function depends_on(reaction, sources, checked) {
+	const depends = checked.get(reaction);
+	if (depends !== void 0) return depends;
+	if (reaction.deps !== null) for (const dep of reaction.deps) {
+		if (includes.call(sources, dep)) return true;
+		if ((dep.f & 2) !== 0 && depends_on(dep, sources, checked)) {
+			checked.set(dep, true);
+			return true;
+		}
+	}
+	checked.set(reaction, false);
+	return false;
+}
+/**
+* @param {Effect} effect
+* @returns {void}
+*/
+function schedule_effect(effect) {
+	/** @type {Batch} */ current_batch.schedule(effect);
+}
+/**
+* Mark all the effects inside a skipped branch CLEAN, so that
+* they can be correctly rescheduled later. Tracks dirty and maybe_dirty
+* effects so they can be rescheduled if the branch survives.
+* @param {Effect} effect
+* @param {{ d: Effect[], m: Effect[] }} tracked
+*/
+function reset_branch(effect, tracked) {
+	if ((effect.f & 32) !== 0 && (effect.f & 1024) !== 0) return;
+	if ((effect.f & 2048) !== 0) tracked.d.push(effect);
+	else if ((effect.f & 4096) !== 0) tracked.m.push(effect);
+	set_signal_status(effect, CLEAN);
+	var e = effect.first;
+	while (e !== null) {
+		reset_branch(e, tracked);
+		e = e.next;
+	}
+}
+/**
+* Mark an entire effect tree clean following an error
+* @param {Effect} effect
+*/
+function reset_all(effect) {
+	set_signal_status(effect, CLEAN);
+	var e = effect.first;
+	while (e !== null) {
+		reset_all(e);
+		e = e.next;
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/sources.js
 /** @import { Derived, Effect, Source, Value } from '#client' */
 /** @type {Set<Effect>} */
 var eager_effects = /* @__PURE__ */ new Set();
@@ -2345,7 +2213,7 @@ function source(v, stack) {
 * @param {V} v
 * @param {Error | null} [stack]
 */
-/* @__NO_SIDE_EFFECTS__ */
+/*#__NO_SIDE_EFFECTS__*/
 function state(v, stack) {
 	const s = source(v, stack);
 	push_reaction_value(s);
@@ -2357,7 +2225,7 @@ function state(v, stack) {
 * @param {boolean} [immutable]
 * @returns {Source<V>}
 */
-/* @__NO_SIDE_EFFECTS__ */
+/*#__NO_SIDE_EFFECTS__*/
 function mutable_source(initial_value, immutable = false, trackable = true) {
 	const s = source(initial_value);
 	if (!immutable) s.equals = safe_equals;
@@ -2372,7 +2240,7 @@ function mutable_source(initial_value, immutable = false, trackable = true) {
 * @returns {V}
 */
 function set(source, value, should_proxy = false) {
-	if (active_reaction !== null && (!untracking || (active_reaction.f & 131072) !== 0) && is_runes() && (active_reaction.f & 4325394) !== 0 && (current_sources === null || !includes.call(current_sources, source))) state_unsafe_mutation();
+	if (active_reaction !== null && (!untracking || (active_reaction.f & 131072) !== 0) && is_runes() && (active_reaction.f & 4325394) !== 0 && (current_sources === null || !current_sources.has(source))) state_unsafe_mutation();
 	return internal_set(source, should_proxy ? proxy(value) : value, legacy_updates);
 }
 /**
@@ -2527,7 +2395,7 @@ function proxy(value) {
 				sources.set(prop, s);
 			}
 			if (s !== void 0) {
-				var v = get$2(s);
+				var v = get$3(s);
 				return v === UNINITIALIZED ? void 0 : v;
 			}
 			return Reflect.get(target, prop, receiver);
@@ -2536,7 +2404,7 @@ function proxy(value) {
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 			if (descriptor && "value" in descriptor) {
 				var s = sources.get(prop);
-				if (s) descriptor.value = get$2(s);
+				if (s) descriptor.value = get$3(s);
 			} else if (descriptor === void 0) {
 				var source = sources.get(prop);
 				var value = source?.v;
@@ -2560,7 +2428,7 @@ function proxy(value) {
 					});
 					sources.set(prop, s);
 				}
-				if (get$2(s) === UNINITIALIZED) return false;
+				if (get$3(s) === UNINITIALIZED) return false;
 			}
 			return has;
 		},
@@ -2599,7 +2467,7 @@ function proxy(value) {
 			return true;
 		},
 		ownKeys(target) {
-			get$2(version);
+			get$3(version);
 			var own_keys = Reflect.ownKeys(target).filter((key) => {
 				var source = sources.get(key);
 				return source === void 0 || source.v !== UNINITIALIZED;
@@ -2612,19 +2480,8 @@ function proxy(value) {
 		}
 	});
 }
-new Set([
-	"copyWithin",
-	"fill",
-	"pop",
-	"push",
-	"reverse",
-	"shift",
-	"sort",
-	"splice",
-	"unshift"
-]);
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/operations.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/operations.js
 /** @type {Window} */
 var $window;
 /** @type {() => Node | null} */
@@ -2664,7 +2521,7 @@ function create_text(value = "") {
 * @template {Node} N
 * @param {N} node
 */
-/* @__NO_SIDE_EFFECTS__ */
+/*@__NO_SIDE_EFFECTS__*/
 function get_first_child(node) {
 	return first_child_getter.call(node);
 }
@@ -2672,7 +2529,7 @@ function get_first_child(node) {
 * @template {Node} N
 * @param {N} node
 */
-/* @__NO_SIDE_EFFECTS__ */
+/*@__NO_SIDE_EFFECTS__*/
 function get_next_sibling(node) {
 	return next_sibling_getter.call(node);
 }
@@ -2685,25 +2542,7 @@ function clear_text_content(node) {
 	node.textContent = "";
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/elements/bindings/shared.js
-/**
-* @template T
-* @param {() => T} fn
-*/
-function without_reactive_context(fn) {
-	var previous_reaction = active_reaction;
-	var previous_effect = active_effect;
-	set_active_reaction(null);
-	set_active_effect(null);
-	try {
-		return fn();
-	} finally {
-		set_active_reaction(previous_reaction);
-		set_active_effect(previous_effect);
-	}
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/client/reactivity/effects.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/reactivity/effects.js
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 /**
 * @param {Effect} effect
@@ -2884,7 +2723,7 @@ function destroy_effect(effect, remove_dom = true) {
 		remove_effect_dom(effect.nodes.start, effect.nodes.end);
 		removed = true;
 	}
-	set_signal_status(effect, DESTROYING);
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 	var transitions = effect.nodes && effect.nodes.t;
@@ -2988,15 +2827,18 @@ function move_effect(effect, fragment) {
 	}
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/legacy.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/legacy.js
 /**
 * @type {Set<Value> | null}
 * @deprecated
 */
 var captured_signals = null;
 //#endregion
-//#region ../../node_modules/svelte/src/internal/client/runtime.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/runtime.js
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/**
+* True if updating in an effect context that is reactive (i.e. not branch/root effects)
+*/
 var is_updating_effect = false;
 var is_destroying_effect = false;
 /** @param {boolean} value */
@@ -3019,13 +2861,12 @@ function set_active_effect(effect) {
 /**
 * When sources are created within a reaction, reading and writing
 * them within that reaction should not cause a re-run
-* @type {null | Source[]}
+* @type {null | Set<Source>}
 */
 var current_sources = null;
 /** @param {Value} value */
 function push_reaction_value(value) {
-	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & 2) !== 0)) if (current_sources === null) current_sources = [value];
-	else current_sources.push(value);
+	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & 2) !== 0)) (current_sources ??= /* @__PURE__ */ new Set()).add(value);
 }
 /**
 * The dependencies of the reaction that is currently being executed. In many cases,
@@ -3090,7 +2931,7 @@ function is_dirty(reaction) {
 function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
-	if (!async_mode_flag && current_sources !== null && includes.call(current_sources, signal)) return;
+	if (!async_mode_flag && current_sources !== null && current_sources.has(signal)) return;
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 		if ((reaction.f & 2) !== 0) schedule_possible_effect_self_invalidation(reaction, effect, false);
@@ -3195,6 +3036,10 @@ function remove_reaction(signal, dependency) {
 			derived.f &= ~WAS_MARKED;
 		}
 		if (derived.v !== UNINITIALIZED) update_derived_status(derived);
+		if (derived.ac !== null) without_reactive_context(() => {
+			/** @type {AbortController} */ derived.ac.abort(STALE_REACTION);
+			derived.ac = null;
+		});
 		freeze_derived_effects(derived);
 		remove_reactions(derived, 0);
 	}
@@ -3220,7 +3065,7 @@ function update_effect(effect) {
 	var previous_effect = active_effect;
 	var was_updating_effect = is_updating_effect;
 	active_effect = effect;
-	is_updating_effect = true;
+	is_updating_effect = (flags & 96) === 0;
 	try {
 		if ((flags & 16777232) !== 0) destroy_block_effect_children(effect);
 		else destroy_effect_children(effect);
@@ -3238,11 +3083,11 @@ function update_effect(effect) {
 * @param {Value<V>} signal
 * @returns {V}
 */
-function get$2(signal) {
+function get$3(signal) {
 	var is_derived = (signal.f & 2) !== 0;
 	captured_signals?.add(signal);
 	if (active_reaction !== null && !untracking) {
-		if (!(active_effect !== null && (active_effect.f & 16384) !== 0) && (current_sources === null || !includes.call(current_sources, signal))) {
+		if (!(active_effect !== null && (active_effect.f & 16384) !== 0) && (current_sources === null || !current_sources.has(signal))) {
 			var deps = active_reaction.deps;
 			if ((active_reaction.f & 2097152) !== 0) {
 				if (signal.rv < read_version) {
@@ -3336,7 +3181,7 @@ function untrack(fn) {
 	}
 }
 //#endregion
-//#region ../../node_modules/svelte/src/store/utils.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/store/utils.js
 /** @import { Readable } from './public' */
 /**
 * @template T
@@ -3353,6 +3198,308 @@ function subscribe_to_store(store, run, invalidate) {
 	}
 	const unsub = untrack(() => store.subscribe(run, invalidate));
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/store/shared/index.js
+/** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
+/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
+/**
+* @type {Array<SubscribeInvalidateTuple<any> | any>}
+*/
+var subscriber_queue = [];
+/**
+* Creates a `Readable` store that allows reading by subscription.
+*
+* @template T
+* @param {T} [value] initial value
+* @param {StartStopNotifier<T>} [start]
+* @returns {Readable<T>}
+*/
+function readable(value, start) {
+	return { subscribe: writable(value, start).subscribe };
+}
+/**
+* Create a `Writable` store that allows both updating and reading by subscription.
+*
+* @template T
+* @param {T} [value] initial value
+* @param {StartStopNotifier<T>} [start]
+* @returns {Writable<T>}
+*/
+function writable(value, start = noop$1) {
+	/** @type {Unsubscriber | null} */
+	let stop = null;
+	/** @type {Set<SubscribeInvalidateTuple<T>>} */
+	const subscribers = /* @__PURE__ */ new Set();
+	/**
+	* @param {T} new_value
+	* @returns {void}
+	*/
+	function set(new_value) {
+		if (safe_not_equal(value, new_value)) {
+			value = new_value;
+			if (stop) {
+				const run_queue = !subscriber_queue.length;
+				for (const subscriber of subscribers) {
+					subscriber[1]();
+					subscriber_queue.push(subscriber, value);
+				}
+				if (run_queue) {
+					for (let i = 0; i < subscriber_queue.length; i += 2) subscriber_queue[i][0](subscriber_queue[i + 1]);
+					subscriber_queue.length = 0;
+				}
+			}
+		}
+	}
+	/**
+	* @param {Updater<T>} fn
+	* @returns {void}
+	*/
+	function update(fn) {
+		set(fn(value));
+	}
+	/**
+	* @param {Subscriber<T>} run
+	* @param {() => void} [invalidate]
+	* @returns {Unsubscriber}
+	*/
+	function subscribe(run, invalidate = noop$1) {
+		/** @type {SubscribeInvalidateTuple<T>} */
+		const subscriber = [run, invalidate];
+		subscribers.add(subscriber);
+		if (subscribers.size === 1) stop = start(set, update) || noop$1;
+		run(value);
+		return () => {
+			subscribers.delete(subscriber);
+			if (subscribers.size === 0 && stop) {
+				stop();
+				stop = null;
+			}
+		};
+	}
+	return {
+		set,
+		update,
+		subscribe
+	};
+}
+/**
+* Derived value store by synchronizing one or more readable stores and
+* applying an aggregation function over its input values.
+*
+* @template {Stores} S
+* @template T
+* @overload
+* @param {S} stores
+* @param {(values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void} fn
+* @param {T} [initial_value]
+* @returns {Readable<T>}
+*/
+/**
+* Derived value store by synchronizing one or more readable stores and
+* applying an aggregation function over its input values.
+*
+* @template {Stores} S
+* @template T
+* @overload
+* @param {S} stores
+* @param {(values: StoresValues<S>) => T} fn
+* @param {T} [initial_value]
+* @returns {Readable<T>}
+*/
+/**
+* @template {Stores} S
+* @template T
+* @param {S} stores
+* @param {Function} fn
+* @param {T} [initial_value]
+* @returns {Readable<T>}
+*/
+function derived$1(stores, fn, initial_value) {
+	const single = !Array.isArray(stores);
+	/** @type {Array<Readable<any>>} */
+	const stores_array = single ? [stores] : stores;
+	if (!stores_array.every(Boolean)) throw new Error("derived() expects stores as input, got a falsy value");
+	const auto = fn.length < 2;
+	return readable(initial_value, (set, update) => {
+		let started = false;
+		/** @type {T[]} */
+		const values = [];
+		let pending = 0;
+		let cleanup = noop$1;
+		const sync = () => {
+			if (pending) return;
+			cleanup();
+			const result = fn(single ? values[0] : values, set, update);
+			if (auto) set(result);
+			else cleanup = typeof result === "function" ? result : noop$1;
+		};
+		const unsubscribers = stores_array.map((store, i) => subscribe_to_store(store, (value) => {
+			values[i] = value;
+			pending &= ~(1 << i);
+			if (started) sync();
+		}, () => {
+			pending |= 1 << i;
+		}));
+		started = true;
+		sync();
+		return function stop() {
+			run_all(unsubscribers);
+			cleanup();
+			started = false;
+		};
+	});
+}
+/**
+* Get the current value from a store by subscribing and immediately unsubscribing.
+*
+* @template T
+* @param {Readable<T>} store
+* @returns {T}
+*/
+function get$2(store) {
+	let value;
+	subscribe_to_store(store, (_) => value = _)();
+	return value;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/elements/events.js
+/**
+* Used on elements, as a map of event type -> event handler,
+* and on events themselves to track which element handled an event
+*/
+var event_symbol = Symbol("events");
+/** @type {Set<string>} */
+var all_registered_events = /* @__PURE__ */ new Set();
+/** @type {Set<(events: Array<string>) => void>} */
+var root_event_handles = /* @__PURE__ */ new Set();
+/**
+* @param {string} event_name
+* @param {EventTarget} dom
+* @param {EventListener} [handler]
+* @param {AddEventListenerOptions} [options]
+*/
+function create_event(event_name, dom, handler, options = {}) {
+	/**
+	* @this {EventTarget}
+	*/
+	function target_handler(event) {
+		if (!options.capture) handle_event_propagation.call(dom, event);
+		if (!event.cancelBubble) return without_reactive_context(() => {
+			return handler?.call(this, event);
+		});
+	}
+	if (event_name.startsWith("pointer") || event_name.startsWith("touch") || event_name === "wheel") queue_micro_task(() => {
+		dom.addEventListener(event_name, target_handler, options);
+	});
+	else dom.addEventListener(event_name, target_handler, options);
+	return target_handler;
+}
+/**
+* Attaches an event handler to an element and returns a function that removes the handler. Using this
+* rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+* (with attributes like `onclick`), which use event delegation for performance reasons
+*
+* @param {EventTarget} element
+* @param {string} type
+* @param {EventListener} handler
+* @param {AddEventListenerOptions} [options]
+*/
+function on(element, type, handler, options = {}) {
+	var target_handler = create_event(type, element, handler, options);
+	return () => {
+		element.removeEventListener(type, target_handler, options);
+	};
+}
+var last_propagated_event = null;
+/**
+* @this {EventTarget}
+* @param {Event} event
+* @returns {void}
+*/
+function handle_event_propagation(event) {
+	var handler_element = this;
+	var owner_document = handler_element.ownerDocument;
+	var event_name = event.type;
+	var path = event.composedPath?.() || [];
+	var current_target = path[0] || event.target;
+	last_propagated_event = event;
+	var path_idx = 0;
+	var handled_at = last_propagated_event === event && event[event_symbol];
+	if (handled_at) {
+		var at_idx = path.indexOf(handled_at);
+		if (at_idx !== -1 && (handler_element === document || handler_element === window)) {
+			event[event_symbol] = handler_element;
+			return;
+		}
+		var handler_idx = path.indexOf(handler_element);
+		if (handler_idx === -1) return;
+		if (at_idx <= handler_idx) path_idx = at_idx;
+	}
+	current_target = path[path_idx] || event.target;
+	if (current_target === handler_element) return;
+	define_property(event, "currentTarget", {
+		configurable: true,
+		get() {
+			return current_target || owner_document;
+		}
+	});
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		/**
+		* @type {unknown}
+		*/
+		var throw_error;
+		/**
+		* @type {unknown[]}
+		*/
+		var other_errors = [];
+		while (current_target !== null) {
+			if (current_target === handler_element) break;
+			try {
+				var delegated = current_target[event_symbol]?.[event_name];
+				if (delegated != null && (!current_target.disabled || event.target === current_target)) delegated.call(current_target, event);
+			} catch (error) {
+				if (throw_error) other_errors.push(error);
+				else throw_error = error;
+			}
+			if (event.cancelBubble) break;
+			path_idx++;
+			current_target = path_idx < path.length ? path[path_idx] : null;
+		}
+		if (throw_error) {
+			for (let error of other_errors) queueMicrotask(() => {
+				throw error;
+			});
+			throw throw_error;
+		}
+	} finally {
+		event[event_symbol] = handler_element;
+		delete event.currentTarget;
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
+	}
+}
+globalThis?.window?.trustedTypes;
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/client/dom/template.js
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { TemplateStructure } from './types' */
+/**
+* @param {TemplateNode} start
+* @param {TemplateNode | null} end
+*/
+function assign_nodes(start, end) {
+	var effect = active_effect;
+	if (effect.nodes === null) effect.nodes = {
+		start,
+		end,
+		a: null,
+		t: null
+	};
 }
 var VOID_ELEMENT_NAMES = [
 	"area",
@@ -3449,236 +3596,731 @@ function is_raw_text_element(name) {
 	return RAW_TEXT_ELEMENTS.includes(name);
 }
 var REGEX_VALID_TAG_NAME = /^[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9.\-_\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]*)?$/u;
-//#endregion
-//#region ../../node_modules/svelte/src/internal/server/blocks/html.js
 /**
-* @param {string} value
-*/
-function html(value) {
-	return "<!---->" + String(value ?? "") + "<!---->";
-}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/server/index.js
-var INVALID_ATTR_NAME_CHAR_REGEX = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-/**
-* @param {Renderer} renderer
-* @param {string} tag
-* @param {() => void} attributes_fn
-* @param {() => void} children_fn
-* @returns {void}
-*/
-function element(renderer, tag, attributes_fn = noop$1, children_fn = noop$1) {
-	renderer.push("<!---->");
-	if (tag) {
-		if (!REGEX_VALID_TAG_NAME.test(tag)) dynamic_element_invalid_tag(tag);
-		renderer.push(`<${tag}`);
-		attributes_fn();
-		renderer.push(`>`);
-		if (!is_void(tag)) {
-			children_fn();
-			if (!is_raw_text_element(tag)) renderer.push(EMPTY_COMMENT);
-			renderer.push(`</${tag}>`);
-		}
-	}
-	renderer.push("<!---->");
-}
-/**
-* Only available on the server and when compiling with the `server` option.
-* Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+* Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+* Transitions will play during the initial render unless the `intro` option is set to `false`.
+*
 * @template {Record<string, any>} Props
-* @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
-* @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} [options]
-* @returns {RenderOutput}
+* @template {Record<string, any>} Exports
+* @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
+* @param {MountOptions<Props>} options
+* @returns {Exports}
 */
-function render(component, options = {}) {
-	if (options.csp?.hash && options.csp.nonce) invalid_csp();
-	return Renderer.render(component, options);
+function mount$1(component, options) {
+	return _mount(component, options);
 }
 /**
-* @param {string} hash
-* @param {Renderer} renderer
-* @param {(renderer: Renderer) => Promise<void> | void} fn
-* @returns {void}
+* Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+*
+* @template {Record<string, any>} Props
+* @template {Record<string, any>} Exports
+* @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
+* @param {{} extends Props ? {
+* 		target: Document | Element | ShadowRoot;
+* 		props?: Props;
+* 		events?: Record<string, (e: any) => any>;
+*  	context?: Map<any, any>;
+* 		intro?: boolean;
+* 		recover?: boolean;
+*		transformError?: (error: unknown) => unknown;
+* 	} : {
+* 		target: Document | Element | ShadowRoot;
+* 		props: Props;
+* 		events?: Record<string, (e: any) => any>;
+*  	context?: Map<any, any>;
+* 		intro?: boolean;
+* 		recover?: boolean;
+*		transformError?: (error: unknown) => unknown;
+* 	}} options
+* @returns {Exports}
 */
-function head(hash, renderer, fn) {
-	renderer.head((renderer) => {
-		renderer.push(`<!--${hash}-->`);
-		renderer.child(fn);
-		renderer.push(EMPTY_COMMENT);
-	});
+function hydrate$1(component, options) {
+	init_operations();
+	options.intro = options.intro ?? false;
+	const target = options.target;
+	const was_hydrating = hydrating;
+	const previous_hydrate_node = hydrate_node;
+	try {
+		var anchor = /* @__PURE__ */ get_first_child(target);
+		while (anchor && (anchor.nodeType !== 8 || anchor.data !== "[")) anchor = /* @__PURE__ */ get_next_sibling(anchor);
+		if (!anchor) throw HYDRATION_ERROR;
+		set_hydrating(true);
+		set_hydrate_node(anchor);
+		const instance = _mount(component, {
+			...options,
+			anchor
+		});
+		set_hydrating(false);
+		return instance;
+	} catch (error) {
+		if (error instanceof Error && error.message.split("\n").some((line) => line.startsWith("https://svelte.dev/e/"))) throw error;
+		if (error !== HYDRATION_ERROR) console.warn("Failed to hydrate: ", error);
+		if (options.recover === false) hydration_failed();
+		init_operations();
+		clear_text_content(target);
+		set_hydrating(false);
+		return mount$1(component, options);
+	} finally {
+		set_hydrating(was_hydrating);
+		set_hydrate_node(previous_hydrate_node);
+	}
 }
+/** @type {Map<EventTarget, Map<string, number>>} */
+var listeners = /* @__PURE__ */ new Map();
 /**
-* @param {Record<string, unknown>} attrs
-* @param {string} [css_hash]
-* @param {Record<string, boolean>} [classes]
-* @param {Record<string, string>} [styles]
-* @param {number} [flags]
-* @returns {string}
+* @template {Record<string, any>} Exports
+* @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
+* @param {MountOptions} options
+* @returns {Exports}
 */
-function attributes(attrs, css_hash, classes, styles, flags = 0) {
-	if (styles) attrs.style = to_style(attrs.style, styles);
-	if (attrs.class) attrs.class = clsx$1(attrs.class);
-	if (css_hash || classes) attrs.class = to_class(attrs.class, css_hash, classes);
-	let attr_str = "";
-	let name;
-	const is_html = (flags & 1) === 0;
-	const lowercase = (flags & 2) === 0;
-	const is_input = (flags & 4) !== 0;
-	for (name of Object.keys(attrs)) {
-		if (typeof attrs[name] === "function") continue;
-		if (name[0] === "$" && name[1] === "$") continue;
-		if (name === "" || INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		var value = attrs[name];
-		var lower = name.toLowerCase();
-		if (lowercase) name = lower;
-		if (lower.length > 2 && lower.startsWith("on")) continue;
-		if (is_input) {
-			if (name === "defaultvalue" || name === "defaultchecked") {
-				name = name === "defaultvalue" ? "value" : "checked";
-				if (attrs[name]) continue;
+function _mount(Component, { target, anchor, props = {}, events, context, intro = true, transformError }) {
+	init_operations();
+	/** @type {Exports} */
+	var component = void 0;
+	var unmount = component_root(() => {
+		var anchor_node = anchor ?? target.appendChild(create_text());
+		boundary(anchor_node, { pending: () => {} }, (anchor_node) => {
+			push$1({});
+			var ctx = component_context;
+			if (context) ctx.c = context;
+			if (events)
+ /** @type {any} */ props.$$events = events;
+			if (hydrating) assign_nodes(anchor_node, null);
+			component = Component(anchor_node, props) || {};
+			if (hydrating) {
+				/** @type {Effect & { nodes: EffectNodes }} */ active_effect.nodes.end = hydrate_node;
+				if (hydrate_node === null || hydrate_node.nodeType !== 8 || hydrate_node.data !== "]") {
+					hydration_mismatch();
+					throw HYDRATION_ERROR;
+				}
 			}
+			pop$1();
+		}, transformError);
+		/** @type {Set<string>} */
+		var registered_events = /* @__PURE__ */ new Set();
+		/** @param {Array<string>} events */
+		var event_handle = (events) => {
+			for (var i = 0; i < events.length; i++) {
+				var event_name = events[i];
+				if (registered_events.has(event_name)) continue;
+				registered_events.add(event_name);
+				var passive = is_passive_event(event_name);
+				for (const node of [target, document]) {
+					var counts = listeners.get(node);
+					if (counts === void 0) {
+						counts = /* @__PURE__ */ new Map();
+						listeners.set(node, counts);
+					}
+					var count = counts.get(event_name);
+					if (count === void 0) {
+						node.addEventListener(event_name, handle_event_propagation, { passive });
+						counts.set(event_name, 1);
+					} else counts.set(event_name, count + 1);
+				}
+			}
+		};
+		event_handle(array_from(all_registered_events));
+		root_event_handles.add(event_handle);
+		return () => {
+			for (var event_name of registered_events) for (const node of [target, document]) {
+				var counts = listeners.get(node);
+				var count = counts.get(event_name);
+				if (--count == 0) {
+					node.removeEventListener(event_name, handle_event_propagation);
+					counts.delete(event_name);
+					if (counts.size === 0) listeners.delete(node);
+				} else counts.set(event_name, count);
+			}
+			root_event_handles.delete(event_handle);
+			if (anchor_node !== anchor) anchor_node.parentNode?.removeChild(anchor_node);
+		};
+	});
+	mounted_components.set(component, unmount);
+	return component;
+}
+/**
+* References of the components that were mounted or hydrated.
+* Uses a `WeakMap` to avoid memory leaks.
+*/
+var mounted_components = /* @__PURE__ */ new WeakMap();
+/**
+* Unmounts a component that was previously mounted using `mount` or `hydrate`.
+*
+* Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+*
+* Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+*
+* ```js
+* import { mount, unmount } from 'svelte';
+* import App from './App.svelte';
+*
+* const app = mount(App, { target: document.body });
+*
+* // later...
+* unmount(app, { outro: true });
+* ```
+* @param {Record<string, any>} component
+* @param {{ outro?: boolean }} [options]
+* @returns {Promise<void>}
+*/
+function unmount$1(component, options) {
+	const fn = mounted_components.get(component);
+	if (fn) {
+		mounted_components.delete(component);
+		return fn(options);
+	}
+	return Promise.resolve();
+}
+/**
+* Takes the component function and returns a Svelte 4 compatible component constructor.
+*
+* @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
+*
+* @template {Record<string, any>} Props
+* @template {Record<string, any>} Exports
+* @template {Record<string, any>} Events
+* @template {Record<string, any>} Slots
+*
+* @param {SvelteComponent<Props, Events, Slots> | Component<Props>} component
+* @returns {ComponentType<SvelteComponent<Props, Events, Slots> & Exports>}
+*/
+function asClassComponent(component) {
+	return class extends Svelte4Component {
+		/** @param {any} options */
+		constructor(options) {
+			super({
+				component,
+				...options
+			});
 		}
-		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
-	}
-	return attr_str;
-}
-/**
-* @param {Record<string, unknown>[]} props
-* @returns {Record<string, unknown>}
-*/
-function spread_props(props) {
-	/** @type {Record<string, unknown>} */
-	const merged_props = {};
-	let key;
-	for (let i = 0; i < props.length; i++) {
-		const obj = props[i];
-		if (obj == null) continue;
-		for (key of Object.keys(obj)) {
-			const desc = Object.getOwnPropertyDescriptor(obj, key);
-			if (desc) Object.defineProperty(merged_props, key, desc);
-			else merged_props[key] = obj[key];
-		}
-	}
-	return merged_props;
-}
-/**
-* @param {unknown} value
-* @returns {string}
-*/
-function stringify(value) {
-	return typeof value === "string" ? value : value == null ? "" : value + "";
-}
-/**
-* @param {any} value
-* @param {string | undefined} [hash]
-* @param {Record<string, boolean>} [directives]
-*/
-function attr_class(value, hash, directives) {
-	var result = to_class(value, hash, directives);
-	return result ? ` class="${escape_html(result, true)}"` : "";
-}
-/**
-* @param {any} value
-* @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [directives]
-*/
-function attr_style(value, directives) {
-	var result = to_style(value, directives);
-	return result ? ` style="${escape_html(result, true)}"` : "";
-}
-/**
-* @template V
-* @param {Record<string, [any, any, any]>} store_values
-* @param {string} store_name
-* @param {Store<V> | null | undefined} store
-* @returns {V}
-*/
-function store_get(store_values, store_name, store) {
-	if (store_name in store_values && store_values[store_name][0] === store) return store_values[store_name][2];
-	store_values[store_name]?.[1]();
-	store_values[store_name] = [
-		store,
-		null,
-		void 0
-	];
-	const unsub = subscribe_to_store(
-		store,
-		/** @param {any} v */
-		(v) => store_values[store_name][2] = v
-	);
-	store_values[store_name][1] = unsub;
-	return store_values[store_name][2];
-}
-/**
-* Sets the new value of a store and returns that value.
-* @template V
-* @param {Store<V>} store
-* @param {V} value
-* @returns {V}
-*/
-function store_set(store, value) {
-	store.set(value);
-	return value;
-}
-/** @param {Record<string, [any, any, any]>} store_values */
-function unsubscribe_stores(store_values) {
-	for (const store_name of Object.keys(store_values)) store_values[store_name][1]();
-}
-/**
-* Legacy mode: If the prop has a fallback and is bound in the
-* parent component, propagate the fallback value upwards.
-* @param {Record<string, unknown>} props_parent
-* @param {Record<string, unknown>} props_now
-*/
-function bind_props(props_parent, props_now) {
-	for (const key of Object.keys(props_now)) {
-		const initial_value = props_parent[key];
-		const value = props_now[key];
-		if (initial_value === void 0 && value !== void 0 && Object.getOwnPropertyDescriptor(props_parent, key)?.set) props_parent[key] = value;
-	}
-}
-/** @param {any} array_like_or_iterator */
-function ensure_array_like(array_like_or_iterator) {
-	if (array_like_or_iterator) return array_like_or_iterator.length !== void 0 ? array_like_or_iterator : Array.from(array_like_or_iterator);
-	return [];
-}
-/**
-* @template V
-* @param {() => V} get_value
-*/
-function once(get_value) {
-	let value = UNINITIALIZED;
-	return () => {
-		if (value === UNINITIALIZED) value = get_value();
-		return value;
 	};
 }
 /**
-* Create an unique ID
-* @param {Renderer} renderer
+* Support using the component as both a class and function during the transition period
+* @typedef  {{new (o: ComponentConstructorOptions): SvelteComponent;(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;}} LegacyComponentType
+*/
+var Svelte4Component = class {
+	/** @type {any} */
+	#events;
+	/** @type {Record<string, any>} */
+	#instance;
+	/**
+	* @param {ComponentConstructorOptions & {
+	*  component: any;
+	* }} options
+	*/
+	constructor(options) {
+		var sources = /* @__PURE__ */ new Map();
+		/**
+		* @param {string | symbol} key
+		* @param {unknown} value
+		*/
+		var add_source = (key, value) => {
+			var s = /* @__PURE__ */ mutable_source(value, false, false);
+			sources.set(key, s);
+			return s;
+		};
+		const props = new Proxy({
+			...options.props || {},
+			$$events: {}
+		}, {
+			get(target, prop) {
+				return get$3(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+			},
+			has(target, prop) {
+				if (prop === LEGACY_PROPS) return true;
+				get$3(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+				return Reflect.has(target, prop);
+			},
+			set(target, prop, value) {
+				set(sources.get(prop) ?? add_source(prop, value), value);
+				return Reflect.set(target, prop, value);
+			}
+		});
+		this.#instance = (options.hydrate ? hydrate$1 : mount$1)(options.component, {
+			target: options.target,
+			anchor: options.anchor,
+			props,
+			context: options.context,
+			intro: options.intro ?? false,
+			recover: options.recover,
+			transformError: options.transformError
+		});
+		if (!async_mode_flag && (!options?.props?.$$host || options.sync === false)) flushSync();
+		this.#events = props.$$events;
+		for (const key of Object.keys(this.#instance)) {
+			if (key === "$set" || key === "$destroy" || key === "$on") continue;
+			define_property(this, key, {
+				get() {
+					return this.#instance[key];
+				},
+				/** @param {any} value */
+				set(value) {
+					this.#instance[key] = value;
+				},
+				enumerable: true
+			});
+		}
+		this.#instance.$set = (next) => {
+			Object.assign(props, next);
+		};
+		this.#instance.$destroy = () => {
+			unmount$1(this.#instance);
+		};
+	}
+	/** @param {Record<string, any>} props */
+	$set(props) {
+		this.#instance.$set(props);
+	}
+	/**
+	* @param {string} event
+	* @param {(...args: any[]) => any} callback
+	* @returns {any}
+	*/
+	$on(event, callback) {
+		this.#events[event] = this.#events[event] || [];
+		/** @param {any[]} args */
+		const cb = (...args) => callback.call(this, ...args);
+		this.#events[event].push(cb);
+		return () => {
+			this.#events[event] = this.#events[event].filter(
+				/** @param {any} fn */
+				(fn) => fn !== cb
+			);
+		};
+	}
+	$destroy() {
+		this.#instance.$destroy();
+	}
+};
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/escaping.js
+var ATTR_REGEX = /[&"<]/g;
+var CONTENT_REGEX = /[&<]/g;
+/**
+* @template V
+* @param {V} value
+* @param {boolean} [is_attr]
+*/
+function escape_html(value, is_attr) {
+	const str = String(value ?? "");
+	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
+	pattern.lastIndex = 0;
+	let escaped = "";
+	let last = 0;
+	while (pattern.test(str)) {
+		const i = pattern.lastIndex - 1;
+		const ch = str[i];
+		escaped += str.substring(last, i) + (ch === "&" ? "&amp;" : ch === "\"" ? "&quot;" : "&lt;");
+		last = i + 1;
+	}
+	return escaped + str.substring(last);
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/shared/attributes.js
+/**
+* `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
+* `<div translate="false">`, which is equivalent to `<div translate="yes">`. There
+* may be other odd cases that need to be added to this list in future
+* @type {Record<string, Map<any, string>>}
+*/
+var replacements = { translate: /* @__PURE__ */ new Map([[true, "yes"], [false, "no"]]) };
+/**
+* @template V
+* @param {string} name
+* @param {V} value
+* @param {boolean} [is_boolean]
 * @returns {string}
 */
-function props_id(renderer) {
-	const uid = renderer.global.uid();
-	renderer.push("<!--$" + uid + "-->");
-	return uid;
+function attr(name, value, is_boolean = false) {
+	if (name === "hidden" && value !== "until-found") is_boolean = true;
+	if (value == null || !value && is_boolean) return "";
+	const normalized = has_own_property.call(replacements, name) && replacements[name].get(value) || value;
+	return ` ${name}${is_boolean ? `=""` : `="${escape_html(normalized, true)}"`}`;
+}
+/**
+* Small wrapper around clsx to preserve Svelte's (weird) handling of falsy values.
+* TODO Svelte 6 revisit this, and likely turn all falsy values into the empty string (what clsx also does)
+* @param  {any} value
+*/
+function clsx$1(value) {
+	if (typeof value === "object") return clsx(value);
+	else return value ?? "";
+}
+var whitespace = [..." 	\n\r\f\xA0\v﻿"];
+/**
+* @param {any} value
+* @param {string | null} [hash]
+* @param {Record<string, boolean>} [directives]
+* @returns {string | null}
+*/
+function to_class(value, hash, directives) {
+	var classname = value == null ? "" : "" + value;
+	if (hash) classname = classname ? classname + " " + hash : hash;
+	if (directives) {
+		for (var key of Object.keys(directives)) if (directives[key]) classname = classname ? classname + " " + key : key;
+		else if (classname.length) {
+			var len = key.length;
+			var a = 0;
+			while ((a = classname.indexOf(key, a)) >= 0) {
+				var b = a + len;
+				if ((a === 0 || whitespace.includes(classname[a - 1])) && (b === classname.length || whitespace.includes(classname[b]))) classname = (a === 0 ? "" : classname.substring(0, a)) + classname.substring(b + 1);
+				else a = b;
+			}
+		}
+	}
+	return classname === "" ? null : classname;
+}
+/**
+*
+* @param {Record<string,any>} styles
+* @param {boolean} important
+*/
+function append_styles(styles, important = false) {
+	var separator = important ? " !important;" : ";";
+	var css = "";
+	for (var key of Object.keys(styles)) {
+		var value = styles[key];
+		if (value != null && value !== "") css += " " + key + ": " + value + separator;
+	}
+	return css;
+}
+/**
+* @param {string} name
+* @returns {string}
+*/
+function to_css_name(name) {
+	if (name[0] !== "-" || name[1] !== "-") return name.toLowerCase();
+	return name;
+}
+/**
+* @param {any} value
+* @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [styles]
+* @returns {string | null}
+*/
+function to_style(value, styles) {
+	if (styles) {
+		var new_style = "";
+		/** @type {Record<string,any> | undefined} */
+		var normal_styles;
+		/** @type {Record<string,any> | undefined} */
+		var important_styles;
+		if (Array.isArray(styles)) {
+			normal_styles = styles[0];
+			important_styles = styles[1];
+		} else normal_styles = styles;
+		if (value) {
+			value = String(value).replaceAll(/\s*\/\*.*?\*\/\s*/g, "").trim();
+			/** @type {boolean | '"' | "'"} */
+			var in_str = false;
+			var in_apo = 0;
+			var in_comment = false;
+			var reserved_names = [];
+			if (normal_styles) reserved_names.push(...Object.keys(normal_styles).map(to_css_name));
+			if (important_styles) reserved_names.push(...Object.keys(important_styles).map(to_css_name));
+			var start_index = 0;
+			var name_index = -1;
+			const len = value.length;
+			for (var i = 0; i < len; i++) {
+				var c = value[i];
+				if (in_comment) {
+					if (c === "/" && value[i - 1] === "*") in_comment = false;
+				} else if (in_str) {
+					if (in_str === c) in_str = false;
+				} else if (c === "/" && value[i + 1] === "*") in_comment = true;
+				else if (c === "\"" || c === "'") in_str = c;
+				else if (c === "(") in_apo++;
+				else if (c === ")") in_apo--;
+				if (!in_comment && in_str === false && in_apo === 0) {
+					if (c === ":" && name_index === -1) name_index = i;
+					else if (c === ";" || i === len - 1) {
+						if (name_index !== -1) {
+							var name = to_css_name(value.substring(start_index, name_index).trim());
+							if (!reserved_names.includes(name)) {
+								if (c !== ";") i++;
+								var property = value.substring(start_index, i).trim();
+								new_style += " " + property + ";";
+							}
+						}
+						start_index = i + 1;
+						name_index = -1;
+					}
+				}
+			}
+		}
+		if (normal_styles) new_style += append_styles(normal_styles);
+		if (important_styles) new_style += append_styles(important_styles, true);
+		new_style = new_style.trim();
+		return new_style === "" ? null : new_style;
+	}
+	return value == null ? null : String(value);
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/hydration.js
+var BLOCK_OPEN = `<!--[-->`;
+var BLOCK_CLOSE = `<!--]-->`;
+var EMPTY_COMMENT = `<!---->`;
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/abort-signal.js
+/** @type {AbortController | null} */
+var controller = null;
+function abort() {
+	controller?.abort(STALE_REACTION);
+	controller = null;
+}
+function getAbortSignal() {
+	return (controller ??= new AbortController()).signal;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/errors.js
+/**
+* The node API `AsyncLocalStorage` is not available, but is required to use async server rendering.
+* @returns {never}
+*/
+function async_local_storage_unavailable() {
+	const error = /* @__PURE__ */ new Error(`async_local_storage_unavailable\nThe node API \`AsyncLocalStorage\` is not available, but is required to use async server rendering.\nhttps://svelte.dev/e/async_local_storage_unavailable`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* Encountered asynchronous work while rendering synchronously.
+* @returns {never}
+*/
+function await_invalid() {
+	const error = /* @__PURE__ */ new Error(`await_invalid\nEncountered asynchronous work while rendering synchronously.\nhttps://svelte.dev/e/await_invalid`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* `<svelte:element this="%tag%">` is not a valid element name — the element will not be rendered
+* @param {string} tag
+* @returns {never}
+*/
+function dynamic_element_invalid_tag(tag) {
+	const error = /* @__PURE__ */ new Error(`dynamic_element_invalid_tag\n\`<svelte:element this="${tag}">\` is not a valid element name — the element will not be rendered\nhttps://svelte.dev/e/dynamic_element_invalid_tag`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* The `html` property of server render results has been deprecated. Use `body` instead.
+* @returns {never}
+*/
+function html_deprecated() {
+	const error = /* @__PURE__ */ new Error(`html_deprecated\nThe \`html\` property of server render results has been deprecated. Use \`body\` instead.\nhttps://svelte.dev/e/html_deprecated`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* Failed to serialize `hydratable` data for key `%key%`.
+* 
+* `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
+* 
+* Cause:
+* %stack%
+* @param {string} key
+* @param {string} stack
+* @returns {never}
+*/
+function hydratable_serialization_failed(key, stack) {
+	const error = /* @__PURE__ */ new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
+
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
+
+Cause:
+${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+* @returns {never}
+*/
+function invalid_csp() {
+	const error = /* @__PURE__ */ new Error(`invalid_csp\n\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.\nhttps://svelte.dev/e/invalid_csp`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* The `idPrefix` option cannot include `--`.
+* @returns {never}
+*/
+function invalid_id_prefix() {
+	const error = /* @__PURE__ */ new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`--\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* `%name%(...)` is not available on the server
+* @param {string} name
+* @returns {never}
+*/
+function lifecycle_function_unavailable(name) {
+	const error = /* @__PURE__ */ new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+	error.name = "Svelte error";
+	throw error;
+}
+/**
+* Could not resolve `render` context.
+* @returns {never}
+*/
+function server_context_required() {
+	const error = /* @__PURE__ */ new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
+	error.name = "Svelte error";
+	throw error;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/context.js
+/** @import { SSRContext } from '#server' */
+/** @type {SSRContext | null} */
+var ssr_context = null;
+/** @param {SSRContext | null} v */
+function set_ssr_context(v) {
+	ssr_context = v;
 }
 /**
 * @template T
-* @param {()=>T} fn
-* @returns {(new_value?: T) => (T | void)}
+* @returns {[() => T, (context: T) => T]}
+* @since 5.40.0
 */
-function derived(fn) {
-	const get_value = ssr_context === null ? fn : once(fn);
-	/** @type {T | undefined} */
-	let updated_value;
-	return function(new_value) {
-		if (arguments.length === 0) return updated_value ?? get_value();
-		updated_value = new_value;
-		return updated_value;
+function createContext() {
+	const key = {};
+	return [() => {
+		if (!hasContext(key)) missing_context();
+		return getContext(key);
+	}, (context) => setContext(key, context)];
+}
+/**
+* @template T
+* @param {any} key
+* @returns {T}
+*/
+function getContext(key) {
+	return get_or_init_context_map("getContext").get(key);
+}
+/**
+* @template T
+* @param {any} key
+* @param {T} context
+* @returns {T}
+*/
+function setContext(key, context) {
+	get_or_init_context_map("setContext").set(key, context);
+	return context;
+}
+/**
+* @param {any} key
+* @returns {boolean}
+*/
+function hasContext(key) {
+	return get_or_init_context_map("hasContext").has(key);
+}
+/** @returns {Map<any, any>} */
+function getAllContexts() {
+	return get_or_init_context_map("getAllContexts");
+}
+/**
+* @param {string} name
+* @returns {Map<unknown, unknown>}
+*/
+function get_or_init_context_map(name) {
+	if (ssr_context === null) lifecycle_outside_component(name);
+	return ssr_context.c ??= new Map(get_parent_context(ssr_context) || void 0);
+}
+/**
+* @param {Function} [fn]
+*/
+function push(fn) {
+	ssr_context = {
+		p: ssr_context,
+		c: null,
+		r: null
 	};
 }
+function pop() {
+	ssr_context = ssr_context.p;
+}
+/**
+* @param {SSRContext} ssr_context
+* @returns {Map<unknown, unknown> | null}
+*/
+function get_parent_context(ssr_context) {
+	let parent = ssr_context.p;
+	while (parent !== null) {
+		const context_map = parent.c;
+		if (context_map !== null) return context_map;
+		parent = parent.p;
+	}
+	return null;
+}
+/**
+* A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
+* 
+* The `hydratable` was initialized in:
+* %stack%
+* @param {string} key
+* @param {string} stack
+*/
+function unresolved_hydratable(key, stack) {
+	console.warn(`https://svelte.dev/e/unresolved_hydratable`);
+}
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/crypto.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/render-context.js
+/** @import { AsyncLocalStorage } from 'node:async_hooks' */
+/** @import { RenderContext } from '#server' */
+/** @type {Promise<void> | null} */
+var current_render = null;
+/** @type {RenderContext | null} */
+var context = null;
+/** @returns {RenderContext} */
+function get_render_context() {
+	const store = context ?? als?.getStore();
+	if (!store) server_context_required();
+	return store;
+}
+/**
+* @template T
+* @param {() => Promise<T>} fn
+* @returns {Promise<T>}
+*/
+async function with_render_context(fn) {
+	context = { hydratable: {
+		lookup: /* @__PURE__ */ new Map(),
+		comparisons: [],
+		unresolved_promises: /* @__PURE__ */ new Map()
+	} };
+	if (in_webcontainer()) {
+		const { promise, resolve } = deferred();
+		const previous_render = current_render;
+		current_render = promise;
+		await previous_render;
+		return fn().finally(resolve);
+	}
+	try {
+		if (als === null) async_local_storage_unavailable();
+		return als.run(context, fn);
+	} finally {
+		context = null;
+	}
+}
+/** @type {AsyncLocalStorage<RenderContext | null> | null} */
+var als = null;
+/** @type {Promise<void> | null} */
+var als_import = null;
+/**
+*
+* @returns {Promise<void>}
+*/
+function init_render_context() {
+	als_import ??= import("node:async_hooks").then((hooks) => {
+		als = new hooks.AsyncLocalStorage();
+	}).then(noop$1, noop$1);
+	return als_import;
+}
+function in_webcontainer() {
+	return !!globalThis.process?.versions?.webcontainer;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/crypto.js
 var text_encoder;
 var crypto;
 /** @param {string} module_name */
@@ -3703,7 +4345,7 @@ function base64_encode(bytes) {
 	return btoa(binary);
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/renderer.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/renderer.js
 /** @import { Component } from 'svelte' */
 /** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
@@ -3941,10 +4583,10 @@ var Renderer = class Renderer {
 	* @returns {void}
 	*/
 	component(fn, component_fn) {
-		push$1(component_fn);
+		push(component_fn);
 		const child = this.child(fn);
 		child.#is_component_body = true;
-		pop$1();
+		pop();
 	}
 	/**
 	* @param {Record<string, any>} attrs
@@ -4015,7 +4657,10 @@ var Renderer = class Renderer {
 			if (renderer.global.mode === "async") return r.#collect_content_async().then((content) => {
 				close(content.head);
 			});
-			else close(r.#collect_content().head);
+			else {
+				const content = r.#collect_content();
+				close(content.head);
+			}
 		});
 	}
 	/**
@@ -4302,7 +4947,7 @@ var Renderer = class Renderer {
 				has_promises = true;
 				for (const p of v.promises) await p;
 			}
-			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
+			entries.push(`[${uneval(k)},${v.serialized}]`);
 		}
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
 		if (has_promises) prelude = `const r = (v) => Promise.resolve(v);
@@ -4387,7 +5032,235 @@ var SSRState = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/hydratable.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/blocks/html.js
+/**
+* @param {string} value
+*/
+function html(value) {
+	return "<!---->" + String(value ?? "") + "<!---->";
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/index.js
+var INVALID_ATTR_NAME_CHAR_REGEX = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
+/**
+* @param {Renderer} renderer
+* @param {string} tag
+* @param {() => void} attributes_fn
+* @param {() => void} children_fn
+* @returns {void}
+*/
+function element(renderer, tag, attributes_fn = noop$1, children_fn = noop$1) {
+	renderer.push("<!---->");
+	if (tag) {
+		if (!REGEX_VALID_TAG_NAME.test(tag)) dynamic_element_invalid_tag(tag);
+		renderer.push(`<${tag}`);
+		attributes_fn();
+		renderer.push(`>`);
+		if (!is_void(tag)) {
+			children_fn();
+			if (!is_raw_text_element(tag)) renderer.push(EMPTY_COMMENT);
+			renderer.push(`</${tag}>`);
+		}
+	}
+	renderer.push("<!---->");
+}
+/**
+* Only available on the server and when compiling with the `server` option.
+* Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+* @template {Record<string, any>} Props
+* @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
+* @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} [options]
+* @returns {RenderOutput}
+*/
+function render(component, options = {}) {
+	if (options.csp?.hash && options.csp.nonce) invalid_csp();
+	return Renderer.render(component, options);
+}
+/**
+* @param {string} hash
+* @param {Renderer} renderer
+* @param {(renderer: Renderer) => Promise<void> | void} fn
+* @returns {void}
+*/
+function head(hash, renderer, fn) {
+	renderer.head((renderer) => {
+		renderer.push(`<!--${hash}-->`);
+		renderer.child(fn);
+		renderer.push(EMPTY_COMMENT);
+	});
+}
+/**
+* @param {Record<string, unknown>} attrs
+* @param {string} [css_hash]
+* @param {Record<string, boolean>} [classes]
+* @param {Record<string, string>} [styles]
+* @param {number} [flags]
+* @returns {string}
+*/
+function attributes(attrs, css_hash, classes, styles, flags = 0) {
+	if (styles) attrs.style = to_style(attrs.style, styles);
+	if (attrs.class) attrs.class = clsx$1(attrs.class);
+	if (css_hash || classes) attrs.class = to_class(attrs.class, css_hash, classes);
+	let attr_str = "";
+	let name;
+	const is_html = (flags & 1) === 0;
+	const lowercase = (flags & 2) === 0;
+	const is_input = (flags & 4) !== 0;
+	for (name of Object.keys(attrs)) {
+		if (typeof attrs[name] === "function") continue;
+		if (name[0] === "$" && name[1] === "$") continue;
+		if (name === "" || INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
+		var value = attrs[name];
+		var lower = name.toLowerCase();
+		if (lowercase) name = lower;
+		if (lower.length > 2 && lower.startsWith("on")) continue;
+		if (is_input) {
+			if (name === "defaultvalue" || name === "defaultchecked") {
+				name = name === "defaultvalue" ? "value" : "checked";
+				if (attrs[name]) continue;
+			}
+		}
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
+	}
+	return attr_str;
+}
+/**
+* @param {Record<string, unknown>[]} props
+* @returns {Record<string, unknown>}
+*/
+function spread_props(props) {
+	/** @type {Record<string, unknown>} */
+	const merged_props = {};
+	let key;
+	for (let i = 0; i < props.length; i++) {
+		const obj = props[i];
+		if (obj == null) continue;
+		for (key of Object.keys(obj)) {
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) Object.defineProperty(merged_props, key, desc);
+			else merged_props[key] = obj[key];
+		}
+	}
+	return merged_props;
+}
+/**
+* @param {unknown} value
+* @returns {string}
+*/
+function stringify(value) {
+	return typeof value === "string" ? value : value == null ? "" : value + "";
+}
+/**
+* @param {any} value
+* @param {string | undefined} [hash]
+* @param {Record<string, boolean>} [directives]
+*/
+function attr_class(value, hash, directives) {
+	var result = to_class(value, hash, directives);
+	return result ? ` class="${escape_html(result, true)}"` : "";
+}
+/**
+* @param {any} value
+* @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [directives]
+*/
+function attr_style(value, directives) {
+	var result = to_style(value, directives);
+	return result ? ` style="${escape_html(result, true)}"` : "";
+}
+/**
+* @template V
+* @param {Record<string, [any, any, any]>} store_values
+* @param {string} store_name
+* @param {Store<V> | null | undefined} store
+* @returns {V}
+*/
+function store_get(store_values, store_name, store) {
+	if (store_name in store_values && store_values[store_name][0] === store) return store_values[store_name][2];
+	store_values[store_name]?.[1]();
+	store_values[store_name] = [
+		store,
+		null,
+		void 0
+	];
+	const unsub = subscribe_to_store(
+		store,
+		/** @param {any} v */
+		(v) => store_values[store_name][2] = v
+	);
+	store_values[store_name][1] = unsub;
+	return store_values[store_name][2];
+}
+/**
+* Sets the new value of a store and returns that value.
+* @template V
+* @param {Store<V>} store
+* @param {V} value
+* @returns {V}
+*/
+function store_set(store, value) {
+	store.set(value);
+	return value;
+}
+/** @param {Record<string, [any, any, any]>} store_values */
+function unsubscribe_stores(store_values) {
+	for (const store_name of Object.keys(store_values)) store_values[store_name][1]();
+}
+/**
+* Legacy mode: If the prop has a fallback and is bound in the
+* parent component, propagate the fallback value upwards.
+* @param {Record<string, unknown>} props_parent
+* @param {Record<string, unknown>} props_now
+*/
+function bind_props(props_parent, props_now) {
+	for (const key of Object.keys(props_now)) {
+		const initial_value = props_parent[key];
+		const value = props_now[key];
+		if (initial_value === void 0 && value !== void 0 && Object.getOwnPropertyDescriptor(props_parent, key)?.set) props_parent[key] = value;
+	}
+}
+/** @param {any} array_like_or_iterator */
+function ensure_array_like(array_like_or_iterator) {
+	if (array_like_or_iterator) return array_like_or_iterator.length !== void 0 ? array_like_or_iterator : Array.from(array_like_or_iterator);
+	return [];
+}
+/**
+* @template V
+* @param {() => V} get_value
+*/
+function once(get_value) {
+	let value = UNINITIALIZED;
+	return () => {
+		if (value === UNINITIALIZED) value = get_value();
+		return value;
+	};
+}
+/**
+* Create an unique ID
+* @param {Renderer} renderer
+* @returns {string}
+*/
+function props_id(renderer) {
+	const uid = renderer.global.uid();
+	renderer.push("<!--$" + uid + "-->");
+	return uid;
+}
+/**
+* @template T
+* @param {()=>T} fn
+* @returns {(new_value?: T) => (T | void)}
+*/
+function derived(fn) {
+	const get_value = ssr_context === null ? fn : once(fn);
+	/** @type {T | undefined} */
+	let updated_value;
+	return function(new_value) {
+		if (arguments.length === 0) return updated_value ?? get_value();
+		updated_value = new_value;
+		return updated_value;
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/hydratable.js
 /** @import { HydratableLookupEntry } from '#server' */
 /**
 * @template T
@@ -4417,7 +5290,7 @@ function encode(key, value, unresolved) {
 		serialized: ""
 	};
 	let uid = 1;
-	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
+	entry.serialized = uneval(entry.value, (value, uneval) => {
 		if (is_promise(value)) {
 			const placeholder = `"${uid++}"`;
 			const p = value.then((v) => {
@@ -4449,7 +5322,7 @@ function serialization_stack(root_stack, uneval_stack) {
 	return out || "<missing stack trace>";
 }
 //#endregion
-//#region ../../node_modules/svelte/src/internal/server/blocks/snippet.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/internal/server/blocks/snippet.js
 /** @import { Snippet } from 'svelte' */
 /** @import { Renderer } from '../renderer' */
 /** @import { Getters } from '#shared' */
@@ -4469,7 +5342,7 @@ function createRawSnippet(fn) {
 	};
 }
 //#endregion
-//#region ../../node_modules/svelte/src/index-server.js
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/index-server.js
 /** @import { SSRContext } from '#server' */
 /** @import { Renderer } from './internal/server/renderer.js' */
 var index_server_exports = /* @__PURE__ */ __exportAll({
@@ -4485,14 +5358,14 @@ var index_server_exports = /* @__PURE__ */ __exportAll({
 	getContext: () => getContext,
 	hasContext: () => hasContext,
 	hydratable: () => hydratable,
-	hydrate: () => hydrate$1,
-	mount: () => mount$1,
+	hydrate: () => hydrate,
+	mount: () => mount,
 	onDestroy: () => onDestroy,
 	onMount: () => noop$1,
 	setContext: () => setContext,
 	settled: () => settled,
 	tick: () => tick,
-	unmount: () => unmount$1,
+	unmount: () => unmount,
 	untrack: () => run
 });
 /** @param {() => void} fn */
@@ -4502,13 +5375,13 @@ function onDestroy(fn) {
 function createEventDispatcher() {
 	return noop$1;
 }
-function mount$1() {
+function mount() {
 	lifecycle_function_unavailable("mount");
 }
-function hydrate$1() {
+function hydrate() {
 	lifecycle_function_unavailable("hydrate");
 }
-function unmount$1() {
+function unmount() {
 	lifecycle_function_unavailable("unmount");
 }
 function fork() {
@@ -4516,442 +5389,6 @@ function fork() {
 }
 async function tick() {}
 async function settled() {}
-//#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/elements/events.js
-/**
-* Used on elements, as a map of event type -> event handler,
-* and on events themselves to track which element handled an event
-*/
-var event_symbol = Symbol("events");
-/** @type {Set<string>} */
-var all_registered_events = /* @__PURE__ */ new Set();
-/** @type {Set<(events: Array<string>) => void>} */
-var root_event_handles = /* @__PURE__ */ new Set();
-/**
-* @param {string} event_name
-* @param {EventTarget} dom
-* @param {EventListener} [handler]
-* @param {AddEventListenerOptions} [options]
-*/
-function create_event(event_name, dom, handler, options = {}) {
-	/**
-	* @this {EventTarget}
-	*/
-	function target_handler(event) {
-		if (!options.capture) handle_event_propagation.call(dom, event);
-		if (!event.cancelBubble) return without_reactive_context(() => {
-			return handler?.call(this, event);
-		});
-	}
-	if (event_name.startsWith("pointer") || event_name.startsWith("touch") || event_name === "wheel") queue_micro_task(() => {
-		dom.addEventListener(event_name, target_handler, options);
-	});
-	else dom.addEventListener(event_name, target_handler, options);
-	return target_handler;
-}
-/**
-* Attaches an event handler to an element and returns a function that removes the handler. Using this
-* rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
-* (with attributes like `onclick`), which use event delegation for performance reasons
-*
-* @param {EventTarget} element
-* @param {string} type
-* @param {EventListener} handler
-* @param {AddEventListenerOptions} [options]
-*/
-function on(element, type, handler, options = {}) {
-	var target_handler = create_event(type, element, handler, options);
-	return () => {
-		element.removeEventListener(type, target_handler, options);
-	};
-}
-var last_propagated_event = null;
-/**
-* @this {EventTarget}
-* @param {Event} event
-* @returns {void}
-*/
-function handle_event_propagation(event) {
-	var handler_element = this;
-	var owner_document = handler_element.ownerDocument;
-	var event_name = event.type;
-	var path = event.composedPath?.() || [];
-	var current_target = path[0] || event.target;
-	last_propagated_event = event;
-	var path_idx = 0;
-	var handled_at = last_propagated_event === event && event[event_symbol];
-	if (handled_at) {
-		var at_idx = path.indexOf(handled_at);
-		if (at_idx !== -1 && (handler_element === document || handler_element === window)) {
-			event[event_symbol] = handler_element;
-			return;
-		}
-		var handler_idx = path.indexOf(handler_element);
-		if (handler_idx === -1) return;
-		if (at_idx <= handler_idx) path_idx = at_idx;
-	}
-	current_target = path[path_idx] || event.target;
-	if (current_target === handler_element) return;
-	define_property(event, "currentTarget", {
-		configurable: true,
-		get() {
-			return current_target || owner_document;
-		}
-	});
-	var previous_reaction = active_reaction;
-	var previous_effect = active_effect;
-	set_active_reaction(null);
-	set_active_effect(null);
-	try {
-		/**
-		* @type {unknown}
-		*/
-		var throw_error;
-		/**
-		* @type {unknown[]}
-		*/
-		var other_errors = [];
-		while (current_target !== null) {
-			if (current_target === handler_element) break;
-			try {
-				var delegated = current_target[event_symbol]?.[event_name];
-				if (delegated != null && (!current_target.disabled || event.target === current_target)) delegated.call(current_target, event);
-			} catch (error) {
-				if (throw_error) other_errors.push(error);
-				else throw_error = error;
-			}
-			if (event.cancelBubble) break;
-			path_idx++;
-			current_target = path_idx < path.length ? path[path_idx] : null;
-		}
-		if (throw_error) {
-			for (let error of other_errors) queueMicrotask(() => {
-				throw error;
-			});
-			throw throw_error;
-		}
-	} finally {
-		event[event_symbol] = handler_element;
-		delete event.currentTarget;
-		set_active_reaction(previous_reaction);
-		set_active_effect(previous_effect);
-	}
-}
-globalThis?.window?.trustedTypes;
-//#endregion
-//#region ../../node_modules/svelte/src/internal/client/dom/template.js
-/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-/** @import { TemplateStructure } from './types' */
-/**
-* @param {TemplateNode} start
-* @param {TemplateNode | null} end
-*/
-function assign_nodes(start, end) {
-	var effect = active_effect;
-	if (effect.nodes === null) effect.nodes = {
-		start,
-		end,
-		a: null,
-		t: null
-	};
-}
-/**
-* Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
-* Transitions will play during the initial render unless the `intro` option is set to `false`.
-*
-* @template {Record<string, any>} Props
-* @template {Record<string, any>} Exports
-* @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
-* @param {MountOptions<Props>} options
-* @returns {Exports}
-*/
-function mount(component, options) {
-	return _mount(component, options);
-}
-/**
-* Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
-*
-* @template {Record<string, any>} Props
-* @template {Record<string, any>} Exports
-* @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
-* @param {{} extends Props ? {
-* 		target: Document | Element | ShadowRoot;
-* 		props?: Props;
-* 		events?: Record<string, (e: any) => any>;
-*  	context?: Map<any, any>;
-* 		intro?: boolean;
-* 		recover?: boolean;
-*		transformError?: (error: unknown) => unknown;
-* 	} : {
-* 		target: Document | Element | ShadowRoot;
-* 		props: Props;
-* 		events?: Record<string, (e: any) => any>;
-*  	context?: Map<any, any>;
-* 		intro?: boolean;
-* 		recover?: boolean;
-*		transformError?: (error: unknown) => unknown;
-* 	}} options
-* @returns {Exports}
-*/
-function hydrate(component, options) {
-	init_operations();
-	options.intro = options.intro ?? false;
-	const target = options.target;
-	const was_hydrating = hydrating;
-	const previous_hydrate_node = hydrate_node;
-	try {
-		var anchor = /* @__PURE__ */ get_first_child(target);
-		while (anchor && (anchor.nodeType !== 8 || anchor.data !== "[")) anchor = /* @__PURE__ */ get_next_sibling(anchor);
-		if (!anchor) throw HYDRATION_ERROR;
-		set_hydrating(true);
-		set_hydrate_node(anchor);
-		const instance = _mount(component, {
-			...options,
-			anchor
-		});
-		set_hydrating(false);
-		return instance;
-	} catch (error) {
-		if (error instanceof Error && error.message.split("\n").some((line) => line.startsWith("https://svelte.dev/e/"))) throw error;
-		if (error !== HYDRATION_ERROR) console.warn("Failed to hydrate: ", error);
-		if (options.recover === false) hydration_failed();
-		init_operations();
-		clear_text_content(target);
-		set_hydrating(false);
-		return mount(component, options);
-	} finally {
-		set_hydrating(was_hydrating);
-		set_hydrate_node(previous_hydrate_node);
-	}
-}
-/** @type {Map<EventTarget, Map<string, number>>} */
-var listeners = /* @__PURE__ */ new Map();
-/**
-* @template {Record<string, any>} Exports
-* @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
-* @param {MountOptions} options
-* @returns {Exports}
-*/
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true, transformError }) {
-	init_operations();
-	/** @type {Exports} */
-	var component = void 0;
-	var unmount = component_root(() => {
-		var anchor_node = anchor ?? target.appendChild(create_text());
-		boundary(anchor_node, { pending: () => {} }, (anchor_node) => {
-			push({});
-			var ctx = component_context;
-			if (context) ctx.c = context;
-			if (events)
- /** @type {any} */ props.$$events = events;
-			if (hydrating) assign_nodes(anchor_node, null);
-			component = Component(anchor_node, props) || {};
-			if (hydrating) {
-				/** @type {Effect & { nodes: EffectNodes }} */ active_effect.nodes.end = hydrate_node;
-				if (hydrate_node === null || hydrate_node.nodeType !== 8 || hydrate_node.data !== "]") {
-					hydration_mismatch();
-					throw HYDRATION_ERROR;
-				}
-			}
-			pop();
-		}, transformError);
-		/** @type {Set<string>} */
-		var registered_events = /* @__PURE__ */ new Set();
-		/** @param {Array<string>} events */
-		var event_handle = (events) => {
-			for (var i = 0; i < events.length; i++) {
-				var event_name = events[i];
-				if (registered_events.has(event_name)) continue;
-				registered_events.add(event_name);
-				var passive = is_passive_event(event_name);
-				for (const node of [target, document]) {
-					var counts = listeners.get(node);
-					if (counts === void 0) {
-						counts = /* @__PURE__ */ new Map();
-						listeners.set(node, counts);
-					}
-					var count = counts.get(event_name);
-					if (count === void 0) {
-						node.addEventListener(event_name, handle_event_propagation, { passive });
-						counts.set(event_name, 1);
-					} else counts.set(event_name, count + 1);
-				}
-			}
-		};
-		event_handle(array_from(all_registered_events));
-		root_event_handles.add(event_handle);
-		return () => {
-			for (var event_name of registered_events) for (const node of [target, document]) {
-				var counts = listeners.get(node);
-				var count = counts.get(event_name);
-				if (--count == 0) {
-					node.removeEventListener(event_name, handle_event_propagation);
-					counts.delete(event_name);
-					if (counts.size === 0) listeners.delete(node);
-				} else counts.set(event_name, count);
-			}
-			root_event_handles.delete(event_handle);
-			if (anchor_node !== anchor) anchor_node.parentNode?.removeChild(anchor_node);
-		};
-	});
-	mounted_components.set(component, unmount);
-	return component;
-}
-/**
-* References of the components that were mounted or hydrated.
-* Uses a `WeakMap` to avoid memory leaks.
-*/
-var mounted_components = /* @__PURE__ */ new WeakMap();
-/**
-* Unmounts a component that was previously mounted using `mount` or `hydrate`.
-*
-* Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
-*
-* Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
-*
-* ```js
-* import { mount, unmount } from 'svelte';
-* import App from './App.svelte';
-*
-* const app = mount(App, { target: document.body });
-*
-* // later...
-* unmount(app, { outro: true });
-* ```
-* @param {Record<string, any>} component
-* @param {{ outro?: boolean }} [options]
-* @returns {Promise<void>}
-*/
-function unmount(component, options) {
-	const fn = mounted_components.get(component);
-	if (fn) {
-		mounted_components.delete(component);
-		return fn(options);
-	}
-	return Promise.resolve();
-}
-/**
-* Takes the component function and returns a Svelte 4 compatible component constructor.
-*
-* @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
-*
-* @template {Record<string, any>} Props
-* @template {Record<string, any>} Exports
-* @template {Record<string, any>} Events
-* @template {Record<string, any>} Slots
-*
-* @param {SvelteComponent<Props, Events, Slots> | Component<Props>} component
-* @returns {ComponentType<SvelteComponent<Props, Events, Slots> & Exports>}
-*/
-function asClassComponent(component) {
-	return class extends Svelte4Component {
-		/** @param {any} options */
-		constructor(options) {
-			super({
-				component,
-				...options
-			});
-		}
-	};
-}
-/**
-* Support using the component as both a class and function during the transition period
-* @typedef  {{new (o: ComponentConstructorOptions): SvelteComponent;(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;}} LegacyComponentType
-*/
-var Svelte4Component = class {
-	/** @type {any} */
-	#events;
-	/** @type {Record<string, any>} */
-	#instance;
-	/**
-	* @param {ComponentConstructorOptions & {
-	*  component: any;
-	* }} options
-	*/
-	constructor(options) {
-		var sources = /* @__PURE__ */ new Map();
-		/**
-		* @param {string | symbol} key
-		* @param {unknown} value
-		*/
-		var add_source = (key, value) => {
-			var s = /* @__PURE__ */ mutable_source(value, false, false);
-			sources.set(key, s);
-			return s;
-		};
-		const props = new Proxy({
-			...options.props || {},
-			$$events: {}
-		}, {
-			get(target, prop) {
-				return get$2(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
-			},
-			has(target, prop) {
-				if (prop === LEGACY_PROPS) return true;
-				get$2(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
-				return Reflect.has(target, prop);
-			},
-			set(target, prop, value) {
-				set(sources.get(prop) ?? add_source(prop, value), value);
-				return Reflect.set(target, prop, value);
-			}
-		});
-		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
-			target: options.target,
-			anchor: options.anchor,
-			props,
-			context: options.context,
-			intro: options.intro ?? false,
-			recover: options.recover,
-			transformError: options.transformError
-		});
-		if (!async_mode_flag && (!options?.props?.$$host || options.sync === false)) flushSync();
-		this.#events = props.$$events;
-		for (const key of Object.keys(this.#instance)) {
-			if (key === "$set" || key === "$destroy" || key === "$on") continue;
-			define_property(this, key, {
-				get() {
-					return this.#instance[key];
-				},
-				/** @param {any} value */
-				set(value) {
-					this.#instance[key] = value;
-				},
-				enumerable: true
-			});
-		}
-		this.#instance.$set = (next) => {
-			Object.assign(props, next);
-		};
-		this.#instance.$destroy = () => {
-			unmount(this.#instance);
-		};
-	}
-	/** @param {Record<string, any>} props */
-	$set(props) {
-		this.#instance.$set(props);
-	}
-	/**
-	* @param {string} event
-	* @param {(...args: any[]) => any} callback
-	* @returns {any}
-	*/
-	$on(event, callback) {
-		this.#events[event] = this.#events[event] || [];
-		/** @param {any[]} args */
-		const cb = (...args) => callback.call(this, ...args);
-		this.#events[event].push(cb);
-		return () => {
-			this.#events[event] = this.#events[event].filter(
-				/** @param {any} fn */
-				(fn) => fn !== cb
-			);
-		};
-	}
-	$destroy() {
-		this.#instance.$destroy();
-	}
-};
 globalThis.Date;
 var SvelteSet = globalThis.Set;
 var SvelteMap = globalThis.Map;
@@ -4974,7 +5411,237 @@ function createSubscriber(_) {
 	return () => {};
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/is.js
+//#region ../../node_modules/.bun/inline-style-parser@0.2.7/node_modules/inline-style-parser/esm/index.mjs
+var COMMENT_REGEX = /\/\*[^*]*\*+([^/*][^*]*\*+)*\//g;
+var NEWLINE_REGEX = /\n/g;
+var WHITESPACE_REGEX = /^\s*/;
+var PROPERTY_REGEX = /^(\*?[-#/*\\\w]+(\[[0-9a-z_-]+\])?)\s*/;
+var COLON_REGEX = /^:\s*/;
+var VALUE_REGEX = /^((?:'(?:\\'|.)*?'|"(?:\\"|.)*?"|\([^)]*?\)|[^};])+)/;
+var SEMICOLON_REGEX = /^[;\s]*/;
+var TRIM_REGEX = /^\s+|\s+$/g;
+var NEWLINE = "\n";
+var FORWARD_SLASH = "/";
+var ASTERISK = "*";
+var EMPTY_STRING = "";
+var TYPE_COMMENT = "comment";
+var TYPE_DECLARATION = "declaration";
+/**
+* @param {String} style
+* @param {Object} [options]
+* @return {Object[]}
+* @throws {TypeError}
+* @throws {Error}
+*/
+function index(style, options) {
+	if (typeof style !== "string") throw new TypeError("First argument must be a string");
+	if (!style) return [];
+	options = options || {};
+	/**
+	* Positional.
+	*/
+	var lineno = 1;
+	var column = 1;
+	/**
+	* Update lineno and column based on `str`.
+	*
+	* @param {String} str
+	*/
+	function updatePosition(str) {
+		var lines = str.match(NEWLINE_REGEX);
+		if (lines) lineno += lines.length;
+		var i = str.lastIndexOf(NEWLINE);
+		column = ~i ? str.length - i : column + str.length;
+	}
+	/**
+	* Mark position and patch `node.position`.
+	*
+	* @return {Function}
+	*/
+	function position() {
+		var start = {
+			line: lineno,
+			column
+		};
+		return function(node) {
+			node.position = new Position(start);
+			whitespace();
+			return node;
+		};
+	}
+	/**
+	* Store position information for a node.
+	*
+	* @constructor
+	* @property {Object} start
+	* @property {Object} end
+	* @property {undefined|String} source
+	*/
+	function Position(start) {
+		this.start = start;
+		this.end = {
+			line: lineno,
+			column
+		};
+		this.source = options.source;
+	}
+	/**
+	* Non-enumerable source string.
+	*/
+	Position.prototype.content = style;
+	/**
+	* Error `msg`.
+	*
+	* @param {String} msg
+	* @throws {Error}
+	*/
+	function error(msg) {
+		var err = /* @__PURE__ */ new Error(options.source + ":" + lineno + ":" + column + ": " + msg);
+		err.reason = msg;
+		err.filename = options.source;
+		err.line = lineno;
+		err.column = column;
+		err.source = style;
+		if (options.silent);
+		else throw err;
+	}
+	/**
+	* Match `re` and return captures.
+	*
+	* @param {RegExp} re
+	* @return {undefined|Array}
+	*/
+	function match(re) {
+		var m = re.exec(style);
+		if (!m) return;
+		var str = m[0];
+		updatePosition(str);
+		style = style.slice(str.length);
+		return m;
+	}
+	/**
+	* Parse whitespace.
+	*/
+	function whitespace() {
+		match(WHITESPACE_REGEX);
+	}
+	/**
+	* Parse comments.
+	*
+	* @param {Object[]} [rules]
+	* @return {Object[]}
+	*/
+	function comments(rules) {
+		var c;
+		rules = rules || [];
+		while (c = comment()) if (c !== false) rules.push(c);
+		return rules;
+	}
+	/**
+	* Parse comment.
+	*
+	* @return {Object}
+	* @throws {Error}
+	*/
+	function comment() {
+		var pos = position();
+		if (FORWARD_SLASH != style.charAt(0) || ASTERISK != style.charAt(1)) return;
+		var i = 2;
+		while (EMPTY_STRING != style.charAt(i) && (ASTERISK != style.charAt(i) || FORWARD_SLASH != style.charAt(i + 1))) ++i;
+		i += 2;
+		if (EMPTY_STRING === style.charAt(i - 1)) return error("End of comment missing");
+		var str = style.slice(2, i - 2);
+		column += 2;
+		updatePosition(str);
+		style = style.slice(i);
+		column += 2;
+		return pos({
+			type: TYPE_COMMENT,
+			comment: str
+		});
+	}
+	/**
+	* Parse declaration.
+	*
+	* @return {Object}
+	* @throws {Error}
+	*/
+	function declaration() {
+		var pos = position();
+		var prop = match(PROPERTY_REGEX);
+		if (!prop) return;
+		comment();
+		if (!match(COLON_REGEX)) return error("property missing ':'");
+		var val = match(VALUE_REGEX);
+		var ret = pos({
+			type: TYPE_DECLARATION,
+			property: trim(prop[0].replace(COMMENT_REGEX, EMPTY_STRING)),
+			value: val ? trim(val[0].replace(COMMENT_REGEX, EMPTY_STRING)) : EMPTY_STRING
+		});
+		match(SEMICOLON_REGEX);
+		return ret;
+	}
+	/**
+	* Parse declarations.
+	*
+	* @return {Object[]}
+	*/
+	function declarations() {
+		var decls = [];
+		comments(decls);
+		var decl;
+		while (decl = declaration()) if (decl !== false) {
+			decls.push(decl);
+			comments(decls);
+		}
+		return decls;
+	}
+	whitespace();
+	return declarations();
+}
+/**
+* Trim `str`.
+*
+* @param {String} str
+* @return {String}
+*/
+function trim(str) {
+	return str ? str.replace(TRIM_REGEX, EMPTY_STRING) : EMPTY_STRING;
+}
+//#endregion
+//#region ../../node_modules/.bun/style-to-object@1.0.14/node_modules/style-to-object/esm/index.mjs
+/**
+* Parses inline style to object.
+*
+* @param style - Inline style.
+* @param iterator - Iterator.
+* @returns - Style object or null.
+*
+* @example Parsing inline style to object:
+*
+* ```js
+* import parse from 'style-to-object';
+* parse('line-height: 42;'); // { 'line-height': '42' }
+* ```
+*/
+function StyleToObject(style, iterator) {
+	let styleObject = null;
+	if (!style || typeof style !== "string") return styleObject;
+	const declarations = index(style);
+	const hasIterator = typeof iterator === "function";
+	declarations.forEach((declaration) => {
+		if (declaration.type !== "declaration") return;
+		const { property, value } = declaration;
+		if (hasIterator) iterator(property, value, declaration);
+		else if (value) {
+			styleObject = styleObject || {};
+			styleObject[property] = value;
+		}
+	});
+	return styleObject;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/is.js
 function isFunction$1(value) {
 	return typeof value === "function";
 }
@@ -4998,7 +5665,7 @@ function isClassValue(value) {
 	return false;
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/box/box-extras.svelte.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/box/box-extras.svelte.js
 var BoxSymbol = Symbol("box");
 var isWritableSymbol = Symbol("is-writable");
 function boxWith(getter, setter) {
@@ -5100,7 +5767,7 @@ function simpleBox(initialValue) {
 	};
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/box/box.svelte.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/box/box.svelte.js
 function box(initialValue) {
 	let current = initialValue;
 	return {
@@ -5121,7 +5788,7 @@ box.readonly = toReadonlyBox;
 box.isBox = isBox;
 box.isWritableBox = isWritableBox;
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/compose-handlers.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/compose-handlers.js
 /**
 * Composes event handlers into a single function that can be called with an event.
 * If the previous handler cancels the event using `event.preventDefault()`, the handlers
@@ -5138,7 +5805,7 @@ function composeHandlers(...handlers) {
 	};
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/strings.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/strings.js
 var NUMBER_CHAR_RE = /\d/;
 var STR_SPLITTERS = [
 	"-",
@@ -5200,7 +5867,7 @@ function lowerFirst(str) {
 	return str ? str[0].toLowerCase() + str.slice(1) : "";
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/css-to-style-obj.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/css-to-style-obj.js
 function cssToStyleObj(css) {
 	if (!css) return {};
 	const styleObj = {};
@@ -5215,11 +5882,11 @@ function cssToStyleObj(css) {
 		}
 		styleObj[camelCase(name)] = value;
 	}
-	parse$1(css, iterator);
+	StyleToObject(css, iterator);
 	return styleObj;
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/execute-callbacks.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/execute-callbacks.js
 /**
 * Executes an array of callback functions with the same arguments.
 * @template T The types of the arguments that the callback functions take.
@@ -5232,7 +5899,7 @@ function executeCallbacks(...callbacks) {
 	};
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/style-to-css.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/style-to-css.js
 function createParser(matcher, replacer) {
 	const regex = RegExp(matcher, "g");
 	return (str) => {
@@ -5247,11 +5914,11 @@ function styleToCSS(styleObj) {
 	return Object.keys(styleObj).map((property) => `${camelToKebab(property)}: ${styleObj[property]};`).join("\n");
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/style.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/style.js
 function styleToString(style = {}) {
 	return styleToCSS(style).replace("\n", " ");
 }
-var EVENT_LIST_SET = new Set([
+var EVENT_LIST_SET = /* @__PURE__ */ new Set([
 	"onabort",
 	"onanimationcancel",
 	"onanimationend",
@@ -5357,7 +6024,7 @@ var EVENT_LIST_SET = new Set([
 	"onwheel"
 ]);
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/merge-props.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/merge-props.js
 /**
 * Modified from https://github.com/adobe/react-spectrum/blob/main/packages/%40react-aria/utils/src/mergeProps.ts (see NOTICE.txt for source)
 */
@@ -5441,7 +6108,7 @@ function mergeProps(...args) {
 	return result;
 }
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/sr-only-styles.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/sr-only-styles.js
 var srOnlyStyles = {
 	position: "absolute",
 	width: "1px",
@@ -5456,197 +6123,10 @@ var srOnlyStyles = {
 };
 styleToString(srOnlyStyles);
 //#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/after-sleep.js
-/**
-* A utility function that executes a callback after a specified number of milliseconds.
-*/
-function afterSleep(ms, cb) {
-	return setTimeout(cb, ms);
-}
-//#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/after-tick.js
-function afterTick(fn) {
-	(/* @__PURE__ */ tick()).then(fn);
-}
-//#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/dom.js
-var ELEMENT_NODE = 1;
-var DOCUMENT_NODE = 9;
-var DOCUMENT_FRAGMENT_NODE = 11;
-function isHTMLElement$1(node) {
-	return isObject(node) && node.nodeType === ELEMENT_NODE && typeof node.nodeName === "string";
-}
-function isDocument(node) {
-	return isObject(node) && node.nodeType === DOCUMENT_NODE;
-}
-function isWindow(node) {
-	return isObject(node) && node.constructor?.name === "VisualViewport";
-}
-function isNode(node) {
-	return isObject(node) && node.nodeType !== void 0;
-}
-function isShadowRoot(node) {
-	return isNode(node) && node.nodeType === DOCUMENT_FRAGMENT_NODE && "host" in node;
-}
-function contains(parent, child) {
-	if (!parent || !child) return false;
-	if (!isHTMLElement$1(parent) || !isHTMLElement$1(child)) return false;
-	const rootNode = child.getRootNode?.();
-	if (parent === child) return true;
-	if (parent.contains(child)) return true;
-	if (rootNode && isShadowRoot(rootNode)) {
-		let next = child;
-		while (next) {
-			if (parent === next) return true;
-			next = next.parentNode || next.host;
-		}
-	}
-	return false;
-}
-function getDocument(node) {
-	if (isDocument(node)) return node;
-	if (isWindow(node)) return node.document;
-	return node?.ownerDocument ?? document;
-}
-function getWindow(node) {
-	if (isShadowRoot(node)) return getWindow(node.host);
-	if (isDocument(node)) return node.defaultView ?? window;
-	if (isHTMLElement$1(node)) return node.ownerDocument?.defaultView ?? window;
-	return window;
-}
-function getActiveElement$1(rootNode) {
-	let activeElement = rootNode.activeElement;
-	while (activeElement?.shadowRoot) {
-		const el = activeElement.shadowRoot.activeElement;
-		if (el === activeElement) break;
-		else activeElement = el;
-	}
-	return activeElement;
-}
-//#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/dom-context.svelte.js
-var DOMContext = class {
-	element;
-	#root = derived(() => {
-		if (!this.element.current) return document;
-		return this.element.current.getRootNode() ?? document;
-	});
-	get root() {
-		return this.#root();
-	}
-	set root($$value) {
-		return this.#root($$value);
-	}
-	constructor(element) {
-		if (typeof element === "function") this.element = boxWith(element);
-		else this.element = element;
-	}
-	getDocument = () => {
-		return getDocument(this.root);
-	};
-	getWindow = () => {
-		return this.getDocument().defaultView ?? window;
-	};
-	getActiveElement = () => {
-		return getActiveElement$1(this.root);
-	};
-	isActiveElement = (node) => {
-		return node === this.getActiveElement();
-	};
-	getElementById(id) {
-		return this.root.getElementById(id);
-	}
-	querySelector = (selector) => {
-		if (!this.root) return null;
-		return this.root.querySelector(selector);
-	};
-	querySelectorAll = (selector) => {
-		if (!this.root) return [];
-		return this.root.querySelectorAll(selector);
-	};
-	setTimeout = (callback, delay) => {
-		return this.getWindow().setTimeout(callback, delay);
-	};
-	clearTimeout = (timeoutId) => {
-		return this.getWindow().clearTimeout(timeoutId);
-	};
-};
-if (typeof HTMLElement === "function");
-//#endregion
-//#region ../../node_modules/svelte/src/attachments/index.js
-/**
-* Creates an object key that will be recognised as an attachment when the object is spread onto an element,
-* as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
-* is generally not needed when building an app.
-*
-* ```svelte
-* <script>
-* 	import { createAttachmentKey } from 'svelte/attachments';
-*
-* 	const props = {
-* 		class: 'cool',
-* 		onclick: () => alert('clicked'),
-* 		[createAttachmentKey()]: (node) => {
-* 			node.textContent = 'attached!';
-* 		}
-* 	};
-* <\/script>
-*
-* <button {...props}>click me</button>
-* ```
-* @since 5.29
-*/
-function createAttachmentKey() {
-	return Symbol(ATTACHMENT_KEY);
-}
-//#endregion
-//#region ../../node_modules/svelte-toolbelt/dist/utils/attach-ref.js
-/**
-* Creates a Svelte Attachment that attaches a DOM element to a ref.
-* The ref can be either a WritableBox or a callback function.
-*
-* @param ref - Either a WritableBox to store the element in, or a callback function that receives the element
-* @param onChange - Optional callback that fires when the ref changes
-* @returns An object with a spreadable attachment key that should be spread onto the element
-*
-* @example
-* // Using with WritableBox
-* const ref = box<HTMLDivElement | null>(null);
-* <div {...attachRef(ref)}>Content</div>
-*
-* @example
-* // Using with callback
-* <div {...attachRef((node) => myNode = node)}>Content</div>
-*
-* @example
-* // Using with onChange
-* <div {...attachRef(ref, (node) => console.log(node))}>Content</div>
-*/
-function attachRef(ref, onChange) {
-	return { [createAttachmentKey()]: (node) => {
-		if (isBox(ref)) {
-			ref.current = node;
-			run(() => onChange?.(node));
-			return () => {
-				if ("isConnected" in node && node.isConnected) return;
-				ref.current = null;
-				onChange?.(null);
-			};
-		}
-		ref(node);
-		run(() => onChange?.(node));
-		return () => {
-			if ("isConnected" in node && node.isConnected) return;
-			ref(null);
-			onChange?.(null);
-		};
-	} };
-}
-//#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/internal/configurable-globals.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/internal/configurable-globals.js
 var defaultWindow = void 0;
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/internal/utils/dom.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/internal/utils/dom.js
 /**
 * Handles getting the active element in a document or shadow root.
 * If the active element is within a shadow root, it will traverse the shadow root
@@ -5656,7 +6136,7 @@ var defaultWindow = void 0;
 * @param document A document or shadow root to get the active element from.
 * @returns The active element in the document or shadow root.
 */
-function getActiveElement(document) {
+function getActiveElement$1(document) {
 	let activeElement = document.activeElement;
 	while (activeElement?.shadowRoot) {
 		const node = activeElement.shadowRoot.activeElement;
@@ -5666,7 +6146,7 @@ function getActiveElement(document) {
 	return activeElement;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/active-element/active-element.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/active-element/active-element.svelte.js
 var ActiveElement = class {
 	#document;
 	#subscribe;
@@ -5686,17 +6166,17 @@ var ActiveElement = class {
 	get current() {
 		this.#subscribe?.();
 		if (!this.#document) return null;
-		return getActiveElement(this.#document);
+		return getActiveElement$1(this.#document);
 	}
 };
 new ActiveElement();
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/internal/utils/is.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/internal/utils/is.js
 function isFunction(value) {
 	return typeof value === "function";
 }
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/extract/extract.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/extract/extract.svelte.js
 function extract(value, defaultValue) {
 	if (isFunction(value)) {
 		const gotten = value();
@@ -5707,7 +6187,7 @@ function extract(value, defaultValue) {
 	return value;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/context/context.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/context/context.js
 var Context = class {
 	#name;
 	#key;
@@ -5769,7 +6249,7 @@ var Context = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/use-debounce/use-debounce.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/use-debounce/use-debounce.svelte.js
 function useDebounce(callback, wait) {
 	let context = null;
 	const wait$ = derived(() => extract(wait, 250));
@@ -5830,7 +6310,7 @@ function useDebounce(callback, wait) {
 	return debounced;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/watch/watch.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/watch/watch.svelte.js
 function runWatcher(sources, flush, effect, options = {}) {
 	const { lazy = false } = options;
 }
@@ -5845,13 +6325,13 @@ function watchOnce(source, effect) {}
 function watchOncePre(source, effect) {}
 watchOnce.pre = watchOncePre;
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/internal/utils/get.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/internal/utils/get.js
 function get$1(value) {
 	if (isFunction(value)) return value();
 	return value;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/element-size/element-size.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/element-size/element-size.svelte.js
 var ElementSize = class {
 	#size = {
 		width: 0,
@@ -5934,7 +6414,7 @@ var ElementSize = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/is-mounted/is-mounted.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/is-mounted/is-mounted.svelte.js
 var IsMounted = class {
 	#isMounted = false;
 	constructor() {}
@@ -5943,7 +6423,7 @@ var IsMounted = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/previous/previous.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/previous/previous.svelte.js
 var Previous = class {
 	#previousCallback = () => void 0;
 	#previous = derived(() => this.#previousCallback());
@@ -5963,7 +6443,7 @@ var Previous = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/node_modules/runed/dist/utilities/resource/resource.svelte.js
+//#region ../../node_modules/.bun/runed@0.35.1+37e628f89a6bdaed/node_modules/runed/dist/utilities/resource/resource.svelte.js
 function debounce$1(fn, delay) {
 	let timeoutId;
 	let lastResolve = null;
@@ -6075,7 +6555,194 @@ function resourcePre(source, fetcher, options) {
 }
 resource.pre = resourcePre;
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/attrs.js
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/after-sleep.js
+/**
+* A utility function that executes a callback after a specified number of milliseconds.
+*/
+function afterSleep(ms, cb) {
+	return setTimeout(cb, ms);
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/after-tick.js
+function afterTick(fn) {
+	(/* @__PURE__ */ tick()).then(fn);
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/dom.js
+var ELEMENT_NODE = 1;
+var DOCUMENT_NODE = 9;
+var DOCUMENT_FRAGMENT_NODE = 11;
+function isHTMLElement$2(node) {
+	return isObject(node) && node.nodeType === ELEMENT_NODE && typeof node.nodeName === "string";
+}
+function isDocument(node) {
+	return isObject(node) && node.nodeType === DOCUMENT_NODE;
+}
+function isWindow(node) {
+	return isObject(node) && node.constructor?.name === "VisualViewport";
+}
+function isNode$1(node) {
+	return isObject(node) && node.nodeType !== void 0;
+}
+function isShadowRoot$1(node) {
+	return isNode$1(node) && node.nodeType === DOCUMENT_FRAGMENT_NODE && "host" in node;
+}
+function contains(parent, child) {
+	if (!parent || !child) return false;
+	if (!isHTMLElement$2(parent) || !isHTMLElement$2(child)) return false;
+	const rootNode = child.getRootNode?.();
+	if (parent === child) return true;
+	if (parent.contains(child)) return true;
+	if (rootNode && isShadowRoot$1(rootNode)) {
+		let next = child;
+		while (next) {
+			if (parent === next) return true;
+			next = next.parentNode || next.host;
+		}
+	}
+	return false;
+}
+function getDocument(node) {
+	if (isDocument(node)) return node;
+	if (isWindow(node)) return node.document;
+	return node?.ownerDocument ?? document;
+}
+function getWindow$1(node) {
+	if (isShadowRoot$1(node)) return getWindow$1(node.host);
+	if (isDocument(node)) return node.defaultView ?? window;
+	if (isHTMLElement$2(node)) return node.ownerDocument?.defaultView ?? window;
+	return window;
+}
+function getActiveElement(rootNode) {
+	let activeElement = rootNode.activeElement;
+	while (activeElement?.shadowRoot) {
+		const el = activeElement.shadowRoot.activeElement;
+		if (el === activeElement) break;
+		else activeElement = el;
+	}
+	return activeElement;
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/dom-context.svelte.js
+var DOMContext = class {
+	element;
+	#root = derived(() => {
+		if (!this.element.current) return document;
+		return this.element.current.getRootNode() ?? document;
+	});
+	get root() {
+		return this.#root();
+	}
+	set root($$value) {
+		return this.#root($$value);
+	}
+	constructor(element) {
+		if (typeof element === "function") this.element = boxWith(element);
+		else this.element = element;
+	}
+	getDocument = () => {
+		return getDocument(this.root);
+	};
+	getWindow = () => {
+		return this.getDocument().defaultView ?? window;
+	};
+	getActiveElement = () => {
+		return getActiveElement(this.root);
+	};
+	isActiveElement = (node) => {
+		return node === this.getActiveElement();
+	};
+	getElementById(id) {
+		return this.root.getElementById(id);
+	}
+	querySelector = (selector) => {
+		if (!this.root) return null;
+		return this.root.querySelector(selector);
+	};
+	querySelectorAll = (selector) => {
+		if (!this.root) return [];
+		return this.root.querySelectorAll(selector);
+	};
+	setTimeout = (callback, delay) => {
+		return this.getWindow().setTimeout(callback, delay);
+	};
+	clearTimeout = (timeoutId) => {
+		return this.getWindow().clearTimeout(timeoutId);
+	};
+};
+if (typeof HTMLElement === "function");
+//#endregion
+//#region ../../node_modules/.bun/svelte@5.56.5/node_modules/svelte/src/attachments/index.js
+/**
+* Creates an object key that will be recognised as an attachment when the object is spread onto an element,
+* as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
+* is generally not needed when building an app.
+*
+* ```svelte
+* <script>
+* 	import { createAttachmentKey } from 'svelte/attachments';
+*
+* 	const props = {
+* 		class: 'cool',
+* 		onclick: () => alert('clicked'),
+* 		[createAttachmentKey()]: (node) => {
+* 			node.textContent = 'attached!';
+* 		}
+* 	};
+* <\/script>
+*
+* <button {...props}>click me</button>
+* ```
+* @since 5.29
+*/
+function createAttachmentKey() {
+	return Symbol(ATTACHMENT_KEY);
+}
+//#endregion
+//#region ../../node_modules/.bun/svelte-toolbelt@0.10.6+37e628f89a6bdaed/node_modules/svelte-toolbelt/dist/utils/attach-ref.js
+/**
+* Creates a Svelte Attachment that attaches a DOM element to a ref.
+* The ref can be either a WritableBox or a callback function.
+*
+* @param ref - Either a WritableBox to store the element in, or a callback function that receives the element
+* @param onChange - Optional callback that fires when the ref changes
+* @returns An object with a spreadable attachment key that should be spread onto the element
+*
+* @example
+* // Using with WritableBox
+* const ref = box<HTMLDivElement | null>(null);
+* <div {...attachRef(ref)}>Content</div>
+*
+* @example
+* // Using with callback
+* <div {...attachRef((node) => myNode = node)}>Content</div>
+*
+* @example
+* // Using with onChange
+* <div {...attachRef(ref, (node) => console.log(node))}>Content</div>
+*/
+function attachRef(ref, onChange) {
+	return { [createAttachmentKey()]: (node) => {
+		if (isBox(ref)) {
+			ref.current = node;
+			run(() => onChange?.(node));
+			return () => {
+				if ("isConnected" in node && node.isConnected) return;
+				ref.current = null;
+				onChange?.(null);
+			};
+		}
+		ref(node);
+		run(() => onChange?.(node));
+		return () => {
+			if ("isConnected" in node && node.isConnected) return;
+			ref(null);
+			onChange?.(null);
+		};
+	} };
+}
+//#endregion
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/attrs.js
 function boolToStr(condition) {
 	return condition ? "true" : "false";
 }
@@ -6136,7 +6803,7 @@ var HOME = "Home";
 var PAGE_DOWN = "PageDown";
 var PAGE_UP = "PageUp";
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/locale.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/locale.js
 /**
 * Detects the text direction in the element.
 * @returns {Direction} The text direction ('ltr' for left-to-right or 'rtl' for right-to-left).
@@ -6145,7 +6812,7 @@ function getElemDirection(elem) {
 	return window.getComputedStyle(elem).getPropertyValue("direction");
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/get-directional-keys.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/get-directional-keys.js
 var FIRST_KEYS$2 = [
 	ARROW_DOWN,
 	PAGE_UP,
@@ -6188,16 +6855,16 @@ function getDirectionalKeys(dir = "ltr", orientation = "horizontal") {
 	};
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/is.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/is.js
 var isBrowser = typeof document !== "undefined";
 var isIOS = getIsIOS();
 function getIsIOS() {
 	return isBrowser && window?.navigator?.userAgent && (/iP(ad|hone|od)/.test(window.navigator.userAgent) || window?.navigator?.maxTouchPoints > 2 && /iPad|Macintosh/.test(window?.navigator.userAgent));
 }
-function isHTMLElement(element) {
+function isHTMLElement$1(element) {
 	return element instanceof HTMLElement;
 }
-function isElement(element) {
+function isElement$1(element) {
 	return element instanceof Element;
 }
 function isElementOrSVGElement(element) {
@@ -6220,7 +6887,7 @@ function isSelectableInput(element) {
 	return element instanceof HTMLInputElement && "select" in element;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/roving-focus-group.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/roving-focus-group.js
 var RovingFocusGroup = class {
 	#opts;
 	#currentTabStopId = box(null);
@@ -6283,12 +6950,12 @@ var RovingFocusGroup = class {
 		const currentTabStopId = this.#currentTabStopId.current;
 		if (!currentTabStopId) return;
 		const currentTabStop = this.#opts.rootNode.current?.querySelector(`#${currentTabStopId}`);
-		if (!currentTabStop || !isHTMLElement(currentTabStop)) return;
+		if (!currentTabStop || !isHTMLElement$1(currentTabStop)) return;
 		currentTabStop.focus();
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/animations-complete.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/animations-complete.js
 var AnimationsComplete = class {
 	#opts;
 	#currentFrame = null;
@@ -6376,7 +7043,7 @@ var AnimationsComplete = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/presence-manager.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/presence-manager.svelte.js
 var PresenceManager = class {
 	#opts;
 	#enabled;
@@ -6439,7 +7106,7 @@ var PresenceManager = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/accordion.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/accordion.svelte.js
 var accordionAttrs = createBitsAttrs({
 	component: "accordion",
 	parts: [
@@ -6751,19 +7418,19 @@ var AccordionHeaderState = class AccordionHeaderState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/noop.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/noop.js
 /**
 * A no operation function (does nothing)
 */
 function noop() {}
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/create-id.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/create-id.js
 function createId(prefixOrUid, uid) {
 	if (uid === void 0) return `bits-${prefixOrUid}`;
 	return `bits-${prefixOrUid}-${uid}`;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/components/accordion.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/components/accordion.svelte
 function Accordion($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -6807,7 +7474,7 @@ function Accordion($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/components/accordion-item.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/components/accordion-item.svelte
 function Accordion_item($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const defaultId = createId(props_id($$renderer));
@@ -6834,7 +7501,7 @@ function Accordion_item($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/components/accordion-header.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/components/accordion-header.svelte
 function Accordion_header($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -6860,7 +7527,7 @@ function Accordion_header($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/components/accordion-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/components/accordion-trigger.svelte
 function Accordion_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -6890,7 +7557,7 @@ function Accordion_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/accordion/components/accordion-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/accordion/components/accordion-content.svelte
 function Accordion_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -6920,7 +7587,7 @@ function Accordion_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/dialog.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/dialog.svelte.js
 var dialogAttrs = createBitsAttrs({
 	component: "dialog",
 	parts: [
@@ -7258,7 +7925,7 @@ var DialogOverlayState = class DialogOverlayState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-title.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-title.svelte
 function Dialog_title($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -7284,7 +7951,7 @@ function Dialog_title($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/portal/portal-consumer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/portal/portal-consumer.svelte
 function Portal_consumer($$renderer, $$props) {
 	const { children } = $$props;
 	$$renderer.push(`<!---->`);
@@ -7293,7 +7960,7 @@ function Portal_consumer($$renderer, $$props) {
 	$$renderer.push(`<!---->`);
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/config/bits-config.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/config/bits-config.js
 var BitsConfigContext = new Context("BitsConfig");
 /**
 * Gets the current Bits UI configuration state from the context.
@@ -7360,7 +8027,7 @@ function createConfigResolver(parent, currentOpts) {
 	};
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/config/prop-resolvers.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/config/prop-resolvers.js
 /**
 * Creates a generic prop resolver that follows a standard priority chain:
 * 1. The getter's prop value (if defined)
@@ -7386,7 +8053,7 @@ function createPropResolver(configOption, fallback) {
 */
 var resolvePortalToProp = createPropResolver((config) => config.defaultPortalTo, "body");
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/portal/portal.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/portal/portal.svelte
 function Portal($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { to: toProp, children, disabled } = $$props;
@@ -7403,7 +8070,7 @@ function Portal($$renderer, $$props) {
 		let instance;
 		function unmountInstance() {
 			if (instance) {
-				unmount$1(instance);
+				unmount(instance);
 				instance = null;
 			}
 		}
@@ -7412,7 +8079,7 @@ function Portal($$renderer, $$props) {
 				unmountInstance();
 				return;
 			}
-			instance = mount$1(Portal_consumer, {
+			instance = mount(Portal_consumer, {
 				target,
 				props: { children },
 				context
@@ -7430,7 +8097,7 @@ function Portal($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/events.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/events.js
 /**
 * Creates a typed event dispatcher and listener pair for custom events
 * @template T - The type of data that will be passed in the event detail
@@ -7466,7 +8133,7 @@ var CustomEventDispatcher = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/debounce.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/debounce.js
 function debounce(fn, wait = 500) {
 	let timeout = null;
 	const debounced = (...args) => {
@@ -7484,7 +8151,7 @@ function debounce(fn, wait = 500) {
 	return debounced;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/elements.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/elements.js
 function isOrContainsTarget(node, target) {
 	return node === target || node.contains(target);
 }
@@ -7492,7 +8159,7 @@ function getOwnerDocument(el) {
 	return el?.ownerDocument ?? document;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/dom.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/dom.js
 function getFirstNonCommentChild(element) {
 	if (!element) return null;
 	for (const child of element.childNodes) if (child.nodeType !== Node.COMMENT_NODE) return child;
@@ -7509,7 +8176,7 @@ function isClickTrulyOutside(event, contentNode) {
 	return clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/utils.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/utils.js
 var SELECTION_KEYS$1 = [ENTER, " "];
 var FIRST_KEYS$1 = [
 	ARROW_DOWN,
@@ -7534,7 +8201,7 @@ function isMouseEvent(event) {
 	return event.pointerType === "mouse";
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/focus.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/focus.js
 /**
 * A utility function that focuses an element.
 */
@@ -7558,7 +8225,7 @@ function focusFirst(candidates, { select = false } = {}, getActiveElement) {
 	}
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/is-using-keyboard/is-using-keyboard.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/is-using-keyboard/is-using-keyboard.svelte.js
 var isUsingKeyboard = false;
 var IsUsingKeyboard = class {
 	static _refs = 0;
@@ -7572,7 +8239,353 @@ var IsUsingKeyboard = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/tabbable.js
+//#region ../../node_modules/.bun/tabbable@6.5.0/node_modules/tabbable/dist/index.esm.js
+/*!
+* tabbable 6.5.0
+* @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
+*/
+var candidateSelectors = [
+	"input:not([inert]):not([inert] *)",
+	"select:not([inert]):not([inert] *)",
+	"textarea:not([inert]):not([inert] *)",
+	"a[href]:not([inert]):not([inert] *)",
+	"area[href]:not([inert]):not([inert] *)",
+	"button:not([inert]):not([inert] *)",
+	"[tabindex]:not(slot):not([inert]):not([inert] *)",
+	"audio[controls]:not([inert]):not([inert] *)",
+	"video[controls]:not([inert]):not([inert] *)",
+	"[contenteditable]:not([contenteditable=\"false\"]):not([inert]):not([inert] *)",
+	"details>summary:first-of-type:not([inert]):not([inert] *)",
+	"details:not([inert]):not([inert] *)"
+];
+var candidateSelector = /* #__PURE__ */ candidateSelectors.join(",");
+var NoElement = typeof Element === "undefined";
+var matches = NoElement ? function() {} : Element.prototype.matches || Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+var getRootNode = !NoElement && Element.prototype.getRootNode ? function(element) {
+	var _element$getRootNode;
+	return element === null || element === void 0 ? void 0 : (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
+} : function(element) {
+	return element === null || element === void 0 ? void 0 : element.ownerDocument;
+};
+/**
+* Determines if a node is inert or in an inert ancestor.
+* @param {Node} [node]
+* @param {boolean} [lookUp] If true and `node` is not inert, looks up at ancestors to
+*  see if any of them are inert. If false, only `node` itself is considered.
+* @returns {boolean} True if inert itself or by way of being in an inert ancestor.
+*  False if `node` is falsy.
+*/
+var _isInert = function isInert(node, lookUp) {
+	var _node$getAttribute;
+	if (lookUp === void 0) lookUp = true;
+	var inertAtt = node === null || node === void 0 ? void 0 : (_node$getAttribute = node.getAttribute) === null || _node$getAttribute === void 0 ? void 0 : _node$getAttribute.call(node, "inert");
+	return inertAtt === "" || inertAtt === "true" || lookUp && node && (typeof node.closest === "function" ? node.closest("[inert]") : _isInert(node.parentNode));
+};
+/**
+* Determines if a node's content is editable.
+* @param {Element} [node]
+* @returns True if it's content-editable; false if it's not or `node` is falsy.
+*/
+var isContentEditable = function isContentEditable(node) {
+	var _node$getAttribute2;
+	var attValue = node === null || node === void 0 ? void 0 : (_node$getAttribute2 = node.getAttribute) === null || _node$getAttribute2 === void 0 ? void 0 : _node$getAttribute2.call(node, "contenteditable");
+	return attValue === "" || attValue === "true";
+};
+/**
+* @param {Element} el container to check in
+* @param {boolean} includeContainer add container to check
+* @param {(node: Element) => boolean} filter filter candidates
+* @returns {Element[]}
+*/
+var getCandidates = function getCandidates(el, includeContainer, filter) {
+	if (_isInert(el)) return [];
+	var candidates = Array.prototype.slice.apply(el.querySelectorAll(candidateSelector));
+	if (includeContainer && matches.call(el, candidateSelector)) candidates.unshift(el);
+	candidates = candidates.filter(filter);
+	return candidates;
+};
+/**
+* @callback GetShadowRoot
+* @param {Element} element to check for shadow root
+* @returns {ShadowRoot|boolean} ShadowRoot if available or boolean indicating if a shadowRoot is attached but not available.
+*/
+/**
+* @callback ShadowRootFilter
+* @param {Element} shadowHostNode the element which contains shadow content
+* @returns {boolean} true if a shadow root could potentially contain valid candidates.
+*/
+/**
+* @typedef {Object} CandidateScope
+* @property {Element} scopeParent contains inner candidates
+* @property {Element[]} candidates list of candidates found in the scope parent
+*/
+/**
+* @typedef {Object} IterativeOptions
+* @property {GetShadowRoot|boolean} getShadowRoot true if shadow support is enabled; falsy if not;
+*  if a function, implies shadow support is enabled and either returns the shadow root of an element
+*  or a boolean stating if it has an undisclosed shadow root
+* @property {(node: Element) => boolean} filter filter candidates
+* @property {boolean} flatten if true then result will flatten any CandidateScope into the returned list
+* @property {ShadowRootFilter} shadowRootFilter filter shadow roots;
+*/
+/**
+* @param {Element[]} elements list of element containers to match candidates from
+* @param {boolean} includeContainer add container list to check
+* @param {IterativeOptions} options
+* @returns {Array.<Element|CandidateScope>}
+*/
+var _getCandidatesIteratively = function getCandidatesIteratively(elements, includeContainer, options) {
+	var candidates = [];
+	var elementsToCheck = Array.from(elements);
+	while (elementsToCheck.length) {
+		var element = elementsToCheck.shift();
+		if (_isInert(element, false)) continue;
+		if (element.tagName === "SLOT") {
+			var assigned = element.assignedElements();
+			var nestedCandidates = _getCandidatesIteratively(assigned.length ? assigned : element.children, true, options);
+			if (options.flatten) candidates.push.apply(candidates, nestedCandidates);
+			else candidates.push({
+				scopeParent: element,
+				candidates: nestedCandidates
+			});
+		} else {
+			if (matches.call(element, candidateSelector) && options.filter(element) && (includeContainer || !elements.includes(element))) candidates.push(element);
+			var shadowRoot = element.shadowRoot || typeof options.getShadowRoot === "function" && options.getShadowRoot(element);
+			var validShadowRoot = !_isInert(shadowRoot, false) && (!options.shadowRootFilter || options.shadowRootFilter(element));
+			if (shadowRoot && validShadowRoot) {
+				var _nestedCandidates = _getCandidatesIteratively(shadowRoot === true ? element.children : shadowRoot.children, true, options);
+				if (options.flatten) candidates.push.apply(candidates, _nestedCandidates);
+				else candidates.push({
+					scopeParent: element,
+					candidates: _nestedCandidates
+				});
+			} else elementsToCheck.unshift.apply(elementsToCheck, element.children);
+		}
+	}
+	return candidates;
+};
+/**
+* @private
+* Determines if the node has an explicitly specified `tabindex` attribute.
+* @param {HTMLElement} node
+* @returns {boolean} True if so; false if not.
+*/
+var hasTabIndex = function hasTabIndex(node) {
+	return !isNaN(parseInt(node.getAttribute("tabindex"), 10));
+};
+/**
+* Determine the tab index of a given node.
+* @param {HTMLElement} node
+* @returns {number} Tab order (negative, 0, or positive number).
+* @throws {Error} If `node` is falsy.
+*/
+var getTabIndex = function getTabIndex(node) {
+	if (!node) throw new Error("No node provided");
+	if (node.tabIndex < 0) {
+		if ((/^(AUDIO|VIDEO|DETAILS)$/.test(node.tagName) || isContentEditable(node)) && !hasTabIndex(node)) return 0;
+	}
+	return node.tabIndex;
+};
+/**
+* Determine the tab index of a given node __for sort order purposes__.
+* @param {HTMLElement} node
+* @param {boolean} [isScope] True for a custom element with shadow root or slot that, by default,
+*  has tabIndex -1, but needs to be sorted by document order in order for its content to be
+*  inserted into the correct sort position.
+* @returns {number} Tab order (negative, 0, or positive number).
+*/
+var getSortOrderTabIndex = function getSortOrderTabIndex(node, isScope) {
+	var tabIndex = getTabIndex(node);
+	if (tabIndex < 0 && isScope && !hasTabIndex(node)) return 0;
+	return tabIndex;
+};
+var sortOrderedTabbables = function sortOrderedTabbables(a, b) {
+	return a.tabIndex === b.tabIndex ? a.documentOrder - b.documentOrder : a.tabIndex - b.tabIndex;
+};
+var isInput = function isInput(node) {
+	return node.tagName === "INPUT";
+};
+var isHiddenInput = function isHiddenInput(node) {
+	return isInput(node) && node.type === "hidden";
+};
+var isDetailsWithSummary = function isDetailsWithSummary(node) {
+	return node.tagName === "DETAILS" && Array.prototype.slice.apply(node.children).some(function(child) {
+		return child.tagName === "SUMMARY";
+	});
+};
+var getCheckedRadio = function getCheckedRadio(nodes, form) {
+	for (var i = 0; i < nodes.length; i++) if (nodes[i].checked && nodes[i].form === form) return nodes[i];
+};
+var isTabbableRadio = function isTabbableRadio(node) {
+	if (!node.name) return true;
+	var radioScope = node.form || getRootNode(node);
+	var queryRadios = function queryRadios(name) {
+		return radioScope.querySelectorAll("input[type=\"radio\"][name=\"" + name + "\"]");
+	};
+	var radioSet;
+	if (typeof window !== "undefined" && typeof window.CSS !== "undefined" && typeof window.CSS.escape === "function") radioSet = queryRadios(window.CSS.escape(node.name));
+	else try {
+		radioSet = queryRadios(node.name);
+	} catch (err) {
+		console.error("Looks like you have a radio button with a name attribute containing invalid CSS selector characters and need the CSS.escape polyfill: %s", err.message);
+		return false;
+	}
+	var checked = getCheckedRadio(radioSet, node.form);
+	return !checked || checked === node;
+};
+var isRadio = function isRadio(node) {
+	return isInput(node) && node.type === "radio";
+};
+var isNonTabbableRadio = function isNonTabbableRadio(node) {
+	return isRadio(node) && !isTabbableRadio(node);
+};
+var isNodeAttached = function isNodeAttached(node) {
+	var _nodeRoot;
+	var nodeRoot = node && getRootNode(node);
+	var nodeRootHost = (_nodeRoot = nodeRoot) === null || _nodeRoot === void 0 ? void 0 : _nodeRoot.host;
+	var attached = false;
+	if (nodeRoot && nodeRoot !== node) {
+		var _nodeRootHost, _nodeRootHost$ownerDo, _node$ownerDocument;
+		attached = !!((_nodeRootHost = nodeRootHost) !== null && _nodeRootHost !== void 0 && (_nodeRootHost$ownerDo = _nodeRootHost.ownerDocument) !== null && _nodeRootHost$ownerDo !== void 0 && _nodeRootHost$ownerDo.contains(nodeRootHost) || node !== null && node !== void 0 && (_node$ownerDocument = node.ownerDocument) !== null && _node$ownerDocument !== void 0 && _node$ownerDocument.contains(node));
+		while (!attached && nodeRootHost) {
+			var _nodeRoot2, _nodeRootHost2, _nodeRootHost2$ownerD;
+			nodeRoot = getRootNode(nodeRootHost);
+			nodeRootHost = (_nodeRoot2 = nodeRoot) === null || _nodeRoot2 === void 0 ? void 0 : _nodeRoot2.host;
+			attached = !!((_nodeRootHost2 = nodeRootHost) !== null && _nodeRootHost2 !== void 0 && (_nodeRootHost2$ownerD = _nodeRootHost2.ownerDocument) !== null && _nodeRootHost2$ownerD !== void 0 && _nodeRootHost2$ownerD.contains(nodeRootHost));
+		}
+	}
+	return attached;
+};
+var isZeroArea = function isZeroArea(node) {
+	var _node$getBoundingClie = node.getBoundingClientRect(), width = _node$getBoundingClie.width, height = _node$getBoundingClie.height;
+	return width === 0 && height === 0;
+};
+var isHidden = function isHidden(node, _ref) {
+	var displayCheck = _ref.displayCheck, getShadowRoot = _ref.getShadowRoot;
+	if (displayCheck === "full-native") {
+		if ("checkVisibility" in node) return !node.checkVisibility({
+			checkOpacity: false,
+			opacityProperty: false,
+			contentVisibilityAuto: true,
+			visibilityProperty: true,
+			checkVisibilityCSS: true
+		});
+	}
+	var visibility = getComputedStyle(node).visibility;
+	if (visibility === "hidden" || visibility === "collapse") return true;
+	var nodeUnderDetails = matches.call(node, "details>summary:first-of-type") ? node.parentElement : node;
+	if (matches.call(nodeUnderDetails, "details:not([open]) *")) return true;
+	if (!displayCheck || displayCheck === "full" || displayCheck === "full-native" || displayCheck === "legacy-full") {
+		if (typeof getShadowRoot === "function") {
+			var originalNode = node;
+			while (node) {
+				var parentElement = node.parentElement;
+				var rootNode = getRootNode(node);
+				if (parentElement && !parentElement.shadowRoot && getShadowRoot(parentElement) === true) return isZeroArea(node);
+				else if (node.assignedSlot) node = node.assignedSlot;
+				else if (!parentElement && rootNode !== node.ownerDocument) node = rootNode.host;
+				else node = parentElement;
+			}
+			node = originalNode;
+		}
+		if (isNodeAttached(node)) return !node.getClientRects().length;
+		if (displayCheck !== "legacy-full") return true;
+	} else if (displayCheck === "non-zero-area") return isZeroArea(node);
+	return false;
+};
+var isDisabledFromFieldset = function isDisabledFromFieldset(node) {
+	if (/^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(node.tagName)) {
+		var parentNode = node.parentElement;
+		while (parentNode) {
+			if (parentNode.tagName === "FIELDSET" && parentNode.disabled) {
+				for (var i = 0; i < parentNode.children.length; i++) {
+					var child = parentNode.children.item(i);
+					if (child.tagName === "LEGEND") return matches.call(parentNode, "fieldset[disabled] *") ? true : !child.contains(node);
+				}
+				return true;
+			}
+			parentNode = parentNode.parentElement;
+		}
+	}
+	return false;
+};
+var isNodeMatchingSelectorFocusable = function isNodeMatchingSelectorFocusable(options, node) {
+	if (node.disabled || isHiddenInput(node) || isHidden(node, options) || isDetailsWithSummary(node) || isDisabledFromFieldset(node)) return false;
+	return true;
+};
+var isNodeMatchingSelectorTabbable = function isNodeMatchingSelectorTabbable(options, node) {
+	if (isNonTabbableRadio(node) || getTabIndex(node) < 0 || !isNodeMatchingSelectorFocusable(options, node)) return false;
+	return true;
+};
+var isShadowRootTabbable = function isShadowRootTabbable(shadowHostNode) {
+	var tabIndex = parseInt(shadowHostNode.getAttribute("tabindex"), 10);
+	if (isNaN(tabIndex) || tabIndex >= 0) return true;
+	return false;
+};
+/**
+* @param {Array.<Element|CandidateScope>} candidates
+* @returns Element[]
+*/
+var _sortByOrder = function sortByOrder(candidates) {
+	var regularTabbables = [];
+	var orderedTabbables = [];
+	candidates.forEach(function(item, i) {
+		var isScope = !!item.scopeParent;
+		var element = isScope ? item.scopeParent : item;
+		var candidateTabindex = getSortOrderTabIndex(element, isScope);
+		var elements = isScope ? _sortByOrder(item.candidates) : element;
+		if (candidateTabindex === 0) isScope ? regularTabbables.push.apply(regularTabbables, elements) : regularTabbables.push(element);
+		else orderedTabbables.push({
+			documentOrder: i,
+			tabIndex: candidateTabindex,
+			item,
+			isScope,
+			content: elements
+		});
+	});
+	return orderedTabbables.sort(sortOrderedTabbables).reduce(function(acc, sortable) {
+		sortable.isScope ? acc.push.apply(acc, sortable.content) : acc.push(sortable.content);
+		return acc;
+	}, []).concat(regularTabbables);
+};
+var tabbable = function tabbable(container, options) {
+	options = options || {};
+	var candidates;
+	if (options.getShadowRoot) candidates = _getCandidatesIteratively([container], options.includeContainer, {
+		filter: isNodeMatchingSelectorTabbable.bind(null, options),
+		flatten: false,
+		getShadowRoot: options.getShadowRoot,
+		shadowRootFilter: isShadowRootTabbable
+	});
+	else candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorTabbable.bind(null, options));
+	return _sortByOrder(candidates);
+};
+var focusable = function focusable(container, options) {
+	options = options || {};
+	var candidates;
+	if (options.getShadowRoot) candidates = _getCandidatesIteratively([container], options.includeContainer, {
+		filter: isNodeMatchingSelectorFocusable.bind(null, options),
+		flatten: true,
+		getShadowRoot: options.getShadowRoot
+	});
+	else candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorFocusable.bind(null, options));
+	return candidates;
+};
+var isTabbable = function isTabbable(node, options) {
+	options = options || {};
+	if (!node) throw new Error("No node provided");
+	if (matches.call(node, candidateSelector) === false) return false;
+	return isNodeMatchingSelectorTabbable(options, node);
+};
+var focusableCandidateSelector = /* #__PURE__ */ candidateSelectors.concat("iframe:not([inert]):not([inert] *)").join(",");
+var isFocusable = function isFocusable(node, options) {
+	options = options || {};
+	if (!node) throw new Error("No node provided");
+	if (matches.call(node, focusableCandidateSelector) === false) return false;
+	return isNodeMatchingSelectorFocusable(options, node);
+};
+//#endregion
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/tabbable.js
 function getTabbableOptions() {
 	return {
 		getShadowRoot: true,
@@ -7603,7 +8616,7 @@ function getTabbableFromFocusable(currentNode, direction) {
 	return allFocusable.slice(activeIndex + 1).find((node) => isTabbable(node, getTabbableOptions())) ?? doc.body;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/arrays.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/arrays.js
 /**
 * Returns the array element after the given index, or undefined for out-of-bounds or empty arrays.
 * @param array the array.
@@ -7736,7 +8749,7 @@ function wrapArray(array, startIndex) {
 	return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/box-auto-reset.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/box-auto-reset.svelte.js
 var defaultOptions = {
 	afterMs: 1e4,
 	onChange: noop
@@ -7762,7 +8775,7 @@ function boxAutoReset(defaultValue, options) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/dom-typeahead.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/dom-typeahead.svelte.js
 var DOMTypeahead = class {
 	#opts;
 	#search;
@@ -7801,7 +8814,7 @@ var DOMTypeahead = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/menu.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/menu.svelte.js
 var CONTEXT_MENU_TRIGGER_ATTR = "data-context-menu-trigger";
 var CONTEXT_MENU_CONTENT_ATTR = "data-context-menu-content";
 var MenuRootContext = new Context("Menu.Root");
@@ -7868,7 +8881,7 @@ var MenuSubmenuIntent = class {
 			};
 			const onContentLeave = (e) => {
 				if (!isMouseEvent(e)) return;
-				if (isElement(e.relatedTarget)) {
+				if (isElement$1(e.relatedTarget)) {
 					const selector = this.#opts.subContentSelector();
 					const matchedSubContent = e.relatedTarget.closest(selector);
 					if (matchedSubContent && matchedSubContent !== contentNode && matchedSubContent.id) {
@@ -7913,7 +8926,7 @@ var MenuSubmenuIntent = class {
 		if (!triggerNode || !contentNode) return null;
 		const triggerRect = triggerNode.getBoundingClientRect();
 		const contentRect = contentNode.getBoundingClientRect();
-		const side = getSide$1(triggerRect, contentRect);
+		const side = getSide$2(triggerRect, contentRect);
 		let apex;
 		let targetRect;
 		let sourceRect;
@@ -7951,7 +8964,7 @@ var MenuSubmenuIntent = class {
 		const contentNode = this.#opts.contentNode();
 		if (!triggerNode || !contentNode) return;
 		const related = e.relatedTarget;
-		if (isElement(related)) {
+		if (isElement$1(related)) {
 			if (target === "content" && contentNode.contains(related)) return;
 			if (target === "trigger" && triggerNode.contains(related)) return;
 		}
@@ -8114,7 +9127,7 @@ function isInsideRect$1(point, rect) {
 function isInsideInsetRect(point, rect, inset) {
 	return point.x >= rect.left + inset && point.x <= rect.right - inset && point.y >= rect.top + inset && point.y <= rect.bottom - inset;
 }
-function getSide$1(triggerRect, contentRect) {
+function getSide$2(triggerRect, contentRect) {
 	const triggerCenterX = triggerRect.left + triggerRect.width / 2;
 	const triggerCenterY = triggerRect.top + triggerRect.height / 2;
 	const contentCenterX = contentRect.left + contentRect.width / 2;
@@ -8395,7 +9408,7 @@ var MenuContentState = class MenuContentState {
 		const parentContentNode = this.parentMenu.parentMenu?.contentNode;
 		if (!parentContentNode) return;
 		const hoveredNode = this.domContext.getDocument().elementFromPoint(pointerPoint.x, pointerPoint.y);
-		if (!isElement(hoveredNode)) return;
+		if (!isElement$1(hoveredNode)) return;
 		const hoveredSubTrigger = hoveredNode.closest(`[${this.parentMenu.root.getBitsAttr("sub-trigger")}]`);
 		if (!hoveredSubTrigger || !parentContentNode.contains(hoveredSubTrigger)) return;
 		if (hoveredSubTrigger === this.parentMenu.triggerNode) return;
@@ -8455,7 +9468,7 @@ var MenuContentState = class MenuContentState {
 		}
 		const target = e.target;
 		const currentTarget = e.currentTarget;
-		if (!isHTMLElement(target) || !isHTMLElement(currentTarget)) return;
+		if (!isHTMLElement$1(target) || !isHTMLElement$1(currentTarget)) return;
 		const isKeydownInside = target.closest(`[${this.parentMenu.root.getBitsAttr("content")}]`)?.id === this.parentMenu.contentId.current;
 		const isModifierKey = e.ctrlKey || e.altKey || e.metaKey;
 		const isCharacterKey = e.key.length === 1;
@@ -8472,8 +9485,8 @@ var MenuContentState = class MenuContentState {
 		focusFirst(candidateNodes, { select: false }, () => this.domContext.getActiveElement());
 	}
 	onblur(e) {
-		if (!isElement(e.currentTarget)) return;
-		if (!isElement(e.target)) return;
+		if (!isElement$1(e.currentTarget)) return;
+		if (!isElement$1(e.target)) return;
 		if (!e.currentTarget.contains?.(e.target)) {
 			this.domContext.getWindow().clearTimeout(this.#timer);
 			this.search = "";
@@ -8573,7 +9586,7 @@ var MenuItemSharedState = class {
 		else {
 			if (this.content.onItemEnter()) return;
 			const item = e.currentTarget;
-			if (!isHTMLElement(item)) return;
+			if (!isHTMLElement$1(item)) return;
 			item.focus({ preventScroll: true });
 		}
 	}
@@ -8617,7 +9630,8 @@ var MenuItemSharedState = class {
 };
 var MenuItemState = class MenuItemState {
 	static create(opts) {
-		return new MenuItemState(opts, new MenuItemSharedState(opts, MenuContentContext.get()));
+		const item = new MenuItemSharedState(opts, MenuContentContext.get());
+		return new MenuItemState(opts, item);
 	}
 	opts;
 	item;
@@ -8649,7 +9663,7 @@ var MenuItemState = class MenuItemState {
 		const isTypingAhead = this.item.content.search !== "";
 		if (this.item.opts.disabled.current || isTypingAhead && e.key === " ") return;
 		if (SELECTION_KEYS$1.includes(e.key)) {
-			if (!isHTMLElement(e.currentTarget)) return;
+			if (!isHTMLElement$1(e.currentTarget)) return;
 			e.currentTarget.click();
 			/**
 			* We prevent default browser behavior for selection keys as they should trigger
@@ -8667,7 +9681,7 @@ var MenuItemState = class MenuItemState {
 	onpointerup(e) {
 		if (e.defaultPrevented) return;
 		if (!this.#isPointerDown) {
-			if (!isHTMLElement(e.currentTarget)) return;
+			if (!isHTMLElement$1(e.currentTarget)) return;
 			e.currentTarget?.click();
 		}
 	}
@@ -8690,7 +9704,9 @@ var MenuItemState = class MenuItemState {
 var MenuSubTriggerState = class MenuSubTriggerState {
 	static create(opts) {
 		const content = MenuContentContext.get();
-		return new MenuSubTriggerState(opts, new MenuItemSharedState(opts, content), content, MenuMenuContext.get());
+		const item = new MenuItemSharedState(opts, content);
+		const submenu = MenuMenuContext.get();
+		return new MenuSubTriggerState(opts, item, content, submenu);
 	}
 	opts;
 	item;
@@ -8755,7 +9771,7 @@ var MenuSubTriggerState = class MenuSubTriggerState {
 		* and we rely heavily on `onFocusOutside` for submenus to close when switching
 		* between separate submenus.
 		*/
-		if (!isHTMLElement(e.currentTarget)) return;
+		if (!isHTMLElement$1(e.currentTarget)) return;
 		e.currentTarget.focus();
 		const selectEvent = new CustomEvent("menusubtriggerselect", {
 			bubbles: true,
@@ -8923,7 +9939,7 @@ var MenuSubmenuState = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/dismissible-layer/use-dismissable-layer.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/dismissible-layer/use-dismissable-layer.svelte.js
 globalThis.bitsDismissableLayers ??= /* @__PURE__ */ new Map();
 var DismissibleLayerState = class DismissibleLayerState {
 	static create(opts) {
@@ -9095,7 +10111,7 @@ function createWrappedEvent(e) {
 	} });
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/dismissible-layer/dismissible-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/dismissible-layer/dismissible-layer.svelte
 function Dismissible_layer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { interactOutsideBehavior = "close", onInteractOutside = noop, onFocusOutside = noop, id, children, enabled, isValidEvent = () => false, ref } = $$props;
@@ -9113,7 +10129,7 @@ function Dismissible_layer($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/escape-layer/use-escape-layer.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/escape-layer/use-escape-layer.svelte.js
 globalThis.bitsEscapeLayers ??= /* @__PURE__ */ new Map();
 var EscapeLayerState = class EscapeLayerState {
 	static create(opts) {
@@ -9162,7 +10178,7 @@ function isResponsibleEscapeLayer(instance) {
 	return firstLayerNode === instance;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/escape-layer/escape-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/escape-layer/escape-layer.svelte
 function Escape_layer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { escapeKeydownBehavior = "close", onEscapeKeydown = noop, children, enabled, ref } = $$props;
@@ -9177,7 +10193,7 @@ function Escape_layer($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope-manager.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope-manager.js
 var FocusScopeManager = class FocusScopeManager {
 	static instance;
 	#scopeStack = simpleBox([]);
@@ -9223,7 +10239,7 @@ var FocusScopeManager = class FocusScopeManager {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope.svelte.js
 var FocusScope = class FocusScope {
 	#paused = false;
 	#container = null;
@@ -9381,7 +10397,7 @@ var FocusScope = class FocusScope {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/focus-scope/focus-scope.svelte
 function Focus_scope($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { enabled = false, trapFocus = false, loop = false, onCloseAutoFocus = noop, onOpenAutoFocus = noop, focusScope, ref } = $$props;
@@ -9398,7 +10414,7 @@ function Focus_scope($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/text-selection-layer/use-text-selection-layer.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/text-selection-layer/use-text-selection-layer.svelte.js
 var noopPointer = () => {};
 globalThis.bitsTextSelectionLayers ??= /* @__PURE__ */ new Map();
 var TextSelectionLayerState = class TextSelectionLayerState {
@@ -9445,7 +10461,7 @@ var TextSelectionLayerState = class TextSelectionLayerState {
 	#pointerdown = (e) => {
 		const node = this.opts.ref.current;
 		const target = e.target;
-		if (!isHTMLElement(node) || !isHTMLElement(target) || !this.#enabledSnapshot) return;
+		if (!isHTMLElement$1(node) || !isHTMLElement$1(target) || !this.#enabledSnapshot) return;
 		/**
 		* We only lock user-selection overflow if layer is the top most layer and
 		* pointerdown occurred inside the node. You are still allowed to select text
@@ -9484,7 +10500,7 @@ function isHighestLayer(instance) {
 	return highestLayer[0] === instance;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/text-selection-layer/text-selection-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/text-selection-layer/text-selection-layer.svelte
 function Text_selection_layer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { preventOverflowTextSelection = true, onPointerDown = noop, onPointerUp = noop, id, children, enabled, ref } = $$props;
@@ -9500,7 +10516,7 @@ function Text_selection_layer($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/use-id.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/use-id.js
 globalThis.bitsIdCounter ??= { current: 0 };
 /**
 * Generates a unique ID based on a global counter.
@@ -9510,7 +10526,7 @@ function useId(prefix = "bits") {
 	return `${prefix}-${globalThis.bitsIdCounter.current}`;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/shared-state.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/shared-state.svelte.js
 var SharedState = class {
 	#factory;
 	#subscribers = 0;
@@ -9534,7 +10550,7 @@ var SharedState = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/body-scroll-lock.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/body-scroll-lock.svelte.js
 var lockMap = new SvelteMap();
 var initialBodyStyle = null;
 var cleanupTimeoutId = null;
@@ -9662,7 +10678,7 @@ function isAnyLocked(map) {
 	return false;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/scroll-lock/scroll-lock.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/scroll-lock/scroll-lock.svelte
 function Scroll_lock($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { preventScroll = true, restoreScrollDelay = null } = $$props;
@@ -9670,7 +10686,7 @@ function Scroll_lock($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-overlay.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-overlay.svelte
 function Dialog_overlay($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9702,7 +10718,7 @@ function Dialog_overlay($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-trigger.svelte
 function Dialog_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9728,7 +10744,7 @@ function Dialog_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-description.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-description.svelte
 function Dialog_description($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9753,7 +10769,7 @@ function Dialog_description($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/avatar/avatar.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/avatar/avatar.svelte.js
 var avatarAttrs = createBitsAttrs({
 	component: "avatar",
 	parts: [
@@ -9879,7 +10895,7 @@ var AvatarFallbackState = class AvatarFallbackState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/avatar/components/avatar.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/avatar/components/avatar.svelte
 function Avatar($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9914,7 +10930,7 @@ function Avatar($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/avatar/components/avatar-image.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/avatar/components/avatar-image.svelte
 function Avatar_image($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9943,7 +10959,7 @@ function Avatar_image($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/avatar/components/avatar-fallback.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/avatar/components/avatar-fallback.svelte
 function Avatar_fallback($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -9968,7 +10984,7 @@ function Avatar_fallback($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/hidden-input.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/hidden-input.svelte
 function Hidden_input($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, $$slots, $$events, ...restProps } = $$props;
@@ -10000,7 +11016,1322 @@ function Hidden_input($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/floating-svelte/floating-utils.svelte.js
+//#region ../../node_modules/.bun/@floating-ui+utils@0.2.12/node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
+/**
+* Custom positioning reference element.
+* @see https://floating-ui.com/docs/virtual-elements
+*/
+var sides = [
+	"top",
+	"right",
+	"bottom",
+	"left"
+];
+var min = Math.min;
+var max = Math.max;
+var round = Math.round;
+var floor = Math.floor;
+var createCoords = (v) => ({
+	x: v,
+	y: v
+});
+var oppositeSideMap = {
+	left: "right",
+	right: "left",
+	bottom: "top",
+	top: "bottom"
+};
+function clamp$1(start, value, end) {
+	return max(start, min(value, end));
+}
+function evaluate(value, param) {
+	return typeof value === "function" ? value(param) : value;
+}
+function getSide$1(placement) {
+	return placement.split("-")[0];
+}
+function getAlignment(placement) {
+	return placement.split("-")[1];
+}
+function getOppositeAxis(axis) {
+	return axis === "x" ? "y" : "x";
+}
+function getAxisLength(axis) {
+	return axis === "y" ? "height" : "width";
+}
+function getSideAxis(placement) {
+	const firstChar = placement[0];
+	return firstChar === "t" || firstChar === "b" ? "y" : "x";
+}
+function getAlignmentAxis(placement) {
+	return getOppositeAxis(getSideAxis(placement));
+}
+function getAlignmentSides(placement, rects, rtl) {
+	if (rtl === void 0) rtl = false;
+	const alignment = getAlignment(placement);
+	const alignmentAxis = getAlignmentAxis(placement);
+	const length = getAxisLength(alignmentAxis);
+	let mainAlignmentSide = alignmentAxis === "x" ? alignment === (rtl ? "end" : "start") ? "right" : "left" : alignment === "start" ? "bottom" : "top";
+	if (rects.reference[length] > rects.floating[length]) mainAlignmentSide = getOppositePlacement(mainAlignmentSide);
+	return [mainAlignmentSide, getOppositePlacement(mainAlignmentSide)];
+}
+function getExpandedPlacements(placement) {
+	const oppositePlacement = getOppositePlacement(placement);
+	return [
+		getOppositeAlignmentPlacement(placement),
+		oppositePlacement,
+		getOppositeAlignmentPlacement(oppositePlacement)
+	];
+}
+function getOppositeAlignmentPlacement(placement) {
+	return placement.includes("start") ? placement.replace("start", "end") : placement.replace("end", "start");
+}
+var lrPlacement = ["left", "right"];
+var rlPlacement = ["right", "left"];
+var tbPlacement = ["top", "bottom"];
+var btPlacement = ["bottom", "top"];
+function getSideList(side, isStart, rtl) {
+	switch (side) {
+		case "top":
+		case "bottom":
+			if (rtl) return isStart ? rlPlacement : lrPlacement;
+			return isStart ? lrPlacement : rlPlacement;
+		case "left":
+		case "right": return isStart ? tbPlacement : btPlacement;
+		default: return [];
+	}
+}
+function getOppositeAxisPlacements(placement, flipAlignment, direction, rtl) {
+	const alignment = getAlignment(placement);
+	let list = getSideList(getSide$1(placement), direction === "start", rtl);
+	if (alignment) {
+		list = list.map((side) => side + "-" + alignment);
+		if (flipAlignment) list = list.concat(list.map(getOppositeAlignmentPlacement));
+	}
+	return list;
+}
+function getOppositePlacement(placement) {
+	const side = getSide$1(placement);
+	return oppositeSideMap[side] + placement.slice(side.length);
+}
+function expandPaddingObject(padding) {
+	var _padding$top, _padding$right, _padding$bottom, _padding$left;
+	return {
+		top: (_padding$top = padding.top) != null ? _padding$top : 0,
+		right: (_padding$right = padding.right) != null ? _padding$right : 0,
+		bottom: (_padding$bottom = padding.bottom) != null ? _padding$bottom : 0,
+		left: (_padding$left = padding.left) != null ? _padding$left : 0
+	};
+}
+function getPaddingObject(padding) {
+	return typeof padding !== "number" ? expandPaddingObject(padding) : {
+		top: padding,
+		right: padding,
+		bottom: padding,
+		left: padding
+	};
+}
+function rectToClientRect(rect) {
+	const { x, y, width, height } = rect;
+	return {
+		width,
+		height,
+		top: y,
+		left: x,
+		right: x + width,
+		bottom: y + height,
+		x,
+		y
+	};
+}
+//#endregion
+//#region ../../node_modules/.bun/@floating-ui+core@1.8.0/node_modules/@floating-ui/core/dist/floating-ui.core.mjs
+function computeCoordsFromPlacement(_ref, placement, rtl) {
+	let { reference, floating } = _ref;
+	const sideAxis = getSideAxis(placement);
+	const alignmentAxis = getAlignmentAxis(placement);
+	const alignLength = getAxisLength(alignmentAxis);
+	const side = getSide$1(placement);
+	const isVertical = sideAxis === "y";
+	const commonX = reference.x + reference.width / 2 - floating.width / 2;
+	const commonY = reference.y + reference.height / 2 - floating.height / 2;
+	const commonAlign = reference[alignLength] / 2 - floating[alignLength] / 2;
+	let coords;
+	switch (side) {
+		case "top":
+			coords = {
+				x: commonX,
+				y: reference.y - floating.height
+			};
+			break;
+		case "bottom":
+			coords = {
+				x: commonX,
+				y: reference.y + reference.height
+			};
+			break;
+		case "right":
+			coords = {
+				x: reference.x + reference.width,
+				y: commonY
+			};
+			break;
+		case "left":
+			coords = {
+				x: reference.x - floating.width,
+				y: commonY
+			};
+			break;
+		default: coords = {
+			x: reference.x,
+			y: reference.y
+		};
+	}
+	const alignment = getAlignment(placement);
+	if (alignment) coords[alignmentAxis] += commonAlign * (alignment === "end" ? 1 : -1) * (rtl && isVertical ? -1 : 1);
+	return coords;
+}
+/**
+* Resolves with an object of overflow side offsets that determine how much the
+* element is overflowing a given clipping boundary on each side.
+* - positive = overflowing the boundary by that number of pixels
+* - negative = how many pixels left before it will overflow
+* - 0 = lies flush with the boundary
+* @see https://floating-ui.com/docs/detectOverflow
+*/
+async function detectOverflow(state, options) {
+	var _await$platform$isEle;
+	if (options === void 0) options = {};
+	const { x, y, platform, rects, elements, strategy } = state;
+	const { boundary = "clippingAncestors", rootBoundary = "viewport", elementContext = "floating", altBoundary = false, padding = 0 } = evaluate(options, state);
+	const paddingObject = getPaddingObject(padding);
+	const element = elements[altBoundary ? elementContext === "floating" ? "reference" : "floating" : elementContext];
+	const clippingClientRect = rectToClientRect(await platform.getClippingRect({
+		element: ((_await$platform$isEle = await (platform.isElement == null ? void 0 : platform.isElement(element))) != null ? _await$platform$isEle : true) ? element : element.contextElement || await (platform.getDocumentElement == null ? void 0 : platform.getDocumentElement(elements.floating)),
+		boundary,
+		rootBoundary,
+		strategy
+	}));
+	const rect = elementContext === "floating" ? {
+		x,
+		y,
+		width: rects.floating.width,
+		height: rects.floating.height
+	} : rects.reference;
+	const offsetParent = await (platform.getOffsetParent == null ? void 0 : platform.getOffsetParent(elements.floating));
+	const offsetScale = await (platform.isElement == null ? void 0 : platform.isElement(offsetParent)) && await (platform.getScale == null ? void 0 : platform.getScale(offsetParent)) || {
+		x: 1,
+		y: 1
+	};
+	const elementClientRect = rectToClientRect(platform.convertOffsetParentRelativeRectToViewportRelativeRect ? await platform.convertOffsetParentRelativeRectToViewportRelativeRect({
+		elements,
+		rect,
+		offsetParent,
+		strategy
+	}) : rect);
+	return {
+		top: (clippingClientRect.top - elementClientRect.top + paddingObject.top) / offsetScale.y,
+		bottom: (elementClientRect.bottom - clippingClientRect.bottom + paddingObject.bottom) / offsetScale.y,
+		left: (clippingClientRect.left - elementClientRect.left + paddingObject.left) / offsetScale.x,
+		right: (elementClientRect.right - clippingClientRect.right + paddingObject.right) / offsetScale.x
+	};
+}
+var MAX_RESET_COUNT = 50;
+/**
+* Computes the `x` and `y` coordinates that will place the floating element
+* next to a given reference element.
+*
+* This export does not have any `platform` interface logic. You will need to
+* write one for the platform you are using Floating UI with.
+*/
+var computePosition$1 = async (reference, floating, config) => {
+	const { placement = "bottom", strategy = "absolute", middleware = [], platform } = config;
+	const platformWithDetectOverflow = platform.detectOverflow ? platform : {
+		...platform,
+		detectOverflow
+	};
+	const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(floating));
+	let rects = await platform.getElementRects({
+		reference,
+		floating,
+		strategy
+	});
+	let { x, y } = computeCoordsFromPlacement(rects, placement, rtl);
+	let statefulPlacement = placement;
+	let resetCount = 0;
+	const middlewareData = {};
+	for (let i = 0; i < middleware.length; i++) {
+		const currentMiddleware = middleware[i];
+		if (!currentMiddleware) continue;
+		const { name, fn } = currentMiddleware;
+		const { x: nextX, y: nextY, data, reset } = await fn({
+			x,
+			y,
+			initialPlacement: placement,
+			placement: statefulPlacement,
+			strategy,
+			middlewareData,
+			rects,
+			platform: platformWithDetectOverflow,
+			elements: {
+				reference,
+				floating
+			}
+		});
+		x = nextX != null ? nextX : x;
+		y = nextY != null ? nextY : y;
+		middlewareData[name] = {
+			...middlewareData[name],
+			...data
+		};
+		if (reset && resetCount < MAX_RESET_COUNT) {
+			resetCount++;
+			if (typeof reset === "object") {
+				if (reset.placement) statefulPlacement = reset.placement;
+				if (reset.rects) rects = reset.rects === true ? await platform.getElementRects({
+					reference,
+					floating,
+					strategy
+				}) : reset.rects;
+				({x, y} = computeCoordsFromPlacement(rects, statefulPlacement, rtl));
+			}
+			i = -1;
+		}
+	}
+	return {
+		x,
+		y,
+		placement: statefulPlacement,
+		strategy,
+		middlewareData
+	};
+};
+/**
+* Provides data to position an inner element of the floating element so that it
+* appears centered to the reference element.
+* @see https://floating-ui.com/docs/arrow
+*/
+var arrow$1 = (options) => ({
+	name: "arrow",
+	options,
+	async fn(state) {
+		const { x, y, placement, rects, platform, elements, middlewareData } = state;
+		const { element, padding = 0 } = evaluate(options, state) || {};
+		if (element == null) return {};
+		const paddingObject = getPaddingObject(padding);
+		const coords = {
+			x,
+			y
+		};
+		const axis = getAlignmentAxis(placement);
+		const length = getAxisLength(axis);
+		const arrowDimensions = await platform.getDimensions(element);
+		const isYAxis = axis === "y";
+		const minProp = isYAxis ? "top" : "left";
+		const maxProp = isYAxis ? "bottom" : "right";
+		const clientProp = isYAxis ? "clientHeight" : "clientWidth";
+		const endDiff = rects.reference[length] + rects.reference[axis] - coords[axis] - rects.floating[length];
+		const startDiff = coords[axis] - rects.reference[axis];
+		const arrowOffsetParent = await (platform.getOffsetParent == null ? void 0 : platform.getOffsetParent(element));
+		let clientSize = arrowOffsetParent ? arrowOffsetParent[clientProp] : 0;
+		if (!clientSize || !await (platform.isElement == null ? void 0 : platform.isElement(arrowOffsetParent))) clientSize = elements.floating[clientProp] || rects.floating[length];
+		const centerToReference = endDiff / 2 - startDiff / 2;
+		const largestPossiblePadding = clientSize / 2 - arrowDimensions[length] / 2 - 1;
+		const minPadding = min(paddingObject[minProp], largestPossiblePadding);
+		const maxPadding = min(paddingObject[maxProp], largestPossiblePadding);
+		const max = clientSize - arrowDimensions[length] - maxPadding;
+		const center = clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
+		const offset = clamp$1(minPadding, center, max);
+		const shouldAddOffset = !middlewareData.arrow && getAlignment(placement) != null && center !== offset && rects.reference[length] / 2 - (center < minPadding ? minPadding : maxPadding) - arrowDimensions[length] / 2 < 0;
+		const alignmentOffset = shouldAddOffset ? center < minPadding ? center - minPadding : center - max : 0;
+		return {
+			[axis]: coords[axis] + alignmentOffset,
+			data: {
+				[axis]: offset,
+				centerOffset: center - offset - alignmentOffset,
+				...shouldAddOffset && { alignmentOffset }
+			},
+			reset: shouldAddOffset
+		};
+	}
+});
+/**
+* Optimizes the visibility of the floating element by flipping the `placement`
+* in order to keep it in view when the preferred placement(s) will overflow the
+* clipping boundary. Alternative to `autoPlacement`.
+* @see https://floating-ui.com/docs/flip
+*/
+var flip$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "flip",
+		options,
+		async fn(state) {
+			var _middlewareData$arrow, _middlewareData$flip;
+			const { placement, middlewareData, rects, initialPlacement, platform, elements } = state;
+			const { mainAxis: checkMainAxis = true, crossAxis: checkCrossAxis = true, fallbackPlacements: specifiedFallbackPlacements, fallbackStrategy = "bestFit", fallbackAxisSideDirection = "none", flipAlignment = true, ...detectOverflowOptions } = evaluate(options, state);
+			if ((_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) return {};
+			const side = getSide$1(placement);
+			const initialSideAxis = getSideAxis(initialPlacement);
+			const isBasePlacement = getSide$1(initialPlacement) === initialPlacement;
+			const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(elements.floating));
+			const fallbackPlacements = specifiedFallbackPlacements || (isBasePlacement || !flipAlignment ? [getOppositePlacement(initialPlacement)] : getExpandedPlacements(initialPlacement));
+			const hasFallbackAxisSideDirection = fallbackAxisSideDirection !== "none";
+			if (!specifiedFallbackPlacements && hasFallbackAxisSideDirection) fallbackPlacements.push(...getOppositeAxisPlacements(initialPlacement, flipAlignment, fallbackAxisSideDirection, rtl));
+			const placements = [initialPlacement, ...fallbackPlacements];
+			const overflow = await platform.detectOverflow(state, detectOverflowOptions);
+			const overflows = [];
+			let overflowsData = ((_middlewareData$flip = middlewareData.flip) == null ? void 0 : _middlewareData$flip.overflows) || [];
+			if (checkMainAxis) overflows.push(overflow[side]);
+			if (checkCrossAxis) {
+				const sides = getAlignmentSides(placement, rects, rtl);
+				overflows.push(overflow[sides[0]], overflow[sides[1]]);
+			}
+			overflowsData = [...overflowsData, {
+				placement,
+				overflows
+			}];
+			if (!overflows.every((side) => side <= 0)) {
+				var _middlewareData$flip2, _overflowsData$filter;
+				const nextIndex = (((_middlewareData$flip2 = middlewareData.flip) == null ? void 0 : _middlewareData$flip2.index) || 0) + 1;
+				const nextPlacement = placements[nextIndex];
+				if (nextPlacement) {
+					if (!(checkCrossAxis === "alignment" ? initialSideAxis !== getSideAxis(nextPlacement) : false) || overflowsData.every((d) => getSideAxis(d.placement) === initialSideAxis ? d.overflows[0] > 0 : true)) return {
+						data: {
+							index: nextIndex,
+							overflows: overflowsData
+						},
+						reset: { placement: nextPlacement }
+					};
+				}
+				let resetPlacement = (_overflowsData$filter = overflowsData.filter((d) => d.overflows[0] <= 0).sort((a, b) => a.overflows[1] - b.overflows[1])[0]) == null ? void 0 : _overflowsData$filter.placement;
+				if (!resetPlacement) switch (fallbackStrategy) {
+					case "bestFit": {
+						var _overflowsData$filter2;
+						const placement = (_overflowsData$filter2 = overflowsData.filter((d) => {
+							if (hasFallbackAxisSideDirection) {
+								const currentSideAxis = getSideAxis(d.placement);
+								return currentSideAxis === initialSideAxis || currentSideAxis === "y";
+							}
+							return true;
+						}).map((d) => [d.placement, d.overflows.filter((overflow) => overflow > 0).reduce((acc, overflow) => acc + overflow, 0)]).sort((a, b) => a[1] - b[1])[0]) == null ? void 0 : _overflowsData$filter2[0];
+						if (placement) resetPlacement = placement;
+						break;
+					}
+					case "initialPlacement":
+						resetPlacement = initialPlacement;
+						break;
+				}
+				if (placement !== resetPlacement) return { reset: { placement: resetPlacement } };
+			}
+			return {};
+		}
+	};
+};
+function getSideOffsets(overflow, rect) {
+	return {
+		top: overflow.top - rect.height,
+		right: overflow.right - rect.width,
+		bottom: overflow.bottom - rect.height,
+		left: overflow.left - rect.width
+	};
+}
+function isAnySideFullyClipped(overflow) {
+	return sides.some((side) => overflow[side] >= 0);
+}
+/**
+* Provides data to hide the floating element in applicable situations, such as
+* when it is not in the same clipping context as the reference element.
+* @see https://floating-ui.com/docs/hide
+*/
+var hide$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "hide",
+		options,
+		async fn(state) {
+			const { rects, platform } = state;
+			const { strategy = "referenceHidden", ...detectOverflowOptions } = evaluate(options, state);
+			switch (strategy) {
+				case "referenceHidden": {
+					const offsets = getSideOffsets(await platform.detectOverflow(state, {
+						...detectOverflowOptions,
+						elementContext: "reference"
+					}), rects.reference);
+					return { data: {
+						referenceHiddenOffsets: offsets,
+						referenceHidden: isAnySideFullyClipped(offsets)
+					} };
+				}
+				case "escaped": {
+					const offsets = getSideOffsets(await platform.detectOverflow(state, {
+						...detectOverflowOptions,
+						altBoundary: true
+					}), rects.floating);
+					return { data: {
+						escapedOffsets: offsets,
+						escaped: isAnySideFullyClipped(offsets)
+					} };
+				}
+				default: return {};
+			}
+		}
+	};
+};
+var originSides = /*#__PURE__*/ new Set(["left", "top"]);
+async function convertValueToCoords(state, options) {
+	const { placement, platform, elements } = state;
+	const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(elements.floating));
+	const side = getSide$1(placement);
+	const alignment = getAlignment(placement);
+	const isVertical = getSideAxis(placement) === "y";
+	const mainAxisMulti = originSides.has(side) ? -1 : 1;
+	const crossAxisMulti = rtl && isVertical ? -1 : 1;
+	const rawValue = evaluate(options, state);
+	let { mainAxis, crossAxis, alignmentAxis } = typeof rawValue === "number" ? {
+		mainAxis: rawValue,
+		crossAxis: 0,
+		alignmentAxis: null
+	} : {
+		mainAxis: rawValue.mainAxis || 0,
+		crossAxis: rawValue.crossAxis || 0,
+		alignmentAxis: rawValue.alignmentAxis
+	};
+	if (alignment && typeof alignmentAxis === "number") crossAxis = alignment === "end" ? alignmentAxis * -1 : alignmentAxis;
+	return isVertical ? {
+		x: crossAxis * crossAxisMulti,
+		y: mainAxis * mainAxisMulti
+	} : {
+		x: mainAxis * mainAxisMulti,
+		y: crossAxis * crossAxisMulti
+	};
+}
+/**
+* Modifies the placement by translating the floating element along the
+* specified axes.
+* A number (shorthand for `mainAxis` or distance), or an axes configuration
+* object may be passed.
+* @see https://floating-ui.com/docs/offset
+*/
+var offset$1 = function(options) {
+	if (options === void 0) options = 0;
+	return {
+		name: "offset",
+		options,
+		async fn(state) {
+			var _middlewareData$offse, _middlewareData$arrow;
+			const { x, y, placement, middlewareData } = state;
+			const diffCoords = await convertValueToCoords(state, options);
+			if (placement === ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse.placement) && (_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) return {};
+			return {
+				x: x + diffCoords.x,
+				y: y + diffCoords.y,
+				data: {
+					...diffCoords,
+					placement
+				}
+			};
+		}
+	};
+};
+/**
+* Optimizes the visibility of the floating element by shifting it in order to
+* keep it in view when it will overflow the clipping boundary.
+* @see https://floating-ui.com/docs/shift
+*/
+var shift$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "shift",
+		options,
+		async fn(state) {
+			const { x, y, placement, platform } = state;
+			const { mainAxis: checkMainAxis = true, crossAxis: checkCrossAxis = false, limiter = { fn: (_ref) => {
+				let { x, y } = _ref;
+				return {
+					x,
+					y
+				};
+			} }, ...detectOverflowOptions } = evaluate(options, state);
+			const coords = {
+				x,
+				y
+			};
+			const overflow = await platform.detectOverflow(state, detectOverflowOptions);
+			const crossAxis = getSideAxis(placement);
+			const mainAxis = getOppositeAxis(crossAxis);
+			let mainAxisCoord = coords[mainAxis];
+			let crossAxisCoord = coords[crossAxis];
+			const clampCoord = (axis, coord) => clamp$1(coord + overflow[axis === "y" ? "top" : "left"], coord, coord - overflow[axis === "y" ? "bottom" : "right"]);
+			if (checkMainAxis) mainAxisCoord = clampCoord(mainAxis, mainAxisCoord);
+			if (checkCrossAxis) crossAxisCoord = clampCoord(crossAxis, crossAxisCoord);
+			const limitedCoords = limiter.fn({
+				...state,
+				[mainAxis]: mainAxisCoord,
+				[crossAxis]: crossAxisCoord
+			});
+			return {
+				...limitedCoords,
+				data: {
+					x: limitedCoords.x - x,
+					y: limitedCoords.y - y,
+					enabled: {
+						[mainAxis]: checkMainAxis,
+						[crossAxis]: checkCrossAxis
+					}
+				}
+			};
+		}
+	};
+};
+/**
+* Built-in `limiter` that will stop `shift()` at a certain point.
+*/
+var limitShift$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		options,
+		fn(state) {
+			var _rawOffset$mainAxis, _rawOffset$crossAxis;
+			const { x, y, placement, rects, middlewareData } = state;
+			const { offset = 0, mainAxis: checkMainAxis = true, crossAxis: checkCrossAxis = true } = evaluate(options, state);
+			const coords = {
+				x,
+				y
+			};
+			const crossAxis = getSideAxis(placement);
+			const mainAxis = getOppositeAxis(crossAxis);
+			let mainAxisCoord = coords[mainAxis];
+			let crossAxisCoord = coords[crossAxis];
+			const rawOffset = evaluate(offset, state);
+			const computedOffset = typeof rawOffset === "number" ? {
+				mainAxis: rawOffset,
+				crossAxis: 0
+			} : {
+				mainAxis: (_rawOffset$mainAxis = rawOffset.mainAxis) != null ? _rawOffset$mainAxis : 0,
+				crossAxis: (_rawOffset$crossAxis = rawOffset.crossAxis) != null ? _rawOffset$crossAxis : 0
+			};
+			if (checkMainAxis) {
+				const len = mainAxis === "y" ? "height" : "width";
+				const limitMin = rects.reference[mainAxis] - rects.floating[len] + computedOffset.mainAxis;
+				const limitMax = rects.reference[mainAxis] + rects.reference[len] - computedOffset.mainAxis;
+				if (mainAxisCoord < limitMin) mainAxisCoord = limitMin;
+				else if (mainAxisCoord > limitMax) mainAxisCoord = limitMax;
+			}
+			if (checkCrossAxis) {
+				var _middlewareData$offse, _middlewareData$offse2;
+				const len = mainAxis === "y" ? "width" : "height";
+				const isOriginSide = originSides.has(getSide$1(placement));
+				const limitMin = rects.reference[crossAxis] - rects.floating[len] + (isOriginSide ? ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse[crossAxis]) || 0 : 0) + (isOriginSide ? 0 : computedOffset.crossAxis);
+				const limitMax = rects.reference[crossAxis] + rects.reference[len] + (isOriginSide ? 0 : ((_middlewareData$offse2 = middlewareData.offset) == null ? void 0 : _middlewareData$offse2[crossAxis]) || 0) - (isOriginSide ? computedOffset.crossAxis : 0);
+				if (crossAxisCoord < limitMin) crossAxisCoord = limitMin;
+				else if (crossAxisCoord > limitMax) crossAxisCoord = limitMax;
+			}
+			return {
+				[mainAxis]: mainAxisCoord,
+				[crossAxis]: crossAxisCoord
+			};
+		}
+	};
+};
+/**
+* Provides data that allows you to change the size of the floating element —
+* for instance, prevent it from overflowing the clipping boundary or match the
+* width of the reference element.
+* @see https://floating-ui.com/docs/size
+*/
+var size$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "size",
+		options,
+		async fn(state) {
+			const { placement, rects, platform, elements } = state;
+			const { apply = () => {}, ...detectOverflowOptions } = evaluate(options, state);
+			const overflow = await platform.detectOverflow(state, detectOverflowOptions);
+			const side = getSide$1(placement);
+			const alignment = getAlignment(placement);
+			const isYAxis = getSideAxis(placement) === "y";
+			const { width, height } = rects.floating;
+			let heightSide;
+			let widthSide;
+			if (side === "top" || side === "bottom") {
+				heightSide = side;
+				widthSide = alignment === (await (platform.isRTL == null ? void 0 : platform.isRTL(elements.floating)) ? "start" : "end") ? "left" : "right";
+			} else {
+				widthSide = side;
+				heightSide = alignment === "end" ? "top" : "bottom";
+			}
+			const maximumClippingHeight = height - overflow.top - overflow.bottom;
+			const maximumClippingWidth = width - overflow.left - overflow.right;
+			const overflowAvailableHeight = min(height - overflow[heightSide], maximumClippingHeight);
+			const overflowAvailableWidth = min(width - overflow[widthSide], maximumClippingWidth);
+			const shiftData = state.middlewareData.shift;
+			const noShift = !shiftData;
+			let availableHeight = overflowAvailableHeight;
+			let availableWidth = overflowAvailableWidth;
+			if (shiftData != null && shiftData.enabled.x) availableWidth = maximumClippingWidth;
+			if (shiftData != null && shiftData.enabled.y) availableHeight = maximumClippingHeight;
+			if (noShift && !alignment) if (isYAxis) availableWidth = width - 2 * max(overflow.left, overflow.right);
+			else availableHeight = height - 2 * max(overflow.top, overflow.bottom);
+			await apply({
+				...state,
+				availableWidth,
+				availableHeight
+			});
+			const nextDimensions = await platform.getDimensions(elements.floating);
+			if (width !== nextDimensions.width || height !== nextDimensions.height) return { reset: { rects: true } };
+			return {};
+		}
+	};
+};
+//#endregion
+//#region ../../node_modules/.bun/@floating-ui+utils@0.2.12/node_modules/@floating-ui/utils/dist/floating-ui.utils.dom.mjs
+function hasWindow() {
+	return typeof window !== "undefined";
+}
+function getNodeName(node) {
+	if (isNode(node)) return (node.nodeName || "").toLowerCase();
+	return "#document";
+}
+function getWindow(node) {
+	var _node$ownerDocument;
+	return (node == null || (_node$ownerDocument = node.ownerDocument) == null ? void 0 : _node$ownerDocument.defaultView) || window;
+}
+function getDocumentElement(node) {
+	var _ref;
+	return (_ref = (isNode(node) ? node.ownerDocument : node.document) || window.document) == null ? void 0 : _ref.documentElement;
+}
+function isNode(value) {
+	if (!hasWindow()) return false;
+	return value instanceof Node || value instanceof getWindow(value).Node;
+}
+function isElement(value) {
+	if (!hasWindow()) return false;
+	return value instanceof Element || value instanceof getWindow(value).Element;
+}
+function isHTMLElement(value) {
+	if (!hasWindow()) return false;
+	return value instanceof HTMLElement || value instanceof getWindow(value).HTMLElement;
+}
+function isShadowRoot(value) {
+	if (!hasWindow() || typeof ShadowRoot === "undefined") return false;
+	return value instanceof ShadowRoot || value instanceof getWindow(value).ShadowRoot;
+}
+function isOverflowElement(element) {
+	const { overflow, overflowX, overflowY, display } = getComputedStyle$1(element);
+	return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && display !== "inline" && display !== "contents";
+}
+function isTableElement(element) {
+	return /^(table|td|th)$/.test(getNodeName(element));
+}
+function isTopLayer(element) {
+	try {
+		if (element.matches(":popover-open")) return true;
+	} catch (_e) {}
+	try {
+		return element.matches(":modal");
+	} catch (_e) {
+		return false;
+	}
+}
+var willChangeRe = /transform|translate|scale|rotate|perspective|filter/;
+var containRe = /paint|layout|strict|content/;
+var isNotNone = (value) => !!value && value !== "none";
+var isWebKitValue;
+function isContainingBlock(elementOrCss) {
+	const css = isElement(elementOrCss) ? getComputedStyle$1(elementOrCss) : elementOrCss;
+	return isNotNone(css.transform) || isNotNone(css.translate) || isNotNone(css.scale) || isNotNone(css.rotate) || isNotNone(css.perspective) || !isWebKit() && (isNotNone(css.backdropFilter) || isNotNone(css.filter)) || willChangeRe.test(css.willChange || "") || containRe.test(css.contain || "");
+}
+function getContainingBlock(element) {
+	let currentNode = getParentNode(element);
+	while (isHTMLElement(currentNode) && !isLastTraversableNode(currentNode)) {
+		if (isContainingBlock(currentNode)) return currentNode;
+		else if (isTopLayer(currentNode)) return null;
+		currentNode = getParentNode(currentNode);
+	}
+	return null;
+}
+function isWebKit() {
+	if (isWebKitValue == null) isWebKitValue = typeof CSS !== "undefined" && CSS.supports && CSS.supports("-webkit-backdrop-filter", "none");
+	return isWebKitValue;
+}
+function isLastTraversableNode(node) {
+	return /^(html|body|#document)$/.test(getNodeName(node));
+}
+function getComputedStyle$1(element) {
+	return getWindow(element).getComputedStyle(element);
+}
+function getNodeScroll(element) {
+	if (isElement(element)) return {
+		scrollLeft: element.scrollLeft,
+		scrollTop: element.scrollTop
+	};
+	return {
+		scrollLeft: element.scrollX,
+		scrollTop: element.scrollY
+	};
+}
+function getParentNode(node) {
+	if (getNodeName(node) === "html") return node;
+	const result = node.assignedSlot || node.parentNode || isShadowRoot(node) && node.host || getDocumentElement(node);
+	return isShadowRoot(result) ? result.host : result;
+}
+function getNearestOverflowAncestor(node) {
+	const parentNode = getParentNode(node);
+	if (isLastTraversableNode(parentNode)) return (node.ownerDocument || node).body;
+	if (isHTMLElement(parentNode) && isOverflowElement(parentNode)) return parentNode;
+	return getNearestOverflowAncestor(parentNode);
+}
+function getOverflowAncestors(node, list, traverseIframes) {
+	var _node$ownerDocument2;
+	if (list === void 0) list = [];
+	if (traverseIframes === void 0) traverseIframes = true;
+	const scrollableAncestor = getNearestOverflowAncestor(node);
+	const isBody = scrollableAncestor === ((_node$ownerDocument2 = node.ownerDocument) == null ? void 0 : _node$ownerDocument2.body);
+	const win = getWindow(scrollableAncestor);
+	if (isBody) {
+		const frameElement = getFrameElement(win);
+		return list.concat(win, win.visualViewport || [], isOverflowElement(scrollableAncestor) ? scrollableAncestor : [], frameElement && traverseIframes ? getOverflowAncestors(frameElement) : []);
+	} else return list.concat(scrollableAncestor, getOverflowAncestors(scrollableAncestor, [], traverseIframes));
+}
+function getFrameElement(win) {
+	return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
+}
+//#endregion
+//#region ../../node_modules/.bun/@floating-ui+dom@1.8.0/node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs
+function getCssDimensions(element) {
+	const css = getComputedStyle$1(element);
+	let width = parseFloat(css.width) || 0;
+	let height = parseFloat(css.height) || 0;
+	const hasOffset = isHTMLElement(element);
+	const offsetWidth = hasOffset ? element.offsetWidth : width;
+	const offsetHeight = hasOffset ? element.offsetHeight : height;
+	const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight;
+	if (shouldFallback) {
+		width = offsetWidth;
+		height = offsetHeight;
+	}
+	return {
+		width,
+		height,
+		$: shouldFallback
+	};
+}
+function unwrapElement(element) {
+	return !isElement(element) ? element.contextElement : element;
+}
+function getScale(element) {
+	const domElement = unwrapElement(element);
+	if (!isHTMLElement(domElement)) return createCoords(1);
+	const rect = domElement.getBoundingClientRect();
+	const { width, height, $ } = getCssDimensions(domElement);
+	let x = ($ ? round(rect.width) : rect.width) / width;
+	let y = ($ ? round(rect.height) : rect.height) / height;
+	if (!x || !Number.isFinite(x)) x = 1;
+	if (!y || !Number.isFinite(y)) y = 1;
+	return {
+		x,
+		y
+	};
+}
+var noOffsets = /*#__PURE__*/ createCoords(0);
+function getVisualOffsets(element) {
+	const win = getWindow(element);
+	if (!isWebKit() || !win.visualViewport) return noOffsets;
+	return {
+		x: win.visualViewport.offsetLeft,
+		y: win.visualViewport.offsetTop
+	};
+}
+function shouldAddVisualOffsets(element, isFixed, floatingOffsetParent) {
+	if (isFixed === void 0) isFixed = false;
+	return !!floatingOffsetParent && isFixed && floatingOffsetParent === getWindow(element);
+}
+function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetParent) {
+	if (includeScale === void 0) includeScale = false;
+	if (isFixedStrategy === void 0) isFixedStrategy = false;
+	const clientRect = element.getBoundingClientRect();
+	const domElement = unwrapElement(element);
+	let scale = createCoords(1);
+	if (includeScale) if (offsetParent) {
+		if (isElement(offsetParent)) scale = getScale(offsetParent);
+	} else scale = getScale(element);
+	const visualOffsets = shouldAddVisualOffsets(domElement, isFixedStrategy, offsetParent) ? getVisualOffsets(domElement) : createCoords(0);
+	let x = (clientRect.left + visualOffsets.x) / scale.x;
+	let y = (clientRect.top + visualOffsets.y) / scale.y;
+	let width = clientRect.width / scale.x;
+	let height = clientRect.height / scale.y;
+	if (domElement && offsetParent) {
+		const win = getWindow(domElement);
+		const offsetWin = isElement(offsetParent) ? getWindow(offsetParent) : offsetParent;
+		let currentWin = win;
+		let currentIFrame = getFrameElement(currentWin);
+		while (currentIFrame && offsetWin !== currentWin) {
+			const iframeScale = getScale(currentIFrame);
+			const iframeRect = currentIFrame.getBoundingClientRect();
+			const css = getComputedStyle$1(currentIFrame);
+			const left = iframeRect.left + (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) * iframeScale.x;
+			const top = iframeRect.top + (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
+			x *= iframeScale.x;
+			y *= iframeScale.y;
+			width *= iframeScale.x;
+			height *= iframeScale.y;
+			x += left;
+			y += top;
+			currentWin = getWindow(currentIFrame);
+			currentIFrame = getFrameElement(currentWin);
+		}
+	}
+	return rectToClientRect({
+		width,
+		height,
+		x,
+		y
+	});
+}
+function getWindowScrollBarX(element, rect) {
+	const leftScroll = getNodeScroll(element).scrollLeft;
+	if (!rect) return getBoundingClientRect(getDocumentElement(element)).left + leftScroll;
+	return rect.left + leftScroll;
+}
+function getHTMLOffset(documentElement, scroll) {
+	const htmlRect = documentElement.getBoundingClientRect();
+	return {
+		x: htmlRect.left + scroll.scrollLeft - getWindowScrollBarX(documentElement, htmlRect),
+		y: htmlRect.top + scroll.scrollTop
+	};
+}
+function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
+	let { elements, rect, offsetParent, strategy } = _ref;
+	const isFixed = strategy === "fixed";
+	const documentElement = getDocumentElement(offsetParent);
+	const topLayer = elements ? isTopLayer(elements.floating) : false;
+	if (offsetParent === documentElement || topLayer && isFixed) return rect;
+	let scroll = {
+		scrollLeft: 0,
+		scrollTop: 0
+	};
+	let scale = createCoords(1);
+	const offsets = createCoords(0);
+	const isOffsetParentAnElement = isHTMLElement(offsetParent);
+	if (isOffsetParentAnElement || !isFixed) {
+		if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) scroll = getNodeScroll(offsetParent);
+		if (isOffsetParentAnElement) {
+			const offsetRect = getBoundingClientRect(offsetParent);
+			scale = getScale(offsetParent);
+			offsets.x = offsetRect.x + offsetParent.clientLeft;
+			offsets.y = offsetRect.y + offsetParent.clientTop;
+		}
+	}
+	const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+	return {
+		width: rect.width * scale.x,
+		height: rect.height * scale.y,
+		x: rect.x * scale.x - scroll.scrollLeft * scale.x + offsets.x + htmlOffset.x,
+		y: rect.y * scale.y - scroll.scrollTop * scale.y + offsets.y + htmlOffset.y
+	};
+}
+function getClientRects(element) {
+	return element.getClientRects ? Array.from(element.getClientRects()) : [];
+}
+function getDocumentRect(html) {
+	const scroll = getNodeScroll(html);
+	const body = html.ownerDocument.body;
+	const width = max(html.scrollWidth, html.clientWidth, body.scrollWidth, body.clientWidth);
+	const height = max(html.scrollHeight, html.clientHeight, body.scrollHeight, body.clientHeight);
+	let x = -scroll.scrollLeft + getWindowScrollBarX(html);
+	const y = -scroll.scrollTop;
+	if (getComputedStyle$1(body).direction === "rtl") x += max(html.clientWidth, body.clientWidth) - width;
+	return {
+		width,
+		height,
+		x,
+		y
+	};
+}
+var SCROLLBAR_MAX = 25;
+function getViewportRect(element, strategy, rootBoundary) {
+	if (rootBoundary === void 0) rootBoundary = "viewport";
+	const isLayoutViewport = rootBoundary === "layoutViewport";
+	const win = getWindow(element);
+	const html = getDocumentElement(element);
+	const visualViewport = win.visualViewport;
+	let width = html.clientWidth;
+	let height = html.clientHeight;
+	let x = 0;
+	let y = 0;
+	if (visualViewport) {
+		const layoutRelativeClientCoords = !isWebKit() || strategy === "fixed";
+		if (isLayoutViewport) {
+			if (!layoutRelativeClientCoords) {
+				x = -visualViewport.offsetLeft;
+				y = -visualViewport.offsetTop;
+			}
+		} else {
+			width = visualViewport.width;
+			height = visualViewport.height;
+			if (layoutRelativeClientCoords) {
+				x = visualViewport.offsetLeft;
+				y = visualViewport.offsetTop;
+			}
+		}
+	}
+	if (getWindowScrollBarX(html) <= 0) {
+		const doc = html.ownerDocument;
+		const body = doc.body;
+		const bodyStyles = getComputedStyle(body);
+		const bodyMarginInline = doc.compatMode === "CSS1Compat" ? parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight) || 0 : 0;
+		const reservedWidth = Math.abs(html.clientWidth - body.clientWidth - bodyMarginInline);
+		const gutter = getComputedStyle(html).scrollbarGutter === "stable both-edges" ? reservedWidth / 2 : reservedWidth;
+		if (gutter <= SCROLLBAR_MAX) width -= gutter;
+	}
+	return {
+		width,
+		height,
+		x,
+		y
+	};
+}
+function getInnerBoundingClientRect(element, strategy) {
+	const clientRect = getBoundingClientRect(element, true, strategy === "fixed");
+	const top = clientRect.top + element.clientTop;
+	const left = clientRect.left + element.clientLeft;
+	const scale = getScale(element);
+	return {
+		width: element.clientWidth * scale.x,
+		height: element.clientHeight * scale.y,
+		x: left * scale.x,
+		y: top * scale.y
+	};
+}
+function getClientRectFromClippingAncestor(element, clippingAncestor, strategy) {
+	let rect;
+	if (clippingAncestor === "viewport" || clippingAncestor === "layoutViewport") rect = getViewportRect(element, strategy, clippingAncestor);
+	else if (clippingAncestor === "document") rect = getDocumentRect(getDocumentElement(element));
+	else if (isElement(clippingAncestor)) rect = getInnerBoundingClientRect(clippingAncestor, strategy);
+	else {
+		const visualOffsets = getVisualOffsets(element);
+		rect = {
+			x: clippingAncestor.x - visualOffsets.x,
+			y: clippingAncestor.y - visualOffsets.y,
+			width: clippingAncestor.width,
+			height: clippingAncestor.height
+		};
+	}
+	return rectToClientRect(rect);
+}
+function getClippingElementAncestors(element, cache) {
+	const cachedResult = cache.get(element);
+	if (cachedResult) return cachedResult;
+	let result = getOverflowAncestors(element, [], false).filter((el) => isElement(el) && getNodeName(el) !== "body");
+	let lastKeptComputedStyle = null;
+	const elementIsFixed = getComputedStyle$1(element).position === "fixed";
+	let currentNode = elementIsFixed ? getParentNode(element) : element;
+	while (isElement(currentNode) && !isLastTraversableNode(currentNode)) {
+		const computedStyle = getComputedStyle$1(currentNode);
+		const currentNodeIsContaining = isContainingBlock(currentNode);
+		const lastPosition = lastKeptComputedStyle ? lastKeptComputedStyle.position : elementIsFixed ? "fixed" : "";
+		if (!currentNodeIsContaining && (lastPosition === "fixed" || lastPosition === "absolute" && computedStyle.position === "static")) result = result.filter((ancestor) => ancestor !== currentNode);
+		else lastKeptComputedStyle = computedStyle;
+		currentNode = getParentNode(currentNode);
+	}
+	cache.set(element, result);
+	return result;
+}
+function getClippingRect(_ref) {
+	let { element, boundary, rootBoundary, strategy } = _ref;
+	const clippingAncestors = [...boundary === "clippingAncestors" ? isTopLayer(element) ? [] : getClippingElementAncestors(element, this._c) : [].concat(boundary), rootBoundary];
+	const firstRect = getClientRectFromClippingAncestor(element, clippingAncestors[0], strategy);
+	let top = firstRect.top;
+	let right = firstRect.right;
+	let bottom = firstRect.bottom;
+	let left = firstRect.left;
+	for (let i = 1; i < clippingAncestors.length; i++) {
+		const rect = getClientRectFromClippingAncestor(element, clippingAncestors[i], strategy);
+		top = max(rect.top, top);
+		right = min(rect.right, right);
+		bottom = min(rect.bottom, bottom);
+		left = max(rect.left, left);
+	}
+	return {
+		width: right - left,
+		height: bottom - top,
+		x: left,
+		y: top
+	};
+}
+function getDimensions(element) {
+	const { width, height } = getCssDimensions(element);
+	return {
+		width,
+		height
+	};
+}
+function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
+	const isOffsetParentAnElement = isHTMLElement(offsetParent);
+	const documentElement = getDocumentElement(offsetParent);
+	const isFixed = strategy === "fixed";
+	const rect = getBoundingClientRect(element, true, isFixed, offsetParent);
+	let scroll = {
+		scrollLeft: 0,
+		scrollTop: 0
+	};
+	const offsets = createCoords(0);
+	if (isOffsetParentAnElement || !isFixed) {
+		if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) scroll = getNodeScroll(offsetParent);
+		if (isOffsetParentAnElement) {
+			const offsetRect = getBoundingClientRect(offsetParent, true, isFixed, offsetParent);
+			offsets.x = offsetRect.x + offsetParent.clientLeft;
+			offsets.y = offsetRect.y + offsetParent.clientTop;
+		}
+	}
+	if (!isOffsetParentAnElement && documentElement) offsets.x = getWindowScrollBarX(documentElement);
+	const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+	return {
+		x: rect.left + scroll.scrollLeft - offsets.x - htmlOffset.x,
+		y: rect.top + scroll.scrollTop - offsets.y - htmlOffset.y,
+		width: rect.width,
+		height: rect.height
+	};
+}
+function isStaticPositioned(element) {
+	return getComputedStyle$1(element).position === "static";
+}
+function getTrueOffsetParent(element, polyfill) {
+	if (!isHTMLElement(element) || getComputedStyle$1(element).position === "fixed") return null;
+	if (polyfill) return polyfill(element);
+	let rawOffsetParent = element.offsetParent;
+	if (getDocumentElement(element) === rawOffsetParent) rawOffsetParent = rawOffsetParent.ownerDocument.body;
+	return rawOffsetParent;
+}
+function getOffsetParent(element, polyfill) {
+	const win = getWindow(element);
+	if (isTopLayer(element)) return win;
+	if (!isHTMLElement(element)) {
+		let svgOffsetParent = getParentNode(element);
+		while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
+			if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) return svgOffsetParent;
+			svgOffsetParent = getParentNode(svgOffsetParent);
+		}
+		return win;
+	}
+	let offsetParent = getTrueOffsetParent(element, polyfill);
+	while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) offsetParent = getTrueOffsetParent(offsetParent, polyfill);
+	if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) return win;
+	return offsetParent || getContainingBlock(element) || win;
+}
+var getElementRects = async function(data) {
+	const getOffsetParentFn = this.getOffsetParent || getOffsetParent;
+	const getDimensionsFn = this.getDimensions;
+	const floatingDimensions = await getDimensionsFn(data.floating);
+	return {
+		reference: getRectRelativeToOffsetParent(data.reference, await getOffsetParentFn(data.floating), data.strategy),
+		floating: {
+			x: 0,
+			y: 0,
+			width: floatingDimensions.width,
+			height: floatingDimensions.height
+		}
+	};
+};
+function isRTL(element) {
+	return getComputedStyle$1(element).direction === "rtl";
+}
+var platform = {
+	convertOffsetParentRelativeRectToViewportRelativeRect,
+	getDocumentElement,
+	getClippingRect,
+	getOffsetParent,
+	getElementRects,
+	getClientRects,
+	getDimensions,
+	getScale,
+	isElement,
+	isRTL
+};
+function rectsAreEqual(a, b) {
+	return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+function observeMove(element, onMove, ancestorResize) {
+	let io = null;
+	let timeoutId;
+	const root = getDocumentElement(element);
+	function cleanup() {
+		var _io;
+		clearTimeout(timeoutId);
+		(_io = io) == null || _io.disconnect();
+		io = null;
+	}
+	function refresh(skip, threshold) {
+		if (skip === void 0) skip = false;
+		if (threshold === void 0) threshold = 1;
+		cleanup();
+		const elementRectForRootMargin = element.getBoundingClientRect();
+		const { left, top, width, height } = elementRectForRootMargin;
+		if (!skip) onMove();
+		if (!width || !height) return;
+		const insetTop = floor(top);
+		const insetRight = floor(root.clientWidth - (left + width));
+		const insetBottom = floor(root.clientHeight - (top + height));
+		const insetLeft = floor(left);
+		const options = {
+			rootMargin: -insetTop + "px " + -insetRight + "px " + -insetBottom + "px " + -insetLeft + "px",
+			threshold: max(0, min(1, threshold)) || 1
+		};
+		let isFirstUpdate = true;
+		function handleObserve(entries) {
+			const ratio = entries[0].intersectionRatio;
+			if (!rectsAreEqual(elementRectForRootMargin, element.getBoundingClientRect())) return refresh();
+			if (ratio !== threshold) {
+				if (!isFirstUpdate) return refresh();
+				if (!ratio) timeoutId = setTimeout(() => {
+					refresh(false, 1e-7);
+				}, 1e3);
+				else refresh(false, ratio);
+			}
+			isFirstUpdate = false;
+		}
+		try {
+			io = new IntersectionObserver(handleObserve, {
+				...options,
+				root: root.ownerDocument
+			});
+		} catch (_e) {
+			io = new IntersectionObserver(handleObserve, options);
+		}
+		io.observe(element);
+	}
+	const win = getWindow(element);
+	const handleResize = () => refresh(ancestorResize);
+	win.addEventListener("resize", handleResize);
+	refresh(true);
+	return () => {
+		win.removeEventListener("resize", handleResize);
+		cleanup();
+	};
+}
+/**
+* Automatically updates the position of the floating element when necessary.
+* Should only be called when the floating element is mounted on the DOM or
+* visible on the screen.
+* @returns cleanup function that should be invoked when the floating element is
+* removed from the DOM or hidden from the screen.
+* @see https://floating-ui.com/docs/autoUpdate
+*/
+function autoUpdate(reference, floating, update, options) {
+	if (options === void 0) options = {};
+	const { ancestorScroll = true, ancestorResize = true, elementResize = typeof ResizeObserver === "function", layoutShift = typeof IntersectionObserver === "function", animationFrame = false } = options;
+	const referenceEl = unwrapElement(reference);
+	const ancestors = ancestorScroll || ancestorResize ? [...referenceEl ? getOverflowAncestors(referenceEl) : [], ...floating ? getOverflowAncestors(floating) : []] : [];
+	ancestors.forEach((ancestor) => {
+		ancestorScroll && ancestor.addEventListener("scroll", update);
+		ancestorResize && ancestor.addEventListener("resize", update);
+	});
+	const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update, ancestorResize) : null;
+	let reobserveFrame = -1;
+	let resizeObserver = null;
+	if (elementResize) {
+		resizeObserver = new ResizeObserver((_ref) => {
+			let [firstEntry] = _ref;
+			if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+				resizeObserver.unobserve(floating);
+				cancelAnimationFrame(reobserveFrame);
+				reobserveFrame = requestAnimationFrame(() => {
+					var _resizeObserver;
+					(_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+				});
+			}
+			update();
+		});
+		if (referenceEl && !animationFrame) resizeObserver.observe(referenceEl);
+		if (floating) resizeObserver.observe(floating);
+	}
+	let frameId;
+	let prevRefRect = animationFrame ? getBoundingClientRect(reference) : null;
+	if (animationFrame) frameLoop();
+	function frameLoop() {
+		const nextRefRect = getBoundingClientRect(reference);
+		if (prevRefRect && !rectsAreEqual(prevRefRect, nextRefRect)) update();
+		prevRefRect = nextRefRect;
+		frameId = requestAnimationFrame(frameLoop);
+	}
+	update();
+	return () => {
+		var _resizeObserver2;
+		ancestors.forEach((ancestor) => {
+			ancestorScroll && ancestor.removeEventListener("scroll", update);
+			ancestorResize && ancestor.removeEventListener("resize", update);
+		});
+		cleanupIo?.();
+		(_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+		resizeObserver = null;
+		if (animationFrame) cancelAnimationFrame(frameId);
+	};
+}
+/**
+* Modifies the placement by translating the floating element along the
+* specified axes.
+* A number (shorthand for `mainAxis` or distance), or an axes configuration
+* object may be passed.
+* @see https://floating-ui.com/docs/offset
+*/
+var offset = offset$1;
+/**
+* Optimizes the visibility of the floating element by shifting it in order to
+* keep it in view when it will overflow the clipping boundary.
+* @see https://floating-ui.com/docs/shift
+*/
+var shift = shift$1;
+/**
+* Optimizes the visibility of the floating element by flipping the `placement`
+* in order to keep it in view when the preferred placement(s) will overflow the
+* clipping boundary. Alternative to `autoPlacement`.
+* @see https://floating-ui.com/docs/flip
+*/
+var flip = flip$1;
+/**
+* Provides data that allows you to change the size of the floating element —
+* for instance, prevent it from overflowing the clipping boundary or match the
+* width of the reference element.
+* @see https://floating-ui.com/docs/size
+*/
+var size = size$1;
+/**
+* Provides data to hide the floating element in applicable situations, such as
+* when it is not in the same clipping context as the reference element.
+* @see https://floating-ui.com/docs/hide
+*/
+var hide = hide$1;
+/**
+* Provides data to position an inner element of the floating element so that it
+* appears centered to the reference element.
+* @see https://floating-ui.com/docs/arrow
+*/
+var arrow = arrow$1;
+/**
+* Built-in `limiter` that will stop `shift()` at a certain point.
+*/
+var limitShift = limitShift$1;
+/**
+* Computes the `x` and `y` coordinates that will place the floating element
+* next to a given reference element.
+*/
+var computePosition = (reference, floating, options) => {
+	const cache = /* @__PURE__ */ new Map();
+	const mergedOptions = options != null ? options : {};
+	const platformWithCache = {
+		...platform,
+		...mergedOptions.platform,
+		_c: cache
+	};
+	return computePosition$1(reference, floating, {
+		...mergedOptions,
+		platform: platformWithCache
+	});
+};
+//#endregion
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/floating-svelte/floating-utils.svelte.js
 function get(valueOrGetValue) {
 	return typeof valueOrGetValue === "function" ? valueOrGetValue() : valueOrGetValue;
 }
@@ -10022,7 +12353,7 @@ function getFloatingContentCSSVars(name) {
 	};
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/floating-svelte/use-floating.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/floating-svelte/use-floating.svelte.js
 function useFloating(options) {
 	options.whileElementsMounted;
 	const openOption = derived(() => get(options.open) ?? true);
@@ -10122,7 +12453,7 @@ function isReferenceHidden(node) {
 	return node.getClientRects().length === 0;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/use-floating-layer.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/use-floating-layer.svelte.js
 var OPPOSITE_SIDE = {
 	top: "bottom",
 	right: "left",
@@ -10358,7 +12689,7 @@ var FloatingContentState = class FloatingContentState {
 		});
 		watch(() => this.contentRef.current, (contentNode) => {
 			if (!contentNode || !this.opts.enabled.current) return;
-			const win = getWindow(contentNode);
+			const win = getWindow$1(contentNode);
 			const rafId = win.requestAnimationFrame(() => {
 				if (this.contentRef.current !== contentNode || !this.opts.enabled.current) return;
 				const zIndex = win.getComputedStyle(contentNode).zIndex;
@@ -10456,7 +12787,7 @@ function getAlignFromPlacement(placement) {
 	return getSideAndAlignFromPlacement(placement)[1];
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer.svelte
 function Floating_layer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { children, tooltip = false } = $$props;
@@ -10466,7 +12797,7 @@ function Floating_layer($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/data-typeahead.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/data-typeahead.svelte.js
 var DataTypeahead = class {
 	#opts;
 	#candidateValues = derived(() => this.#opts.candidateValues());
@@ -11441,7 +13772,7 @@ var SelectScrollUpButtonState = class SelectScrollUpButtonState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-hidden-input.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-hidden-input.svelte
 function Select_hidden_input($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, autocomplete } = $$props;
@@ -11474,7 +13805,7 @@ function Select_hidden_input($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-anchor.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-anchor.svelte
 function Floating_layer_anchor($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { id, children, virtualEl, ref, tooltip = false } = $$props;
@@ -11488,7 +13819,7 @@ function Floating_layer_anchor($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/arrow/arrow.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/arrow/arrow.svelte
 function Arrow($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { id = useId(), children, child, width = 10, height = 5, $$slots, $$events, ...restProps } = $$props;
@@ -11514,7 +13845,7 @@ function Arrow($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-arrow.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-arrow.svelte
 function Floating_layer_arrow($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { id = useId(), ref = null, $$slots, $$events, ...restProps } = $$props;
@@ -11527,7 +13858,7 @@ function Floating_layer_arrow($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-content.svelte
 function Floating_layer_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { content, side = "bottom", sideOffset = 0, align = "center", alignOffset = 0, id, arrowPadding = 0, avoidCollisions = true, collisionBoundary = [], collisionPadding = 0, hideWhenDetached = false, onPlaced = () => {}, sticky = "partial", updatePositionStrategy = "optimized", strategy = "fixed", dir = "ltr", style = {}, wrapperId = useId(), customAnchor = null, enabled, tooltip = false } = $$props;
@@ -11561,7 +13892,7 @@ function Floating_layer_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-content-static.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/floating-layer/components/floating-layer-content-static.svelte
 function Floating_layer_content_static($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { content, onPlaced } = $$props;
@@ -11573,7 +13904,7 @@ function Floating_layer_content_static($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/separator/separator.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/separator/separator.svelte.js
 var separatorAttrs = createBitsAttrs({
 	component: "separator",
 	parts: ["root"]
@@ -11605,7 +13936,7 @@ var SeparatorRootState = class SeparatorRootState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/separator/components/separator.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/separator/components/separator.svelte
 function Separator($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -11632,7 +13963,7 @@ function Separator($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-content.svelte
 function Popper_content($$renderer, $$props) {
 	let { content, isStatic = false, onPlaced, $$slots, $$events, ...restProps } = $$props;
 	if (isStatic) {
@@ -11651,7 +13982,7 @@ function Popper_content($$renderer, $$props) {
 	$$renderer.push(`<!--]-->`);
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer-inner.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer-inner.svelte
 function Popper_layer_inner($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { popper, onEscapeKeydown, escapeKeydownBehavior, preventOverflowTextSelection, id, onPointerDown, onPointerUp, side, sideOffset, align, alignOffset, arrowPadding, avoidCollisions, collisionBoundary, collisionPadding, sticky, hideWhenDetached, updatePositionStrategy, strategy, dir, preventScroll, wrapperId, style, onPlaced, onInteractOutside, onCloseAutoFocus, onOpenAutoFocus, onFocusOutside, interactOutsideBehavior = "close", loop, trapFocus = true, isValidEvent = () => false, customAnchor = null, isStatic = false, enabled, ref, tooltip = false, contentPointerEvents = "auto", $$slots, $$events, ...restProps } = $$props;
@@ -11753,7 +14084,7 @@ function Popper_layer_inner($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer.svelte
 function Popper_layer($$renderer, $$props) {
 	let { popper, open, onEscapeKeydown, escapeKeydownBehavior, preventOverflowTextSelection, id, onPointerDown, onPointerUp, side, sideOffset, align, alignOffset, arrowPadding, avoidCollisions, collisionBoundary, collisionPadding, sticky, hideWhenDetached, updatePositionStrategy, strategy, dir, preventScroll, wrapperId, style, onPlaced, onInteractOutside, onCloseAutoFocus, onOpenAutoFocus, onFocusOutside, interactOutsideBehavior = "close", loop, trapFocus = true, isValidEvent = () => false, customAnchor = null, isStatic = false, ref, shouldRender, $$slots, $$events, ...restProps } = $$props;
 	if (shouldRender) {
@@ -11801,7 +14132,7 @@ function Popper_layer($$renderer, $$props) {
 	$$renderer.push(`<!--]-->`);
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer-force-mount.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/popper-layer/popper-layer-force-mount.svelte
 function Popper_layer_force_mount($$renderer, $$props) {
 	let { popper, onEscapeKeydown, escapeKeydownBehavior, preventOverflowTextSelection, id, onPointerDown, onPointerUp, side, sideOffset, align, alignOffset, arrowPadding, avoidCollisions, collisionBoundary, collisionPadding, sticky, hideWhenDetached, updatePositionStrategy, strategy, dir, preventScroll, wrapperId, style, onPlaced, onInteractOutside, onCloseAutoFocus, onOpenAutoFocus, onFocusOutside, interactOutsideBehavior = "close", loop, trapFocus = true, isValidEvent = () => false, customAnchor = null, isStatic = false, enabled, $$slots, $$events, ...restProps } = $$props;
 	Popper_layer_inner($$renderer, spread_props([
@@ -11847,7 +14178,7 @@ function Popper_layer_force_mount($$renderer, $$props) {
 	]));
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-content.svelte
 function Select_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -11939,7 +14270,7 @@ function Select_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/mounted.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/mounted.svelte
 function Mounted($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { mounted = false, onMountedChange = noop } = $$props;
@@ -11947,7 +14278,7 @@ function Mounted($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-item.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-item.svelte
 function Select_item($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -12000,7 +14331,7 @@ function Select_item($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-group.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-group.svelte
 function Select_group($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -12025,7 +14356,7 @@ function Select_group($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-viewport.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-viewport.svelte
 function Select_viewport($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -12050,7 +14381,7 @@ function Select_viewport($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-scroll-down-button.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-scroll-down-button.svelte
 function Select_scroll_down_button($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -12100,7 +14431,7 @@ function Select_scroll_down_button($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-scroll-up-button.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-scroll-up-button.svelte
 function Select_scroll_up_button($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -12150,7 +14481,7 @@ function Select_scroll_up_button($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/utils.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/utils.js
 function findNextSibling(el, selector) {
 	let sibling = el.nextElementSibling;
 	while (sibling) {
@@ -12166,7 +14497,7 @@ function findPreviousSibling(el, selector) {
 	}
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/css-escape.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/css-escape.js
 /**
 * https://github.com/mathiasbynens/CSS.escape
 *
@@ -12200,7 +14531,7 @@ function cssEscape(value) {
 	return result;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/command.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/command.svelte.js
 var COMMAND_VALUE_ATTR = "data-value";
 var commandAttrs = createBitsAttrs({
 	component: "command",
@@ -12638,7 +14969,7 @@ var CommandRootState = class CommandRootState {
 	*/
 	registerItem(id, groupId) {
 		this.allItems.add(id);
-		if (groupId) if (!this.allGroups.has(groupId)) this.allGroups.set(groupId, new Set([id]));
+		if (groupId) if (!this.allGroups.has(groupId)) this.allGroups.set(groupId, /* @__PURE__ */ new Set([id]));
 		else this.allGroups.get(groupId).add(id);
 		if (!this.sortAndFilterAfterTick) {
 			this.sortAndFilterAfterTick = true;
@@ -13310,7 +15641,7 @@ var CommandLabelState = class CommandLabelState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/_command-label.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/_command-label.svelte
 function _command_label($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13327,7 +15658,7 @@ function _command_label($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command.svelte
 function Command($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13443,7 +15774,7 @@ function Command($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-empty.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-empty.svelte
 function Command_empty($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13473,7 +15804,7 @@ function Command_empty($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-group.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-group.svelte
 function Command_group($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13500,7 +15831,7 @@ function Command_group($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-group-heading.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-group-heading.svelte
 function Command_group_heading($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13525,7 +15856,7 @@ function Command_group_heading($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-group-items.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-group-items.svelte
 function Command_group_items($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13551,7 +15882,7 @@ function Command_group_items($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-input.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-input.svelte
 function Command_input($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13584,7 +15915,7 @@ function Command_input($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-item.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-item.svelte
 function Command_item($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13621,7 +15952,7 @@ function Command_item($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-list.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-list.svelte
 function Command_list($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13649,7 +15980,7 @@ function Command_list($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/components/command-separator.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/components/command-separator.svelte
 function Command_separator($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13679,7 +16010,7 @@ function Command_separator($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/command/compute-command-score.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/command/compute-command-score.js
 var SCORE_CONTINUE_MATCH = 1;
 var SCORE_SPACE_WORD_JUMP = .9;
 var SCORE_NON_SPACE_WORD_JUMP = .8;
@@ -13774,7 +16105,7 @@ function computeCommandScore(command, search, commandKeywords) {
 	return computeCommandScoreInner(command, search, formatInput(command), formatInput(search), 0, 0, {});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-sub.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-sub.svelte
 function Menu_sub($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open = false, onOpenChange = noop, onOpenChangeComplete = noop, children } = $$props;
@@ -13796,7 +16127,7 @@ function Menu_sub($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-item.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-item.svelte
 function Menu_item($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13824,7 +16155,7 @@ function Menu_item($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-group.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-group.svelte
 function Menu_group($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13849,7 +16180,7 @@ function Menu_group($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-separator.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-separator.svelte
 function Menu_separator($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13874,7 +16205,7 @@ function Menu_separator($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-sub-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-sub-content.svelte
 function Menu_sub_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -13925,7 +16256,7 @@ function Menu_sub_content($$renderer, $$props) {
 		function handleOnFocusOutside(e) {
 			onFocusOutside(e);
 			if (e.defaultPrevented) return;
-			if (!isHTMLElement(e.target)) return;
+			if (!isHTMLElement$1(e.target)) return;
 			if (e.target.id === subContentState.parentMenu.triggerNode?.id) return;
 			if ((subContentState.parentMenu.parentMenu?.contentNode)?.contains(e.target)) {
 				subContentState.parentMenu.onClose();
@@ -14022,7 +16353,7 @@ function Menu_sub_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-sub-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-sub-trigger.svelte
 function Menu_sub_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -14057,7 +16388,7 @@ function Menu_sub_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/safe-polygon.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/safe-polygon.svelte.js
 function isPointInPolygon(point, polygon) {
 	const [x, y] = point;
 	let isInside = false;
@@ -14150,10 +16481,10 @@ var SafePolygon = class {
 			};
 			const handleTriggerLeave = (e) => {
 				const target = e.relatedTarget;
-				if (isElement(target) && contentNode.contains(target)) return;
+				if (isElement$1(target) && contentNode.contains(target)) return;
 				const ignoredTargets = this.#opts.ignoredTargets?.() ?? [];
-				if (isElement(target) && ignoredTargets.some((n) => n === target || n.contains(target))) return;
-				this.#transitTargets = isElement(target) && ignoredTargets.length > 0 ? ignoredTargets.filter((n) => target.contains(n)) : [];
+				if (isElement$1(target) && ignoredTargets.some((n) => n === target || n.contains(target))) return;
+				this.#transitTargets = isElement$1(target) && ignoredTargets.length > 0 ? ignoredTargets.filter((n) => target.contains(n)) : [];
 				this.#exitPoint = [e.clientX, e.clientY];
 				this.#exitTarget = "content";
 				this.#scheduleLeaveFallback();
@@ -14166,7 +16497,7 @@ var SafePolygon = class {
 			};
 			const handleContentLeave = (e) => {
 				const target = e.relatedTarget;
-				if (isElement(target) && triggerNode.contains(target)) return;
+				if (isElement$1(target) && triggerNode.contains(target)) return;
 				this.#exitPoint = [e.clientX, e.clientY];
 				this.#exitTarget = "trigger";
 				this.#scheduleLeaveFallback();
@@ -14303,7 +16634,7 @@ var SafePolygon = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/popover/popover.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/popover/popover.svelte.js
 var popoverAttrs = createBitsAttrs({
 	component: "popover",
 	parts: [
@@ -14535,7 +16866,7 @@ var PopoverContentState = class PopoverContentState {
 	}
 	onfocusin(e) {
 		const target = e.target;
-		if (isElement(target) && isTabbable(target)) this.root.markInteraction();
+		if (isElement$1(target) && isTabbable(target)) this.root.markInteraction();
 	}
 	onpointerenter(e) {
 		if (isTouch(e)) return;
@@ -14547,11 +16878,11 @@ var PopoverContentState = class PopoverContentState {
 	onInteractOutside = (e) => {
 		this.opts.onInteractOutside.current(e);
 		if (e.defaultPrevented) return;
-		if (!isElement(e.target)) return;
+		if (!isElement$1(e.target)) return;
 		const closestTrigger = e.target.closest(popoverAttrs.selector("trigger"));
 		if (closestTrigger && closestTrigger === this.root.triggerNode) return;
 		if (this.opts.customAnchor.current) {
-			if (isElement(this.opts.customAnchor.current)) {
+			if (isElement$1(this.opts.customAnchor.current)) {
 				if (this.opts.customAnchor.current.contains(e.target)) return;
 			} else if (typeof this.opts.customAnchor.current === "string") {
 				const el = document.querySelector(this.opts.customAnchor.current);
@@ -14607,7 +16938,7 @@ var PopoverContentState = class PopoverContentState {
 	};
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/popover/components/popover-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/popover/components/popover-content.svelte
 function Popover_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -14713,7 +17044,7 @@ function Popover_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/popover/components/popover-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/popover/components/popover-trigger.svelte
 function Popover_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -14749,7 +17080,7 @@ function Popover_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog.svelte
 function Dialog($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open = false, onOpenChange = noop, onOpenChangeComplete = noop, children } = $$props;
@@ -14767,7 +17098,7 @@ function Dialog($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-close.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-close.svelte
 function Dialog_close($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -14794,7 +17125,7 @@ function Dialog_close($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dialog/components/dialog-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dialog/components/dialog-content.svelte
 function Dialog_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -14880,7 +17211,7 @@ function Dialog_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu.svelte
 function Menu($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open = false, dir = "ltr", onOpenChange = noop, onOpenChangeComplete = noop, _internal_variant: variant = "dropdown-menu", _internal_should_skip_exit_animation: shouldSkipExitAnimation = void 0, children } = $$props;
@@ -14911,7 +17242,7 @@ function Menu($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/dropdown-menu/components/dropdown-menu-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/dropdown-menu/components/dropdown-menu-content.svelte
 function Dropdown_menu_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -15023,7 +17354,7 @@ function Dropdown_menu_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/menu/components/menu-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/menu/components/menu-trigger.svelte
 function Menu_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -15056,7 +17387,7 @@ function Menu_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/label/label.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/label/label.svelte.js
 var labelAttrs = createBitsAttrs({
 	component: "label",
 	parts: ["root"]
@@ -15089,7 +17420,7 @@ var LabelRootState = class LabelRootState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/label/components/label.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/label/components/label.svelte
 function Label($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -15117,7 +17448,7 @@ function Label($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/svelte-resize-observer.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/svelte-resize-observer.svelte.js
 var SvelteResizeObserver = class {
 	#node;
 	#onResize;
@@ -15142,7 +17473,7 @@ var SvelteResizeObserver = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/presence-layer/presence.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/presence-layer/presence.svelte.js
 var Presence = class {
 	opts;
 	present;
@@ -15197,7 +17528,7 @@ var Presence = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/utilities/presence-layer/presence-layer.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/utilities/presence-layer/presence-layer.svelte
 function Presence_layer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open, forceMount, presence, ref } = $$props;
@@ -15217,7 +17548,7 @@ function Presence_layer($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/popover/components/popover.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/popover/components/popover.svelte
 function Popover($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open = false, onOpenChange = noop, onOpenChangeComplete = noop, children } = $$props;
@@ -15239,7 +17570,7 @@ function Popover($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/radio-group/radio-group.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/radio-group/radio-group.svelte.js
 var radioGroupAttrs = createBitsAttrs({
 	component: "radio-group",
 	parts: ["root", "item"]
@@ -15413,7 +17744,7 @@ var RadioGroupInputState = class RadioGroupInputState {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/radio-group/components/radio-group-input.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/radio-group/components/radio-group-input.svelte
 function Radio_group_input($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const inputState = RadioGroupInputState.create();
@@ -15425,7 +17756,7 @@ function Radio_group_input($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/radio-group/components/radio-group.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/radio-group/components/radio-group.svelte
 function Radio_group($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -15466,7 +17797,7 @@ function Radio_group($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/radio-group/components/radio-group-item.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/radio-group/components/radio-group-item.svelte
 function Radio_group_item($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -15496,7 +17827,7 @@ function Radio_group_item($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/clamp.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/clamp.js
 /**
 * Clamps a number between a minimum and maximum value.
 */
@@ -15504,7 +17835,7 @@ function clamp(n, min, max) {
 	return Math.min(max, Math.max(min, n));
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/state-machine.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/state-machine.js
 var StateMachine = class {
 	state;
 	#machine;
@@ -15521,7 +17852,7 @@ var StateMachine = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/scroll-area.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/scroll-area.svelte.js
 var scrollAreaAttrs = createBitsAttrs({
 	component: "scroll-area",
 	parts: [
@@ -16244,7 +18575,7 @@ function isScrollingWithinScrollbarBounds(scrollPos, maxScrollPos) {
 	return scrollPos > 0 && scrollPos < maxScrollPos;
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area.svelte
 function Scroll_area($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16272,7 +18603,7 @@ function Scroll_area($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-viewport.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-viewport.svelte
 function Scroll_area_viewport($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16290,7 +18621,7 @@ function Scroll_area_viewport($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-shared.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-shared.svelte
 function Scroll_area_scrollbar_shared($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { child, children, $$slots, $$events, ...restProps } = $$props;
@@ -16310,7 +18641,7 @@ function Scroll_area_scrollbar_shared($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-x.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-x.svelte
 function Scroll_area_scrollbar_x($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { $$slots, $$events, ...restProps } = $$props;
@@ -16320,7 +18651,7 @@ function Scroll_area_scrollbar_x($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-y.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-y.svelte
 function Scroll_area_scrollbar_y($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { $$slots, $$events, ...restProps } = $$props;
@@ -16330,7 +18661,7 @@ function Scroll_area_scrollbar_y($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-visible.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-visible.svelte
 function Scroll_area_scrollbar_visible($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { $$slots, $$events, ...restProps } = $$props;
@@ -16345,7 +18676,7 @@ function Scroll_area_scrollbar_visible($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-auto.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-auto.svelte
 function Scroll_area_scrollbar_auto($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { forceMount = false, $$slots, $$events, ...restProps } = $$props;
@@ -16365,7 +18696,7 @@ function Scroll_area_scrollbar_auto($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-scroll.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-scroll.svelte
 function Scroll_area_scrollbar_scroll($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { forceMount = false, $$slots, $$events, ...restProps } = $$props;
@@ -16385,7 +18716,7 @@ function Scroll_area_scrollbar_scroll($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-hover.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar-hover.svelte
 function Scroll_area_scrollbar_hover($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { forceMount = false, $$slots, $$events, ...restProps } = $$props;
@@ -16407,7 +18738,7 @@ function Scroll_area_scrollbar_hover($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-scrollbar.svelte
 function Scroll_area_scrollbar($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16436,7 +18767,7 @@ function Scroll_area_scrollbar($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-thumb-impl.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-thumb-impl.svelte
 function Scroll_area_thumb_impl($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { ref = null, id, child, children, present, $$slots, $$events, ...restProps } = $$props;
@@ -16462,7 +18793,7 @@ function Scroll_area_thumb_impl($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-thumb.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-thumb.svelte
 function Scroll_area_thumb($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16503,7 +18834,7 @@ function Scroll_area_thumb($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-corner-impl.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-corner-impl.svelte
 function Scroll_area_corner_impl($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { ref = null, id, children, child, $$slots, $$events, ...restProps } = $$props;
@@ -16527,7 +18858,7 @@ function Scroll_area_corner_impl($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-corner.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/scroll-area/components/scroll-area-corner.svelte
 function Scroll_area_corner($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16563,7 +18894,7 @@ function Scroll_area_corner($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select.svelte
 function Select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, onValueChange = noop, name = "", disabled = false, type, open = false, onOpenChange = noop, onOpenChangeComplete = noop, loop = false, scrollAlignment = "nearest", required = false, items = [], allowDeselect = false, autocomplete, children } = $$props;
@@ -16655,7 +18986,7 @@ function Select($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/select/components/select-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/select/components/select-trigger.svelte
 function Select_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16694,7 +19025,7 @@ function Select_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tabs/tabs.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tabs/tabs.svelte.js
 var tabsAttrs = createBitsAttrs({
 	component: "tabs",
 	parts: [
@@ -16891,7 +19222,7 @@ function getTabDataState(condition) {
 	return condition ? "active" : "inactive";
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tabs/components/tabs.svelte
 function Tabs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16927,7 +19258,7 @@ function Tabs($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tabs/components/tabs-content.svelte
 function Tabs_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16953,7 +19284,7 @@ function Tabs_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-list.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tabs/components/tabs-list.svelte
 function Tabs_list($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -16978,7 +19309,7 @@ function Tabs_list($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tabs/components/tabs-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tabs/components/tabs-trigger.svelte
 function Tabs_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -17005,7 +19336,7 @@ function Tabs_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/internal/timeout-fn.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/internal/timeout-fn.js
 var TimeoutFn = class {
 	#interval;
 	#cb;
@@ -17035,7 +19366,7 @@ var TimeoutFn = class {
 	}
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/tooltip.svelte.js
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/tooltip.svelte.js
 var tooltipAttrs = createBitsAttrs({
 	component: "tooltip",
 	parts: ["content", "trigger"]
@@ -17444,7 +19775,7 @@ var TooltipTriggerState = class TooltipTriggerState {
 			return;
 		}
 		const relatedTarget = e.relatedTarget;
-		if (isElement(relatedTarget)) for (const record of root.registry.triggers.values()) {
+		if (isElement$1(relatedTarget)) for (const record of root.registry.triggers.values()) {
 			if (record.node !== relatedTarget) continue;
 			if (root.provider.opts.skipDelayDuration.current > 0) {
 				this.#hasPointerMoveOpened = false;
@@ -17539,7 +19870,7 @@ var TooltipContentState = class TooltipContentState {
 		});
 	}
 	onInteractOutside = (e) => {
-		if (isElement(e.target) && this.root.triggerNode?.contains(e.target) && this.root.disableCloseOnTriggerClick) {
+		if (isElement$1(e.target) && this.root.triggerNode?.contains(e.target) && this.root.disableCloseOnTriggerClick) {
 			e.preventDefault();
 			return;
 		}
@@ -17591,7 +19922,7 @@ var TooltipContentState = class TooltipContentState {
 	};
 };
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/components/tooltip.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/components/tooltip.svelte
 function Tooltip($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { open = false, triggerId = null, onOpenChange = noop, onOpenChangeComplete = noop, disabled, delayDuration, disableCloseOnTriggerClick, disableHoverableContent, ignoreNonKeyboardFocus, tether, children } = $$props;
@@ -17630,7 +19961,7 @@ function Tooltip($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/components/tooltip-content.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/components/tooltip-content.svelte
 function Tooltip_content($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -17742,7 +20073,7 @@ function Tooltip_content($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/components/tooltip-trigger.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/components/tooltip-trigger.svelte
 function Tooltip_trigger($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const uid = props_id($$renderer);
@@ -17771,7 +20102,7 @@ function Tooltip_trigger($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/components/tooltip-arrow.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/components/tooltip-arrow.svelte
 function Tooltip_arrow($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { ref = null, $$slots, $$events, ...restProps } = $$props;
@@ -17798,7 +20129,7 @@ function Tooltip_arrow($$renderer, $$props) {
 	});
 }
 //#endregion
-//#region ../../node_modules/bits-ui/dist/bits/tooltip/components/tooltip-provider.svelte
+//#region ../../node_modules/.bun/bits-ui@2.18.1+1145bf17e4779b6a/node_modules/bits-ui/dist/bits/tooltip/components/tooltip-provider.svelte
 function Tooltip_provider($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { children, delayDuration = 700, disableCloseOnTriggerClick = false, disableHoverableContent = false, disabled = false, ignoreNonKeyboardFocus = false, skipDelayDuration = 300 } = $$props;
@@ -17815,4 +20146,4 @@ function Tooltip_provider($$renderer, $$props) {
 	});
 }
 //#endregion
-export { Avatar as $, Menu_sub_content as A, render as At, Command_group_heading as B, writable as Bt, Menu as C, attr_style as Ct, Popover_trigger as D, element as Dt, Dialog as E, derived as Et, Command_separator as F, unsubscribe_stores as Ft, Select_scroll_down_button as G, async_mode_flag as Gt, Command_empty as H, attr as Ht, Command_list as I, html as It, Select_item as J, getContext as Jt, Select_viewport as K, noop$1 as Kt, Command_item as L, derived$1 as Lt, Menu_group as M, store_get as Mt, Menu_item as N, store_set as Nt, Popover_content as O, ensure_array_like as Ot, Menu_sub as P, stringify as Pt, Avatar_image as Q, Command_input as R, get$3 as Rt, Dropdown_menu_content as S, attr_class as St, Dialog_close as T, bind_props as Tt, Command as U, clsx$1 as Ut, Command_group as V, snapshot as Vt, Select_scroll_up_button as W, escape_html as Wt, Separator as X, setContext as Xt, Select_content as Y, hasContext as Yt, Avatar_fallback as Z, Radio_group_item as _, index_server_exports as _t, Tooltip as a, Dialog_title as at, Label as b, tick as bt, Tabs_content as c, Accordion_header as ct, Select as d, mergeProps as dt, Dialog_description as et, Scroll_area_corner as f, MediaQuery as ft, Scroll_area as g, on as gt, Scroll_area_viewport as h, asClassComponent as ht, Tooltip_content as i, Portal as it, Menu_separator as j, spread_props as jt, Menu_sub_trigger as k, head as kt, Tabs as l, Accordion_item as lt, Scroll_area_scrollbar as m, createSubscriber as mt, Tooltip_arrow as n, Dialog_overlay as nt, Tabs_trigger as o, Accordion_content as ot, Scroll_area_thumb as p, SvelteSet as pt, Select_group as q, run as qt, Tooltip_trigger as r, useId as rt, Tabs_list as s, Accordion_trigger as st, Tooltip_provider as t, Dialog_trigger as tt, Select_trigger as u, Accordion as ut, Radio_group as v, onDestroy as vt, Dialog_content as w, attributes as wt, Menu_trigger as x, hydratable as xt, Popover as y, settled as yt, Command_group_items as z, readable as zt };
+export { Avatar as $, get_type as $t, Menu_sub_content as A, store_set as At, Command_group_heading as B, asClassComponent as Bt, Menu as C, derived as Ct, Popover_trigger as D, render as Dt, Dialog as E, head as Et, Command_separator as F, hasContext as Ft, Select_scroll_down_button as G, writable as Gt, Command_empty as H, derived$1 as Ht, Command_list as I, setContext as It, Select_item as J, noop$1 as Jt, Select_viewport as K, snapshot as Kt, Command_item as L, attr as Lt, Menu_group as M, unsubscribe_stores as Mt, Menu_item as N, html as Nt, Popover_content as O, spread_props as Ot, Menu_sub as P, getContext as Pt, Avatar_image as Q, enumerable_symbols as Qt, Command_input as R, clsx$1 as Rt, Dropdown_menu_content as S, bind_props as St, Dialog_close as T, ensure_array_like as Tt, Command as U, get$2 as Ut, Command_group as V, on as Vt, Select_scroll_up_button as W, readable as Wt, Separator as X, uneval as Xt, Select_content as Y, run as Yt, Avatar_fallback as Z, DevalueError as Zt, Radio_group_item as _, settled as _t, Tooltip as a, stringify_string as an, Dialog_title as at, Label as b, attr_style as bt, Tabs_content as c, Accordion_header as ct, Select as d, mergeProps as dt, is_plain_object as en, Dialog_description as et, Scroll_area_corner as f, MediaQuery as ft, Scroll_area as g, onDestroy as gt, Scroll_area_viewport as h, index_server_exports as ht, Tooltip_content as i, stringify_key as in, Portal as it, Menu_separator as j, stringify as jt, Menu_sub_trigger as k, store_get as kt, Tabs as l, Accordion_item as lt, Scroll_area_scrollbar as m, createSubscriber as mt, Tooltip_arrow as n, is_valid_array_index as nn, Dialog_overlay as nt, Tabs_trigger as o, valid_array_indices as on, Accordion_content as ot, Scroll_area_thumb as p, SvelteSet as pt, Select_group as q, async_mode_flag as qt, Tooltip_trigger as r, is_valid_array_len as rn, useId as rt, Tabs_list as s, MAX_ARRAY_INDEX as sn, Accordion_trigger as st, Tooltip_provider as t, is_primitive as tn, Dialog_trigger as tt, Select_trigger as u, Accordion as ut, Radio_group as v, tick as vt, Dialog_content as w, element as wt, Menu_trigger as x, attributes as xt, Popover as y, attr_class as yt, Command_group_items as z, escape_html as zt };

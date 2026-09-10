@@ -1,4 +1,4 @@
-import { I as forumReplies, K as mediaLibrary, L as forumThreads, a as user, dt as reviews, o as abuseReports, t as db } from "../../../../chunks/drizzle.js";
+import { $ as mediaLibrary, U as forumReplies, W as forumThreads, a as user, o as abuseReports, t as db, vt as reviews } from "../../../../chunks/drizzle.js";
 import { a as take } from "../../../../chunks/rate-limit.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -13,14 +13,14 @@ import { eq } from "drizzle-orm";
 * stays meaningful. Auth optional — anonymous reports land with
 * reporterId=null. Rate-limited 10/hr per user / IP.
 */
-var ALLOWED_TARGET_TYPES = new Set([
+var ALLOWED_TARGET_TYPES = /* @__PURE__ */ new Set([
 	"review",
 	"forum_thread",
 	"forum_reply",
 	"content",
 	"user"
 ]);
-var ALLOWED_CATEGORIES = new Set([
+var ALLOWED_CATEGORIES = /* @__PURE__ */ new Set([
 	"spam",
 	"harassment",
 	"sexual",

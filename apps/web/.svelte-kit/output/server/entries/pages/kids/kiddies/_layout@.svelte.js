@@ -1,4 +1,4 @@
-import { Et as derived } from "../../../../chunks/ui-libs.js";
+import { Ct as derived } from "../../../../chunks/ui-libs.js";
 import { t as page } from "../../../../chunks/state.js";
 import "../../../../chunks/navigation.js";
 import "../../../../chunks/portal-navigation.js";

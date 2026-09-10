@@ -1,0 +1,24 @@
+{
+	"name": "mobile",
+	"private": true,
+	"version": "1.0.1",
+	"type": "module",
+	"scripts": {
+		"sync": "cap sync android",
+		"open": "cap open android",
+		"build:apk": "cd android && ./gradlew assembleRelease",
+		"build:apk:debug": "cd android && ./gradlew assembleDebug",
+		"build:aab": "cd android && ./gradlew bundleRelease"
+	},
+	"devDependencies": {
+		"@capacitor/cli": "^7.0.0"
+	},
+	"dependencies": {
+		"@capacitor/android": "^7.0.0",
+		"@capacitor/app": "^7.0.0",
+		"@capacitor/core": "^7.0.0",
+		"@capacitor/preferences": "^7.0.0",
+		"@capacitor/splash-screen": "^7.0.0",
+		"@capacitor/status-bar": "^7.0.0"
+	}
+}

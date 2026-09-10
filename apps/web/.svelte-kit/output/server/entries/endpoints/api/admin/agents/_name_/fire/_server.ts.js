@@ -12,7 +12,7 @@ import { json } from "@sveltejs/kit";
 * Names mirror the cron registry: abuse-triage, anomaly-watch,
 * theology-monitor, content-quality-auditor.
 */
-var ALLOWED_NAMES = new Set([
+var ALLOWED_NAMES = /* @__PURE__ */ new Set([
 	"abuse-triage",
 	"anomaly-watch",
 	"theology-monitor",

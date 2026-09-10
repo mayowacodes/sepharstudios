@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "Sephar Studios",
+	"version": "1.0.1",
+	"identifier": "com.sepharstudios.desktop",
+	"build": {
+		"frontendDist": "../../web/build-static"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "Sephar Studios",
+				"width": 1440,
+				"height": 900,
+				"minWidth": 960,
+				"minHeight": 600,
+				"resizable": true,
+				"fullscreen": false,
+				"backgroundColor": "#0b0c10"
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; connect-src 'self' https://sepharstudios.com https://*.sepharstudios.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'",
+			"capabilities": ["default"]
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": ["msi", "nsis"],
+		"icon": ["icons/icon.ico"],
+		"copyright": "Sephar Studios",
+		"category": "Entertainment",
+		"shortDescription": "Faith-based streaming",
+		"longDescription": "Sephar Studios — faith-based streaming platform."
+	}
+}

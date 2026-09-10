@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { fade } from 'svelte/transition';
   import type HlsType from 'hls.js';
 
@@ -93,7 +93,7 @@
     onTimeUpdate?: (currentTime: number, duration: number) => void;
     /**
      * When true (and contentId set), VideoPlayer auto-fetches
-     * /api/ads/vast-tag and plays the returned URL as a pre-roll before
+     * /api/promo/vast-tag and plays the returned URL as a pre-roll before
      * the main content. Treats the URL as a direct video src — sufficient
      * for raw MP4 creatives.
      *
@@ -105,6 +105,12 @@
      * unchanged so the upgrade is local to the player.
      */
     enableAds?: boolean;
+    /**
+     * Squeeze-back mid-roll ads. Defaults false so the other three
+     * VideoPlayer consumers (live, creator preview, admin review) are
+     * untouched — only the watch page opts in.
+     */
+    enableBreakAds?: boolean;
   }
 
   let {
@@ -115,8 +121,24 @@
     nextEpisodeHref,
     previewVtt, previewSprites = [],
     enableAds = false,
+    enableBreakAds = false,
     onEnded, onTimeUpdate
   }: Props = $props();
+
+  // Resume position, captured ONCE at component init and never re-read.
+  //
+  // Why this is not just `startAt`: initHls() reads it, and initHls() is called
+  // from the src-owning $effect below. In Svelte 5 a prop read inside a function
+  // called by an effect becomes a dependency of that effect — so reading the
+  // prop directly made `startAt` an *implicit* dependency of playback init.
+  // watch/[id]/+page.svelte passes `startAt={startAt()}` from a $derived, so any
+  // re-evaluation of that derived (an invalidateAll() after a PPV purchase, for
+  // one) re-ran the effect, and initHls unconditionally does `hls.destroy()` —
+  // tearing down and rebuilding the whole HLS pipeline in the middle of
+  // playback. Capturing the value here severs that edge: the resume position is
+  // a mount-time concern and genuinely never changes on a live player.
+  // svelte-ignore state_referenced_locally
+  const initialStartAt = startAt;
 
   // Auto-advance to the next episode at 95% completion. Netflix-style
   // "skip credits" — for TV titles the back-end of the file is usually
@@ -145,8 +167,7 @@
   let endScreenInterval: ReturnType<typeof setInterval> | null = null;
 
   $effect(() => {
-    const visible = endScreen && endScreen.length > 0 && duration > 0
-      && currentTime / duration > 0.9 && !endScreenDismissed;
+    const visible = endScreenVisible;
     // Three cases where we still show the overlay but suppress the
     // auto-advance countdown:
     //   1. End of series — there's nowhere we'd auto-jump to.
@@ -379,6 +400,36 @@
   let playing = $state(false);
   let currentTime = $state(0);
   let duration = $state(0);
+
+  // Single source of truth for "is the end screen showing".
+  //
+  // Declared here, below `currentTime`/`duration`, because a $derived evaluates
+  // where it is written — placing it up with the other end-screen state would
+  // read those bindings before their declarations.
+  //
+  // This predicate used to be written out twice: once for the countdown effect
+  // and once inline in the markup. Two copies of a condition this fiddly drift,
+  // and the failure mode was ugly — the markup could hide the overlay while the
+  // effect still believed it visible, leaving the countdown running behind
+  // nothing until it fired `window.location.href` and navigated the viewer away
+  // from a page showing no end screen at all. One derived, read in both places,
+  // makes that unrepresentable.
+  /**
+   * Ad-break phase. Declared here, well above the rest of the ad controller,
+   * because `endScreenVisible` below reads `adActive` — and a $derived
+   * evaluates where it is written, so it cannot reference a binding declared
+   * further down the file. The remaining ad state lives with the controller.
+   */
+  let adPhase = $state<'idle' | 'playing' | 'ending'>('idle');
+  const adActive = $derived(adPhase === 'playing' || adPhase === 'ending');
+
+  const endScreenVisible = $derived(
+    endScreen.length > 0 && duration > 0
+    && currentTime / duration > 0.9 && !endScreenDismissed
+    // Never behind an ad: the countdown would keep ticking under the ad pane
+    // and could navigate the viewer away mid-break.
+    && !adActive
+  );
   let buffered = $state(0);
   let volume = $state(1);
   let muted = $state(false);
@@ -448,7 +499,7 @@
       if (token !== initSeq) return;
       if (!Hls.isSupported()) {
         video.src = url;
-        if (startAt > 0) video.currentTime = startAt;
+        if (initialStartAt > 0) video.currentTime = initialStartAt;
         return;
       }
 
@@ -462,16 +513,23 @@
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
         levels = data.levels.map((l, i) => ({ height: l.height, bitrate: l.bitrate, index: i }));
-        if (startAt > 0) video.currentTime = startAt;
+        if (initialStartAt > 0) video.currentTime = initialStartAt;
         video.play().catch(() => {});
       });
 
       hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
         currentLevel = data.level;
+        const lvl = levels[data.level];
+        if (lvl) telemetryNoteLevel(Math.round(lvl.bitrate / 1000));
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
+        // Non-fatal errors are counted but not surfaced — a handful of
+        // recovered segment errors is normal, a hundred is a CDN problem, and
+        // only the aggregate can tell them apart.
+        telemetryErrorCount += 1;
         if (!data.fatal) return;
+        telemetryFatal = `${data.type}: ${data.details}`;
         // Bounded recovery. A permanently-broken source (404ing
         // manifest, undecodable stream) used to loop startLoad() /
         // recoverMediaError() forever — an unbounded request storm.
@@ -500,14 +558,14 @@
     } else if (isHlsUrl && canPlayNative) {
       // Native HLS (Safari)
       video.src = url;
-      if (startAt > 0) {
-        video.addEventListener('loadedmetadata', () => { video.currentTime = startAt; }, { once: true });
+      if (initialStartAt > 0) {
+        video.addEventListener('loadedmetadata', () => { video.currentTime = initialStartAt; }, { once: true });
       }
       video.play().catch(() => {});
     } else {
       // Direct MP4/WebM — no HLS machinery needed
       video.src = url;
-      if (startAt > 0) video.currentTime = startAt;
+      if (initialStartAt > 0) video.currentTime = initialStartAt;
     }
   }
 
@@ -538,15 +596,45 @@
     videoEl.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
   }
 
+  /**
+   * Duck factor applied to the movie while a short ad plays over it.
+   * Plain `let`, not `$state` — nothing renders from it, and keeping it
+   * non-reactive guarantees it can never become a dependency of the
+   * playback-init effect.
+   */
+  let ducking = false;
+  const DUCK_FACTOR = 0.2;
+
+  /**
+   * THE ONLY writer of `videoEl.volume` / `videoEl.muted`.
+   *
+   * `volume` state always holds the USER'S INTENT; the element carries
+   * intent x duck factor. Before this, three separate places wrote the element
+   * directly, so ducking to 0.2 made the slider visibly jump to 20% and a user
+   * who touched the slider mid-ad permanently lost their original level. With a
+   * single writer, a mid-duck adjustment sets intent, the duck stays applied,
+   * and restoring is just `ducking = false; applyVolume()` — no saved-value
+   * bookkeeping, so no restore bug.
+   *
+   * Mute always wins: ducking never unmutes, and a muted player mutes the ad
+   * too (autoplay policy, and basic decency).
+   */
+  function applyVolume() {
+    if (!videoEl) return;
+    videoEl.volume = volume * (ducking ? DUCK_FACTOR : 1);
+    videoEl.muted = muted;
+  }
+
   function toggleMute() {
     if (!videoEl) return;
     muted = !muted;
-    videoEl.muted = muted;
+    applyVolume();
   }
 
   function changeVolume(e: Event) {
     volume = parseFloat((e.target as HTMLInputElement).value);
-    if (videoEl) { videoEl.volume = volume; videoEl.muted = volume === 0; }
+    muted = volume === 0;
+    applyVolume();
   }
 
   async function toggleFullscreen() {
@@ -625,6 +713,13 @@
       async (entries) => {
         const entry = entries[0];
         if (!entry) return;
+        // Also suppressed during an ad break: a PiP window renders only the
+        // video surface, so the squeeze and the whole ad pane would be
+        // invisible. This adds `adActive` as a dependency of the *PiP* effect
+        // only — that effect just creates an IntersectionObserver, so
+        // re-creating it twice per break is free. It is NOT a dependency of the
+        // src-owning effect, which is the one that must never see ad state.
+        //
         // Only auto-PiP when the player is mostly out of view AND it's
         // currently playing AND we're not already in PiP AND we're not
         // in fullscreen (would conflict). Browsers also bail on
@@ -637,6 +732,7 @@
           && playing
           && !inPip
           && !fullscreen
+          && !adActive
         ) {
           try { await togglePip(); } catch { /* gesture-context bail; not worth surfacing */ }
         }
@@ -681,12 +777,27 @@
       a.tagName === 'SELECT' ||
       a.isContentEditable
     )) return;
+    // During an ad break, seeking and chapter jumps are meaningless (and in
+    // pause mode the movie isn't moving at all). Volume, mute and fullscreen
+    // stay live so the viewer keeps the controls that matter. Escape must never
+    // skip an ad.
+    if (adActive) {
+      switch (e.key) {
+        case 'm': toggleMute(); break;
+        case 'ArrowUp': volume = Math.min(1, volume + 0.1); applyVolume(); break;
+        case 'ArrowDown': volume = Math.max(0, volume - 0.1); applyVolume(); break;
+        case 'f': if (adLayout === 'squeeze') toggleFullscreen(); break;
+        case ' ': case 'k': e.preventDefault(); break;   // swallowed on purpose
+      }
+      return;
+    }
+
     switch (e.key) {
       case ' ': case 'k': e.preventDefault(); togglePlay(); break;
       case 'ArrowRight': videoEl.currentTime = Math.min(videoEl.currentTime + 10, duration); break;
       case 'ArrowLeft': videoEl.currentTime = Math.max(videoEl.currentTime - 10, 0); break;
-      case 'ArrowUp': volume = Math.min(1, volume + 0.1); if (videoEl) videoEl.volume = volume; break;
-      case 'ArrowDown': volume = Math.max(0, volume - 0.1); if (videoEl) videoEl.volume = volume; break;
+      case 'ArrowUp': volume = Math.min(1, volume + 0.1); applyVolume(); break;
+      case 'ArrowDown': volume = Math.max(0, volume - 0.1); applyVolume(); break;
       case 'f': toggleFullscreen(); break;
       case 'm': toggleMute(); break;
       case '.': case '>': e.preventDefault(); nextChapter(); break;
@@ -704,10 +815,28 @@
       // `?` (which is Shift+/ on US layouts) opens the shortcut
       // help overlay. `/` is included so users on layouts without
       // an easy `?` still get a fast keystroke. The overlay closes
-      // itself on Esc / outside-click / another `?` press.
+      // on Esc (below), outside-click, or another `?` press.
       case '?': case '/':
         e.preventDefault();
         shortcutsOpen = !shortcutsOpen;
+        break;
+      // Escape, in precedence order: dismiss the shortcuts overlay, else
+      // leave fullscreen. Previously absent entirely, despite the comment
+      // above having claimed Esc closed the overlay — only outside-click
+      // and the Close button ever did.
+      //
+      // Deliberately does NOT call preventDefault when neither applies: the
+      // browser's own Escape behaviour (stopping a media load, closing a
+      // native dialog) should still work when the player has nothing to
+      // dismiss.
+      case 'Escape':
+        if (shortcutsOpen) {
+          e.preventDefault();
+          shortcutsOpen = false;
+        } else if (document.fullscreenElement) {
+          e.preventDefault();
+          void toggleFullscreen();
+        }
         break;
     }
   }
@@ -764,7 +893,7 @@
     if (enableAds && contentId) {
       void (async () => {
         try {
-          const res = await fetch(`/api/ads/vast-tag?contentId=${encodeURIComponent(contentId)}`);
+          const res = await fetch(`/api/promo/vast-tag?contentId=${encodeURIComponent(contentId)}`);
           const body = res.ok ? await res.json() : null;
           if (!body?.url) { adsDecisionPending = false; return; }
           prerollUrl = body.url;
@@ -812,7 +941,22 @@
       }
     });
     v.addEventListener('pause', () => { playing = false; controlsVisible = true; clearTimeout(controlsTimer); });
+    v.addEventListener('waiting', () => {
+      // A `waiting` before playback has begun is startup, not a stall.
+      if (telemetryStartupMs > 0) telemetryStallBeganAt = Date.now();
+    });
+    v.addEventListener('playing', () => {
+      if (telemetryStartupMs === 0 && telemetryStartedAt > 0) {
+        telemetryStartupMs = Date.now() - telemetryStartedAt;
+      } else if (telemetryStallBeganAt > 0) {
+        telemetryStallCount += 1;
+        telemetryStallMs += Date.now() - telemetryStallBeganAt;
+        telemetryStallBeganAt = 0;
+      }
+    });
+
     v.addEventListener('timeupdate', () => {
+      onPlayheadForAds(v.currentTime);
       currentTime = v.currentTime;
       onTimeUpdate?.(v.currentTime, v.duration);
     });
@@ -828,7 +972,15 @@
       onEnded?.();
       reportProgress();
     });
-    v.addEventListener('volumechange', () => { volume = v.volume; muted = v.muted; });
+    v.addEventListener('volumechange', () => {
+      // While ducked, the element's volume is intent x 0.2 — reading it back
+      // into `volume` would overwrite the user's real setting with the ducked
+      // one and then restore to that lower value when the ad ends. Sync only
+      // mute, which the duck never touches.
+      if (ducking) { muted = v.muted; return; }
+      volume = v.volume;
+      muted = v.muted;
+    });
 
     // Named so the cleanup can remove it — the old anonymous handler
     // leaked a document-level listener (holding the whole component
@@ -838,6 +990,10 @@
 
     // Report progress every 30 seconds
     progressInterval = setInterval(reportProgress, 30_000);
+    // Telemetry every 60s. Less frequent than progress on purpose: it is
+    // diagnostic, not user-visible, and each post is a row update.
+    telemetryStartedAt = Date.now();
+    telemetryInterval = setInterval(() => void reportTelemetry(false), 60000);
     // Heartbeat the realtime active-viewer counter every 30s while playing.
     // First ping fires immediately on first play (below) so the counter
     // doesn't lag by up to 30s.
@@ -858,9 +1014,18 @@
     initSeq += 1;
     hls?.destroy();
     hls = null;
+    // Final telemetry flush before anything else is torn down — it reads
+    // currentTime and levels, which the teardown below invalidates.
+    void reportTelemetry(true);
+    if (telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
     clearInterval(progressInterval);
     clearInterval(activeInterval);
     clearTimeout(controlsTimer);
+    // Ad timers. endBreak() is idempotent, but it also restores volume and
+    // resumes the movie — neither of which makes sense during teardown, so
+    // clear the timers directly rather than calling it.
+    if (adWatchdog) { clearTimeout(adWatchdog); adWatchdog = null; }
+    if (adTicker) { clearInterval(adTicker); adTicker = null; }
     // The end-screen countdown + preroll skip timer were NOT cleared
     // here before — an orphaned end-screen interval kept counting after
     // the viewer navigated away and then fired window.location.href,
@@ -868,6 +1033,354 @@
     if (endScreenInterval) { clearInterval(endScreenInterval); endScreenInterval = null; }
     if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
   });
+
+  // ───────────────────────────────────────────────────────────────────────
+  // PLAYBACK TELEMETRY
+  //
+  // Views and watch-seconds say how much was watched; they say nothing about
+  // whether it played WELL. Without this, a region the CDN serves badly is
+  // indistinguishable from a region that simply watches less.
+  //
+  // All plain `let` — none of it renders, and keeping it non-reactive
+  // guarantees it can never become a dependency of the playback-init effect.
+  // ───────────────────────────────────────────────────────────────────────
+  let telemetrySessionId: string | null = null;
+  let telemetryStartedAt = 0;
+  let telemetryStartupMs = 0;
+  let telemetryStallCount = 0;
+  let telemetryStallMs = 0;
+  let telemetryErrorCount = 0;
+  let telemetryFatal: string | null = null;
+  let telemetryStallBeganAt = 0;
+  let telemetryInterval: ReturnType<typeof setInterval> | null = null;
+  // Time-weighted bitrate: sum(kbps x ms) / sum(ms). A plain mean over switch
+  // events would let a 2-second dip to 360p count as much as an hour at 1080p.
+  let telemetryBitrateWeighted = 0;
+  let telemetryBitrateMs = 0;
+  let telemetryLastLevelAt = 0;
+  let telemetryLastKbps = 0;
+
+  function telemetryNoteLevel(kbps: number) {
+    const now = Date.now();
+    if (telemetryLastLevelAt > 0 && telemetryLastKbps > 0) {
+      const dt = now - telemetryLastLevelAt;
+      telemetryBitrateWeighted += telemetryLastKbps * dt;
+      telemetryBitrateMs += dt;
+    }
+    telemetryLastLevelAt = now;
+    telemetryLastKbps = kbps;
+  }
+
+  function telemetryEffectiveKbps(): number {
+    telemetryNoteLevel(telemetryLastKbps);
+    return telemetryBitrateMs > 0
+      ? Math.round(telemetryBitrateWeighted / telemetryBitrateMs)
+      : telemetryLastKbps;
+  }
+
+  function telemetryPayload() {
+    const level = levels[currentLevel];
+    return {
+      sessionId: telemetrySessionId,
+      contentId,
+      effectiveBitrateKbps: telemetryEffectiveKbps(),
+      startupMs: telemetryStartupMs,
+      stallCount: telemetryStallCount,
+      stallSeconds: Math.round(telemetryStallMs / 1000),
+      errorCount: telemetryErrorCount,
+      fatalError: telemetryFatal,
+      // `height === 0` marks the audio-only rung — the signal that the
+      // low-bandwidth lever is actually being used.
+      finalQuality: level ? (level.height ? `${level.height}p` : 'audio') : null,
+      watchedSeconds: Math.floor(currentTime)
+    };
+  }
+
+  async function reportTelemetry(final = false) {
+    if (!contentId) return;
+    const payload = JSON.stringify(telemetryPayload());
+    try {
+      if (final && navigator.sendBeacon) {
+        // Must survive the page going away — that is exactly when the most
+        // interesting sessions (rage-quits after a stall) end.
+        navigator.sendBeacon('/api/watch/telemetry', new Blob([payload], { type: 'application/json' }));
+        return;
+      }
+      const res = await fetch('/api/watch/telemetry', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: payload
+      });
+      const body = await res.json().catch(() => null);
+      if (body?.sessionId) telemetrySessionId = body.sessionId;
+    } catch {
+      /* telemetry must never break playback */
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SQUEEZE-BACK ADS
+  //
+  // At a cue point the movie scales to 60% from the top-left and an ad renders
+  // in the L-shaped remainder. Ads <= 30s duck the movie audio and let it play
+  // on; longer ads pause it and restore full size afterwards. On phones there
+  // is no squeeze — the movie pauses and the ad takes the whole frame.
+  //
+  // THE CARDINAL RULE: none of this state may ever be read by the src-owning
+  // $effect below. That effect calls initHls(), which unconditionally does
+  // `hls.destroy()`, so a new dependency there would tear down and rebuild the
+  // entire HLS pipeline mid-ad — the exact failure the `adsDecisionPending`
+  // comment above documents. The ad renders from a SECOND <video> element for
+  // the same reason, which also keeps reportProgress()'s reads of
+  // videoEl.currentTime honest.
+  // ───────────────────────────────────────────────────────────────────────
+  type AdBreakPlan = { breakId: string; positionSeconds: number; kind: 'preroll' | 'midroll'; squeezeScale: number };
+  type AdDecisionAd = {
+    decisionId: string; campaignId: string; creativeId: string; src: string;
+    kind: 'video' | 'vast'; durationSeconds: number | null;
+    behavior: 'duck' | 'pause'; squeezeScale: number;
+    clickUrl: string | null; ctaLabel: string | null;
+    headline: string | null; body: string | null; mobileBehavior: string;
+  };
+
+  let adPlan = $state<AdBreakPlan[]>([]);
+  let ad = $state<AdDecisionAd | null>(null);
+  let adVideoEl = $state<HTMLVideoElement | undefined>();
+  let adLayout = $state<'squeeze' | 'takeover'>('squeeze');
+  let adBehavior = $state<'duck' | 'pause'>('pause');
+  let adRemaining = $state(0);
+  let adScale = $state(0.6);
+  let canSqueeze = $state(true);
+
+  // Non-reactive on purpose: consumed breaks and resume intent are bookkeeping,
+  // never rendered, and must not create reactive edges anywhere near playback.
+  const consumedBreaks = new Set<string>();
+  let resumeAfterAd = false;
+  let adWatchdog: ReturnType<typeof setTimeout> | null = null;
+  let adTicker: ReturnType<typeof setInterval> | null = null;
+  let breakInFlight = false;
+
+  /** Scale is applied to the wrapper, never to the container or the controls. */
+  const stageStyle = $derived(
+    adActive && adLayout === 'squeeze' ? `transform: scale(${adScale});` : ''
+  );
+
+  /** Percentage the movie occupies while squeezed, for sizing the ad panes. */
+  const scalePct = $derived(adActive && adLayout === 'squeeze' ? adScale * 100 : 100);
+
+  async function loadAdPlan() {
+    if (!enableBreakAds || !contentId) return;
+    try {
+      const qs = new URLSearchParams({ contentId });
+      if (duration > 0) qs.set('runtime', String(Math.floor(duration)));
+      const res = await fetch(`/api/promo/plan?${qs}`);
+      if (!res.ok) return;
+      const body = await res.json();
+      adPlan = Array.isArray(body?.breaks) ? body.breaks : [];
+    } catch {
+      adPlan = [];
+    }
+  }
+
+  function adBeacon(type: string, extra: Record<string, unknown> = {}) {
+    if (!ad) return;
+    const payload = JSON.stringify({
+      decisionId: ad.decisionId, campaignId: ad.campaignId, creativeId: ad.creativeId,
+      type, wasMuted: muted, layout: adLayout, ...extra
+    });
+    try {
+      // Terminal events must survive navigation and tab close.
+      if ((type === 'complete' || type === 'skip' || type === 'error') && navigator.sendBeacon) {
+        navigator.sendBeacon('/api/promo/e', new Blob([payload], { type: 'application/json' }));
+      } else {
+        void fetch('/api/promo/e', { method: 'POST', headers: { 'content-type': 'application/json' }, body: payload });
+      }
+    } catch { /* a beacon must never break playback */ }
+  }
+
+  async function startBreak(plan: AdBreakPlan) {
+    if (breakInFlight || adActive || !videoEl) return;
+    breakInFlight = true;
+    consumedBreaks.add(plan.breakId);
+    try {
+      const res = await fetch('/api/promo/decision', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contentId, breakId: plan.breakId })
+      });
+      const body = res.ok ? await res.json() : null;
+      const decision: AdDecisionAd | null = body?.ad ?? null;
+      if (!decision) return;                       // no fill — skip the break silently
+
+      // A PiP window shows only the video surface, so a squeeze would be
+      // invisible. Leave PiP first; if we can't, don't serve an unseen ad.
+      if (inPip) {
+        try { await document.exitPictureInPicture(); } catch { return; }
+      }
+
+      ad = decision;
+      adScale = plan.squeezeScale || decision.squeezeScale || 0.6;
+      adLayout = canSqueeze ? 'squeeze' : 'takeover';
+      // A takeover has no visible movie to duck against, so it always pauses.
+      adBehavior = adLayout === 'takeover' ? 'pause' : decision.behavior;
+      adRemaining = decision.durationSeconds ?? 0;
+      adPhase = 'playing';
+
+      if (adBehavior === 'pause') {
+        resumeAfterAd = !videoEl.paused;
+        videoEl.pause();
+      } else {
+        ducking = true;
+        applyVolume();
+      }
+
+      await tick();
+      if (adVideoEl) {
+        adVideoEl.src = decision.src;
+        adVideoEl.muted = muted;
+        adVideoEl.volume = volume;
+        try {
+          await adVideoEl.play();
+        } catch {
+          // Autoplay refused with sound — retry muted rather than losing the
+          // impression entirely.
+          try { adVideoEl.muted = true; await adVideoEl.play(); }
+          catch { endBreak('error'); return; }
+        }
+      }
+
+      adBeacon('start');
+      announceAd(
+        adBehavior === 'pause'
+          ? 'Advertisement. Your movie is paused.'
+          : 'Advertisement. Your movie continues at reduced volume.'
+      );
+
+      adTicker = setInterval(() => {
+        if (adVideoEl && Number.isFinite(adVideoEl.duration)) {
+          adRemaining = Math.max(0, Math.ceil(adVideoEl.duration - adVideoEl.currentTime));
+        } else if (adRemaining > 0) {
+          adRemaining -= 1;
+        }
+      }, 1000);
+
+      // Escalation watchdog: an advertiser can declare 15s and serve 60s. If a
+      // ducked ad outruns its declared length, the movie has been playing
+      // unheard underneath it — switch to pause rather than let it run on.
+      if (adBehavior === 'duck' && decision.durationSeconds) {
+        adWatchdog = setTimeout(() => {
+          if (adPhase === 'playing' && adBehavior === 'duck') {
+            adBeacon('error', { reason: 'duration_mismatch' });
+            adBehavior = 'pause';
+            ducking = false;
+            applyVolume();
+            if (videoEl && !videoEl.paused) { resumeAfterAd = true; videoEl.pause(); }
+          }
+        }, (decision.durationSeconds + 2) * 1000);
+      }
+    } catch {
+      endBreak('error');
+    } finally {
+      breakInFlight = false;
+    }
+  }
+
+  /**
+   * Ends a break. MUST be idempotent and unconditionally safe — it is called
+   * from `ended`, `error`, the watchdog, and onDestroy. The invariant it
+   * protects: the movie is never left paused or ducked because an ad failed.
+   */
+  function endBreak(reason: 'complete' | 'skip' | 'error') {
+    if (adPhase === 'idle') return;
+    adPhase = 'ending';
+    if (adWatchdog) { clearTimeout(adWatchdog); adWatchdog = null; }
+    if (adTicker) { clearInterval(adTicker); adTicker = null; }
+
+    const watched = adVideoEl && Number.isFinite(adVideoEl.currentTime)
+      ? Math.floor(adVideoEl.currentTime) : 0;
+    adBeacon(reason, { watchedSeconds: watched });
+
+    ducking = false;
+    applyVolume();
+
+    if (adVideoEl) {
+      adVideoEl.pause();
+      adVideoEl.removeAttribute('src');
+      adVideoEl.load();                       // free the decoder
+    }
+
+    if (resumeAfterAd && videoEl) { void videoEl.play().catch(() => {}); }
+    resumeAfterAd = false;
+
+    announceAd('Advertisement finished. Returning to your movie.');
+
+    // Let the un-squeeze transition play out before unmounting the panes.
+    setTimeout(() => { adPhase = 'idle'; ad = null; }, 450);
+  }
+
+  /** Coarse announcements only — a per-second countdown would spam AT. */
+  function announceAd(msg: string) {
+    try { adLiveMessage = msg; } catch { /* ignore */ }
+  }
+  let adLiveMessage = $state('');
+
+  /**
+   * Can this viewport actually show a squeeze?
+   *
+   * Layout is a CLIENT question, answered by real measurement — not by the
+   * server's `locals.deviceType`, which does not exist at all in the
+   * static/native build and would miss a resized desktop window or the player
+   * embedded at ~50% width on the creator page. Targeting and reporting use the
+   * server's device bucket; layout uses this. They will sometimes disagree,
+   * which is why the impression records both.
+   *
+   * iOS is excluded outright: Safari permits only one <video> playing at a
+   * time, so duck-and-continue is physically impossible there. Those viewers
+   * get the pause-and-takeover path instead.
+   */
+  $effect(() => {
+    if (typeof window === 'undefined' || !containerEl) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const mq = window.matchMedia('(min-width: 768px)');
+    const evaluate = () => {
+      canSqueeze = mq.matches && (containerEl?.clientWidth ?? 0) >= 640 && !isIOS;
+    };
+    evaluate();
+    mq.addEventListener('change', evaluate);
+    // A SEPARATE observer from the PiP IntersectionObserver — do not overload
+    // that one; they answer different questions and have different lifetimes.
+    const ro = new ResizeObserver(evaluate);
+    ro.observe(containerEl);
+    return () => { mq.removeEventListener('change', evaluate); ro.disconnect(); };
+  });
+
+  // Fetch the break schedule once the real duration is known. `duration` comes
+  // from loadedmetadata, and the 90% cutoff cannot be computed without it —
+  // mediaLibrary.duration is a display string ('2h 7m'), not seconds.
+  let adPlanRequested = false;
+  $effect(() => {
+    if (enableBreakAds && contentId && duration > 0 && !adPlanRequested) {
+      adPlanRequested = true;
+      void loadAdPlan();
+    }
+  });
+
+  /** Called from the existing timeupdate listener — no new listener. */
+  function onPlayheadForAds(t: number) {
+    if (!enableBreakAds || adActive || breakInFlight || adPlan.length === 0) return;
+    for (const b of adPlan) {
+      if (consumedBreaks.has(b.breakId)) continue;
+      if (b.kind === 'preroll') continue;
+      // Trigger once the playhead reaches the cue. A seek past several breaks
+      // consumes them all but only opens the last one, so scrubbing to the end
+      // cannot queue four ads.
+      if (t >= b.positionSeconds && t < b.positionSeconds + 2) {
+        void startBreak(b);
+        return;
+      }
+    }
+  }
 
   // Single owner of playback init: runs on mount and on every src
   // change, but stays out of the way while the ads decision is pending
@@ -900,20 +1413,103 @@
   aria-label="Video player"
   tabindex="0"
 >
-  <!-- Video element -->
-  <video
-    bind:this={videoEl}
-    {poster}
-    class="w-full h-full"
-    playsinline
+  <!-- Video stage.
+       ALWAYS RENDERED — never wrap this in {#if}/{#each}/{#key}. A conditional
+       wrapper would tear down the subtree, `videoEl` would become undefined and
+       then a NEW element, and the src-owning $effect would re-run initHls() —
+       destroying the HLS pipeline mid-ad. All squeeze state travels through the
+       style attribute below, which mutates an attribute and nothing else.
+
+       `absolute inset-0` is geometrically identical to the previous static-flow
+       `w-full h-full`, because the container's height is fixed by aspect-video —
+       so all four consumers render byte-identically at rest.
+
+       Transform, not width/height: the compositor handles it, so the decoded
+       video surface is never re-scaled and no layout is recomputed per frame.
+       origin-top-left + a uniform scale means the movie occupies exactly the
+       top-left scale x scale box with its aspect ratio intact, and the
+       remainder is a literal L. -->
+  <div
+    class="absolute inset-0 origin-top-left will-change-transform transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:duration-0"
+    style={stageStyle}
   >
-    {#each subtitles as sub}
-      <track kind="subtitles" label={sub.label} src={sub.src} srclang={sub.srclang} />
-    {/each}
-    {#each descriptions as d}
-      <track kind="descriptions" label={d.label} src={d.src} srclang={d.srclang} />
-    {/each}
-  </video>
+    <video
+      bind:this={videoEl}
+      {poster}
+      class="w-full h-full"
+      playsinline
+    >
+      {#each subtitles as sub}
+        <track kind="subtitles" label={sub.label} src={sub.src} srclang={sub.srclang} />
+      {/each}
+      {#each descriptions as d}
+        <track kind="descriptions" label={d.label} src={d.src} srclang={d.srclang} />
+      {/each}
+    </video>
+  </div>
+
+  <!-- Ad panes.
+       Placed immediately after the stage with NO z-index, deliberately. The
+       existing stack works by DOM order: <video> (auto) -> end screen (z-10) ->
+       controls overlay (auto, later in DOM) -> skip buttons (z-30) ->
+       failure/shortcuts (z-40). Inserting here with no z-index paints the ad
+       above the movie and below the controls, which is exactly right. Giving
+       the controls an explicit z-index to "fix" ordering would silently invert
+       today's end-screen-covers-controls behaviour. -->
+  {#if adActive && ad}
+    {#if adLayout === 'squeeze'}
+      <!-- Right column of the L -->
+      <div
+        class="absolute top-0 right-0 h-full bg-black flex flex-col"
+        style="width: {100 - scalePct}%"
+        role="region"
+        aria-label="Advertisement"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={() => {}}
+      >
+        <video
+          bind:this={adVideoEl}
+          class="w-full flex-1 object-contain"
+          playsinline
+          disablepictureinpicture
+          onended={() => endBreak('complete')}
+          onerror={() => endBreak('error')}
+        ></video>
+        {@render adChrome()}
+      </div>
+      <!-- Bottom-left leg of the L, beneath the squeezed movie -->
+      <div
+        class="absolute left-0 bottom-0 bg-black text-white px-4 py-3 overflow-hidden"
+        style="width: {scalePct}%; height: {100 - scalePct}%"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={() => {}}
+        role="region"
+        aria-label="Advertisement details"
+      >
+        {#if ad.headline}<p class="text-sm font-semibold truncate">{ad.headline}</p>{/if}
+        {#if ad.body}<p class="text-xs text-white/70 line-clamp-2">{ad.body}</p>{/if}
+      </div>
+    {:else}
+      <!-- Mobile takeover: the movie is paused underneath, frame preserved. -->
+      <div
+        class="absolute inset-0 bg-black flex flex-col"
+        role="region"
+        aria-label="Advertisement"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={() => {}}
+      >
+        <video
+          bind:this={adVideoEl}
+          class="w-full flex-1 object-contain"
+          playsinline
+          disablepictureinpicture
+          onended={() => endBreak('complete')}
+          onerror={() => endBreak('error')}
+        ></video>
+        {@render adChrome()}
+      </div>
+    {/if}
+  {/if}
 
   <!-- Playback-failure overlay. Set when hls.js exhausts its bounded
        recovery attempts (broken manifest, undecodable stream). Before
@@ -982,7 +1578,7 @@
 
   <!-- End-screen overlay: appears during the last 10% of playback if there
        are next-up cards. Click any card to navigate; X dismisses. -->
-  {#if endScreen && endScreen.length > 0 && duration > 0 && currentTime / duration > 0.9 && !endScreenDismissed}
+  {#if endScreenVisible}
     <div
       class="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 transition-opacity"
       role="region"
@@ -1047,7 +1643,8 @@
   <!-- Controls overlay — click is only used to stop propagation to the container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 {controlsVisible ? 'opacity-100' : 'opacity-0'}"
+    class="absolute left-0 top-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 {controlsVisible ? 'opacity-100' : 'opacity-0'}"
+    style="width: {scalePct}%; height: {scalePct}%"
     onclick={(e) => e.stopPropagation()}
     onkeydown={() => {}}
     role="presentation"
@@ -1416,3 +2013,28 @@
     </button>
   {/if}
 </div>
+\n
+{#snippet adChrome()}
+  <div class="flex items-center justify-between gap-3 px-3 py-2 bg-black/80">
+    <span class="text-[10px] uppercase tracking-wider bg-white/20 text-white px-1.5 py-0.5 rounded">Ad</span>
+    <!-- aria-hidden: a per-second ticker announced by a live region spams
+         assistive tech. Coarse announcements go through the region below. -->
+    <span class="text-xs text-white/80" aria-hidden="true">
+      {adRemaining > 0 ? `${adRemaining}s` : ''}
+    </span>
+    {#if ad?.clickUrl}
+      <a
+        href={ad.clickUrl}
+        target="_blank"
+        rel="noopener noreferrer nofollow sponsored"
+        class="text-xs font-medium bg-white text-black px-3 py-1.5 rounded min-h-[44px] inline-flex items-center"
+        onclick={() => adBeacon('click')}
+      >
+        {ad.ctaLabel ?? 'Learn more'}
+      </a>
+    {/if}
+  </div>
+{/snippet}
+
+<!-- Coarse ad announcements. Deliberately not on the countdown. -->
+<div class="sr-only" role="status" aria-live="polite">{adLiveMessage}</div>

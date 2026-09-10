@@ -1,6 +1,6 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { Z as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
-import { n as PLAN_PRICES_CENTS, o as initializeTransaction } from "../../../../../chunks/paystack.js";
+import { it as paymentIntents, t as db } from "../../../../../chunks/drizzle.js";
+import { c as isPlanName, o as initializeTransaction, s as isPaidPlan } from "../../../../../chunks/paystack.js";
 import { i as verifyOtp } from "../../../../../chunks/otp.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/payment/initialize/+server.ts
@@ -11,7 +11,8 @@ var POST = async ({ request, locals }) => {
 	if (phone && otp) {
 		if (!await verifyOtp(phone, otp)) return json({ error: "Invalid or expired verification code" }, { status: 400 });
 	} else if (phone || otp) return json({ error: "Phone number and OTP are both required" }, { status: 400 });
-	if (!PLAN_PRICES_CENTS[plan]) return json({ error: "Invalid plan" }, { status: 400 });
+	if (!isPlanName(plan)) return json({ error: "Invalid plan" }, { status: 400 });
+	if (!isPaidPlan(plan)) return json({ error: "This plan is free — activate it via /api/subscriptions/start-free" }, { status: 400 });
 	try {
 		const verificationAmountCents = 50;
 		const tx = await initializeTransaction({

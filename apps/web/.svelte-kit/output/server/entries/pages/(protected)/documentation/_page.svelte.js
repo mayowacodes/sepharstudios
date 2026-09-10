@@ -1,4 +1,4 @@
-import { jt as spread_props } from "../../../../chunks/ui-libs.js";
+import { Ot as spread_props } from "../../../../chunks/ui-libs.js";
 import { t as Icon } from "../../../../chunks/Icon.js";
 import { t as Book_open } from "../../../../chunks/book-open.js";
 import { t as External_link } from "../../../../chunks/external-link.js";
@@ -6,7 +6,7 @@ import { t as Rocket } from "../../../../chunks/rocket.js";
 import { t as Settings } from "../../../../chunks/settings.js";
 import { t as Button } from "../../../../chunks/button.js";
 import { a as Card, i as Card_content, n as Card_header, r as Card_description, t as Card_title } from "../../../../chunks/card.js";
-//#region ../../node_modules/@lucide/svelte/dist/icons/code.svelte
+//#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/code.svelte
 function Code($$renderer, $$props) {
 	let { $$slots, $$events, ...props } = $$props;
 	Icon($$renderer, spread_props([

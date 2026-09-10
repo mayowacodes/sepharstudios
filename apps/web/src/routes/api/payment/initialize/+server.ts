@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { initializeTransaction, PLAN_PRICES_CENTS, type PlanName } from '$lib/payment/paystack';
+import { initializeTransaction, isPlanName, isPaidPlan, type PlanName } from '$lib/payment/paystack';
 import { verifyOtp } from '$lib/server/otp';
 import { db } from '$lib/db/drizzle';
 import { paymentIntents } from '$lib/db/schema/sepharstudios';
@@ -27,8 +27,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Phone number and OTP are both required' }, { status: 400 });
 	}
 
-	if (!PLAN_PRICES_CENTS[plan]) {
+	// `isPlanName`, not `!PLAN_PRICES_CENTS[plan]` — freemium costs 0 and 0 is
+	// falsy, so the old truthiness check rejected the free tier as unknown.
+	if (!isPlanName(plan)) {
 		return json({ error: 'Invalid plan' }, { status: 400 });
+	}
+
+	// A free plan has nothing to initialize. There is no charge, no card to
+	// verify and no authorization to store, so sending it to Paystack would
+	// take a $0.50 verification charge for a subscription that never bills.
+	if (!isPaidPlan(plan)) {
+		return json(
+			{ error: 'This plan is free — activate it via /api/subscriptions/start-free' },
+			{ status: 400 }
+		);
 	}
 
 	try {

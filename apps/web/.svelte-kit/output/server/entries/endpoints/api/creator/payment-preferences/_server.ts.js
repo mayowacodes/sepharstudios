@@ -1,4 +1,4 @@
-import { O as creators, t as db } from "../../../../../chunks/drizzle.js";
+import { F as creators, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 //#region src/routes/api/creator/payment-preferences/+server.ts
@@ -13,7 +13,7 @@ import { eq } from "drizzle-orm";
 * Validation: percentages must sum to 100. The payout worker (forthcoming)
 * will read these to decide how to split each payout.
 */
-var VALID_PREFERENCES = new Set([
+var VALID_PREFERENCES = /* @__PURE__ */ new Set([
 	"fiat",
 	"usdc",
 	"stc",

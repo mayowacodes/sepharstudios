@@ -1,4 +1,4 @@
-import { S as contentThumbnailVariants, t as db } from "./drizzle.js";
+import { k as contentThumbnailVariants, t as db } from "./drizzle.js";
 import { eq, sql } from "drizzle-orm";
 //#region src/lib/server/thumbnail-rotation.ts
 /**

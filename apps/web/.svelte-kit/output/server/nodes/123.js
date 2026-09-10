@@ -1,8 +1,8 @@
-import * as server from '../entries/pages/kids/kiddies/_page.server.ts.js';
+
 
 export const index = 123;
-export { server };
-export const server_id = "src/routes/kids/kiddies/+page.server.ts";
-export const imports = [];
-export const stylesheets = [];
+let component_cache;
+export const component = async () => component_cache ??= (await import('../entries/pages/kids/kiddies/bible-quiz/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/123.CyOtpONq.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/CF76uHDC.js","_app/immutable/chunks/HuCy9WZI.js","_app/immutable/chunks/yDDlYEIK2.js"];
+export const stylesheets = ["_app/immutable/assets/ui-libs.C1tyNZCz.css"];
 export const fonts = [];

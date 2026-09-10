@@ -1,4 +1,4 @@
-import { Ct as attr_style, Et as derived, Ht as attr, Ot as ensure_array_like, Pt as stringify, St as attr_class, Wt as escape_html, vt as onDestroy } from "./ui-libs.js";
+import { Ct as derived, Lt as attr, Tt as ensure_array_like, bt as attr_style, gt as onDestroy, jt as stringify, yt as attr_class, zt as escape_html } from "./ui-libs.js";
 //#region src/lib/components/widgets/VideoPlayer.svelte
 function VideoPlayer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -55,7 +55,7 @@ function VideoPlayer($$renderer, $$props) {
 		*  review page's "Add note at MM:SS" button). */
 		/**
 		* When true (and contentId set), VideoPlayer auto-fetches
-		* /api/ads/vast-tag and plays the returned URL as a pre-roll before
+		* /api/promo/vast-tag and plays the returned URL as a pre-roll before
 		* the main content. Treats the URL as a direct video src — sufficient
 		* for raw MP4 creatives.
 		*
@@ -66,8 +66,14 @@ function VideoPlayer($$renderer, $$props) {
 		* exposes (skip on null, swap to main src on ad complete) is
 		* unchanged so the upgrade is local to the player.
 		*/
-		let { src, poster, contentId, startAt = 0, title, ageRating, genres = [], subtitles = [], descriptions = [], chapters = [], endScreen = [], endOfSeries = false, nextEpisodeHref, previewVtt, previewSprites = [], enableAds = false, onEnded, onTimeUpdate } = $$props;
+		/**
+		* Squeeze-back mid-roll ads. Defaults false so the other three
+		* VideoPlayer consumers (live, creator preview, admin review) are
+		* untouched — only the watch page opts in.
+		*/
+		let { src, poster, contentId, startAt = 0, title, ageRating, genres = [], subtitles = [], descriptions = [], chapters = [], endScreen = [], endOfSeries = false, nextEpisodeHref, previewVtt, previewSprites = [], enableAds = false, enableBreakAds = false, onEnded, onTimeUpdate } = $$props;
 		const displayGenres = derived(() => (genres ?? []).slice(0, 3));
+		let endScreenCountdown = 10;
 		let endScreenInterval = null;
 		const currentChapter = derived(() => {
 			if (!chapters || chapters.length === 0) return null;
@@ -101,6 +107,8 @@ function VideoPlayer($$renderer, $$props) {
 		let playing = false;
 		let currentTime = 0;
 		let duration = 0;
+		const adActive = derived(() => false);
+		const endScreenVisible = derived(() => endScreen.length > 0 && false);
 		let volume = 1;
 		let muted = false;
 		let fullscreen = false;
@@ -131,6 +139,14 @@ function VideoPlayer($$renderer, $$props) {
 			clearInterval(progressInterval);
 			clearInterval(activeInterval);
 			clearTimeout(controlsTimer);
+			if (adWatchdog) {
+				clearTimeout(adWatchdog);
+				adWatchdog = null;
+			}
+			if (adTicker) {
+				clearInterval(adTicker);
+				adTicker = null;
+			}
 			if (endScreenInterval) {
 				clearInterval(endScreenInterval);
 				endScreenInterval = null;
@@ -140,7 +156,16 @@ function VideoPlayer($$renderer, $$props) {
 				prerollSkippableTimer = null;
 			}
 		});
-		$$renderer.push(`<div class="relative bg-black w-full aspect-video select-none group" role="application" aria-label="Video player" tabindex="0"><video${attr("poster", poster)} class="w-full h-full" playsinline=""><!--[-->`);
+		let ad = null;
+		let adScale = .6;
+		let adWatchdog = null;
+		let adTicker = null;
+		/** Scale is applied to the wrapper, never to the container or the controls. */
+		const stageStyle = derived(() => adActive() && true ? `transform: scale(${adScale});` : "");
+		/** Percentage the movie occupies while squeezed, for sizing the ad panes. */
+		const scalePct = derived(() => adActive() && true ? adScale * 100 : 100);
+		let adLiveMessage = "";
+		$$renderer.push(`<div class="relative bg-black w-full aspect-video select-none group" role="application" aria-label="Video player" tabindex="0"><div class="absolute inset-0 origin-top-left will-change-transform transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:duration-0"${attr_style(stageStyle())}><video${attr("poster", poster)} class="w-full h-full" playsinline=""><!--[-->`);
 		const each_array = ensure_array_like(subtitles);
 		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 			let sub = each_array[$$index];
@@ -152,7 +177,10 @@ function VideoPlayer($$renderer, $$props) {
 			let d = each_array_1[$$index_1];
 			$$renderer.push(`<track kind="descriptions"${attr("label", d.label)}${attr("src", d.src)}${attr("srclang", d.srclang)}/>`);
 		}
-		$$renderer.push(`<!--]--></video> `);
+		$$renderer.push(`<!--]--></video></div> `);
+		if (adActive() && ad);
+		else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
 		if (skipIntroTarget() !== null) {
@@ -165,9 +193,42 @@ function VideoPlayer($$renderer, $$props) {
 		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> `);
-		if (endScreen && endScreen.length > 0 && false);
-		else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]-->  <div${attr_class(`absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 opacity-100`)} role="presentation">`);
+		if (endScreenVisible()) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 transition-opacity" role="region" aria-label="Next up suggestions"><div class="w-full max-w-3xl space-y-4">`);
+			if (endOfSeries) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<div class="text-center space-y-2 mb-2"><div class="text-4xl">🎬</div> <h3 class="text-white text-xl font-semibold">You've reached the end of the series</h3> <p class="text-white/70 text-sm">Thanks for watching. Here are a few more to explore.</p></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <div class="flex items-center justify-between"><h3 class="text-white text-lg font-semibold">${escape_html(endOfSeries ? "More like this" : "Up next")}</h3> <button type="button" class="text-gray-300 hover:text-white text-sm" aria-label="Dismiss">Dismiss</button></div> <div${attr_class(`grid grid-cols-1 sm:grid-cols-${stringify(Math.min(endScreen.length, 3))} gap-3`)}><!--[-->`);
+			const each_array_2 = ensure_array_like(endScreen);
+			for (let i = 0, $$length = each_array_2.length; i < $$length; i++) {
+				let item = each_array_2[i];
+				$$renderer.push(`<a${attr("href", item.href || `/watch/${item.slug || item.id}`)} class="block group surface-1 rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all"><div class="aspect-video bg-black/50 relative">`);
+				if (item.thumbnail) {
+					$$renderer.push("<!--[0-->");
+					$$renderer.push(`<img${attr("src", item.thumbnail)} alt="" class="w-full h-full object-cover"/>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--> `);
+				if (item.kind) {
+					$$renderer.push("<!--[0-->");
+					$$renderer.push(`<div class="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-medium">${escape_html(item.kind)}</div>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--> `);
+				if (i === 0 && true) {
+					$$renderer.push("<!--[0-->");
+					$$renderer.push(`<div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">Playing in ${escape_html(endScreenCountdown)}s</div>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--></div> <div class="p-2"><div class="text-sm text-white font-medium line-clamp-2 group-hover:text-purple-300">${escape_html(item.title)}</div> `);
+				if (item.duration) {
+					$$renderer.push("<!--[0-->");
+					$$renderer.push(`<div class="text-xs text-gray-400 mt-0.5">${escape_html(item.duration)}</div>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--></div></a>`);
+			}
+			$$renderer.push(`<!--]--></div></div></div>`);
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]-->  <div${attr_class(`absolute left-0 top-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 opacity-100`)}${attr_style(`width: ${stringify(scalePct())}%; height: ${stringify(scalePct())}%`)} role="presentation">`);
 		if (title) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<div class="absolute top-0 inset-x-0 pointer-events-none bg-linear-to-b from-black/60 via-black/20 to-transparent pt-3 pb-10 px-4"><div class="relative h-6 sm:h-7"><!---->`);
@@ -239,7 +300,7 @@ function VideoPlayer($$renderer, $$props) {
 		$$renderer.push(`<!--]--> `);
 		$$renderer.push("<!--[0-->");
 		$$renderer.push(`<button type="button" aria-label="Play video" class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-16 h-16 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white"><svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"></polygon></svg></div></button>`);
-		$$renderer.push(`<!--]--></div>`);
+		$$renderer.push(`<!--]--></div> \\n  <div class="sr-only" role="status" aria-live="polite">${escape_html(adLiveMessage)}</div>`);
 	});
 }
 //#endregion

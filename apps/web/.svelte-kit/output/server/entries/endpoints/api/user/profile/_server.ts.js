@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 * Only the user's own row is touched. Demographics fields are optional and
 * default to NULL; sending an empty string clears the value.
 */
-var ALLOWED_GENDERS = new Set([
+var ALLOWED_GENDERS = /* @__PURE__ */ new Set([
 	"male",
 	"female",
 	"non_binary",

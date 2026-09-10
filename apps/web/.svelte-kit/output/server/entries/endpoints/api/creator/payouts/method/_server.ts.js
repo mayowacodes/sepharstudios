@@ -1,4 +1,4 @@
-import { O as creators, t as db } from "../../../../../../chunks/drizzle.js";
+import { F as creators, t as db } from "../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -14,7 +14,7 @@ import { eq } from "drizzle-orm";
 * Switching to Stripe requires a verified Connect account — we block the
 * switch otherwise so the cron doesn't try to pay an unverified creator.
 */
-var VALID_PROCESSORS = new Set(["paystack", "stripe"]);
+var VALID_PROCESSORS = /* @__PURE__ */ new Set(["paystack", "stripe"]);
 var GET = async ({ locals }) => {
 	const session = await locals.auth.getSession();
 	if (!session) return json({ error: "Unauthorized" }, { status: 401 });

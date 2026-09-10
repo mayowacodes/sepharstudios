@@ -1,4 +1,4 @@
-import { Et as derived, vt as onDestroy } from "../../../../../../chunks/ui-libs.js";
+import { Ct as derived, gt as onDestroy } from "../../../../../../chunks/ui-libs.js";
 import "../../../../../../chunks/archive.js";
 import { t as Arrow_left } from "../../../../../../chunks/arrow-left.js";
 import "../../../../../../chunks/external-link.js";

@@ -1,13 +1,12 @@
-import { f as get_message, h as base64_decode, n as TRAILING_SLASH_PARAM, p as get_status, r as create_remote_key, t as INVALIDATED_PARAM, y as noop } from "./shared.js";
+import { b as unflatten, d as get_message, f as get_status, m as base64_decode, n as TRAILING_SLASH_PARAM, r as create_remote_key, t as INVALIDATED_PARAM, x as noop } from "./shared.js";
 import { r as base } from "./server.js";
+import { Gt as writable, Jt as noop$1, _t as settled, ht as index_server_exports, vt as tick$1 } from "./ui-libs.js";
 import { S as compact, f as make_trackable, g as add_data_suffix, h as noop_span, l as decode_params, p as normalize_path, s as hash, u as decode_pathname } from "./exports.js";
-import { Bt as writable, Kt as noop$1, _t as index_server_exports, bt as tick$1, yt as settled } from "./ui-libs.js";
 import "./index-server.js";
 import "./internal.js";
-import "./environment.js";
+import "./internal2.js";
 import { HttpError, Redirect, SvelteKitError } from "@sveltejs/kit/internal";
 import "@sveltejs/kit/internal/server";
-import * as devalue from "devalue";
 var STATES_KEY = "sveltekit:states";
 var HISTORY_INDEX = "sveltekit:history";
 var NAVIGATION_INDEX = "sveltekit:navigation";
@@ -20,7 +19,7 @@ var PRELOAD_PRIORITIES = {
 	false: -1
 };
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/client/utils.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/utils.js
 var origin = "";
 /** @param {string | URL} url */
 function resolve_url(url) {
@@ -89,7 +88,7 @@ function is_external_url(url, base, hash_routing) {
 	return false;
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/client/state.svelte.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/state.svelte.js
 var page;
 var navigating;
 var updated;
@@ -146,13 +145,13 @@ function initial_fetch(resource, opts) {
 	if (script?.textContent) {
 		script.remove();
 		let { body, ...init } = JSON.parse(script.textContent);
+		if (script.getAttribute("data-b64") !== null) body = base64_decode(body);
 		const ttl = script.getAttribute("data-ttl");
 		if (ttl) cache.set(selector, {
 			body,
 			init,
 			ttl: 1e3 * Number(ttl)
 		});
-		if (script.getAttribute("data-b64") !== null) body = base64_decode(body);
 		return Promise.resolve(new Response(body, init));
 	}
 	return window.fetch(resource, opts);
@@ -196,40 +195,40 @@ function build_selector(resource, opts) {
 	return selector;
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/client/session-storage.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/session-storage.js
 /**
 * Read a value from `sessionStorage`
 * @param {string} key
 * @param {(value: string) => any} parse
 */
-/* @__NO_SIDE_EFFECTS__ */
+/*@__NO_SIDE_EFFECTS__*/
 function get(key, parse = JSON.parse) {
 	try {
 		return parse(sessionStorage[key]);
 	} catch {}
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/client/ndjson.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/stream.js
 /**
-* Yields parsed JSON objects from a ReadableStream of newline-delimited JSON.
-* Each yielded value is the raw `JSON.parse`'d object — callers handle deserialization.
+* Reads from a stream, decoding it as text and yielding each block of content
+* separated by `delimiter`. The trailing block (if any) is yielded once the
+* stream closes.
 * @param {ReadableStreamDefaultReader<Uint8Array>} reader
+* @param {string} delimiter
 */
-async function* read_ndjson(reader) {
+async function* read_stream(reader, delimiter) {
 	let done = false;
 	let buffer = "";
 	const decoder = new TextDecoder();
 	while (true) {
-		let split = buffer.indexOf("\n");
+		let split = buffer.indexOf(delimiter);
 		while (split !== -1) {
-			const line = buffer.slice(0, split).trim();
-			buffer = buffer.slice(split + 1);
-			if (line) yield JSON.parse(line);
-			split = buffer.indexOf("\n");
+			yield buffer.slice(0, split);
+			buffer = buffer.slice(split + delimiter.length);
+			split = buffer.indexOf(delimiter);
 		}
 		if (done) {
-			const line = buffer.trim();
-			if (line) yield JSON.parse(line);
+			if (buffer) yield buffer;
 			return;
 		}
 		const chunk = await reader.read();
@@ -239,7 +238,21 @@ async function* read_ndjson(reader) {
 	}
 }
 //#endregion
-//#region ../../node_modules/@sveltejs/kit/src/runtime/client/client.js
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/ndjson.js
+/**
+* Yields parsed JSON objects from a ReadableStream of newline-delimited JSON.
+* Each yielded value is the raw `JSON.parse`'d object — callers handle deserialization.
+* @param {ReadableStreamDefaultReader<Uint8Array>} reader
+*/
+async function* read_ndjson(reader) {
+	for await (const block of read_stream(reader, "\n")) {
+		const line = block.trim();
+		if (line) yield JSON.parse(line);
+	}
+}
+//#endregion
+//#region ../../node_modules/.bun/@sveltejs+kit@2.69.3+ab726ce7a871e72d/node_modules/@sveltejs/kit/src/runtime/client/client.js
+/** @import { RemoteFunctionDataNode, ServerNodesResponse, ServerRedirectNode } from 'types' */
 /** @import { CacheEntry } from './remote-functions/cache.svelte.js' */
 /** @import { Query } from './remote-functions/query/instance.svelte.js' */
 /** @import { LiveQuery } from './remote-functions/query-live/instance.svelte.js' */
@@ -293,7 +306,8 @@ function clear_onward_history(current_history_index, current_navigation_index) {
 * Returns a `Promise` that never resolves (to prevent any
 * subsequent work, e.g. history manipulation, from happening)
 * @param {URL} url
-* @param {boolean} [replace] If `true`, will replace the current `history` entry rather than creating a new one with `pushState`
+* @param {boolean} [replace] if `true`, will replace the current `history` entry rather than creating a new one with `pushState`
+* @returns {Promise<any>} a promise that never resolves
 */
 function native_navigation(url, replace = false) {
 	if (replace) location.replace(url.href);
@@ -334,6 +348,10 @@ var load_cache = null;
 function discard_load_cache() {
 	load_cache?.fork?.then((f) => f?.discard());
 	load_cache = null;
+	current_a = {
+		element: void 0,
+		href: void 0
+	};
 }
 /**
 * @type {Map<string, Promise<URL>>}
@@ -382,6 +400,7 @@ var token;
 * If a preload token is in the set and the preload errors, the error
 * handling logic (for example reloading) is skipped.
 */
+/** @type {Set<{}>} */
 var preload_tokens = /* @__PURE__ */ new Set();
 /**
 * @type {Map<string, Map<string, CacheEntry<Query<any>>>>}
@@ -412,6 +431,7 @@ function restore_snapshot(index) {
 * @param {{ replaceState?: boolean; noScroll?: boolean; keepFocus?: boolean; invalidateAll?: boolean; invalidate?: Array<string | URL | ((url: URL) => boolean)>; state?: Record<string, any> }} options
 * @param {number} redirect_count
 * @param {{}} [nav_token]
+* @returns {Promise<void>}
 */
 async function _goto(url, options, redirect_count, nav_token) {
 	/** @type {Set<string>} */
@@ -432,7 +452,10 @@ async function _goto(url, options, redirect_count, nav_token) {
 			if (options.invalidateAll) {
 				force_invalidation = true;
 				query_keys = /* @__PURE__ */ new Set();
-				for (const [id, entries] of query_map) for (const payload of entries.keys()) query_keys.add(create_remote_key(id, payload));
+				for (const [id, entries] of query_map) for (const [payload, entry] of entries) {
+					entry.resource?.reset();
+					query_keys.add(create_remote_key(id, payload));
+				}
 				live_query_keys = /* @__PURE__ */ new Set();
 				for (const [id, entries] of live_query_map) for (const payload of entries.keys()) live_query_keys.add(create_remote_key(id, payload));
 			}
@@ -440,7 +463,7 @@ async function _goto(url, options, redirect_count, nav_token) {
 		}
 	});
 	if (options.invalidateAll) tick$1().then(tick$1).then(() => {
-		for (const [id, entries] of query_map) for (const [payload, { resource }] of entries) if (query_keys?.has(create_remote_key(id, payload))) resource.refresh();
+		for (const [id, entries] of query_map) for (const [payload, { resource }] of entries) if (query_keys?.has(create_remote_key(id, payload))) resource.start();
 		for (const [id, entries] of live_query_map) for (const [payload, { resource }] of entries) if (live_query_keys?.has(create_remote_key(id, payload))) resource.reconnect();
 	});
 }
@@ -473,7 +496,6 @@ async function initialize(result, target, hydrate) {
 		transformError: void 0
 	});
 	await Promise.resolve();
-	restore_snapshot(current_navigation_index);
 	if (hydrate) {
 		/** @type {import('@sveltejs/kit').AfterNavigate} */
 		const navigation = {
@@ -488,6 +510,7 @@ async function initialize(result, target, hydrate) {
 		};
 		after_navigate_callbacks.forEach((fn) => fn(navigation));
 	}
+	restore_snapshot(current_navigation_index);
 	started = true;
 }
 /**
@@ -708,7 +731,7 @@ function create_data_node(node, previous) {
 */
 function diff_search_params(old_url, new_url) {
 	if (!old_url) return new Set(new_url.searchParams.keys());
-	const changed = new Set([...old_url.searchParams.keys(), ...new_url.searchParams.keys()]);
+	const changed = /* @__PURE__ */ new Set([...old_url.searchParams.keys(), ...new_url.searchParams.keys()]);
 	for (const key of changed) {
 		const old_values = old_url.searchParams.getAll(key);
 		const new_values = new_url.searchParams.getAll(key);
@@ -737,8 +760,18 @@ function preload_error({ error, url, route, params }) {
 	};
 }
 /**
-* @param {import('./types.js').NavigationIntent & { preload?: {} }} intent
+* @overload
+* @param {import('./types.js').NavigationIntent} intent
+* @returns {Promise<import('./types.js').NavigationResult | undefined>}
+*/
+/**
+* @overload
+* @param {import('./types.js').NavigationIntent & { preload: {} }} intent
 * @returns {Promise<import('./types.js').NavigationResult>}
+*/
+/**
+* @param {import('./types.js').NavigationIntent & { preload?: {} }} intent
+* @returns {Promise<import('./types.js').NavigationResult | undefined>}
 */
 async function load_route({ id, invalidating, url, params, route, preload }) {
 	if (load_cache?.id === id) {
@@ -771,7 +804,7 @@ async function load_route({ id, invalidating, url, params, route, preload }) {
 					params,
 					route: { id }
 				});
-				if (preload_tokens.has(preload)) return preload_error({
+				if (preload && preload_tokens.has(preload)) return preload_error({
 					error: handled_error,
 					url,
 					params,
@@ -820,7 +853,7 @@ async function load_route({ id, invalidating, url, params, route, preload }) {
 			type: "redirect",
 			location: err.location
 		};
-		if (preload_tokens.has(preload)) return preload_error({
+		if (preload && preload_tokens.has(preload)) return preload_error({
 			error: await handle_error(err, {
 				params,
 				url,
@@ -905,7 +938,7 @@ async function load_nearest_error_page(i, branch, errors) {
 *   url: URL;
 *   route: { id: string | null }
 * }} opts
-* @returns {Promise<import('./types.js').NavigationFinished>}
+* @returns {Promise<import('./types.js').NavigationFinished | undefined>} returns `undefined` in case of a redirect
 */
 async function load_root_error_page({ status, error, url, route }) {
 	/** @type {Record<string, string>} */
@@ -916,8 +949,8 @@ async function load_root_error_page({ status, error, url, route }) {
 		const server_data = await load_data(url, [true]);
 		if (server_data.type !== "data" || server_data.nodes[0] && server_data.nodes[0].type !== "data") throw 0;
 		server_data_node = server_data.nodes[0] ?? null;
-	} catch {
-		if (url.origin !== origin || url.pathname !== location.pathname || hydrated) await native_navigation(url);
+	} catch (e) {
+		if (!(e instanceof HttpError && e.status === 404) && (url.origin !== origin || url.pathname !== location.pathname || hydrated)) return await native_navigation(url);
 	}
 	try {
 		return get_navigation_result_from_branch({
@@ -943,7 +976,23 @@ async function load_root_error_page({ status, error, url, route }) {
 			route: null
 		});
 	} catch (error) {
-		if (error instanceof Redirect) return _goto(new URL(error.location, location.href), {}, 0);
+		if (error instanceof Redirect) {
+			await _goto(new URL(error.location, location.href), {}, 0);
+			return;
+		}
+		const error_template = await app.get_error_template();
+		const handled = await handle_error(error, {
+			url,
+			params,
+			route
+		});
+		const html = error_template({
+			status,
+			message: String(handled?.message ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+		});
+		const parsed = new DOMParser().parseFromString(html, "text/html");
+		document.documentElement.replaceChild(document.adoptNode(parsed.head), document.head);
+		document.documentElement.replaceChild(document.adoptNode(parsed.body), document.body);
 		throw error;
 	}
 }
@@ -1059,6 +1108,7 @@ function _before_navigate({ url, type, intent, delta, event, scroll }) {
 *   block?: () => void;
 *   event?: Event
 * }} opts
+* @returns {Promise<void>}
 */
 async function navigate({ type, url, popped, keepfocus, noscroll, replace_state, state = {}, redirect_count = 0, nav_token = {}, accept = noop, block = noop, event }) {
 	const prev_token = token;
@@ -1092,8 +1142,9 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 	url = intent?.url || url;
 	if (token !== nav_token) {
 		nav.reject(/* @__PURE__ */ new Error("navigation aborted"));
-		return false;
+		return;
 	}
+	if (!navigation_result) return;
 	if (navigation_result.type === "redirect") {
 		if (redirect_count < 20) {
 			await navigate({
@@ -1120,10 +1171,11 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 			url,
 			route: { id: null }
 		});
+		if (!navigation_result) return;
 	} else if (navigation_result.props.page.status >= 400) {
 		if (await stores.updated.check()) {
 			await update_service_worker();
-			await native_navigation(url, replace_state);
+			return await native_navigation(url, replace_state);
 		}
 	}
 	reset_invalidation();
@@ -1143,7 +1195,13 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 	}
 	const load_cache_fork = intent && load_cache?.id === intent.id ? load_cache.fork : null;
 	if (load_cache?.fork && !load_cache_fork) discard_load_cache();
-	load_cache = null;
+	else {
+		load_cache = null;
+		current_a = {
+			element: void 0,
+			href: void 0
+		};
+	}
 	navigation_result.props.page.state = state;
 	/**
 	* @type {Promise<void> | undefined}
@@ -1175,6 +1233,7 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 			}
 		};
 		if (navigation_result.props.page) navigation_result.props.page.url = url;
+		if (!keepfocus && document.activeElement instanceof HTMLElement && document.activeElement !== document.body) document.activeElement.blur();
 		const fork = load_cache_fork && await load_cache_fork;
 		if (fork) commit_promise = fork.commit();
 		else {
@@ -1191,7 +1250,7 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 	await tick$1();
 	if (token !== nav_token) {
 		nav.reject(/* @__PURE__ */ new Error("navigation aborted"));
-		return false;
+		return;
 	}
 	if (navigation_result.props.page && rendering_error) Object.assign(navigation_result.props.page, rendering_error);
 	/** @type {Element | null | ''} */
@@ -1206,10 +1265,10 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 	if (!keepfocus && !changed_focus) reset_focus(url, !deep_linked);
 	autoscroll = true;
 	is_navigating = false;
-	if (type === "popstate") restore_snapshot(current_navigation_index);
 	nav.fulfil(void 0);
 	if (nav.navigation.to) nav.navigation.to.scroll = scroll_state();
 	after_navigate_callbacks.forEach((fn) => fn(nav.navigation));
+	if (type === "popstate") restore_snapshot(current_navigation_index);
 	stores.navigating.set(navigating.current = null);
 }
 /**
@@ -1219,7 +1278,7 @@ async function navigate({ type, url, popped, keepfocus, noscroll, replace_state,
 * @param {App.Error} error
 * @param {number} status
 * @param {boolean} [replace_state]
-* @returns {Promise<import('./types.js').NavigationFinished>}
+* @returns {Promise<import('./types.js').NavigationFinished | undefined>}
 */
 async function server_fallback(url, route, error, status, replace_state) {
 	if (url.origin === origin && url.pathname === location.pathname && !hydrated) return await load_root_error_page({
@@ -1230,6 +1289,16 @@ async function server_fallback(url, route, error, status, replace_state) {
 	});
 	return await native_navigation(url, replace_state);
 }
+/** @typedef {(typeof PRELOAD_PRIORITIES)['hover'] | (typeof PRELOAD_PRIORITIES)['tap']} PreloadDataPriority */
+/**
+* The anchor element whose href is being preloaded. It is reset after navigation
+* or changes when a different anchor element is being preloaded.
+* @type {{ element: Element | SVGAElement | undefined; href: string | SVGAnimatedString | undefined }}
+*/
+var current_a = {
+	element: void 0,
+	href: void 0
+};
 /**
 * @param {unknown} error
 * @param {import('@sveltejs/kit').NavigationEvent} event
@@ -1330,48 +1399,56 @@ async function load_data(url, invalid) {
 		else if (res.status === 500) message = "Internal Error";
 		throw new HttpError(res.status, message);
 	}
-	return new Promise(async (resolve) => {
-		/**
-		* Map of deferred promises that will be resolved by a subsequent chunk of data
-		* @type {Map<string, import('types').Deferred>}
-		*/
-		const deferreds = /* @__PURE__ */ new Map();
-		const reader = res.body.getReader();
-		/**
-		* @param {any} data
-		*/
-		function deserialize(data) {
-			return devalue.unflatten(data, {
-				...app.decoders,
-				Promise: (id) => {
-					return new Promise((fulfil, reject) => {
-						deferreds.set(id, {
-							fulfil,
-							reject
-						});
+	return new Promise((resolve, reject) => {
+		process_stream(resolve, res).catch(reject);
+	});
+}
+/**
+* @param {(value: ServerNodesResponse | ServerRedirectNode) => void} resolve
+* @param {Response} res
+* @returns {Promise<void>}
+*/
+async function process_stream(resolve, res) {
+	const reader = res.body.getReader();
+	/**
+	* Map of deferred promises that will be resolved by a subsequent chunk of data
+	* @type {Map<string, import('types').Deferred>}
+	*/
+	const deferreds = /* @__PURE__ */ new Map();
+	/**
+	* @param {any} data
+	*/
+	function deserialize(data) {
+		return unflatten(data, {
+			...app.decoders,
+			Promise: (id) => {
+				return new Promise((fulfil, reject) => {
+					deferreds.set(id, {
+						fulfil,
+						reject
 					});
+				});
+			}
+		});
+	}
+	for await (const node of read_ndjson(reader)) {
+		if (node.type === "redirect") return resolve(node);
+		if (node.type === "data") {
+			node.nodes?.forEach((node) => {
+				if (node?.type === "data") {
+					node.uses = deserialize_uses(node.uses);
+					node.data = deserialize(node.data);
 				}
 			});
+			resolve(node);
+		} else if (node.type === "chunk") {
+			const { id, data, error } = node;
+			const deferred = deferreds.get(id);
+			deferreds.delete(id);
+			if (error) deferred.reject(deserialize(error));
+			else deferred.fulfil(deserialize(data));
 		}
-		for await (const node of read_ndjson(reader)) {
-			if (node.type === "redirect") return resolve(node);
-			if (node.type === "data") {
-				node.nodes?.forEach((node) => {
-					if (node?.type === "data") {
-						node.uses = deserialize_uses(node.uses);
-						node.data = deserialize(node.data);
-					}
-				});
-				resolve(node);
-			} else if (node.type === "chunk") {
-				const { id, data, error } = node;
-				const deferred = deferreds.get(id);
-				deferreds.delete(id);
-				if (error) deferred.reject(deserialize(error));
-				else deferred.fulfil(deserialize(data));
-			}
-		}
-	});
+	}
 }
 /**
 * @param {any} uses
