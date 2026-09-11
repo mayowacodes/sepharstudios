@@ -1,0 +1,35 @@
+import { d as db, c as user, E as creators, a2 as taxForms } from './drizzle-CsnNxG5m.js';
+import { j as json } from './index.js-BP8aAXBX.js';
+import { eq, desc } from 'drizzle-orm';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import 'drizzle-orm/pg-core';
+
+//#region src/routes/api/admin/tax-forms/+server.ts
+/**
+* GET /api/admin/tax-forms?status=
+*
+* Tax form review queue. Admin-only. Joins creator + user for display.
+*/
+var GET = async ({ url, locals }) => {
+	if (locals.user?.role !== "admin") return json({ error: "Forbidden" }, { status: 403 });
+	const status = url.searchParams.get("status");
+	return json({ forms: await db.select({
+		id: taxForms.id,
+		formKind: taxForms.formKind,
+		taxYear: taxForms.taxYear,
+		status: taxForms.status,
+		submittedAt: taxForms.submittedAt,
+		verifiedAt: taxForms.verifiedAt,
+		rejectionReason: taxForms.rejectionReason,
+		pdfUrl: taxForms.pdfUrl,
+		formData: taxForms.formData,
+		creatorId: creators.id,
+		creatorDisplayName: creators.displayName,
+		creatorEmail: user.email,
+		userName: user.name
+	}).from(taxForms).leftJoin(creators, eq(creators.id, taxForms.creatorId)).leftJoin(user, eq(user.id, creators.userId)).where(status ? eq(taxForms.status, status) : void 0).orderBy(desc(taxForms.submittedAt)).limit(200) });
+};
+
+export { GET };
+//# sourceMappingURL=_server.ts-gfE8jPjj.js.map

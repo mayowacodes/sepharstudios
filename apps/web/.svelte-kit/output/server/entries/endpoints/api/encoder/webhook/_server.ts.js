@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { $ as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, tt as mediaLibrary } from "../../../../../chunks/drizzle.js";
 import { n as publish } from "../../../../../chunks/sse.js";
 import { t as masterPlaylistUrl } from "../../../../../chunks/encoder-playback.js";
 import { t as notify } from "../../../../../chunks/notify.js";
@@ -146,14 +146,16 @@ var POST = async ({ request }) => {
 	if (body.status === "ready") {
 		updates.processingProgress = 100;
 		updates.processingError = null;
-		if (!current.videoUrl) {
+		const isFirstPublish = !current.videoUrl;
+		const qcVerified = body.qcPassed === true;
+		if (isFirstPublish || qcVerified) {
 			const jobIdForUrl = current.encoderJobId ?? body.jobId;
 			if (jobIdForUrl) try {
 				updates.videoUrl = masterPlaylistUrl(jobIdForUrl);
 			} catch (err) {
 				console.error("[encoder/webhook] masterPlaylistUrl failed:", err);
 			}
-		}
+		} else console.warn(`[encoder/webhook] ${current.id}: ready without a QC pass and a live videoUrl already exists — keeping the current version`);
 	}
 	let updated = current;
 	if (Object.keys(updates).length > 1) {

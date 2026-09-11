@@ -33,9 +33,26 @@ function getClient(): OpenPanel | null {
  * Fire-and-forget event tracker. Never throws. Pass `userId: null` for
  * anonymous events.
  */
+/**
+ * Every event name the platform emits server-side.
+ *
+ * A union rather than a free-form string because `track()` took `event: string`
+ * and the seven call sites each invented their own name with no cross-check. A
+ * typo produced a silent second event stream that looked like a traffic drop on
+ * the real one, and nothing failed. Adding a name here is deliberate; misspelling
+ * one is now a compile error.
+ */
+export type AnalyticsEvent =
+	| 'sign_up'
+	| 'subscribe'
+	| 'watch_complete'
+	| 'content_share'
+	| 'creator_apply'
+	| 'stc_claim';
+
 export async function track(
   userId: string | null,
-  event: string,
+  event: AnalyticsEvent,
   properties?: Record<string, unknown>
 ): Promise<void> {
   const c = getClient();

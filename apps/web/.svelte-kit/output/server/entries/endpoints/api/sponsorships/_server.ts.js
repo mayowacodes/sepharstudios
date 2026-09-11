@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../chunks/shared-server.js";
-import { t as db, yt as sponsorshipApplications } from "../../../../chunks/drizzle.js";
+import { St as sponsorshipApplications, t as db } from "../../../../chunks/drizzle.js";
 import { c as uploadAndSaveFile } from "../../../../chunks/minio.js";
 import { a as take } from "../../../../chunks/rate-limit.js";
 import { json } from "@sveltejs/kit";

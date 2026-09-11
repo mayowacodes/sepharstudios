@@ -24,7 +24,7 @@ function _page($$renderer, $$props) {
 		/** Whether ads are shown on this tier */
 		let plans = [
 			{
-				id: "freemium",
+				id: "basic",
 				name: "Free",
 				price: 0,
 				cadence: "forever",
@@ -41,29 +41,9 @@ function _page($$renderer, $$props) {
 				nftBenefits: ["Earn STC by watching", "No staking discount on this tier"]
 			},
 			{
-				id: "basic",
-				name: "Basic",
-				price: 4,
-				cadence: "/month",
-				maxProfiles: 2,
-				kidsAllowed: false,
-				hasAds: false,
-				features: [
-					"HD streaming — ad-free",
-					"2 profiles",
-					"Download on 1 device",
-					"Cancel anytime"
-				],
-				nftBenefits: [
-					"Subscription NFT on Polygon",
-					"Earn 5 STC/day watching",
-					"Stake STC for up to 10% off"
-				]
-			},
-			{
 				id: "premium",
 				name: "Premium (Family)",
-				price: 10,
+				price: 1,
 				cadence: "/month",
 				maxProfiles: 8,
 				kidsAllowed: true,

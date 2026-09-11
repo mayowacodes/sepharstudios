@@ -15,33 +15,35 @@ Format:
 
 ---
 
-## Retire legacy encoder + orchestrator Dokploy services (post-cutover cleanup)
+## ~~Retire legacy encoder + orchestrator Dokploy services~~ — CODE SIDE DONE (2026-09-10)
 
-- **Why it exists**
-  - Track A migrated the encoder pipeline from `encoder-orchestrator` + Bull-on-Redis + the four `encoder-service/*` Node services to a single Temporal workflow + TS worker at `temporal-encoder/worker/` (in the encoder repo). The Temporal cluster compose lives at `temporal-encoder/cluster/`. SvelteKit no longer calls the orchestrator (`encoder-orchestrator.ts` was deleted; all four submit/commit/cancel/retry endpoints + the playback/status/cron endpoints now route through `temporal-client.ts` + `encoder-playback.ts`).
-  - The legacy Dokploy services are still running as a rollback insurance — uploads route to Temporal but the old containers cost only memory while idle.
+**The platform no longer references the orchestrator at all.** Completed in code:
 
-- **Symptoms (today)**
-  - Two idle Dokploy services consuming memory + showing up in dashboards as zero-throughput.
-  - `apps/web/src/routes/api/encoder/job-state/[jobId]/+server.ts` (the legacy cancel-poll endpoint the old worker.js calls) is dead-code traffic if those containers ever wake up.
-  - `apps/web/src/routes/api/cron/encoder-poll/+server.ts` is a no-op kept around so the Dokploy cron schedule doesn't 404.
+- Deleted `apps/web/src/routes/api/encoder/job-state/[jobId]/+server.ts` (the
+  legacy cancel-poll endpoint the old worker.js called).
+- Deleted `apps/web/src/routes/api/cron/encoder-poll/+server.ts` (a no-op kept
+  only so a Dokploy cron schedule would not 404).
+- `/api/health` no longer probes the orchestrator. That check was reporting a
+  retired service as **healthy**, because an unset URL returned ok — a
+  readiness check that cannot fail is worse than none, since it occupies the
+  slot where a real signal belongs. It now probes Temporal, which is what
+  actually runs encoding.
 
-- **Proposed fix** (do after ~7 days at 100% Temporal traffic with no incidents)
-  1. **Backup the orchestrator's Postgres** (`pg_dump`) and archive it for 30 days.
-  2. **Stop Dokploy services**: `encoder-orchestrator`, `encoder-service` (api + worker + content-scan + transcription compose). Don't delete the volumes yet.
-  3. **Remove SvelteKit endpoints**:
-     - `apps/web/src/routes/api/encoder/job-state/[jobId]/+server.ts`
-     - `apps/web/src/routes/api/cron/encoder-poll/+server.ts`
-     - The Dokploy cron schedule that hit `encoder-poll`.
-  4. **Remove env vars** from SvelteKit: `ORCHESTRATOR_BASE_URL`, `ORCHESTRATOR_API_SECRET`, `ENCODER_ORCHESTRATOR_*`, and any encoder-side `REDIS_URL` if Redis isn't used for anything else.
-  5. **In the encoder repo** (`Documents/Projects/encoder/`): delete `encoder-orchestrator/` whole repo, `encoder-service/api/`, `encoder-service/worker/`, `encoder-service/content-scan/`, `encoder-service/transcription/index.js` (keep `transcription/transcribe.py` — the new TS worker spawns it).
-  6. **After 30 days**: delete the orchestrator Postgres volume.
+**Still to do, and these are OPS actions outside this repo:**
 
-- **Scope** — ~2 hours total. Mostly Dokploy + git ops.
-
-- **Risk if we delay** — Low. Idle services are cheap. The only ongoing cost is mental: two stacks of code that look load-bearing but aren't.
-
----
+1. Back up the orchestrator's Postgres (`pg_dump`) and archive it for 30 days.
+2. Stop the Dokploy services: `encoder-orchestrator`, `encoder-service`
+   (api + worker + content-scan + transcription). Keep the volumes for now.
+3. Remove the Dokploy cron schedule that hit `encoder-poll` — the endpoint is
+   gone, so that schedule now 404s on every run.
+4. Remove `ORCHESTRATOR_BASE_URL`, `ORCHESTRATOR_API_SECRET`,
+   `ENCODER_ORCHESTRATOR_*` from the Dokploy environment. They are unread by
+   the platform as of this change.
+5. In the encoder repo, delete `encoder-orchestrator/`, `encoder-service/api/`,
+   `encoder-service/worker/`, `encoder-service/content-scan/` and
+   `encoder-service/transcription/index.js` (keep `transcription/transcribe.py`
+   — the Temporal worker spawns it).
+6. After 30 days, delete the orchestrator Postgres volume.
 
 ## Orphaned `Movie` / `AudioTrack` / `Subtitle` / `Chapter` / `PlayerSettings` types
 

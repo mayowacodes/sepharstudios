@@ -10,7 +10,7 @@ return {
 	assets: new Set(["asl-logo.png","favicon-96x96.png","favicon.ico","favicon.svg","logo&name-sepharstudios.png","logo-alone-sepharstudios-bgless.png","logo-alone-sepharstudios.png","logo_name-sepharstudios.png","manifest.json","name-alone-sepharstudios.png","pwa-192x192.png","pwa-512x512.png","pwa-maskable-192x192.png","pwa-maskable-512x512.png","robots.txt","screenshot-mobile.webp","screenshot-wide.webp","sw.js"]),
 	mimeTypes: {".png":"image/png",".svg":"image/svg+xml",".json":"application/json",".txt":"text/plain",".webp":"image/webp",".js":"text/javascript"},
 	_: {
-		client: {start:"_app/immutable/entry/start.hlmsS6GJ.js",app:"_app/immutable/entry/app.wxRIQWW5.js",imports:["_app/immutable/entry/start.hlmsS6GJ.js","_app/immutable/chunks/Cg3C_mFI.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/BuFlayix.js","_app/immutable/chunks/Bc9cMxm7.js","_app/immutable/entry/app.wxRIQWW5.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/HclGiUj8.js"],stylesheets:["_app/immutable/assets/ui-libs.C1tyNZCz.css","_app/immutable/assets/ui-libs.C1tyNZCz.css"],fonts:[],uses_env_dynamic_public:true},
+		client: {start:"_app/immutable/entry/start.C-tMevhx.js",app:"_app/immutable/entry/app.B_p0jpIv.js",imports:["_app/immutable/entry/start.C-tMevhx.js","_app/immutable/chunks/CIT8kfMd.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/BuFlayix.js","_app/immutable/chunks/Bc9cMxm7.js","_app/immutable/entry/app.B_p0jpIv.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/HclGiUj8.js"],stylesheets:["_app/immutable/assets/ui-libs.C1tyNZCz.css","_app/immutable/assets/ui-libs.C1tyNZCz.css"],fonts:[],uses_env_dynamic_public:true},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -459,6 +459,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/admin/agents/_name_/fire/_server.ts.js'))
 			},
 			{
+				id: "/api/admin/ai-costs",
+				pattern: /^\/api\/admin\/ai-costs\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/ai-costs/_server.ts.js'))
+			},
+			{
 				id: "/api/admin/ai/config",
 				pattern: /^\/api\/admin\/ai\/config\/?$/,
 				params: [],
@@ -758,6 +765,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/admin/governance/treasury/_server.ts.js'))
+			},
+			{
+				id: "/api/admin/observability",
+				pattern: /^\/api\/admin\/observability\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/observability/_server.ts.js'))
 			},
 			{
 				id: "/api/admin/payouts",
@@ -1572,13 +1586,6 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/cron/creator-payouts/_server.ts.js'))
 			},
 			{
-				id: "/api/cron/encoder-poll",
-				pattern: /^\/api\/cron\/encoder-poll\/?$/,
-				params: [],
-				page: null,
-				endpoint: __memo(() => import('./entries/endpoints/api/cron/encoder-poll/_server.ts.js'))
-			},
-			{
 				id: "/api/cron/event-status-sweep",
 				pattern: /^\/api\/cron\/event-status-sweep\/?$/,
 				params: [],
@@ -1661,13 +1668,6 @@ return {
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/downloads/manifest/_id_/_server.ts.js'))
-			},
-			{
-				id: "/api/encoder/job-state/[jobId]",
-				pattern: /^\/api\/encoder\/job-state\/([^/]+?)\/?$/,
-				params: [{"name":"jobId","optional":false,"rest":false,"chained":false}],
-				page: null,
-				endpoint: __memo(() => import('./entries/endpoints/api/encoder/job-state/_jobId_/_server.ts.js'))
 			},
 			{
 				id: "/api/encoder/jobs",
@@ -2291,6 +2291,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/watch/progress/_server.ts.js'))
+			},
+			{
+				id: "/api/watch/telemetry",
+				pattern: /^\/api\/watch\/telemetry\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/watch/telemetry/_server.ts.js'))
 			},
 			{
 				id: "/api/watch/[videoId]",

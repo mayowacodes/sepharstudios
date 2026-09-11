@@ -1,0 +1,44 @@
+import { e as error } from './index.js-BP8aAXBX.js';
+
+//#region src/routes/(admin)/admin/+layout.ts
+/**
+* Role guard for every route under /admin.
+*
+* This lives at `(admin)/admin/` rather than `(admin)/` for a concrete reason:
+* `+layout@.svelte` in this directory resets the layout hierarchy back to the
+* root, which cuts `(admin)/+layout.*` out of the route chain entirely. The
+* generated client manifest confirms it — the chain for `/admin/dashboard` is
+* `[0, 3]` (root, then this reset layout); the `(admin)` group node appears in
+* no chain at all. A guard placed there is dead code, which is exactly what the
+* previous `(admin)/+layout.server.ts` was, despite its "defence in depth"
+* comment.
+*
+* Why it still matters that this runs: hooks.server.ts enforces the admin role
+* only when the request arrives on the `admin.` subdomain. An `/admin/*` path on
+* the apex domain reaches the router with no role check at all, so without this
+* the admin UI renders for anyone signed in. The API endpoints all call
+* `requireAdmin()` independently, so no data leaks — but the interface should
+* not paint either.
+*/
+var load = async ({ parent }) => {
+	const { user } = await parent();
+	if (!user) throw error(401, "Sign in required");
+	if (user.role !== "admin") throw error(403, "Forbidden: you are not an admin");
+	return { user };
+};
+
+var _layout_ts = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	load: load
+});
+
+const index = 2;
+let component_cache;
+const component = async () => component_cache ??= (await import('./_layout@.svelte-SSHgbzXG.js')).default;
+const universal_id = "src/routes/(admin)/admin/+layout.ts";
+const imports = ["_app/immutable/nodes/2.DHKy9fve.js","_app/immutable/chunks/QTnfLwEv.js","_app/immutable/chunks/BsVwIFTV.js","_app/immutable/chunks/Bin8K3vy.js","_app/immutable/chunks/BuFlayix.js","_app/immutable/chunks/U6Mr5jrF2.js","_app/immutable/chunks/BTEnPp3h.js","_app/immutable/chunks/Bc9cMxm7.js","_app/immutable/chunks/DA_W6qOS.js","_app/immutable/chunks/CVvb29p6.js","_app/immutable/chunks/HuCy9WZI.js","_app/immutable/chunks/Bguy7RFu.js","_app/immutable/chunks/E4wFmwoy.js","_app/immutable/chunks/CZ0iejYq.js","_app/immutable/chunks/BcdcGr0x2.js","_app/immutable/chunks/Dy8qoEGg2.js","_app/immutable/chunks/QHPknIdw2.js","_app/immutable/chunks/DDNGFuwF2.js","_app/immutable/chunks/Dhfq-MNX2.js","_app/immutable/chunks/B3nkk3ZW2.js","_app/immutable/chunks/CyXjWlT9.js","_app/immutable/chunks/LI4RzlLk.js","_app/immutable/chunks/B3qGyZ6B.js","_app/immutable/chunks/D6pBY8uh.js","_app/immutable/chunks/C6_1_GyP.js","_app/immutable/chunks/qvEsCU_-.js","_app/immutable/chunks/CfIeTnH-.js","_app/immutable/chunks/CYKbzymK.js","_app/immutable/chunks/DLupASnU2.js","_app/immutable/chunks/DziTgYIQ2.js","_app/immutable/chunks/C01nDjOm.js","_app/immutable/chunks/BLy_9REf.js","_app/immutable/chunks/BiEXOabg.js","_app/immutable/chunks/D3r3jRQz.js","_app/immutable/chunks/C19_BzBH.js","_app/immutable/chunks/CL_HWHFc2.js","_app/immutable/chunks/BMr-SSC6.js","_app/immutable/chunks/iSdTMXsR.js","_app/immutable/chunks/Bkpf_Ads.js","_app/immutable/chunks/PnT1f7q6.js","_app/immutable/chunks/DzLw8YWo.js","_app/immutable/chunks/CFKu6x7M.js","_app/immutable/chunks/HJKNSgnP.js","_app/immutable/chunks/BK_Y07D6.js","_app/immutable/chunks/BtCW5bza2.js","_app/immutable/chunks/DqzUUf7Y2.js","_app/immutable/chunks/f3MSlbhE2.js","_app/immutable/chunks/BveA2u-e2.js","_app/immutable/chunks/CqgOZEvA2.js","_app/immutable/chunks/CTsNHExs2.js","_app/immutable/chunks/CMVhVUDw2.js","_app/immutable/chunks/CMWPG8--2.js","_app/immutable/chunks/BlM0FlPC2.js","_app/immutable/chunks/DF9JcFC7.js","_app/immutable/chunks/DMYWzW03.js","_app/immutable/chunks/Cortmpgb.js","_app/immutable/chunks/C9Hg4rJI.js"];
+const stylesheets = ["_app/immutable/assets/ui-libs.C1tyNZCz.css","_app/immutable/assets/skeleton.D38UF9u5.css","_app/immutable/assets/PortalShell._wPY6-_N.css","_app/immutable/assets/app.BxdWYkJq.css"];
+const fonts = [];
+
+export { component, fonts, imports, index, stylesheets, _layout_ts as universal, universal_id };
+//# sourceMappingURL=2-B8E4wbCv.js.map

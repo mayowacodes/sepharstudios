@@ -316,6 +316,9 @@
 	"/api/admin/governance/treasury": [
 		"src/routes/api/admin/governance/treasury/+server.ts"
 	],
+	"/api/admin/observability": [
+		"src/routes/api/admin/observability/+server.ts"
+	],
 	"/api/admin/payouts": [
 		"src/routes/api/admin/payouts/+server.ts"
 	],
@@ -664,9 +667,6 @@
 	"/api/cron/creator-payouts": [
 		"src/routes/api/cron/creator-payouts/+server.ts"
 	],
-	"/api/cron/encoder-poll": [
-		"src/routes/api/cron/encoder-poll/+server.ts"
-	],
 	"/api/cron/event-status-sweep": [
 		"src/routes/api/cron/event-status-sweep/+server.ts"
 	],
@@ -702,9 +702,6 @@
 	],
 	"/api/downloads/manifest/[id]": [
 		"src/routes/api/downloads/manifest/[id]/+server.ts"
-	],
-	"/api/encoder/job-state/[jobId]": [
-		"src/routes/api/encoder/job-state/[jobId]/+server.ts"
 	],
 	"/api/encoder/jobs": [
 		"src/routes/api/encoder/jobs/+server.ts"
@@ -972,6 +969,9 @@
 	],
 	"/api/watch/progress": [
 		"src/routes/api/watch/progress/+server.ts"
+	],
+	"/api/watch/telemetry": [
+		"src/routes/api/watch/telemetry/+server.ts"
 	],
 	"/api/watch/[videoId]": [
 		"src/routes/api/watch/[videoId]/+server.ts"

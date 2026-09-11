@@ -1,5 +1,12 @@
 import sys
+from typing import Tuple, cast
+
 from PIL import Image
+
+# Pixel shape guaranteed by the convert("RGBA") below. Declared at module scope
+# because a type alias defined inside a function is only a local variable and
+# cannot be used in a type expression.
+RGBA = Tuple[int, int, int, int]
 
 def remove_background(input_path, output_path):
     print("Loading image...")
@@ -9,21 +16,25 @@ def remove_background(input_path, output_path):
     w, h = img.size
     print(f"Image size: {w}x{h}")
     
+    # getpixel() is typed as returning float | tuple | None because its return
+    # shape depends on the image mode. The convert("RGBA") above guarantees a
+    # 4-tuple, so narrow once here instead of indexing a union four times.
     corners = [
-        img.getpixel((0, 0)),
-        img.getpixel((w-1, 0)),
-        img.getpixel((0, h-1)),
-        img.getpixel((w-1, h-1))
+        cast(RGBA, img.getpixel((0, 0))),
+        cast(RGBA, img.getpixel((w-1, 0))),
+        cast(RGBA, img.getpixel((0, h-1))),
+        cast(RGBA, img.getpixel((w-1, h-1)))
     ]
-    
+
     # Assume the top-left corner is the background color
-    bg_color = corners[0]
+    bg_color: RGBA = corners[0]
     print(f"Detected background color: {bg_color}")
     
     new_data = []
     # threshold for similarity
     threshold = 30
-    for item in datas:
+    for raw in datas:
+        item = cast(RGBA, raw)
         # Check if pixel is close to background color
         if abs(item[0] - bg_color[0]) < threshold and abs(item[1] - bg_color[1]) < threshold and abs(item[2] - bg_color[2]) < threshold:
             # Check if it has an alpha channel, replace with fully transparent

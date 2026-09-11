@@ -1,1 +1,0 @@
-import{r as e}from"./B8N3I6Xu.js";import"./CcfisAwp2.js";var t=[`admin.`,`creator.`,`creators.`,`kids.`];function n(e){return t.some(t=>e.startsWith(t))}function r(e,t){let n=e.split(`.`);return`${t}//${n.length>2?n.slice(-2).join(`.`):e}`}function i(){let{hostname:t,protocol:i}=window.location;if(n(t)){window.location.href=`${r(t,i)}/`;return}e(`/`)}export{i as t};

@@ -67,10 +67,11 @@ async function createRefund(options) {
 	})).data;
 }
 var PLAN_PRICES_CENTS = {
-	freemium: 0,
-	basic: 400,
-	premium: 1e3,
-	creator: 1e3
+	basic: 0,
+	premium: 100,
+	creator: 200,
+	/** @deprecated Alias for `basic`. Kept so existing subscription rows resolve. */
+	freemium: 0
 };
 /**
 * Is `v` a real plan name?
@@ -87,6 +88,17 @@ function isPlanName(v) {
 * Does this plan involve money? Free plans must never reach Paystack: there is
 * nothing to charge, no authorization to store, and no renewal to schedule.
 */
+/**
+* Resolve a stored plan name to the tier it means today.
+*
+* `freemium` was merged into `basic` on 2026-09-10. Rows written before that
+* still say 'freemium', so anything comparing plan names — entitlement checks,
+* upgrade paths, reporting — must canonicalise first or it will treat the same
+* tier as two different ones.
+*/
+function canonicalPlan(plan) {
+	return plan === "freemium" ? "basic" : plan;
+}
 function isPaidPlan(plan) {
 	return PLAN_PRICES_CENTS[plan] > 0;
 }
@@ -97,17 +109,11 @@ function isPaidPlan(plan) {
 * change existing subscribers' entitlements.
 */
 var PLAN_FEATURES = {
-	freemium: {
+	basic: {
 		maxProfiles: 2,
 		kidsAllowed: true,
 		hasAds: true,
 		renewalIntervalMonths: 0
-	},
-	basic: {
-		maxProfiles: 2,
-		kidsAllowed: false,
-		hasAds: false,
-		renewalIntervalMonths: 1
 	},
 	premium: {
 		maxProfiles: 8,
@@ -116,11 +122,17 @@ var PLAN_FEATURES = {
 		renewalIntervalMonths: 1
 	},
 	creator: {
-		maxProfiles: 2,
-		kidsAllowed: false,
+		maxProfiles: 8,
+		kidsAllowed: true,
 		hasAds: false,
 		renewalIntervalMonths: 1
+	},
+	freemium: {
+		maxProfiles: 2,
+		kidsAllowed: true,
+		hasAds: true,
+		renewalIntervalMonths: 0
 	}
 };
 //#endregion
-export { createRefund as a, isPlanName as c, createCustomer as i, verifyTransaction as l, PLAN_PRICES_CENTS as n, initializeTransaction as o, chargeAuthorization as r, isPaidPlan as s, PLAN_FEATURES as t };
+export { createCustomer as a, isPaidPlan as c, chargeAuthorization as i, isPlanName as l, PLAN_PRICES_CENTS as n, createRefund as o, canonicalPlan as r, initializeTransaction as s, PLAN_FEATURES as t, verifyTransaction as u };

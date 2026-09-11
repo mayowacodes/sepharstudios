@@ -482,6 +482,7 @@
     "name": "ai-provider",
     "imports": [
       "_shared-server.js",
+      "_drizzle.js",
       "_ai-settings.js"
     ]
   },
@@ -4156,6 +4157,16 @@
       "_drizzle.js"
     ]
   },
+  "src/routes/api/admin/ai-costs/+server.ts": {
+    "file": "entries/endpoints/api/admin/ai-costs/_server.ts.js",
+    "name": "entries/endpoints/api/admin/ai-costs/_server.ts",
+    "src": "src/routes/api/admin/ai-costs/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_admin-auth.js"
+    ]
+  },
   "src/routes/api/admin/ai/config/+server.ts": {
     "file": "entries/endpoints/api/admin/ai/config/_server.ts.js",
     "name": "entries/endpoints/api/admin/ai/config/_server.ts",
@@ -4575,6 +4586,16 @@
     "imports": [
       "_drizzle.js",
       "_governance-auth.js"
+    ]
+  },
+  "src/routes/api/admin/observability/+server.ts": {
+    "file": "entries/endpoints/api/admin/observability/_server.ts.js",
+    "name": "entries/endpoints/api/admin/observability/_server.ts",
+    "src": "src/routes/api/admin/observability/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_admin-auth.js"
     ]
   },
   "src/routes/api/admin/payouts/+server.ts": {
@@ -5742,15 +5763,6 @@
       "_stc-transfer.js"
     ]
   },
-  "src/routes/api/cron/encoder-poll/+server.ts": {
-    "file": "entries/endpoints/api/cron/encoder-poll/_server.ts.js",
-    "name": "entries/endpoints/api/cron/encoder-poll/_server.ts",
-    "src": "src/routes/api/cron/encoder-poll/+server.ts",
-    "isEntry": true,
-    "imports": [
-      "_shared-server.js"
-    ]
-  },
   "src/routes/api/cron/event-status-sweep/+server.ts": {
     "file": "entries/endpoints/api/cron/event-status-sweep/_server.ts.js",
     "name": "entries/endpoints/api/cron/event-status-sweep/_server.ts",
@@ -5881,16 +5893,8 @@
     "isEntry": true,
     "imports": [
       "_shared-server.js",
-      "_drizzle.js"
-    ]
-  },
-  "src/routes/api/encoder/job-state/[jobId]/+server.ts": {
-    "file": "entries/endpoints/api/encoder/job-state/_jobId_/_server.ts.js",
-    "name": "entries/endpoints/api/encoder/job-state/_jobId_/_server.ts",
-    "src": "src/routes/api/encoder/job-state/[jobId]/+server.ts",
-    "isEntry": true,
-    "imports": [
-      "_drizzle.js"
+      "_drizzle.js",
+      "_paystack.js"
     ]
   },
   "src/routes/api/encoder/jobs/+server.ts": {
@@ -6806,6 +6810,17 @@
       "_ai-token-scoring.js",
       "_analytics.js",
       "_stc-hours.js",
+      "_ua-country.js"
+    ]
+  },
+  "src/routes/api/watch/telemetry/+server.ts": {
+    "file": "entries/endpoints/api/watch/telemetry/_server.ts.js",
+    "name": "entries/endpoints/api/watch/telemetry/_server.ts",
+    "src": "src/routes/api/watch/telemetry/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_rate-limit.js",
       "_ua-country.js"
     ]
   },

@@ -1,0 +1,50 @@
+import { m as mediaLibrary } from './drizzle-CsnNxG5m.js';
+
+//#region src/lib/db/projections.ts
+/**
+* Card-shaped projection for `mediaLibrary` rows on list/feed endpoints
+* (movies, shows, documentaries, kids feed). Drops admin-only and large
+* media-URL columns that the card components never read, reducing payload
+* by ~50% per row at scale.
+*
+* Use `db.select(mediaCardColumns).from(mediaLibrary).where(...)` instead of
+* `db.select().from(mediaLibrary)...` on any endpoint that returns >1 row.
+*/
+var mediaCardColumns = {
+	id: mediaLibrary.id,
+	title: mediaLibrary.title,
+	description: mediaLibrary.description,
+	thumbnail: mediaLibrary.thumbnail,
+	posterUrl: mediaLibrary.posterUrl,
+	posterLandscapeUrl: mediaLibrary.posterLandscapeUrl,
+	posterSquareUrl: mediaLibrary.posterSquareUrl,
+	backdropUrl: mediaLibrary.backdropUrl,
+	trailerUrl: mediaLibrary.trailerUrl,
+	logoTitleUrl: mediaLibrary.logoTitleUrl,
+	link: mediaLibrary.link,
+	slug: mediaLibrary.slug,
+	mediaType: mediaLibrary.mediaType,
+	category: mediaLibrary.category,
+	genres: mediaLibrary.genres,
+	topics: mediaLibrary.topics,
+	keywords: mediaLibrary.keywords,
+	rating: mediaLibrary.rating,
+	ageRating: mediaLibrary.ageRating,
+	duration: mediaLibrary.duration,
+	quality: mediaLibrary.quality,
+	year: mediaLibrary.year,
+	releaseDate: mediaLibrary.releaseDate,
+	language: mediaLibrary.language,
+	bibleReference: mediaLibrary.bibleReference,
+	featured: mediaLibrary.featured,
+	isNew: mediaLibrary.isNew,
+	voteAverage: mediaLibrary.voteAverage,
+	voteCount: mediaLibrary.voteCount,
+	popularity: mediaLibrary.popularity,
+	createdAt: mediaLibrary.createdAt,
+	scheduledPublishAt: mediaLibrary.scheduledPublishAt,
+	status: mediaLibrary.status
+};
+
+export { mediaCardColumns as m };
+//# sourceMappingURL=projections-BdYmgHWY.js.map

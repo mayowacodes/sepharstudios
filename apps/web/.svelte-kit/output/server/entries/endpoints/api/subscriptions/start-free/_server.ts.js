@@ -1,10 +1,10 @@
-import { ct as paystackSubscriptions, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, ut as paystackSubscriptions } from "../../../../../chunks/drizzle.js";
 import { t as PLAN_FEATURES } from "../../../../../chunks/paystack.js";
 import { t as track } from "../../../../../chunks/analytics.js";
 import { json } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";
 //#region src/routes/api/subscriptions/start-free/+server.ts
-var FREE_PLAN = "freemium";
+var FREE_PLAN = "basic";
 /**
 * POST /api/subscriptions/start-free  →  { plan, status, maxProfiles, kidsAllowed }
 *

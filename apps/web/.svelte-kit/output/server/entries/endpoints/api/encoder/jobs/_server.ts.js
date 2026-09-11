@@ -1,5 +1,5 @@
 import { t as private_env } from "../../../../../chunks/shared-server.js";
-import { $ as mediaLibrary, t as db } from "../../../../../chunks/drizzle.js";
+import { t as db, tt as mediaLibrary } from "../../../../../chunks/drizzle.js";
 import { i as getEncoderPresignedUploadUrl } from "../../../../../chunks/minio.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";

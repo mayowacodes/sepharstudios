@@ -114,6 +114,7 @@ function VideoPlayer($$renderer, $$props) {
 		let fullscreen = false;
 		let controlsTimer;
 		let levels = [];
+		let currentLevel = -1;
 		let speed = 1;
 		let progressInterval;
 		let activeInterval;
@@ -136,6 +137,11 @@ function VideoPlayer($$renderer, $$props) {
 			initSeq += 1;
 			hls?.destroy();
 			hls = null;
+			reportTelemetry(true);
+			if (telemetryInterval) {
+				clearInterval(telemetryInterval);
+				telemetryInterval = null;
+			}
 			clearInterval(progressInterval);
 			clearInterval(activeInterval);
 			clearTimeout(controlsTimer);
@@ -156,6 +162,62 @@ function VideoPlayer($$renderer, $$props) {
 				prerollSkippableTimer = null;
 			}
 		});
+		let telemetrySessionId = null;
+		let telemetryStartupMs = 0;
+		let telemetryStallCount = 0;
+		let telemetryStallMs = 0;
+		let telemetryErrorCount = 0;
+		let telemetryFatal = null;
+		let telemetryInterval = null;
+		let telemetryBitrateWeighted = 0;
+		let telemetryBitrateMs = 0;
+		let telemetryLastLevelAt = 0;
+		let telemetryLastKbps = 0;
+		function telemetryNoteLevel(kbps) {
+			const now = Date.now();
+			if (telemetryLastLevelAt > 0 && telemetryLastKbps > 0) {
+				const dt = now - telemetryLastLevelAt;
+				telemetryBitrateWeighted += telemetryLastKbps * dt;
+				telemetryBitrateMs += dt;
+			}
+			telemetryLastLevelAt = now;
+			telemetryLastKbps = kbps;
+		}
+		function telemetryEffectiveKbps() {
+			telemetryNoteLevel(telemetryLastKbps);
+			return telemetryBitrateMs > 0 ? Math.round(telemetryBitrateWeighted / telemetryBitrateMs) : telemetryLastKbps;
+		}
+		function telemetryPayload() {
+			const level = levels[currentLevel];
+			return {
+				sessionId: telemetrySessionId,
+				contentId,
+				effectiveBitrateKbps: telemetryEffectiveKbps(),
+				startupMs: telemetryStartupMs,
+				stallCount: telemetryStallCount,
+				stallSeconds: Math.round(telemetryStallMs / 1e3),
+				errorCount: telemetryErrorCount,
+				fatalError: telemetryFatal,
+				finalQuality: level ? level.height ? `${level.height}p` : "audio" : null,
+				watchedSeconds: Math.floor(currentTime)
+			};
+		}
+		async function reportTelemetry(final = false) {
+			if (!contentId) return;
+			const payload = JSON.stringify(telemetryPayload());
+			try {
+				if (final && navigator.sendBeacon) {
+					navigator.sendBeacon("/api/watch/telemetry", new Blob([payload], { type: "application/json" }));
+					return;
+				}
+				const body = await (await fetch("/api/watch/telemetry", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: payload
+				})).json().catch(() => null);
+				if (body?.sessionId) telemetrySessionId = body.sessionId;
+			} catch {}
+		}
 		let ad = null;
 		let adScale = .6;
 		let adWatchdog = null;

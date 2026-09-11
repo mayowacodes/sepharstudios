@@ -1,5 +1,5 @@
 import { t as private_env } from "./shared-server.js";
-import { C as aiCallLog, t as db } from "./drizzle.js";
+import { t as db, w as aiCallLog } from "./drizzle.js";
 import { n as callAgent, r as callChat } from "./ai-provider.js";
 import { and, eq, gte, sql } from "drizzle-orm";
 //#region src/lib/server/ai.ts

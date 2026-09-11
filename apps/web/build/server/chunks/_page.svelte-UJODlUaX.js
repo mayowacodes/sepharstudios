@@ -1,0 +1,171 @@
+import { b as ensure_array_like, q as escape_html, i as attr } from './index.js-BP8aAXBX.js';
+import { P as PortalKpi } from './PortalKpi-DWNdHKY5.js';
+import { A as Arrow_up_right } from './arrow-up-right-DJNsInm9.js';
+import { B as Banknote } from './banknote-CTwoWlII.js';
+import { C as Circle_check } from './circle-check-DXLJgjiz.js';
+import { C as Circle_x } from './circle-x-CFTHHG_t.js';
+import { C as Clock } from './clock-CrS2iB71.js';
+import { C as Coins } from './coins-BlQRgSco.js';
+import { E as Eye } from './eye-C0iIhMJZ.js';
+import { F as File_check } from './file-check-3Kyppc0i.js';
+import { M as Message_square } from './message-square-CzZQ0DJR.js';
+import { S as Shield_check } from './shield-check-CLcqoqe0.js';
+import { S as Sparkles } from './sparkles-BMsBMaRm.js';
+import { T as Triangle_alert } from './triangle-alert-K4XkRqGf.js';
+import { U as Users } from './users-C2Q26AgN.js';
+import { V as Video } from './video-fthjtWII.js';
+import { P as PortalHero } from './PortalHero-B80SkUjg.js';
+import { P as PortalButton } from './PortalButton-CmQGGkb7.js';
+import './Icon-DOH8dWtn.js';
+
+//#region src/routes/(admin)/admin/+page.svelte
+function _page($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		let adminStats = {
+			pendingReviews: 0,
+			totalCreators: 0,
+			publishedContent: 0,
+			rejectedContent: 0,
+			totalViews: 0,
+			pendingApplications: 0,
+			approvedApplications7d: 0,
+			avgApprovalHours: 0
+		};
+		const quickActions = [
+			{
+				href: "/admin/review",
+				label: "Review Queue",
+				icon: Shield_check,
+				accent: "yellow"
+			},
+			{
+				href: "/admin/content",
+				label: "Content",
+				icon: Video,
+				accent: "blue"
+			},
+			{
+				href: "/admin/creators",
+				label: "Creators",
+				icon: Users,
+				accent: "green"
+			},
+			{
+				href: "/admin/payouts",
+				label: "Payouts",
+				icon: Banknote,
+				accent: "orange"
+			},
+			{
+				href: "/admin/tokenomics",
+				label: "Tokenomics",
+				icon: Coins,
+				accent: "amber"
+			},
+			{
+				href: "/admin/communications",
+				label: "Messages",
+				icon: Message_square,
+				accent: "cyan"
+			}
+		];
+		$$renderer.push(`<div class="mx-auto px-4 py-6 space-y-6 max-w-7xl">`);
+		{
+			function actions($$renderer) {
+				PortalButton($$renderer, {
+					href: "/admin/ai-runs",
+					variant: "secondary",
+					size: "md",
+					children: ($$renderer) => {
+						Sparkles($$renderer, { class: "w-4 h-4" });
+						$$renderer.push(`<!----> AI Runs`);
+					},
+					$$slots: { default: true }
+				});
+			}
+			PortalHero($$renderer, {
+				eyebrow: "Mission Control",
+				title: "Platform pulse",
+				subtitle: "Reviews, encoder health, creator community. Everything you need to keep the studio humming.",
+				icon: Shield_check,
+				statusDot: true,
+				statusText: "All systems nominal" ,
+				statusTone: "success" ,
+				actions});
+		}
+		$$renderer.push(`<!----> <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">`);
+		PortalKpi($$renderer, {
+			label: "Pending Reviews",
+			value: adminStats.pendingReviews,
+			icon: Clock,
+			href: "/admin/review"
+		});
+		$$renderer.push(`<!----> `);
+		PortalKpi($$renderer, {
+			label: "Active Creators",
+			value: adminStats.totalCreators,
+			icon: Users,
+			href: "/admin/creators"
+		});
+		$$renderer.push(`<!----> `);
+		PortalKpi($$renderer, {
+			label: "Published",
+			value: adminStats.publishedContent,
+			icon: Circle_check,
+			href: "/admin/content?status=approved"
+		});
+		$$renderer.push(`<!----> `);
+		PortalKpi($$renderer, {
+			label: "Rejected",
+			value: adminStats.rejectedContent,
+			icon: Circle_x,
+			href: "/admin/content?status=rejected"
+		});
+		$$renderer.push(`<!----> `);
+		PortalKpi($$renderer, {
+			label: "Platform Views",
+			value: adminStats.totalViews,
+			icon: Eye,
+			href: "/admin/analytics"
+		});
+		$$renderer.push(`<!----></div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-3"><section class="lg:col-span-2 surface-1 rounded-xl p-5"><header class="flex items-center justify-between mb-4"><div class="flex items-center gap-2">`);
+		Triangle_alert($$renderer, { class: "w-4 h-4 text-yellow-500" });
+		$$renderer.push(`<!----> <h2 class="text-sm font-semibold text-foreground">Urgent reviews</h2></div> <a href="/admin/review" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">Open queue `);
+		Arrow_up_right($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----></a></header> `);
+		{
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="space-y-2"><!--[-->`);
+			const each_array = ensure_array_like(Array(3));
+			for (let i = 0, $$length = each_array.length; i < $$length; i++) {
+				each_array[i];
+				$$renderer.push(`<div class="surface-2 rounded h-12 animate-pulse"></div>`);
+			}
+			$$renderer.push(`<!--]--></div>`);
+		}
+		$$renderer.push(`<!--]--></section> <section class="surface-1 rounded-xl p-5 space-y-4"><header class="flex items-center justify-between"><div class="flex items-center gap-2">`);
+		File_check($$renderer, { class: "w-4 h-4 text-blue-500" });
+		$$renderer.push(`<!----> <h2 class="text-sm font-semibold text-foreground">Creator applications</h2></div> <a href="/admin/creator-applications" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">Review `);
+		Arrow_up_right($$renderer, { class: "w-3 h-3" });
+		$$renderer.push(`<!----></a></header> <div class="space-y-3"><div><div class="text-3xl font-semibold text-foreground tabular-nums">${escape_html(adminStats.pendingApplications)}</div> <div class="text-xs text-muted-foreground">pending</div></div> <div class="grid grid-cols-2 gap-2 text-xs"><div class="surface-2 rounded-md px-2 py-1.5"><div class="text-foreground font-medium tabular-nums">${escape_html(adminStats.approvedApplications7d)}</div> <div class="text-muted-foreground">approved · 7d</div></div> <div class="surface-2 rounded-md px-2 py-1.5"><div class="text-foreground font-medium tabular-nums">${escape_html(Number.isFinite(adminStats.avgApprovalHours) ? adminStats.avgApprovalHours.toFixed(1) : "0.0")}h</div> <div class="text-muted-foreground">avg approval</div></div></div></div></section></div> <section><h2 class="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Quick actions</h2> <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2"><!--[-->`);
+		const each_array_2 = ensure_array_like(quickActions);
+		for (let $$index_2 = 0, $$length = each_array_2.length; $$index_2 < $$length; $$index_2++) {
+			let a = each_array_2[$$index_2];
+			const Icon = a.icon;
+			$$renderer.push(`<a${attr("href", a.href)} class="surface-1 hover:surface-2 transition-colors rounded-xl p-4 flex flex-col items-start gap-2 group">`);
+			if (Icon) {
+				$$renderer.push("<!--[-->");
+				Icon($$renderer, { class: "w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" });
+				$$renderer.push("<!--]-->");
+			} else {
+				$$renderer.push("<!--[!-->");
+				$$renderer.push("<!--]-->");
+			}
+			$$renderer.push(` <span class="text-sm font-medium text-foreground">${escape_html(a.label)}</span></a>`);
+		}
+		$$renderer.push(`<!--]--></div></section></div>`);
+	});
+}
+
+export { _page as default };
+//# sourceMappingURL=_page.svelte-UJODlUaX.js.map

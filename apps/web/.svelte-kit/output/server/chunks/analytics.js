@@ -29,10 +29,6 @@ function getClient() {
 	});
 	return client;
 }
-/**
-* Fire-and-forget event tracker. Never throws. Pass `userId: null` for
-* anonymous events.
-*/
 async function track(userId, event, properties) {
 	const c = getClient();
 	if (!c) return;

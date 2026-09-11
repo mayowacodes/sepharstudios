@@ -69,6 +69,15 @@ interface WebhookBody {
 	progressPct?: number;
 	stage?: string;
 	errorMessage?: string;
+	/**
+	 * QC verdict from the encoder's qcCheck activity, sent on the terminal
+	 * `ready` / `failed` webhook.
+	 *
+	 * This is trustworthy because the whole body is HMAC-verified above — an
+	 * unsigned caller cannot assert `qcPassed: true` to force a swap.
+	 */
+	qcPassed?: boolean;
+	qcFailures?: Array<{ check: string; detail: string }>;
 }
 
 function verifySignature(rawBody: string, signature: string | null, secret: string): boolean {
@@ -198,7 +207,26 @@ export const POST: RequestHandler = async ({ request }) => {
 		// each one re-deriving the URL or calling out to the orchestrator.
 		// Only write when the column is empty so we never stomp a static
 		// upload, a live-recording finalize, or a prior successful encode.
-		if (!current.videoUrl) {
+		// ── Atomic publish (Xepho §23) ──────────────────────────────────
+		//
+		// Two cases, deliberately different:
+		//
+		//   FIRST encode (no videoUrl yet) — publish. There is no live version
+		//   to protect, and refusing here would leave the title unplayable.
+		//
+		//   RE-ENCODE (videoUrl already set) — publish ONLY when the encoder
+		//   says QC passed. Previously this branch refused unconditionally,
+		//   which was safe but meant a re-encode could never take effect: the
+		//   new ladder uploaded and was then ignored forever. Gating on QC
+		//   gets the intended behaviour — the existing version keeps serving
+		//   until a verified replacement exists, then swaps.
+		//
+		// `qcPassed !== true` rather than `=== false`: an older encoder that
+		// sends no verdict at all must not be able to replace live content.
+		const isFirstPublish = !current.videoUrl;
+		const qcVerified = body.qcPassed === true;
+
+		if (isFirstPublish || qcVerified) {
 			const jobIdForUrl = current.encoderJobId ?? body.jobId;
 			if (jobIdForUrl) {
 				try {
@@ -210,6 +238,10 @@ export const POST: RequestHandler = async ({ request }) => {
 					console.error('[encoder/webhook] masterPlaylistUrl failed:', err);
 				}
 			}
+		} else {
+			console.warn(
+				`[encoder/webhook] ${current.id}: ready without a QC pass and a live videoUrl already exists — keeping the current version`
+			);
 		}
 	}
 

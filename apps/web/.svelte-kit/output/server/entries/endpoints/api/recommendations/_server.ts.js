@@ -1,4 +1,4 @@
-import { $ as mediaLibrary, t as db } from "../../../../chunks/drizzle.js";
+import { t as db, tt as mediaLibrary } from "../../../../chunks/drizzle.js";
 import { t as getRecommendations } from "../../../../chunks/recommendations.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq, ne, sql } from "drizzle-orm";

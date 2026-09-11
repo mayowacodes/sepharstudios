@@ -1,4 +1,4 @@
-import { pt as profiles, t as db } from "../../../../../chunks/drizzle.js";
+import { gt as profiles, t as db } from "../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, desc, eq } from "drizzle-orm";
 //#region src/routes/api/profiles/current/+server.ts

@@ -1,4 +1,4 @@
-import { W as forumThreads, t as db } from "../../../../../../../../chunks/drizzle.js";
+import { K as forumThreads, t as db } from "../../../../../../../../chunks/drizzle.js";
 import { r as Role } from "../../../../../../../../chunks/constants.js";
 import { json } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";

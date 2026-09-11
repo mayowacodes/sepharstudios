@@ -441,6 +441,55 @@ number-one ad-ops question and without it every answer is database archaeology.
 
 </details>
 
+## Tracks D–H — ✅ DONE (2026-09-10)
+
+All five implemented and verified. `bun run check` 0/0 across 10,641 files;
+encoder `tsc --noEmit` clean and 22/22 tests passing; pyright clean.
+
+**Pricing was restructured first:** `basic` is now the free ad-supported tier
+(absorbing freemium, keeping its kids access), `premium` $1, `creator` $2 with
+8 profiles. `freemium` is retained in code as a **deprecated alias** of `basic`
+— subscription rows store the plan as a plain string, so removing the key would
+make `PLAN_FEATURES['freemium']` undefined for every existing subscriber.
+`canonicalPlan()` maps it.
+
+**D — AI cost ledger.** `ai_cost_ledger` + `ai_budget_periods` (migration 0045),
+metered inside `callAI` rather than at ~15 call sites — a per-call-site approach
+only meters the sites someone remembered. Money is micro-USD integers; float
+accumulation across millions of rows drifts. A budget refusal returns `null`
+rather than throwing, because callers already degrade gracefully and a ceiling
+should not surface as a 500 on an optional feature.
+
+**E — offline + audio-only.** An audio-only rung was added to every multi-rung
+encoder preset, emitted with **no RESOLUTION** in the master playlist (a player
+that sees RESOLUTION on a video-less stream stalls). Client download manager
+writes into `sephar-downloads-v1` — the cache the service worker *already*
+served from, so offline playback needed no new SW code. Two real bugs found in
+the download endpoint: it selected an **arbitrary** subscription row, and it had
+**no PPV check at all**, so a paid title could be downloaded without purchase —
+worse than the streaming path, since a download cannot be revoked.
+
+**F — atomic publish + QC.** New `qcCheck` activity verifies the master
+playlist, every variant, duration drift (2% tolerance) and spot-checked
+segments before the workflow emits `ready`. The platform now swaps an existing
+`videoUrl` **only** on `qcPassed`. Previously it refused unconditionally, which
+was safe but meant a re-encode could never take effect.
+
+**G — observability.** `/api/admin/observability` reports playback error/stall
+**rates** (not counts — counts rise with traffic and look like regressions),
+effective bitrate by geo+device, encode failure reasons, AI spend, and ad
+render rate. `track()` gained a typed event union; it took a free-form string
+across seven call sites, where a typo silently forked the event stream.
+
+**H — legacy encoder retirement.** Deleted the two dead endpoints. `/api/health`
+no longer probes the retired orchestrator — that check reported it **healthy**
+because an unset URL returned ok, and a readiness check that cannot fail is
+worse than none. It now probes Temporal. Remaining steps are ops-side and
+listed in TECHDEBT.md.
+
+<details>
+<summary>Original Track D–H plan (superseded)</summary>
+
 ## Track D — §21 AI cost ledger
 
 ~15 AI features run today (`ai-tagging`, `ai-moderation`, `ai-companion`,
@@ -513,6 +562,8 @@ remove `ORCHESTRATOR_*` env vars, and delete the legacy repos. Drop the volume
 after 30 days. ~2 hours, mostly ops.
 
 ---
+
+</details>
 
 ## Recommended order
 

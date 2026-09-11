@@ -1140,6 +1140,75 @@ var adCampaignDaily = pgTable("ad_campaign_daily", {
 	clicks: integer("clicks").notNull().default(0),
 	watchSeconds: bigint("watch_seconds", { mode: "number" }).notNull().default(0)
 }, (t) => ({ pk: primaryKey({ columns: [t.campaignId, t.day] }) }));
+/**
+* One row per paid model call, including refusals and failures.
+*
+* Failures are recorded deliberately: a provider that times out after consuming
+* input tokens still costs money, and a retry storm that bills nothing visible
+* is exactly how COGS drifts without anyone noticing.
+*/
+var aiCostLedger = pgTable("ai_cost_ledger", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+	creatorId: text("creator_id"),
+	contentId: text("content_id").references(() => mediaLibrary.id, { onDelete: "set null" }),
+	category: varchar("category", { length: 20 }).notNull(),
+	operation: varchar("operation", { length: 80 }).notNull(),
+	provider: varchar("provider", { length: 40 }).notNull(),
+	model: varchar("model", { length: 120 }).notNull(),
+	inputUnits: integer("input_units").notNull().default(0),
+	outputUnits: integer("output_units").notNull().default(0),
+	estimatedMicroUsd: bigint("estimated_micro_usd", { mode: "number" }).notNull().default(0),
+	actualMicroUsd: bigint("actual_micro_usd", { mode: "number" }),
+	status: varchar("status", { length: 16 }).notNull().default("reserved"),
+	retryNumber: integer("retry_number").notNull().default(0),
+	errorMessage: text("error_message"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	settledAt: timestamp("settled_at")
+}, (t) => ({
+	userPeriodIdx: index("ai_cost_user_period_idx").on(t.userId, t.createdAt),
+	creatorPeriodIdx: index("ai_cost_creator_period_idx").on(t.creatorId, t.createdAt),
+	categoryIdx: index("ai_cost_category_idx").on(t.category, t.createdAt)
+}));
+/**
+* Rolling spend per scope per period, so a budget check is one indexed read
+* rather than an aggregate over the ledger.
+*
+* `scope` is 'user' | 'creator' | 'platform'; `scopeId` is the owning id, or
+* the literal 'platform' for the global daily emergency cap.
+*/
+var aiBudgetPeriods = pgTable("ai_budget_periods", {
+	scope: varchar("scope", { length: 12 }).notNull(),
+	scopeId: text("scope_id").notNull(),
+	periodStart: date("period_start").notNull(),
+	spentMicroUsd: bigint("spent_micro_usd", { mode: "number" }).notNull().default(0),
+	limitMicroUsd: bigint("limit_micro_usd", { mode: "number" }),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (t) => ({ pk: primaryKey({ columns: [
+	t.scope,
+	t.scopeId,
+	t.periodStart
+] }) }));
+var playbackTelemetry = pgTable("playback_telemetry", {
+	id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+	contentId: text("content_id").references(() => mediaLibrary.id, { onDelete: "set null" }),
+	userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+	deviceType: varchar("device_type", { length: 20 }),
+	country: varchar("country", { length: 2 }),
+	effectiveBitrateKbps: integer("effective_bitrate_kbps"),
+	startupMs: integer("startup_ms"),
+	stallCount: integer("stall_count").notNull().default(0),
+	stallSeconds: integer("stall_seconds").notNull().default(0),
+	errorCount: integer("error_count").notNull().default(0),
+	fatalError: text("fatal_error"),
+	finalQuality: varchar("final_quality", { length: 20 }),
+	watchedSeconds: integer("watched_seconds").notNull().default(0),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (t) => ({
+	contentDayIdx: index("playback_telemetry_content_day_idx").on(t.contentId, t.createdAt),
+	geoIdx: index("playback_telemetry_geo_idx").on(t.country, t.deviceType, t.createdAt)
+}));
 //#endregion
 //#region src/lib/db/schema.ts
 var schema_exports = /* @__PURE__ */ __exportAll({
@@ -1161,7 +1230,9 @@ var schema_exports = /* @__PURE__ */ __exportAll({
 	adminWorkflowRules: () => adminWorkflowRules,
 	agentRuns: () => agentRuns,
 	aiActionLog: () => aiActionLog,
+	aiBudgetPeriods: () => aiBudgetPeriods,
 	aiCallLog: () => aiCallLog,
+	aiCostLedger: () => aiCostLedger,
 	bibleStoryProgress: () => bibleStoryProgress,
 	comingSoonSubscriptions: () => comingSoonSubscriptions,
 	contentPricing: () => contentPricing,
@@ -1202,6 +1273,7 @@ var schema_exports = /* @__PURE__ */ __exportAll({
 	payouts: () => payouts,
 	paystackEvents: () => paystackEvents,
 	paystackSubscriptions: () => paystackSubscriptions,
+	playbackTelemetry: () => playbackTelemetry,
 	playlistItems: () => playlistItems,
 	playlists: () => playlists,
 	ppvContent: () => ppvContent,
@@ -1295,4 +1367,4 @@ var db = drizzle(postgres(private_env.DATABASE_URL, {
 	connect_timeout: 10
 }), { schema: schema_exports });
 //#endregion
-export { mediaLibrary as $, copilotConversations as A, userMilestones as At, familyAddons as B, aiCallLog as C, successStories as Ct, contentShares as D, transactions as Dt, contentPricing as E, taxForms as Et, creators as F, governanceAuditEntries as G, forumLikes as H, cronState as I, governanceProposalApprovals as J, governanceMemberships as K, episodes as L, creatorApplications as M, creatorEarnings as N, contentSubtitleTracks as O, trialBlacklist as Ot, creatorFollowers as P, mediaAnalyticsDaily as Q, eventRegistrations as R, aiActionLog as S, subscriptions as St, comingSoonSubscriptions as T, tax1099Forms as Tt, forumReplies as U, files as V, forumThreads as W, liveChatMessages as X, governanceProposals as Y, liveStreams as Z, adminPolicies as _, reviewHelpful as _t, user as a, payoutDisputes as at, adminWorkflowRules as b, stcStakes as bt, adAdvertisers as c, paystackSubscriptions as ct, adCampaigns as d, ppvContent as dt, mediaWatchProgress as et, adContentSettings as f, ppvPurchases as ft, adminMessages as g, refunds as gt, adminMessageTemplates as h, quizSessions as ht, session as i, paymentIntents as it, copilotMessages as j, watchSessionMeta as jt, contentThumbnailVariants as k, userAchievements as kt, adBreaks as l, playlistItems as lt, adImpressions as m, pushSubscriptions as mt, account as n, notificationPreferences as nt, abuseReports as o, payouts as ot, adCreatives as p, profiles as pt, governancePauseEvents as q, schema as r, notifications as rt, achievements as s, paystackEvents as st, db as t, newsletterSubscriptions as tt, adCampaignDaily as u, playlists as ut, adminSettings as v, reviews as vt, bibleStoryProgress as w, supportTickets as wt, agentRuns as x, streaks as xt, adminTokenomicsSettings as y, sponsorshipApplications as yt, events as z };
+export { liveStreams as $, contentSubtitleTracks as A, transactions as At, eventRegistrations as B, aiBudgetPeriods as C, stcStakes as Ct, comingSoonSubscriptions as D, supportTickets as Dt, bibleStoryProgress as E, successStories as Et, creatorEarnings as F, forumReplies as G, familyAddons as H, creatorFollowers as I, governanceMemberships as J, forumThreads as K, creators as L, copilotConversations as M, userAchievements as Mt, copilotMessages as N, userMilestones as Nt, contentPricing as O, tax1099Forms as Ot, creatorApplications as P, watchSessionMeta as Pt, liveChatMessages as Q, cronState as R, aiActionLog as S, sponsorshipApplications as St, aiCostLedger as T, subscriptions as Tt, files as U, events as V, forumLikes as W, governanceProposalApprovals as X, governancePauseEvents as Y, governanceProposals as Z, adminPolicies as _, pushSubscriptions as _t, user as a, notifications as at, adminWorkflowRules as b, reviewHelpful as bt, adAdvertisers as c, payouts as ct, adCampaigns as d, playbackTelemetry as dt, mediaAnalyticsDaily as et, adContentSettings as f, playlistItems as ft, adminMessages as g, profiles as gt, adminMessageTemplates as h, ppvPurchases as ht, session as i, notificationPreferences as it, contentThumbnailVariants as j, trialBlacklist as jt, contentShares as k, taxForms as kt, adBreaks as l, paystackEvents as lt, adImpressions as m, ppvContent as mt, account as n, mediaWatchProgress as nt, abuseReports as o, paymentIntents as ot, adCreatives as p, playlists as pt, governanceAuditEntries as q, schema as r, newsletterSubscriptions as rt, achievements as s, payoutDisputes as st, db as t, mediaLibrary as tt, adCampaignDaily as u, paystackSubscriptions as ut, adminSettings as v, quizSessions as vt, aiCallLog as w, streaks as wt, agentRuns as x, reviews as xt, adminTokenomicsSettings as y, refunds as yt, episodes as z };

@@ -1,4 +1,4 @@
-import { pt as profiles, t as db } from "../../../../../../chunks/drizzle.js";
+import { gt as profiles, t as db } from "../../../../../../chunks/drizzle.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "crypto";

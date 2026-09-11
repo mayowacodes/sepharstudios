@@ -1,4 +1,4 @@
-import { D as contentShares, t as db } from "../../../../chunks/drizzle.js";
+import { k as contentShares, t as db } from "../../../../chunks/drizzle.js";
 import { t as track } from "../../../../chunks/analytics.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/shares/+server.ts

@@ -1,4 +1,4 @@
-import { R as eventRegistrations, t as db, z as events } from "../../../../../../chunks/drizzle.js";
+import { B as eventRegistrations, V as events, t as db } from "../../../../../../chunks/drizzle.js";
 import { n as requireAdmin } from "../../../../../../chunks/admin-auth.js";
 import { t as notify } from "../../../../../../chunks/notify.js";
 import { json } from "@sveltejs/kit";

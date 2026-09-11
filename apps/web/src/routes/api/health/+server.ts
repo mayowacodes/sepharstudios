@@ -53,17 +53,33 @@ async function checkMeili(): Promise<CheckResult> {
   });
 }
 
-async function checkOrchestrator(): Promise<CheckResult> {
-  const url = env.ORCHESTRATOR_BASE_URL || env.ENCODER_ORCHESTRATOR_URL;
+/**
+ * Encoder reachability.
+ *
+ * Was `checkOrchestrator`, probing the legacy encoder-orchestrator service.
+ * That service was retired once the Temporal pipeline reached 100% of traffic
+ * (see TECHDEBT), so the probe was reporting on something that no longer
+ * exists — and reporting it as HEALTHY, because an unset URL returns ok. A
+ * readiness check that cannot fail is worse than no check: it occupies the slot
+ * where a real signal should be.
+ *
+ * Now probes the Temporal frontend, which is what actually runs encoding.
+ * Still soft-fails when unconfigured: encoding being down should not take the
+ * whole site's readiness with it, since browsing and playback of already-
+ * encoded titles are unaffected.
+ */
+async function checkEncoder(): Promise<CheckResult> {
+  const url = env.TEMPORAL_ADDRESS || env.TEMPORAL_UI_URL;
   if (!url) return { ok: true, latencyMs: 0, error: 'not_configured' };
   return timed(async () => {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 2500);
     try {
-      const res = await fetch(`${url.replace(/\/+$/, '')}/health`, {
-        method: 'GET',
-        signal: controller.signal
-      });
+      const base = url.replace(/\/+$/, '');
+      // Accept a bare host:port (the gRPC address) by assuming http — the
+      // Temporal UI and frontend both answer a plain GET on /.
+      const probe = base.startsWith('http') ? `${base}/` : `http://${base}/`;
+      const res = await fetch(probe, { method: 'GET', signal: controller.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } finally {
       clearTimeout(tid);
@@ -103,18 +119,18 @@ async function checkMinio(): Promise<CheckResult> {
  *   { status: "ok" | "degraded", uptimeSec, db: CheckResult, minio: CheckResult }
  */
 export const GET: RequestHandler = async () => {
-  const [dbResult, redisResult, minioResult, meiliResult, orchestratorResult] = await Promise.all([
+  const [dbResult, redisResult, minioResult, meiliResult, encoderResult] = await Promise.all([
     checkDb(),
     checkRedis(),
     checkMinio(),
     checkMeili(),
-    checkOrchestrator()
+    checkEncoder()
   ]);
 
   // Meili + Orchestrator are optional infra — when not configured, they're
   // returned ok=true with error='not_configured' so the readiness probe
   // doesn't fail in dev or in deployments that skip them.
-  const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && orchestratorResult.ok;
+  const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && encoderResult.ok;
   const body = {
     status: healthy ? 'ok' : 'degraded',
     uptimeSec: Math.round((Date.now() - startedAt) / 1000),
@@ -122,7 +138,7 @@ export const GET: RequestHandler = async () => {
     redis: redisResult,
     minio: minioResult,
     meili: meiliResult,
-    orchestrator: orchestratorResult
+    encoder: encoderResult
   };
 
   return json(body, { status: healthy ? 200 : 503 });

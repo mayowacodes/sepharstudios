@@ -46,8 +46,23 @@ async function checkMeili() {
 		if (health.status !== "available") throw new Error(`status=${health.status}`);
 	});
 }
-async function checkOrchestrator() {
-	const url = private_env.ORCHESTRATOR_BASE_URL || private_env.ENCODER_ORCHESTRATOR_URL;
+/**
+* Encoder reachability.
+*
+* Was `checkOrchestrator`, probing the legacy encoder-orchestrator service.
+* That service was retired once the Temporal pipeline reached 100% of traffic
+* (see TECHDEBT), so the probe was reporting on something that no longer
+* exists — and reporting it as HEALTHY, because an unset URL returns ok. A
+* readiness check that cannot fail is worse than no check: it occupies the slot
+* where a real signal should be.
+*
+* Now probes the Temporal frontend, which is what actually runs encoding.
+* Still soft-fails when unconfigured: encoding being down should not take the
+* whole site's readiness with it, since browsing and playback of already-
+* encoded titles are unaffected.
+*/
+async function checkEncoder() {
+	const url = private_env.TEMPORAL_ADDRESS || private_env.TEMPORAL_UI_URL;
 	if (!url) return {
 		ok: true,
 		latencyMs: 0,
@@ -57,7 +72,9 @@ async function checkOrchestrator() {
 		const controller = new AbortController();
 		const tid = setTimeout(() => controller.abort(), 2500);
 		try {
-			const res = await fetch(`${url.replace(/\/+$/, "")}/health`, {
+			const base = url.replace(/\/+$/, "");
+			const probe = base.startsWith("http") ? `${base}/` : `http://${base}/`;
+			const res = await fetch(probe, {
 				method: "GET",
 				signal: controller.signal
 			});
@@ -96,14 +113,14 @@ async function checkMinio() {
 *   { status: "ok" | "degraded", uptimeSec, db: CheckResult, minio: CheckResult }
 */
 var GET = async () => {
-	const [dbResult, redisResult, minioResult, meiliResult, orchestratorResult] = await Promise.all([
+	const [dbResult, redisResult, minioResult, meiliResult, encoderResult] = await Promise.all([
 		checkDb(),
 		checkRedis(),
 		checkMinio(),
 		checkMeili(),
-		checkOrchestrator()
+		checkEncoder()
 	]);
-	const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && orchestratorResult.ok;
+	const healthy = dbResult.ok && redisResult.ok && minioResult.ok && meiliResult.ok && encoderResult.ok;
 	return json({
 		status: healthy ? "ok" : "degraded",
 		uptimeSec: Math.round((Date.now() - startedAt) / 1e3),
@@ -111,7 +128,7 @@ var GET = async () => {
 		redis: redisResult,
 		minio: minioResult,
 		meili: meiliResult,
-		orchestrator: orchestratorResult
+		encoder: encoderResult
 	}, { status: healthy ? 200 : 503 });
 };
 //#endregion
