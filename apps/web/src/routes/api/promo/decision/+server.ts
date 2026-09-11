@@ -2,11 +2,12 @@ import { json, error, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db/drizzle';
 import { paystackSubscriptions, mediaLibrary } from '$lib/db/schema/sepharstudios';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { decide, recordServed, recordFrequency, type AdDecision } from '$lib/server/ads/decision';
+import { decide, recordServed, recordFrequency, DUCK_MAX_SECONDS, HOUSE_BACKFILL_ID, type AdDecision } from '$lib/server/ads/decision';
 import { fingerprintFromHeaders } from '$lib/server/ua-country';
 import { getPresignedUrl } from '$lib/server/minio';
 import { enforceRateLimit } from '$lib/server/rate-limit';
 import { env } from '$env/dynamic/private';
+import { fetchVast, fireTrackers } from '$lib/server/ads/vast';
 
 /**
  * POST /api/promo/decision  →  AdDecisionPayload
@@ -93,9 +94,42 @@ export const POST: RequestHandler = async ({ request, locals, url, getClientAddr
 	// never reach the client, and the creative bucket is private.
 	let src: string;
 	if (decision.kind === 'vast') {
-		// VAST tags are fetched and parsed server-side (never handed to the
-		// page) — this branch is wired in the VAST phase.
-		src = decision.src ?? '';
+		// Resolve the tag server-side. The page never sees the VAST URL, only
+		// the resulting media file — so there is no third-party request from
+		// the browser for an ad blocker to intercept, and the behaviour is
+		// identical inside the Capacitor WebView.
+		if (!decision.src) return json({ ad: null } satisfies AdDecisionPayload);
+		try {
+			const vast = await fetchVast(decision.src, {
+				// A ducked ad plays alongside a still-running movie and shares
+				// its bandwidth; a heavy creative would force hls.js to
+				// downshift the film, which viewers read as the ad degrading
+				// the content.
+				preferLowBitrate: decision.behavior === 'duck',
+				contentId,
+				referrer: request.headers.get('referer')
+			});
+			if (!vast) return json({ ad: null } satisfies AdDecisionPayload);
+
+			src = vast.mediaUrl;
+
+			// VAST duration overrides the stored estimate, and can flip the
+			// behaviour: a tag that returns a 60s creative must pause the movie
+			// even if the campaign row guessed it would duck.
+			if (vast.durationSeconds > 0) {
+				decision.durationSeconds = vast.durationSeconds;
+				decision.behavior = vast.durationSeconds <= DUCK_MAX_SECONDS ? 'duck' : 'pause';
+			}
+			if (vast.clickThrough) decision.clickUrl = vast.clickThrough;
+
+			// Impression pixels fire now, at decision time, matching how the
+			// first-party path records `served`. Fire-and-forget: a partner's
+			// slow pixel must never delay the ad starting.
+			void fireTrackers(vast.trackers.impression);
+		} catch (err) {
+			console.error('[promo/decision] VAST resolution failed:', err instanceof Error ? err.message : err);
+			return json({ ad: null } satisfies AdDecisionPayload);
+		}
 	} else {
 		if (!decision.src) return json({ ad: null } satisfies AdDecisionPayload);
 		src = await getPresignedUrl(
@@ -122,7 +156,12 @@ export const POST: RequestHandler = async ({ request, locals, url, getClientAddr
 		country: fp.country
 	}, content?.creatorId ?? null);
 
-	void recordFrequency(decision.campaignId, session?.user.id ?? 'anon', 24);
+	// House inventory is unlimited by definition — capping it would leave
+	// breaks empty once a viewer hit the cap, which is the opposite of what a
+	// backfill is for.
+	if (decision.campaignId !== HOUSE_BACKFILL_ID) {
+		void recordFrequency(decision.campaignId, session?.user.id ?? 'anon', 24);
+	}
 
 	return json({
 		ad: { ...decision, src },

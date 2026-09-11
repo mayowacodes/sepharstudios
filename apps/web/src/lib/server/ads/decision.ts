@@ -48,6 +48,16 @@ export const DUCK_MAX_SECONDS = 30;
 
 export type AdBehavior = 'duck' | 'pause';
 
+/**
+ * Sentinel campaign/creative id for the house VAST backfill.
+ *
+ * It has no row in ad_campaigns or ad_creatives — it is synthesized from the
+ * ADS_VAST_TAG_URL env var, not from the database — so impression recording
+ * MUST skip it. Inserting would violate the foreign keys on ad_impressions and
+ * turn every unfilled break into a 500.
+ */
+export const HOUSE_BACKFILL_ID = 'house-backfill';
+
 export interface AdBreakPlan {
 	breakId: string;
 	positionSeconds: number;
@@ -415,6 +425,43 @@ export async function decide(
 		};
 	}
 
+	// ── House backfill ────────────────────────────────────────────────────
+	//
+	// No campaign filled. If a house VAST tag is configured, synthesize a
+	// decision from it rather than leaving the break empty.
+	//
+	// This preserves the ADS_VAST_TAG_URL configuration path that predates the
+	// campaign system, and it guarantees the backfill tier is never empty — a
+	// break that opens with nothing to show is a worse viewer experience than
+	// one that shows a house promo, because the player has already committed to
+	// the squeeze by the time it knows.
+	const houseTag = env.ADS_VAST_TAG_URL;
+	if (houseTag) {
+		const uuid = randomUUID();
+		const HOUSE_ID = HOUSE_BACKFILL_ID;
+		return {
+			decision: {
+				decisionId: signDecisionId(uuid, HOUSE_ID, HOUSE_ID),
+				campaignId: HOUSE_ID,
+				creativeId: HOUSE_ID,
+				src: houseTag,
+				kind: 'vast',
+				// Unknown until the tag is resolved. Null means the caller
+				// defaults to pause, which is the safe choice for an ad whose
+				// length we cannot bound — the VAST response then corrects it.
+				durationSeconds: null,
+				behavior: 'pause',
+				squeezeScale: DEFAULT_SQUEEZE_SCALE,
+				clickUrl: null,
+				ctaLabel: null,
+				headline: null,
+				body: null,
+				mobileBehavior: 'takeover'
+			},
+			rejections
+		};
+	}
+
 	return { decision: null, rejections };
 }
 
@@ -431,6 +478,12 @@ export async function recordServed(
 	ctx: DecisionContext,
 	creatorId: string | null
 ): Promise<void> {
+	// The house backfill is synthesized from an env var and has no campaign or
+	// creative row, so its ids would violate ad_impressions' foreign keys.
+	// Delivery of house inventory is not billed or reported on, so there is
+	// nothing lost by not recording it.
+	if (decision.campaignId === HOUSE_BACKFILL_ID) return;
+
 	await db.insert(adImpressions).values({
 		decisionId: decision.decisionId,
 		campaignId: decision.campaignId,

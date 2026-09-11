@@ -315,6 +315,7 @@
       "_chart-column.js",
       "_check.js",
       "_chevron-right.js",
+      "_coins.js",
       "_external-link.js",
       "_file-check.js",
       "_file-text.js",
@@ -455,13 +456,6 @@
       "_drizzle.js"
     ]
   },
-  "_ads.js": {
-    "file": "chunks/ads.js",
-    "name": "ads",
-    "imports": [
-      "_paystack.js"
-    ]
-  },
   "_ai-model.js": {
     "file": "chunks/ai-model.js",
     "name": "ai-model",
@@ -516,9 +510,9 @@
       "_shared-server.js"
     ]
   },
-  "_app.Ce7DzPSd.css": {
-    "file": "_app/immutable/assets/app.Ce7DzPSd.css",
-    "src": "_app.Ce7DzPSd.css"
+  "_app.DbrgWkcK.css": {
+    "file": "_app/immutable/assets/app.DbrgWkcK.css",
+    "src": "_app.DbrgWkcK.css"
   },
   "_archive.js": {
     "file": "chunks/archive.js",
@@ -921,7 +915,7 @@
       "_shared-server.js",
       "_drizzle.js",
       "_redis.js",
-      "_ads.js"
+      "_paystack.js"
     ]
   },
   "_default-query-compiler.js": {
@@ -971,6 +965,10 @@
       "_ui-libs.js",
       "_Icon.js"
     ]
+  },
+  "_download-manager.js": {
+    "file": "chunks/download-manager.js",
+    "name": "download-manager"
   },
   "_download.js": {
     "file": "chunks/download.js",
@@ -1974,7 +1972,7 @@
       "_PortalShell.js"
     ],
     "css": [
-      "_app/immutable/assets/app.Ce7DzPSd.css"
+      "_app/immutable/assets/app.DbrgWkcK.css"
     ]
   },
   "src/routes/(admin)/admin/+page.svelte": {
@@ -2018,6 +2016,24 @@
       "_skeleton.js",
       "_PortalHero.js",
       "_PortalEmptyState.js"
+    ]
+  },
+  "src/routes/(admin)/admin/ai-costs/+page.svelte": {
+    "file": "entries/pages/(admin)/admin/ai-costs/_page.svelte.js",
+    "name": "entries/pages/(admin)/admin/ai-costs/_page.svelte",
+    "src": "src/routes/(admin)/admin/ai-costs/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ui-libs.js",
+      "_coins.js",
+      "_refresh-cw.js",
+      "_save.js",
+      "_input.js",
+      "_button.js",
+      "_badge.js",
+      "_PortalHero.js",
+      "_card.js",
+      "_label.js"
     ]
   },
   "src/routes/(admin)/admin/ai-runs/+page.svelte": {
@@ -2309,6 +2325,21 @@
       "_wallet.js",
       "_PortalHero.js",
       "_GovernanceStatusCard.js"
+    ]
+  },
+  "src/routes/(admin)/admin/observability/+page.svelte": {
+    "file": "entries/pages/(admin)/admin/observability/_page.svelte.js",
+    "name": "entries/pages/(admin)/admin/observability/_page.svelte",
+    "src": "src/routes/(admin)/admin/observability/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ui-libs.js",
+      "_activity.js",
+      "_refresh-cw.js",
+      "_button.js",
+      "_badge.js",
+      "_PortalHero.js",
+      "_card.js"
     ]
   },
   "src/routes/(admin)/admin/payouts/+page.svelte": {
@@ -3031,6 +3062,7 @@
       "_wallet2.js",
       "_Recommendations2.js",
       "_contracts2.js",
+      "_download-manager.js",
       "_WalletConnect.js"
     ],
     "css": [
@@ -3377,7 +3409,7 @@
       "_button.js"
     ],
     "css": [
-      "_app/immutable/assets/app.Ce7DzPSd.css"
+      "_app/immutable/assets/app.DbrgWkcK.css"
     ]
   },
   "src/routes/(creator)/creator/+page.svelte": {
@@ -3560,8 +3592,8 @@
       "_badge.js",
       "_PortalHero.js",
       "_card.js",
-      "_wallet2.js",
       "_label.js",
+      "_wallet2.js",
       "_contracts2.js",
       "_WalletConnect.js"
     ]
@@ -4080,7 +4112,7 @@
     ],
     "css": [
       "_app/immutable/assets/_layout.jkX3DP41.css",
-      "_app/immutable/assets/app.Ce7DzPSd.css"
+      "_app/immutable/assets/app.DbrgWkcK.css"
     ]
   },
   "src/routes/+layout.ts": {
@@ -4660,6 +4692,17 @@
     "file": "entries/endpoints/api/admin/promo/breaks/_server.ts.js",
     "name": "entries/endpoints/api/admin/promo/breaks/_server.ts",
     "src": "src/routes/api/admin/promo/breaks/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_drizzle.js",
+      "_admin-auth.js",
+      "_decision.js"
+    ]
+  },
+  "src/routes/api/admin/promo/breaks/generate/+server.ts": {
+    "file": "entries/endpoints/api/admin/promo/breaks/generate/_server.ts.js",
+    "name": "entries/endpoints/api/admin/promo/breaks/generate/_server.ts",
+    "src": "src/routes/api/admin/promo/breaks/generate/+server.ts",
     "isEntry": true,
     "imports": [
       "_drizzle.js",
@@ -6503,17 +6546,6 @@
       "_decision.js"
     ]
   },
-  "src/routes/api/promo/vast-tag/+server.ts": {
-    "file": "entries/endpoints/api/promo/vast-tag/_server.ts.js",
-    "name": "entries/endpoints/api/promo/vast-tag/_server.ts",
-    "src": "src/routes/api/promo/vast-tag/+server.ts",
-    "isEntry": true,
-    "imports": [
-      "_shared-server.js",
-      "_drizzle.js",
-      "_ads.js"
-    ]
-  },
   "src/routes/api/push/subscribe/+server.ts": {
     "file": "entries/endpoints/api/push/subscribe/_server.ts.js",
     "name": "entries/endpoints/api/push/subscribe/_server.ts",
@@ -7035,14 +7067,21 @@
     "imports": [
       "_ui-libs.js",
       "_constants.js",
+      "_check.js",
+      "_download.js",
+      "_loader-circle.js",
       "_ReviewSection.js",
+      "_trash-2.js",
+      "_x.js",
       "_role-labels.js",
       "_client.js",
       "_state.js",
       "_copilot.js",
       "_navigation.js",
+      "_button.js",
       "_VideoPlayer.js",
-      "_ReportButton.js"
+      "_ReportButton.js",
+      "_download-manager.js"
     ]
   },
   "src/routes/watch/[id]/+page.ts": {

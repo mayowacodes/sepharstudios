@@ -15,8 +15,8 @@ import { t as Button } from "../../../../../chunks/button.js";
 import { t as Badge } from "../../../../../chunks/badge.js";
 import { t as PortalHero } from "../../../../../chunks/PortalHero.js";
 import { a as Card, i as Card_content, n as Card_header, t as Card_title } from "../../../../../chunks/card.js";
-import { a as isConnected } from "../../../../../chunks/wallet2.js";
 import { t as Label } from "../../../../../chunks/label.js";
+import { a as isConnected } from "../../../../../chunks/wallet2.js";
 import "../../../../../chunks/contracts2.js";
 import { t as WalletConnect } from "../../../../../chunks/WalletConnect.js";
 //#region src/routes/(creator)/creator/earnings/+page.svelte

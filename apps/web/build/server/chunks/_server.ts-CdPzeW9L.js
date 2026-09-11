@@ -1,0 +1,149 @@
+import { m as mediaLibrary, d as db } from './drizzle-C3SH12nS.js';
+import { R as Role } from './constants-BiiFHz9b.js';
+import { j as json } from './index.js-CxPEndTa.js';
+import { eq, or, ilike, and, desc, sql } from 'drizzle-orm';
+import 'drizzle-orm/postgres-js';
+import 'postgres';
+import 'drizzle-orm/pg-core';
+import './file-text-By5QqCz6.js';
+import './Icon-Bw1rnKTC.js';
+import './house-6lS0tROn.js';
+import './layout-dashboard-B2Dnc05Q.js';
+import './user-DfNTMTjp.js';
+import './users-BHfWNfsK.js';
+
+//#region src/routes/api/creator/content/+server.ts
+var MAX_PAGE_SIZE = 100;
+var DEFAULT_PAGE_SIZE = 25;
+var GET = async ({ locals, url }) => {
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	if (![Role.CREATOR, Role.ADMIN].includes(session.user.role)) return json({ error: "Forbidden" }, { status: 403 });
+	const status = url.searchParams.get("status");
+	const type = url.searchParams.get("type");
+	const q = url.searchParams.get("q")?.trim();
+	const hasPaginationParam = url.searchParams.has("page") || url.searchParams.has("pageSize");
+	const conds = [eq(mediaLibrary.creatorId, session.user.id)];
+	if (status && status !== "all") conds.push(eq(mediaLibrary.status, status));
+	if (type && type !== "all") conds.push(eq(mediaLibrary.mediaType, type));
+	if (q) {
+		const pat = `%${q}%`;
+		const searchExpr = or(ilike(mediaLibrary.title, pat), ilike(mediaLibrary.description, pat));
+		if (searchExpr) conds.push(searchExpr);
+	}
+	const whereExpr = conds.length === 1 ? conds[0] : and(...conds);
+	const columns = {
+		id: mediaLibrary.id,
+		title: mediaLibrary.title,
+		description: mediaLibrary.description,
+		mediaType: mediaLibrary.mediaType,
+		status: mediaLibrary.status,
+		isActive: mediaLibrary.isActive,
+		thumbnail: mediaLibrary.thumbnail,
+		posterUrl: mediaLibrary.posterUrl,
+		backdropUrl: mediaLibrary.backdropUrl,
+		duration: mediaLibrary.duration,
+		viewCount: mediaLibrary.viewCount,
+		genres: mediaLibrary.genres,
+		keywords: mediaLibrary.keywords,
+		createdAt: mediaLibrary.createdAt,
+		updatedAt: mediaLibrary.updatedAt,
+		reviewNotes: mediaLibrary.reviewNotes,
+		rejectionReason: mediaLibrary.rejectionReason
+	};
+	if (!hasPaginationParam) return json(await db.select(columns).from(mediaLibrary).where(whereExpr).orderBy(desc(mediaLibrary.createdAt)));
+	const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+	const requested = parseInt(url.searchParams.get("pageSize") ?? `${DEFAULT_PAGE_SIZE}`, 10) || DEFAULT_PAGE_SIZE;
+	const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, requested));
+	const offset = (page - 1) * pageSize;
+	const [items, totals] = await Promise.all([db.select(columns).from(mediaLibrary).where(whereExpr).orderBy(desc(mediaLibrary.createdAt)).limit(pageSize).offset(offset), db.select({ count: sql`count(*)::int` }).from(mediaLibrary).where(whereExpr)]);
+	const total = totals[0]?.count ?? 0;
+	return json({
+		items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.max(1, Math.ceil(total / pageSize))
+		}
+	});
+};
+var POST = async ({ request, locals }) => {
+	const session = await locals.auth.getSession();
+	if (!session) return json({ error: "Unauthorized" }, { status: 401 });
+	if (![Role.CREATOR, Role.ADMIN].includes(session.user.role)) return json({ error: "Forbidden" }, { status: 403 });
+	const data = await request.json();
+	const id = crypto.randomUUID();
+	const title = String(data.title || "").trim();
+	if (!title) return json({ error: "Title is required" }, { status: 400 });
+	const cleanPeople = (value, kind) => {
+		if (!Array.isArray(value)) return [];
+		return value.slice(0, 50).flatMap((v) => {
+			if (!v || typeof v !== "object") return [];
+			const name = String(v.name ?? "").trim();
+			const role = String(v.role ?? "").trim();
+			if (!name || !role) return [];
+			const out = {
+				name: name.slice(0, 120),
+				role: role.slice(0, 80)
+			};
+			const photoUrl = v.photoUrl;
+			if (typeof photoUrl === "string" && photoUrl) out.photoUrl = photoUrl.slice(0, 500);
+			if (kind === "cast") {
+				const characterName = v.characterName;
+				if (typeof characterName === "string" && characterName) out.characterName = characterName.trim().slice(0, 120);
+			}
+			return [out];
+		});
+	};
+	let scheduledPublishAt = null;
+	if (data.comingSoon && data.comingSoonReleaseDate) {
+		const ts = Date.parse(String(data.comingSoonReleaseDate));
+		if (!Number.isNaN(ts)) scheduledPublishAt = new Date(ts);
+	}
+	const category = data.audience === "kids" ? "kids" : data.audience === "teens" ? "teens" : null;
+	try {
+		await db.insert(mediaLibrary).values({
+			id,
+			title: title.slice(0, 255),
+			description: typeof data.description === "string" ? data.description.slice(0, 1e4) : null,
+			mediaType: data.contentType,
+			category,
+			ageRating: data.ageRating,
+			thumbnail: data.assets?.thumbnail,
+			posterUrl: data.assets?.posterPortrait,
+			posterLandscapeUrl: data.assets?.posterLandscape,
+			posterSquareUrl: data.assets?.posterSquare,
+			logoTitleUrl: data.assets?.logoTitle,
+			backdropUrl: data.assets?.backdropHero,
+			trailerUrl: data.trailerUrl || null,
+			language: data.language || "English",
+			bibleReference: data.bibleReferences?.[0] || null,
+			genres: data.genre || [],
+			topics: data.themes || [],
+			keywords: data.keywords || [],
+			cast: cleanPeople(data.cast, "cast"),
+			crew: cleanPeople(data.crew, "crew"),
+			duration: data.duration?.toString() || null,
+			isActive: false,
+			isNew: true,
+			status: "submitted",
+			creatorId: session.user.id,
+			slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${id.slice(0, 5)}`,
+			link: `/watch/${id}`,
+			videoUrl: data.videoUrl || null,
+			processingStatus: "not_started",
+			scheduledPublishAt
+		});
+		return json({
+			success: true,
+			contentId: id
+		});
+	} catch (error) {
+		console.error("Content submission error:", error);
+		return json({ error: "Failed to save content metadata" }, { status: 500 });
+	}
+};
+
+export { GET, POST };
+//# sourceMappingURL=_server.ts-CdPzeW9L.js.map

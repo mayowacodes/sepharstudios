@@ -7,6 +7,7 @@ import { t as Bell } from "./bell.js";
 import { t as Chart_column } from "./chart-column.js";
 import { t as Check } from "./check.js";
 import { t as Chevron_right } from "./chevron-right.js";
+import { t as Coins } from "./coins.js";
 import { t as External_link } from "./external-link.js";
 import { t as File_check } from "./file-check.js";
 import { t as File_text } from "./file-text.js";
@@ -153,6 +154,11 @@ var ADMIN_NAV = [
 				icon: Activity
 			},
 			{
+				href: "/admin/observability",
+				label: "Observability",
+				icon: Activity
+			},
+			{
 				href: "/admin/analytics",
 				label: "Analytics",
 				icon: Chart_column
@@ -165,6 +171,10 @@ var ADMIN_NAV = [
 			href: "/admin/promo",
 			label: "Promotions",
 			icon: Megaphone
+		}, {
+			href: "/admin/ai-costs",
+			label: "AI costs",
+			icon: Coins
 		}]
 	},
 	{

@@ -19,6 +19,7 @@ import { a as Sheet_trigger, i as Sheet_content, o as Sheet } from "../../../../
 import { a as isConnected } from "../../../../chunks/wallet2.js";
 import { n as RecentlyWatched, t as Recommendations } from "../../../../chunks/Recommendations2.js";
 import "../../../../chunks/contracts2.js";
+import "../../../../chunks/download-manager.js";
 import { t as WalletConnect } from "../../../../chunks/WalletConnect.js";
 //#region ../../node_modules/.bun/@lucide+svelte@1.24.0+5726b9c92ebd8575/node_modules/@lucide/svelte/dist/icons/circle-plus.svelte
 function Circle_plus($$renderer, $$props) {

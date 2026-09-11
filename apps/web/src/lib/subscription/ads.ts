@@ -1,9 +1,12 @@
 /**
  * Ads gating — single source of truth for whether the current user should be
- * shown ads. The VAST tag is fetched from /api/promo/vast-tag and consumed by
- * VideoPlayer as a pre-roll; both surfaces gate on `shouldShowAds()`. Set
- * `ADS_VAST_TAG_URL` env to enable; leave unset to no-op (free of ads even
- * for non-paying viewers, useful for staging).
+ * shown ads.
+ *
+ * The old /api/promo/vast-tag endpoint is gone. Ads now go through
+ * /api/promo/plan (the break schedule) and /api/promo/decision (the auction),
+ * which gate on this function plus the category rule below. `ADS_VAST_TAG_URL`
+ * still works, but as the house BACKFILL inside the auction rather than as the
+ * only ad path — leave it unset to disable backfill.
  *
  * The decision tree:
  *   - No subscription           → free anonymous viewer, show ads

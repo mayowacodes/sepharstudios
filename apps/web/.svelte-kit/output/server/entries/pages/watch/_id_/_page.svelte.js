@@ -1,13 +1,20 @@
 import { Ct as derived, Et as head, Lt as attr, Nt as html, Tt as ensure_array_like, gt as onDestroy, yt as attr_class, zt as escape_html } from "../../../../chunks/ui-libs.js";
 import { i as SiteMeta } from "../../../../chunks/constants.js";
+import { t as Check } from "../../../../chunks/check.js";
+import { t as Download } from "../../../../chunks/download.js";
+import { t as Loader_circle } from "../../../../chunks/loader-circle.js";
 import { n as ShareButton, t as ReviewSection } from "../../../../chunks/ReviewSection.js";
+import { t as Trash_2 } from "../../../../chunks/trash-2.js";
+import { t as X } from "../../../../chunks/x.js";
 import { n as sectionLabel, r as translateRole } from "../../../../chunks/role-labels.js";
 import { r as invalidateAll } from "../../../../chunks/client.js";
 import { t as page } from "../../../../chunks/state.js";
 import { t as copilotContext } from "../../../../chunks/copilot.js";
 import "../../../../chunks/navigation.js";
+import { t as Button } from "../../../../chunks/button.js";
 import { t as VideoPlayer } from "../../../../chunks/VideoPlayer.js";
 import { t as ReportButton } from "../../../../chunks/ReportButton.js";
+import { r as isDownloaded, t as deleteDownload } from "../../../../chunks/download-manager.js";
 //#region src/lib/components/widgets/PPVPaywall.svelte
 function PPVPaywall($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -30,6 +37,130 @@ function PPVPaywall($$renderer, $$props) {
 			$$renderer.push(`<p class="text-[10px] text-gray-500">Charged in ${escape_html(void 0)}. Local currency shown for reference; final amount may vary by your card's FX.</p>`);
 		} else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--> <p class="text-gray-500 text-xs">Upgrade to <a href="/plans" class="text-[#FFBF00] underline">Premium</a> for unlimited access to all content.</p></div>`);
+	});
+}
+//#endregion
+//#region src/lib/components/widgets/DownloadButton.svelte
+function DownloadButton($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		/**
+		* Offline download control.
+		*
+		* This is the ENTRY POINT the offline feature was missing: the download
+		* manager and the Downloads dashboard both already existed, but nothing in
+		* the UI ever called `downloadContent`, so the dashboard could only ever list
+		* and delete downloads that could not be created.
+		*
+		* Entitlement is not checked here. /api/downloads/manifest/:id gates on plan
+		* AND on PPV purchase, and its refusal message is what the user sees — a
+		* client-side plan check would duplicate that logic and drift from it.
+		*/
+		/** Set when the title has an audio-only rung, enabling that choice. */
+		let { contentId, title, thumbnail = null, allowAudioOnly = true } = $$props;
+		let status = "checking";
+		let progress = 0;
+		let showQuality = false;
+		const QUALITIES = [
+			{
+				value: "hd",
+				label: "Standard",
+				hint: "Up to 720p — best balance"
+			},
+			{
+				value: "sd",
+				label: "Data saver",
+				hint: "Up to 480p — smaller"
+			},
+			{
+				value: "audio",
+				label: "Audio only",
+				hint: "Smallest — no picture"
+			}
+		];
+		async function refresh() {
+			try {
+				status = await isDownloaded(contentId) ? "done" : "idle";
+			} catch {
+				status = "idle";
+			}
+		}
+		async function remove() {
+			await deleteDownload(contentId);
+			await refresh();
+		}
+		$$renderer.push(`<div class="relative inline-block">`);
+		if (status === "checking") {
+			$$renderer.push("<!--[0-->");
+			Button($$renderer, {
+				variant: "outline",
+				size: "sm",
+				disabled: true,
+				children: ($$renderer) => {
+					Loader_circle($$renderer, { class: "size-4 mr-2 animate-spin" });
+					$$renderer.push(`<!----> Download`);
+				},
+				$$slots: { default: true }
+			});
+		} else if (status === "downloading") {
+			$$renderer.push("<!--[1-->");
+			Button($$renderer, {
+				variant: "outline",
+				size: "sm",
+				disabled: true,
+				children: ($$renderer) => {
+					Loader_circle($$renderer, { class: "size-4 mr-2 animate-spin" });
+					$$renderer.push(`<!----> ${escape_html(progress)}%`);
+				},
+				$$slots: { default: true }
+			});
+		} else if (status === "done") {
+			$$renderer.push("<!--[2-->");
+			Button($$renderer, {
+				variant: "outline",
+				size: "sm",
+				onclick: remove,
+				title: "Remove download",
+				children: ($$renderer) => {
+					Check($$renderer, { class: "size-4 mr-2 text-emerald-500" });
+					$$renderer.push(`<!----> Downloaded `);
+					Trash_2($$renderer, { class: "size-4 ml-2 opacity-60" });
+					$$renderer.push(`<!---->`);
+				},
+				$$slots: { default: true }
+			});
+		} else {
+			$$renderer.push("<!--[-1-->");
+			Button($$renderer, {
+				variant: "outline",
+				size: "sm",
+				onclick: () => showQuality = !showQuality,
+				children: ($$renderer) => {
+					Download($$renderer, { class: "size-4 mr-2" });
+					$$renderer.push(`<!----> Download`);
+				},
+				$$slots: { default: true }
+			});
+		}
+		$$renderer.push(`<!--]--> `);
+		if (showQuality) {
+			$$renderer.push("<!--[0-->");
+			$$renderer.push(`<div class="absolute right-0 z-50 mt-2 w-60 rounded-md border bg-popover p-1 shadow-md" role="menu" tabindex="-1"><!--[-->`);
+			const each_array = ensure_array_like(QUALITIES);
+			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+				let q = each_array[$$index];
+				if (q.value !== "audio" || allowAudioOnly) {
+					$$renderer.push("<!--[0-->");
+					$$renderer.push(`<button type="button" role="menuitem" class="w-full rounded px-3 py-2 text-left text-sm hover:bg-accent"><span class="block font-medium">${escape_html(q.label)}</span> <span class="block text-xs text-muted-foreground">${escape_html(q.hint)}</span></button>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]-->`);
+			}
+			$$renderer.push(`<!--]--> <button type="button" class="w-full rounded px-3 py-2 text-left text-xs text-muted-foreground hover:bg-accent">`);
+			X($$renderer, { class: "size-3 mr-1 inline" });
+			$$renderer.push(`<!----> Cancel</button></div>`);
+		} else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--> `);
+		$$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--></div>`);
 	});
 }
 //#endregion
@@ -134,6 +265,12 @@ function _page($$renderer, $$props) {
 			contentId: content().slug || content().id,
 			title: content().title,
 			description: content().description ?? ""
+		});
+		$$renderer.push(`<!----> `);
+		DownloadButton($$renderer, {
+			contentId: content().id,
+			title: content().title,
+			thumbnail: content().thumbnail ?? null
 		});
 		$$renderer.push(`<!----> `);
 		ReportButton($$renderer, {

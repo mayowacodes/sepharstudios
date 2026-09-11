@@ -1,9 +1,52 @@
 import { t as private_env } from "./shared-server.js";
 import { d as adCampaigns, f as adContentSettings, l as adBreaks, m as adImpressions, p as adCreatives, t as db, tt as mediaLibrary } from "./drizzle.js";
 import { t as getRedis } from "./redis.js";
-import { n as shouldShowAds, t as adsAllowedOnCategory } from "./ads.js";
+import { t as PLAN_FEATURES } from "./paystack.js";
 import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+//#region src/lib/subscription/ads.ts
+/**
+* Ads gating — single source of truth for whether the current user should be
+* shown ads.
+*
+* The old /api/promo/vast-tag endpoint is gone. Ads now go through
+* /api/promo/plan (the break schedule) and /api/promo/decision (the auction),
+* which gate on this function plus the category rule below. `ADS_VAST_TAG_URL`
+* still works, but as the house BACKFILL inside the auction rather than as the
+* only ad path — leave it unset to disable backfill.
+*
+* The decision tree:
+*   - No subscription           → free anonymous viewer, show ads
+*   - Subscription cancelled    → access ended, show ads (or paywall — depends on UX)
+*   - Subscription paused       → dunning state, show ads while card is fixed
+*   - plan === 'freemium'       → always show ads (defining tier feature)
+*   - plan === 'basic' | 'premium' | 'creator' → ad-free
+*
+* Content category overrides all of the above — see `adsAllowedOnCategory`.
+*/
+function shouldShowAds(ctx) {
+	if (!ctx || !ctx.plan) return true;
+	if (ctx.status !== "active" && ctx.status !== "trial") return true;
+	const features = PLAN_FEATURES[ctx.plan];
+	if (!features) return true;
+	return features.hasAds;
+}
+/**
+* Audience categories that never carry advertising, on any plan.
+*
+* Non-skippable ads against children's content is a regulatory exposure
+* (COPPA in the US, the UK CAP code on advertising to minors) that the
+* available inventory does not justify, and a reputational one for a
+* faith-based platform whose kids portal is a primary acquisition hook.
+*
+* This is a category rule, not a plan rule, and it is deliberately the outer
+* check: a freemium viewer watching a kids title gets no ads even though their
+* plan says `hasAds: true`.
+*/
+var AD_FREE_CATEGORIES = /* @__PURE__ */ new Set(["kids", "teens"]);
+function adsAllowedOnCategory(category) {
+	return !category || !AD_FREE_CATEGORIES.has(category);
+}
 var NO_BREAKS_AFTER_PCT = .9;
 /**
 * Squeeze scale. The movie keeps 60% of each edge (36% of area) while the ad
@@ -14,6 +57,15 @@ var NO_BREAKS_AFTER_PCT = .9;
 * 1280px player, which is below watchable for narrative film.
 */
 var DEFAULT_SQUEEZE_SCALE = .6;
+/**
+* Sentinel campaign/creative id for the house VAST backfill.
+*
+* It has no row in ad_campaigns or ad_creatives — it is synthesized from the
+* ADS_VAST_TAG_URL env var, not from the database — so impression recording
+* MUST skip it. Inserting would violate the foreign keys on ad_impressions and
+* turn every unfilled break into a 500.
+*/
+var HOUSE_BACKFILL_ID = "house-backfill";
 function eventSecret() {
 	const s = private_env.ADS_EVENT_SECRET;
 	if (!s) throw new Error("ADS_EVENT_SECRET is not set — ad decisioning is disabled");
@@ -210,6 +262,29 @@ async function decide(ctx, opts = {}) {
 			rejections
 		};
 	}
+	const houseTag = private_env.ADS_VAST_TAG_URL;
+	if (houseTag) {
+		const uuid = randomUUID();
+		const HOUSE_ID = HOUSE_BACKFILL_ID;
+		return {
+			decision: {
+				decisionId: signDecisionId(uuid, HOUSE_ID, HOUSE_ID),
+				campaignId: HOUSE_ID,
+				creativeId: HOUSE_ID,
+				src: houseTag,
+				kind: "vast",
+				durationSeconds: null,
+				behavior: "pause",
+				squeezeScale: DEFAULT_SQUEEZE_SCALE,
+				clickUrl: null,
+				ctaLabel: null,
+				headline: null,
+				body: null,
+				mobileBehavior: "takeover"
+			},
+			rejections
+		};
+	}
 	return {
 		decision: null,
 		rejections
@@ -223,6 +298,7 @@ function djb2(s) {
 }
 /** Record the served impression. Called by the decision endpoint. */
 async function recordServed(decision, ctx, creatorId) {
+	if (decision.campaignId === "house-backfill") return;
 	await db.insert(adImpressions).values({
 		decisionId: decision.decisionId,
 		campaignId: decision.campaignId,
@@ -238,4 +314,4 @@ async function recordServed(decision, ctx, creatorId) {
 	});
 }
 //#endregion
-export { recordFrequency as a, planBreaks as i, NO_BREAKS_AFTER_PCT as n, recordServed as o, decide as r, verifyDecisionId as s, DEFAULT_SQUEEZE_SCALE as t };
+export { planBreaks as a, verifyDecisionId as c, decide as i, HOUSE_BACKFILL_ID as n, recordFrequency as o, NO_BREAKS_AFTER_PCT as r, recordServed as s, DEFAULT_SQUEEZE_SCALE as t };

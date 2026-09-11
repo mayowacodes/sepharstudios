@@ -214,7 +214,7 @@ is not currently possible.
 
 ---
 
-## Track C — Interactive squeeze-back ads — 🔨 IN PROGRESS
+## Track C — Interactive squeeze-back ads — ✅ DONE (2026-09-11)
 
 **Done:** schema (7 tables, [0044](drizzle/0044_ads_platform.sql) + apply
 script), decisioning ([decision.ts](apps/web/src/lib/server/ads/decision.ts)),
@@ -255,8 +255,27 @@ Two decisions in there worth keeping:
 
 **Not yet verified visually.** The squeeze type-checks and builds, but no ad has
 actually rendered — that needs campaign rows in a live database. The first real
-test should watch `initSeq`: it must stay at `1` through a full break cycle, or
-ad state has leaked into the playback-init effect.
+test should watch `initSeq`: it must stay at `1` through a full break cycle.
+
+### The offline feature had no entry point
+
+Found while finishing Track E's UI: **`downloadContent` had zero callers
+anywhere in the app.** The download manager, the manifest endpoint and the
+service-worker cache path all existed and worked; nothing ever invoked them, so
+`Downloads.svelte` could only list and delete downloads that could not be
+created. `DownloadButton.svelte` is that missing entry point, mounted on the
+watch page with quality selection (Standard / Data saver / Audio only).
+
+Also corrected: a **duplicate download manager**. Track E originally added
+`$lib/client/download-manager.ts` without checking, while
+`$lib/utils/download-manager.ts` had existed since March. Both opened IndexedDB
+`sephar-downloads` **version 1** with different store names, so
+`onupgradeneeded` would not fire and the new one would have thrown
+`NotFoundError` on any device that already had downloads. The duplicate is gone
+and its real improvements were ported into the original, which fixed two bugs
+already there: it **never cached the playlists** (only segments — so hls.js had
+no manifest to read offline and a fully-downloaded title played nothing), and it
+fetched segments one at a time through service-worker round-trips.
 
 Notes from building it that are not obvious from the code:
 

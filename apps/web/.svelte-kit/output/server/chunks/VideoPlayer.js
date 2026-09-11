@@ -54,17 +54,17 @@ function VideoPlayer($$renderer, $$props) {
 		*  wants to anchor a UI affordance to the playhead (e.g. the admin
 		*  review page's "Add note at MM:SS" button). */
 		/**
-		* When true (and contentId set), VideoPlayer auto-fetches
-		* /api/promo/vast-tag and plays the returned URL as a pre-roll before
-		* the main content. Treats the URL as a direct video src — sufficient
-		* for raw MP4 creatives.
+		* Play a pre-roll before the main content, when the break schedule
+		* contains a `kind='preroll'` cue.
 		*
-		* Upgrade path to full VAST tracking (impression / quartile / click-
-		* thru / complete pings): replace the inline pre-roll <video> below
-		* with a Google IMA SDK ad-display container, parse the URL as VAST
-		* XML, and fire the tracking events emitted by IMA. The contract this
-		* exposes (skip on null, swap to main src on ad complete) is
-		* unchanged so the upgrade is local to the player.
+		* The pre-roll used to be a separate mechanism that swapped `src` on the
+		* main <video>, which is why the playback-init effect had to know about
+		* ads at all. It is now just an ad break at position 0, rendered on the
+		* ad element like every other break — full-frame rather than squeezed,
+		* since there is no movie playing underneath to squeeze.
+		*
+		* Full VAST support (wrappers, quartile pixels, click tracking) is handled
+		* server-side in $lib/server/ads/vast.ts, not by an SDK in the page.
 		*/
 		/**
 		* Squeeze-back mid-roll ads. Defaults false so the other three
@@ -131,7 +131,6 @@ function VideoPlayer($$renderer, $$props) {
 		const progressPct = derived(() => 0);
 		const bufferedPct = derived(() => 0);
 		const qualityLabel = derived(() => "Auto");
-		let prerollSkippableTimer = null;
 		onDestroy(() => {
 			reportProgress();
 			initSeq += 1;
@@ -156,10 +155,6 @@ function VideoPlayer($$renderer, $$props) {
 			if (endScreenInterval) {
 				clearInterval(endScreenInterval);
 				endScreenInterval = null;
-			}
-			if (prerollSkippableTimer) {
-				clearInterval(prerollSkippableTimer);
-				prerollSkippableTimer = null;
 			}
 		});
 		let telemetrySessionId = null;
@@ -252,9 +247,7 @@ function VideoPlayer($$renderer, $$props) {
 			$$renderer.push("<!--[1-->");
 			$$renderer.push(`<button type="button" class="absolute bottom-20 right-4 z-30 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-black text-sm font-semibold shadow-lg transition-colors backdrop-blur">Skip Credits</button>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
-		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
+		$$renderer.push(`<!--]-->  `);
 		if (endScreenVisible()) {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<div class="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 transition-opacity" role="region" aria-label="Next up suggestions"><div class="w-full max-w-3xl space-y-4">`);

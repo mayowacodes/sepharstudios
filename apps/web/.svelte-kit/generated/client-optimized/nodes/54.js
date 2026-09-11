@@ -1,3 +1,3 @@
-import * as universal from "../../../../src/routes/(app)/documentaries/+page.ts";
+import * as universal from "../../../../src/routes/(app)/creators/[id]/+page.ts";
 export { universal };
-export { default as component } from "../../../../src/routes/(app)/documentaries/+page.svelte";
+export { default as component } from "../../../../src/routes/(app)/creators/[id]/+page.svelte";

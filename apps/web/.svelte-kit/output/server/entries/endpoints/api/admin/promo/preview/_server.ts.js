@@ -1,5 +1,5 @@
 import { n as requireAdmin } from "../../../../../../chunks/admin-auth.js";
-import { r as decide } from "../../../../../../chunks/decision.js";
+import { i as decide } from "../../../../../../chunks/decision.js";
 import { json } from "@sveltejs/kit";
 //#region src/routes/api/admin/promo/preview/+server.ts
 /**

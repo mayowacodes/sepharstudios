@@ -22,6 +22,8 @@
 		"build:all": "bun run build && bun run build:android && bun run build:desktop"
 	},
 	"devDependencies": {
+		"minio": "^8.0.7",
+		"postgres": "^3.4.9",
 		"turbo": "latest"
 	}
 }

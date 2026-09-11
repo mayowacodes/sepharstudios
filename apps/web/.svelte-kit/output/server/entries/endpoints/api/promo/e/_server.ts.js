@@ -1,5 +1,5 @@
 import { m as adImpressions, t as db } from "../../../../../chunks/drizzle.js";
-import { s as verifyDecisionId } from "../../../../../chunks/decision.js";
+import { c as verifyDecisionId } from "../../../../../chunks/decision.js";
 import { a as take } from "../../../../../chunks/rate-limit.js";
 import { json } from "@sveltejs/kit";
 import { eq, sql } from "drizzle-orm";

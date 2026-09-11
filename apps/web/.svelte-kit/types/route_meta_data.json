@@ -38,6 +38,10 @@
 		"src/routes/(admin)/admin/+layout.ts",
 		"src/routes/+layout.ts"
 	],
+	"/(admin)/admin/ai-costs": [
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
+	],
 	"/(admin)/admin/ai-runs": [
 		"src/routes/(admin)/admin/+layout.ts",
 		"src/routes/+layout.ts"
@@ -104,6 +108,10 @@
 		"src/routes/+layout.ts"
 	],
 	"/(admin)/admin/governance/treasury": [
+		"src/routes/(admin)/admin/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/(admin)/admin/observability": [
 		"src/routes/(admin)/admin/+layout.ts",
 		"src/routes/+layout.ts"
 	],
@@ -339,6 +347,9 @@
 	],
 	"/api/admin/promo/breaks": [
 		"src/routes/api/admin/promo/breaks/+server.ts"
+	],
+	"/api/admin/promo/breaks/generate": [
+		"src/routes/api/admin/promo/breaks/generate/+server.ts"
 	],
 	"/api/admin/promo/campaigns": [
 		"src/routes/api/admin/promo/campaigns/+server.ts"
@@ -882,9 +893,6 @@
 	],
 	"/api/promo/plan": [
 		"src/routes/api/promo/plan/+server.ts"
-	],
-	"/api/promo/vast-tag": [
-		"src/routes/api/promo/vast-tag/+server.ts"
 	],
 	"/api/push/subscribe": [
 		"src/routes/api/push/subscribe/+server.ts"

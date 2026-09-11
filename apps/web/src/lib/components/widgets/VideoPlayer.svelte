@@ -92,17 +92,17 @@
      *  review page's "Add note at MM:SS" button). */
     onTimeUpdate?: (currentTime: number, duration: number) => void;
     /**
-     * When true (and contentId set), VideoPlayer auto-fetches
-     * /api/promo/vast-tag and plays the returned URL as a pre-roll before
-     * the main content. Treats the URL as a direct video src — sufficient
-     * for raw MP4 creatives.
+     * Play a pre-roll before the main content, when the break schedule
+     * contains a `kind='preroll'` cue.
      *
-     * Upgrade path to full VAST tracking (impression / quartile / click-
-     * thru / complete pings): replace the inline pre-roll <video> below
-     * with a Google IMA SDK ad-display container, parse the URL as VAST
-     * XML, and fire the tracking events emitted by IMA. The contract this
-     * exposes (skip on null, swap to main src on ad complete) is
-     * unchanged so the upgrade is local to the player.
+     * The pre-roll used to be a separate mechanism that swapped `src` on the
+     * main <video>, which is why the playback-init effect had to know about
+     * ads at all. It is now just an ad break at position 0, rendered on the
+     * ad element like every other break — full-frame rather than squeezed,
+     * since there is no movie playing underneath to squeeze.
+     *
+     * Full VAST support (wrappers, quartile pixels, click tracking) is handled
+     * server-side in $lib/server/ads/vast.ts, not by an SDK in the page.
      */
     enableAds?: boolean;
     /**
@@ -483,6 +483,25 @@
 
   async function initHls(video: HTMLVideoElement, url: string) {
     const token = ++initSeq;
+
+    // Tripwire for the one failure this whole design exists to prevent.
+    //
+    // initHls() destroys and rebuilds the HLS pipeline. If it runs while an ad
+    // break is open, something has made ad state a dependency of the src-owning
+    // $effect, and the movie is being torn down mid-ad — which presents as the
+    // video going black and restarting when the ad ends.
+    //
+    // Deliberately NOT dev-only: the failure would first appear in production,
+    // on a real break, and a check that is compiled out there is a check that
+    // never fires when it matters. One console.error on a path that should
+    // never execute costs nothing.
+    if (adPhase !== 'idle') {
+      console.error(
+        `[VideoPlayer] initHls called during an ad break (initSeq=${token}, adPhase=${adPhase}). ` +
+        'Ad state has leaked into the playback-init effect — the HLS pipeline is being ' +
+        'destroyed mid-ad. See the comment above that effect.'
+      );
+    }
     if (hls) { hls.destroy(); hls = null; }
     recoveryAttempts = 0;
     playbackFailed = false;
@@ -852,74 +871,12 @@
     currentLevel === -1 ? 'Auto' : levels[currentLevel] ? `${levels[currentLevel].height}p` : 'Auto'
   );
 
-  // Pre-roll ad state. When the player is mounted with enableAds=true and
-  // the server returns a non-null preroll URL, we play that first, then
-  // swap to the main content on `ended`. Skip button shows after 5s.
-  let prerollUrl = $state<string | null>(null);
-  let prerollActive = $state(false);
-  let prerollSkippableAt = $state(5);
-  let prerollSkippableTimer: ReturnType<typeof setInterval> | null = null;
-
-  // True while we're still deciding whether a pre-roll ad plays. The
-  // src-owning $effect below skips while this (or prerollActive) is
-  // set, so exactly ONE code path ever initializes playback. Before
-  // this guard, onMount called initHls directly AND the $effect fired
-  // on mount — both parked at the async hls.js import, both passed the
-  // `if (hls) destroy` check, and both constructed an instance: one
-  // leaked, and with ads enabled the pre-roll's v.src was raced/stomped
-  // by the main content's init.
-  // Deliberately reads the props' initial values — the ads decision is
-  // made once per mount; these props never change on a live player.
-  // svelte-ignore state_referenced_locally
-  let adsDecisionPending = $state(enableAds && !!contentId);
-
-  function endPreroll(reason: 'completed' | 'skipped' | 'error') {
-    prerollActive = false;
-    if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
-    try {
-      const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
-      op?.('ad_preroll_end', { contentId, reason });
-    } catch { /* analytics best-effort */ }
-    // Main-content init happens via the $effect the moment
-    // prerollActive flips false — no direct initHls call needed.
-  }
-
   onMount(() => {
     if (!videoEl) return;
 
     const v = videoEl;
     v.volume = volume;
 
-    if (enableAds && contentId) {
-      void (async () => {
-        try {
-          const res = await fetch(`/api/promo/vast-tag?contentId=${encodeURIComponent(contentId)}`);
-          const body = res.ok ? await res.json() : null;
-          if (!body?.url) { adsDecisionPending = false; return; }
-          prerollUrl = body.url;
-          prerollActive = true;
-          prerollSkippableAt = 5;
-          prerollSkippableTimer = setInterval(() => {
-            prerollSkippableAt = Math.max(0, prerollSkippableAt - 1);
-            if (prerollSkippableAt === 0 && prerollSkippableTimer) {
-              clearInterval(prerollSkippableTimer);
-              prerollSkippableTimer = null;
-            }
-          }, 1000);
-          v.src = body.url;
-          v.play().catch(() => endPreroll('error'));
-          try {
-            const op = (window as unknown as { op?: (event: string, props?: Record<string, unknown>) => void }).op;
-            op?.('ad_preroll_start', { contentId });
-          } catch { /* analytics best-effort */ }
-          // Decision made (ad playing). prerollActive keeps the main
-          // init suppressed until endPreroll flips it.
-          adsDecisionPending = false;
-        } catch {
-          adsDecisionPending = false;
-        }
-      })();
-    }
 
     // Track the first play of this session — used for funnel analysis (sign-up
     // → subscribe → watch-start → watch-complete). Subsequent plays (pause →
@@ -965,10 +922,6 @@
       if (v.buffered.length > 0) buffered = v.buffered.end(v.buffered.length - 1);
     });
     v.addEventListener('ended', () => {
-      if (prerollActive) {
-        endPreroll('completed');
-        return;
-      }
       onEnded?.();
       reportProgress();
     });
@@ -1031,7 +984,6 @@
     // the viewer navigated away and then fired window.location.href,
     // yanking them to a different title from an unrelated page.
     if (endScreenInterval) { clearInterval(endScreenInterval); endScreenInterval = null; }
-    if (prerollSkippableTimer) { clearInterval(prerollSkippableTimer); prerollSkippableTimer = null; }
   });
 
   // ───────────────────────────────────────────────────────────────────────
@@ -1129,7 +1081,7 @@
   // THE CARDINAL RULE: none of this state may ever be read by the src-owning
   // $effect below. That effect calls initHls(), which unconditionally does
   // `hls.destroy()`, so a new dependency there would tear down and rebuild the
-  // entire HLS pipeline mid-ad — the exact failure the `adsDecisionPending`
+  // entire HLS pipeline mid-ad — the exact failure the old `adsDecisionPending`
   // comment above documents. The ad renders from a SECOND <video> element for
   // the same reason, which also keeps reportProgress()'s reads of
   // videoEl.currentTime honest.
@@ -1220,7 +1172,10 @@
 
       ad = decision;
       adScale = plan.squeezeScale || decision.squeezeScale || 0.6;
-      adLayout = canSqueeze ? 'squeeze' : 'takeover';
+      // A pre-roll is ALWAYS full-frame. Squeezing implies a movie playing in
+      // the remaining space, and at position 0 there is nothing there yet — a
+      // squeezed pre-roll would show a 60% black rectangle beside the ad.
+      adLayout = plan.kind === 'preroll' ? 'takeover' : (canSqueeze ? 'squeeze' : 'takeover');
       // A takeover has no visible movie to duck against, so it always pauses.
       adBehavior = adLayout === 'takeover' ? 'pause' : decision.behavior;
       adRemaining = decision.durationSeconds ?? 0;
@@ -1366,6 +1321,24 @@
     }
   });
 
+  /**
+   * Fire the pre-roll cue, if the schedule has one.
+   *
+   * Separate from the mid-roll path because a pre-roll is not reached by the
+   * playhead — it must run before the movie starts, not when `currentTime`
+   * crosses 0.
+   */
+  let prerollAttempted = false;
+  $effect(() => {
+    if (!enableAds || prerollAttempted || adPlan.length === 0 || !videoEl) return;
+    const pre = adPlan.find((b) => b.kind === 'preroll');
+    if (!pre) { prerollAttempted = true; return; }
+    prerollAttempted = true;
+    // Hold the movie while the pre-roll plays; startBreak's pause branch
+    // records that it should resume afterwards.
+    void startBreak(pre);
+  });
+
   /** Called from the existing timeupdate listener — no new listener. */
   function onPlayheadForAds(t: number) {
     if (!enableBreakAds || adActive || breakInFlight || adPlan.length === 0) return;
@@ -1382,11 +1355,21 @@
     }
   }
 
-  // Single owner of playback init: runs on mount and on every src
-  // change, but stays out of the way while the ads decision is pending
-  // or a pre-roll is playing (see adsDecisionPending above).
+  // Single owner of playback init: runs on mount and on every src change.
+  //
+  // This effect reads EXACTLY two things — `videoEl` and `src` — and that is
+  // load-bearing. `initHls` unconditionally destroys the current Hls instance,
+  // so anything else that becomes a dependency here tears down playback when it
+  // changes. It previously also read `adsDecisionPending` and `prerollActive`,
+  // because the old pre-roll played through this same <video> element and had
+  // to suppress the main init until it finished.
+  //
+  // The pre-roll now runs as a `kind='preroll'` ad break on its own <video>
+  // element like every other break, so those flags are gone and this reduces to
+  // its irreducible form. DO NOT add a dependency here. Ad state in particular
+  // belongs on the non-reactive controller further up.
   $effect(() => {
-    if (videoEl && src && !adsDecisionPending && !prerollActive) {
+    if (videoEl && src) {
       initHls(videoEl, src);
     }
   });
@@ -1559,22 +1542,6 @@
 
   <!-- Pre-roll ad chrome. The pre-roll plays from the same <video>; this
        overlay shows the "Ad" badge + countdown + skip button. -->
-  {#if prerollActive && prerollUrl}
-    <div class="absolute top-3 left-3 z-20 inline-flex items-center gap-2 bg-black/70 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded">
-      Ad
-    </div>
-    <div class="absolute bottom-3 right-3 z-20">
-      {#if prerollSkippableAt > 0}
-        <span class="bg-black/70 text-white text-xs px-3 py-1.5 rounded">Skip in {prerollSkippableAt}s</span>
-      {:else}
-        <button
-          type="button"
-          onclick={() => endPreroll('skipped')}
-          class="bg-white/90 hover:bg-white text-black text-xs font-semibold px-3 py-1.5 rounded"
-        >Skip ad →</button>
-      {/if}
-    </div>
-  {/if}
 
   <!-- End-screen overlay: appears during the last 10% of playback if there
        are next-up cards. Click any card to navigate; X dismisses. -->

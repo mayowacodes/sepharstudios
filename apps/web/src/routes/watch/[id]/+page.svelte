@@ -7,6 +7,7 @@
   import { invalidateAll } from '$app/navigation';
   import ReviewSection from '$lib/components/widgets/ReviewSection.svelte';
   import ShareButton from '$lib/components/widgets/ShareButton.svelte';
+  import DownloadButton from '$lib/components/widgets/DownloadButton.svelte';
   import ReportButton from '$lib/components/ReportButton.svelte';
   import { copilotContext } from '$lib/stores/copilot';
   import { SiteMeta } from '$lib/constants';
@@ -190,6 +191,14 @@
             {/if}
           </div>
           <ShareButton contentId={content.slug || content.id} title={content.title} description={content.description ?? ''} />
+          <!-- Uses the row id, never the slug: the download manifest endpoint
+               and the IndexedDB record are both keyed by id, and a slug-keyed
+               download would not be found again after a title is renamed. -->
+          <DownloadButton
+            contentId={content.id}
+            title={content.title}
+            thumbnail={content.thumbnail ?? null}
+          />
           <ReportButton targetType="content" targetId={content.id} />
         </div>
         <div class="flex flex-wrap gap-3 mt-2 text-sm text-zinc-400">

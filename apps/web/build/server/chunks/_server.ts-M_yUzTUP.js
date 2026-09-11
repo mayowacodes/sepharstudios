@@ -1,0 +1,41 @@
+import { C as Constants } from './constants-BiiFHz9b.js';
+import { s as sendEmailAction } from './server2-C3RwuLls.js';
+import { j as json } from './index.js-CxPEndTa.js';
+import './file-text-By5QqCz6.js';
+import './Icon-Bw1rnKTC.js';
+import './house-6lS0tROn.js';
+import './layout-dashboard-B2Dnc05Q.js';
+import './user-DfNTMTjp.js';
+import './users-BHfWNfsK.js';
+
+//#region src/routes/api/contact/+server.ts
+function isValidEmail(value) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+var POST = async ({ request }) => {
+	const body = await request.json().catch(() => ({}));
+	const name = (body.name ?? "").trim();
+	const email = (body.email ?? "").trim();
+	const subject = (body.subject ?? "").trim();
+	const message = (body.message ?? "").trim();
+	if (!name || !email || !subject || !message) return json({ error: "All fields are required." }, { status: 400 });
+	if (!isValidEmail(email)) return json({ error: "Please enter a valid email address." }, { status: 400 });
+	if (message.length > 5e3) return json({ error: "Message is too long (5000 char max)." }, { status: 400 });
+	try {
+		await sendEmailAction({
+			to: Constants.SUPPORTEMAIL,
+			subject: `[Contact form] ${subject} — from ${name}`,
+			meta: {
+				description: `${message}\n\nFrom: ${name} <${email}>`,
+				link: `mailto:${email}`
+			}
+		});
+		return json({ ok: true });
+	} catch (err) {
+		console.error("Contact form send failed:", err);
+		return json({ error: "Could not send your message right now. Please try again later." }, { status: 502 });
+	}
+};
+
+export { POST };
+//# sourceMappingURL=_server.ts-M_yUzTUP.js.map

@@ -1,3 +1,3 @@
-import * as universal from "../../../../src/routes/watch/live/[id]/+page.ts";
+import * as universal from "../../../../src/routes/kids/teens/+page.ts";
 export { universal };
-export { default as component } from "../../../../src/routes/watch/live/[id]/+page.svelte";
+export { default as component } from "../../../../src/routes/kids/teens/+page.svelte";
